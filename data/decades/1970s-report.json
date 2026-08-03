@@ -1,0 +1,207 @@
+{
+  "duplicatePlayersRemoved": [],
+  "formattingIssuesFixed": [
+    {
+      "team": "ATL",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "BOS",
+      "from": "Jo Jo",
+      "to": "Jo Jo White",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "BKN",
+      "from": "Jan Van",
+      "to": "Jan van Breda Kolff",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "CHI",
+      "from": "Norm Van",
+      "to": "Norm Van Lier",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "GSW",
+      "from": "Jo Jo",
+      "to": "Jo Jo White",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "LAC",
+      "from": "World B.",
+      "to": "World B. Free",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "MIL",
+      "from": "Norm Van",
+      "to": "Norm Van Lier",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "NYK",
+      "from": "Micheal Ray",
+      "to": "Micheal Ray Richardson",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "PHI",
+      "from": "World B.",
+      "to": "World B. Free",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "PHI",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "PHO",
+      "from": "Dick Van",
+      "to": "Dick Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "PHO",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "SAC",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "SAC",
+      "from": "Norm Van",
+      "to": "Norm Van Lier",
+      "reason": "Truncated / incomplete name"
+    }
+  ],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "note": "No players removed for wrong-team. Modern abbreviations intentionally combine relocated/renamed franchises per source header (e.g. NOJ→UTA, BUF→LAC, SEA→OKC, CIN→SAC, BAL→WAS, NYN/NJA→BKN)."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "SAC",
+      "name": "Bob Cousy*",
+      "seasons": "1970",
+      "gp": 7,
+      "note": "Cousy was Royals coach and briefly activated himself in 1969-70. Left as-is (historically real cameo, not a roster star)."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "LAC",
+      "name": "Moses Malone*",
+      "seasons": "1977",
+      "gp": 2,
+      "note": "Maps to Buffalo Braves stint before Houston under LAC franchise continuity. Confirm intentional."
+    }
+  ],
+  "otherInconsistencies": [
+    "Team-specific decade averages preserved across multi-team careers (no cross-team flattening).",
+    "Canonical cleaned file: data/decades/1970s.txt (1279 players, 22 teams). Raw paste at data/decades/1970s-raw.txt.",
+    "Micheal Ray Richardson spelling kept as Micheal (his legal/NBA spelling), not Michael."
+  ],
+  "teamCounts": {
+    "Hawks (ATL)": {
+      "claimed": 73,
+      "afterClean": 73
+    },
+    "Celtics (BOS)": {
+      "claimed": 56,
+      "afterClean": 56
+    },
+    "Nets (BKN)": {
+      "claimed": 35,
+      "afterClean": 35
+    },
+    "Bulls (CHI)": {
+      "claimed": 65,
+      "afterClean": 65
+    },
+    "Cavaliers (CLE)": {
+      "claimed": 51,
+      "afterClean": 51
+    },
+    "Nuggets (DEN)": {
+      "claimed": 31,
+      "afterClean": 31
+    },
+    "Pistons (DET)": {
+      "claimed": 70,
+      "afterClean": 70
+    },
+    "Warriors (GSW)": {
+      "claimed": 54,
+      "afterClean": 54
+    },
+    "Rockets (HOU)": {
+      "claimed": 64,
+      "afterClean": 64
+    },
+    "Pacers (IND)": {
+      "claimed": 33,
+      "afterClean": 33
+    },
+    "Braves / Clippers (LAC)": {
+      "claimed": 82,
+      "afterClean": 82
+    },
+    "Lakers (LAL)": {
+      "claimed": 69,
+      "afterClean": 69
+    },
+    "Bucks (MIL)": {
+      "claimed": 68,
+      "afterClean": 68
+    },
+    "Knicks (NYK)": {
+      "claimed": 59,
+      "afterClean": 59
+    },
+    "SuperSonics / Thunder (OKC)": {
+      "claimed": 71,
+      "afterClean": 71
+    },
+    "76ers (PHI)": {
+      "claimed": 75,
+      "afterClean": 75
+    },
+    "Suns (PHO)": {
+      "claimed": 62,
+      "afterClean": 62
+    },
+    "Trail Blazers (POR)": {
+      "claimed": 65,
+      "afterClean": 65
+    },
+    "Royals / Kings (SAC)": {
+      "claimed": 78,
+      "afterClean": 78
+    },
+    "Spurs (SAS)": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "Jazz (UTA)": {
+      "claimed": 41,
+      "afterClean": 41
+    },
+    "Bullets / Wizards (WAS)": {
+      "claimed": 57,
+      "afterClean": 57
+    }
+  }
+}

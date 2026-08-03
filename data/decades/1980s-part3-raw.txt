@@ -1,0 +1,78 @@
+LOS ANGELES CLIPPERS (SAN DIEGO/LA)
+========================================================================
+
+Norm Nixon | PG | 17.0 PPG | 2.8 RPG | 8.8 APG
+Ron Harper | SG | 22.9 PPG | 5.9 RPG | 4.8 APG
+World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
+Quentin Dailey | SG | 20.3 PPG | 3.9 RPG | 3.1 APG
+Michael Brooks | PG | 16.8 PPG | 3.0 RPG | 6.5 APG
+Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
+Marques Johnson | SF | 20.3 PPG | 7.0 RPG | 3.6 APG
+Michael Cage | PF | 11.0 PPG | 11.0 RPG | 1.5 APG
+Terry Cummings | PF | 23.7 PPG | 10.6 RPG | 2.7 APG
+Tom Chambers | PF | 20.0 PPG | 6.6 RPG | 2.3 APG
+Benoit Benjamin | C | 12.8 PPG | 8.0 RPG | 1.3 APG
+James Donaldson | C | 11.0 PPG | 9.0 RPG | 1.0 APG
+Swen Nater | C | 8.5 PPG | 8.0 RPG | 1.0 APG
+Ken Norman | PF | 11.6 PPG | 5.8 RPG | 1.5 APG
+Danny Manning | PF | 16.7 PPG | 6.6 RPG | 2.5 APG
+
+========================================================================
+LOS ANGELES LAKERS
+========================================================================
+
+Magic Johnson | PG | 19.5 PPG | 7.2 RPG | 11.2 APG
+Norm Nixon | PG | 17.6 PPG | 2.8 RPG | 8.8 APG
+Byron Scott | SG | 17.5 PPG | 3.0 RPG | 3.5 APG
+Michael Cooper | SG | 10.0 PPG | 3.0 RPG | 4.2 APG
+James Worthy | SF | 21.1 PPG | 5.4 RPG | 3.0 APG
+Jamaal Wilkes | SF | 18.0 PPG | 5.1 RPG | 2.8 APG
+A.C. Green | PF | 11.8 PPG | 8.7 RPG | 1.2 APG
+Kurt Rambis | PF | 9.0 PPG | 7.5 RPG | 2.0 APG
+Kareem Abdul-Jabbar | C | 22.0 PPG | 7.9 RPG | 2.5 APG
+Mychal Thompson | C | 15.7 PPG | 7.4 RPG | 2.0 APG
+Bob McAdoo | C | 10.0 PPG | 4.5 RPG | 1.0 APG
+Orlando Woolridge | SF | 20.6 PPG | 5.0 RPG | 2.7 APG
+Sam Perkins | PF | 15.0 PPG | 8.0 RPG | 2.0 APG
+Vlade Divac | C | 8.5 PPG | 6.0 RPG | 1.5 APG
+Mike McGee | SG | 10.5 PPG | 2.5 RPG | 2.0 APG
+
+========================================================================
+MILWAUKEE BUCKS
+========================================================================
+
+Sidney Moncrief | SG | 20.2 PPG | 5.0 RPG | 4.5 APG
+Terry Cummings | PF | 23.7 PPG | 10.6 RPG | 2.7 APG
+Paul Pressey | SF | 12.9 PPG | 4.9 RPG | 5.7 APG
+Jack Sikma | C | 15.6 PPG | 9.4 RPG | 3.5 APG
+Ricky Pierce | SG | 17.6 PPG | 2.8 RPG | 2.3 APG
+Alvin Robertson | SG | 17.0 PPG | 5.5 RPG | 5.0 APG
+Junior Bridgeman | SG | 13.6 PPG | 3.5 RPG | 2.4 APG
+Craig Hodges | PG | 10.0 PPG | 2.0 RPG | 4.0 APG
+Brian Winters | SG | 16.0 PPG | 2.5 RPG | 4.0 APG
+Marques Johnson | SF | 20.6 PPG | 7.4 RPG | 3.6 APG
+Bob Lanier | C | 18.7 PPG | 9.3 RPG | 3.0 APG
+Dave Meyers | PF | 11.0 PPG | 5.0 RPG | 2.0 APG
+Jay Humphries | PG | 13.0 PPG | 3.0 RPG | 6.0 APG
+Jerome Whitehead | C | 8.0 PPG | 6.0 RPG | 1.5 APG
+Randy Breuer | C | 8.0 PPG | 5.5 RPG | 1.0 APG
+
+========================================================================
+NEW JERSEY NETS
+========================================================================
+
+Buck Williams | PF | 16.4 PPG | 11.9 RPG | 1.3 APG
+Otis Birdsong | SG | 18.0 PPG | 3.5 RPG | 3.0 APG
+Albert King | SF | 17.4 PPG | 4.8 RPG | 2.7 APG
+Micheal Ray Richardson | PG | 14.0 PPG | 5.0 RPG | 7.0 APG
+Darryl Dawkins | C | 14.1 PPG | 7.0 RPG | 1.3 APG
+Orlando Woolridge | SF | 20.6 PPG | 5.0 RPG | 2.7 APG
+Mike Gminski | C | 16.0 PPG | 8.0 RPG | 2.0 APG
+Dennis Hopson | SG | 15.8 PPG | 3.7 RPG | 2.6 APG
+Roy Hinson | PF | 19.0 PPG | 7.0 RPG | 2.0 APG
+Benoit Benjamin | C | 12.8 PPG | 8.0 RPG | 1.3 APG
+Chris Morris | SF | 14.0 PPG | 5.0 RPG | 2.0 APG
+Sam Bowie | C | 10.9 PPG | 7.1 RPG | 2.1 APG
+Tony Brown | SG | 11.0 PPG | 3.0 RPG | 2.5 APG
+Chris Dudley | C | 4.0 PPG | 7.0 RPG | 0.5 APG
+John Bagley | PG | 10.0 PPG | 2.5 RPG | 6.0 APG

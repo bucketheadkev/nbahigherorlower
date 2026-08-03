@@ -1,0 +1,12 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!104 &1
+RenderSettings:
+  m_ObjectHideFlags: 0
+  m_Fog: 1
+  m_FogColor: {r: 0.05, g: 0.05, b: 0.08, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.02
+  m_AmbientSkyColor: {r: 0.08, g: 0.08, b: 0.12, a: 1}
+  m_AmbientEquatorColor: {r: 0.06, g: 0.06, b: 0.08, a: 1}
+  m_AmbientGroundColor: {r: 0.04, g: 0.04, b: 0.05, a: 1}

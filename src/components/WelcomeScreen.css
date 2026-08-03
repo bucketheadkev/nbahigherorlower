@@ -1,0 +1,128 @@
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1rem 0 3rem;
+}
+
+.welcome-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.welcome-tag {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.welcome-title {
+  font-size: clamp(3rem, 12vw, 4.5rem);
+  line-height: 1;
+}
+
+.welcome-title .accent {
+  color: var(--orange);
+}
+
+.welcome-sub {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.welcome-rules {
+  width: 100%;
+  text-align: left;
+}
+
+.welcome-rules h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: var(--gold);
+}
+
+.welcome-rules ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.welcome-rules li {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.welcome-rules strong {
+  color: var(--text);
+}
+
+.welcome-best {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.welcome-tier-key {
+  width: 100%;
+  text-align: left;
+}
+
+.welcome-tier-key h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.tier-key-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.65rem;
+}
+
+.tier-key-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+.best-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.best-streak {
+  font-size: 0.9rem;
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.welcome-start {
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+  min-height: 52px;
+}
+
+.welcome-footnote {
+  font-size: 0.8rem;
+  color: var(--muted);
+}

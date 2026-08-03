@@ -1,0 +1,205 @@
+{
+  "format": "modern",
+  "duplicatePlayersRemoved": [
+    {
+      "team": "MIAMI HEAT",
+      "teamTitle": "MIAMI HEAT",
+      "name": "Jamal Mashburn",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "SEATTLE SUPERSONICS",
+      "teamTitle": "SEATTLE SUPERSONICS",
+      "name": "Hersey Hawkins",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "TORONTO RAPTORS",
+      "teamTitle": "TORONTO RAPTORS",
+      "name": "Doug Christie",
+      "keptSeasons": null,
+      "removedSeasons": null
+    }
+  ],
+  "formattingIssuesFixed": [
+    {
+      "team": "CLEVELAND CAVALIERS",
+      "from": "Wes Person",
+      "to": "Wesley Person",
+      "reason": "Obvious spelling/truncation (Wesley Person)"
+    },
+    {
+      "team": "MEMPHIS GRIZZLIES (VANCOUVER)",
+      "from": "Lee Mayberry | PG | 8.0 PPG | 4.0 APG | 2.0 RPG",
+      "to": "Lee Mayberry | PG | 8.0 PPG | 2.0 RPG | 4.0 APG",
+      "reason": "Swapped RPG/APG field order"
+    },
+    {
+      "team": "MILWAUKEE BUCKS",
+      "from": "Armen Gilliam",
+      "to": "Armon Gilliam",
+      "reason": "Obvious spelling typo (Armon Gilliam)"
+    },
+    {
+      "team": "SACRAMENTO KINGS",
+      "from": "Abdul-Rauf",
+      "to": "Mahmoud Abdul-Rauf",
+      "reason": "Truncated name (Mahmoud Abdul-Rauf)"
+    },
+    {
+      "team": "SEATTLE SUPERSONICS",
+      "from": "Hawkins",
+      "to": "Hersey Hawkins",
+      "reason": "Truncated name (Hersey Hawkins); then removed as same-team duplicate"
+    }
+  ],
+  "omittedPlayers": [],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "note": "MEMPHIS GRIZZLIES (VANCOUVER) and VANCOUVER GRIZZLIES are the same franchise listed twice with near-identical rosters. Left both sections as provided (headers preserved). Say if you want them merged into one."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "PHILADELPHIA 76ERS",
+      "name": "Willie Green",
+      "note": "NBA debut was 2003-04 — outside 1990s coverage. Left as-is."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "MILWAUKEE BUCKS",
+      "name": "Michael Redd",
+      "note": "NBA debut was 2000-01 — borderline/outside typical 1990-91–1999-00 decade window. Left as-is."
+    }
+  ],
+  "otherInconsistencies": [
+    "BPG intentionally used as the third counting stat for several centers (Mutombo, Bradley, etc.) — preserved.",
+    "Canonical file: data/decades/1990s.txt (30 sections, 447 players)."
+  ],
+  "teamCounts": {
+    "ATLANTA HAWKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "BOSTON CELTICS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHARLOTTE HORNETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHICAGO BULLS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CLEVELAND CAVALIERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DALLAS MAVERICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DENVER NUGGETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DETROIT PISTONS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "GOLDEN STATE WARRIORS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "HOUSTON ROCKETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "INDIANA PACERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES CLIPPERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES LAKERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MEMPHIS GRIZZLIES (VANCOUVER)": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MIAMI HEAT": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "MILWAUKEE BUCKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MINNESOTA TIMBERWOLVES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW JERSEY NETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW YORK KNICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "ORLANDO MAGIC": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHILADELPHIA 76ERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHOENIX SUNS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PORTLAND TRAIL BLAZERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SACRAMENTO KINGS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SAN ANTONIO SPURS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SEATTLE SUPERSONICS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "TORONTO RAPTORS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "UTAH JAZZ": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "VANCOUVER GRIZZLIES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "WASHINGTON BULLETS / WIZARDS": {
+      "claimed": 15,
+      "afterClean": 15
+    }
+  },
+  "status": "COMPLETE — 30 team sections, 447 players after same-team dedupe."
+}

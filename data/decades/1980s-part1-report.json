@@ -1,0 +1,44 @@
+{
+  "format": "modern",
+  "duplicatePlayersRemoved": [],
+  "formattingIssuesFixed": [],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "note": "No clear wrong-franchise players in Part 1. Left all entries as provided."
+    }
+  ],
+  "otherInconsistencies": [
+    "1980s source uses a different format than 1960s/1970s (full team names, unnumbered rows, \"G\" not \"GP\"). Format preserved exactly.",
+    "Canonical accumulating file: data/decades/1980s.txt (Part 1 only so far: 6 teams, 120 players).",
+    "Raw Part 1: data/decades/1980s-part1-raw.txt"
+  ],
+  "teamCounts": {
+    "ATLANTA HAWKS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "BOSTON CELTICS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "CHICAGO BULLS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "CLEVELAND CAVALIERS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "DALLAS MAVERICKS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "DENVER NUGGETS": {
+      "claimed": 20,
+      "afterClean": 20
+    }
+  },
+  "status": "PART 1 incomplete — awaiting remaining 1980s teams"
+}

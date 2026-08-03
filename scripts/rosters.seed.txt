@@ -1,0 +1,370 @@
+import type { Position, PlayerStats, TradePlayer } from './types';
+
+function p(
+  id: string,
+  name: string,
+  teamId: string,
+  position: Position,
+  age: number,
+  stats: PlayerStats,
+  tradeValue: number,
+  isStarter: boolean,
+  isFranchise = false,
+): TradePlayer {
+  return { id, name, teamId, position, age, stats, tradeValue, isStarter, isFranchise };
+}
+
+export const ROSTER: TradePlayer[] = [
+  // Atlanta Hawks
+  p('trae', 'Trae Young', 'ATL', 'PG', 26, { ppg: 24.2, rpg: 3.1, apg: 11.6, spg: 1.0, bpg: 0.2 }, 82, true, true),
+  p('murray_dej', 'Dejounte Murray', 'ATL', 'SG', 28, { ppg: 20.5, rpg: 5.3, apg: 6.1, spg: 1.4, bpg: 0.3 }, 68, true),
+  p('johnson_j', 'Jalen Johnson', 'ATL', 'SF', 23, { ppg: 18.9, rpg: 10.0, apg: 3.8, spg: 1.2, bpg: 0.8 }, 72, true),
+  p('risacher', 'Zaccharie Risacher', 'ATL', 'SF', 20, { ppg: 12.1, rpg: 3.8, apg: 1.4, spg: 0.8, bpg: 0.5 }, 48, true),
+  p('capela', 'Clint Capela', 'ATL', 'C', 30, { ppg: 11.5, rpg: 10.6, apg: 1.2, spg: 0.7, bpg: 1.5 }, 52, true),
+  p('krejci', 'Vit Krejci', 'ATL', 'SG', 24, { ppg: 8.2, rpg: 2.4, apg: 2.1, spg: 0.5, bpg: 0.2 }, 28, false),
+  p('daniels', 'Dyson Daniels', 'ATL', 'PG', 22, { ppg: 14.1, rpg: 5.9, apg: 4.4, spg: 3.0, bpg: 0.5 }, 58, false),
+  p('okongwu', 'Onyeka Okongwu', 'ATL', 'C', 24, { ppg: 13.4, rpg: 8.2, apg: 2.3, spg: 0.6, bpg: 0.9 }, 54, false),
+
+  // Boston Celtics
+  p('tatum', 'Jayson Tatum', 'BOS', 'SF', 27, { ppg: 26.8, rpg: 8.7, apg: 6.0, spg: 1.0, bpg: 0.5 }, 94, true, true),
+  p('brown', 'Jaylen Brown', 'BOS', 'SG', 28, { ppg: 22.3, rpg: 5.8, apg: 4.5, spg: 1.1, bpg: 0.3 }, 86, true),
+  p('white', 'Derrick White', 'BOS', 'PG', 30, { ppg: 16.2, rpg: 4.1, apg: 5.2, spg: 1.0, bpg: 1.0 }, 68, true),
+  p('holiday', 'Jrue Holiday', 'BOS', 'PG', 34, { ppg: 12.5, rpg: 5.4, apg: 6.1, spg: 1.2, bpg: 0.4 }, 62, true),
+  p('porzingis', 'Kristaps Porzingis', 'BOS', 'C', 29, { ppg: 19.5, rpg: 6.8, apg: 2.1, spg: 0.7, bpg: 1.5 }, 74, true),
+  p('hauser', 'Sam Hauser', 'BOS', 'PF', 27, { ppg: 8.6, rpg: 3.5, apg: 1.0, spg: 0.4, bpg: 0.2 }, 32, false),
+  p('pritchard', 'Payton Pritchard', 'BOS', 'PG', 27, { ppg: 14.3, rpg: 3.8, apg: 3.5, spg: 0.9, bpg: 0.1 }, 48, false),
+  p('horford', 'Al Horford', 'BOS', 'C', 38, { ppg: 9.0, rpg: 6.4, apg: 2.6, spg: 0.6, bpg: 1.0 }, 42, false),
+
+  // Brooklyn Nets
+  p('bridges_m', 'Mikal Bridges', 'BKN', 'SF', 28, { ppg: 17.6, rpg: 3.2, apg: 3.7, spg: 1.0, bpg: 0.5 }, 66, true),
+  p('thomas', 'Cam Thomas', 'BKN', 'SG', 23, { ppg: 24.4, rpg: 3.5, apg: 3.8, spg: 0.7, bpg: 0.2 }, 62, true),
+  p('claxton', 'Nic Claxton', 'BKN', 'C', 25, { ppg: 11.2, rpg: 9.6, apg: 2.2, spg: 0.8, bpg: 1.5 }, 58, true),
+  p('johnson_c', 'Cameron Johnson', 'BKN', 'PF', 28, { ppg: 14.0, rpg: 4.3, apg: 2.9, spg: 0.7, bpg: 0.3 }, 50, true),
+  p('wilson', 'Jalen Wilson', 'BKN', 'SF', 24, { ppg: 9.8, rpg: 3.2, apg: 1.8, spg: 0.5, bpg: 0.2 }, 30, true),
+  p('sharpe', 'Day\'Ron Sharpe', 'BKN', 'C', 23, { ppg: 8.5, rpg: 6.8, apg: 1.5, spg: 0.5, bpg: 0.6 }, 32, false),
+  p('clowney', 'Noah Clowney', 'BKN', 'PF', 21, { ppg: 10.1, rpg: 4.5, apg: 1.2, spg: 0.4, bpg: 0.5 }, 38, false),
+  p('lewis', 'Dariq Lewis', 'BKN', 'SG', 23, { ppg: 7.2, rpg: 2.1, apg: 1.8, spg: 0.6, bpg: 0.1 }, 24, false),
+
+  // Charlotte Hornets
+  p('miller', 'Brandon Miller', 'CHA', 'SF', 22, { ppg: 21.0, rpg: 4.9, apg: 3.5, spg: 0.9, bpg: 0.6 }, 68, true),
+  p('ball', 'LaMelo Ball', 'CHA', 'PG', 23, { ppg: 25.2, rpg: 5.1, apg: 7.4, spg: 1.1, bpg: 0.3 }, 78, true, true),
+  p('bridges_miles', 'Miles Bridges', 'CHA', 'PF', 26, { ppg: 20.3, rpg: 7.5, apg: 3.9, spg: 0.7, bpg: 0.5 }, 64, true),
+  p('williams_m', 'Mark Williams', 'CHA', 'C', 23, { ppg: 12.7, rpg: 9.7, apg: 1.2, spg: 0.5, bpg: 1.1 }, 52, true),
+  p('richards', 'Nick Richards', 'CHA', 'C', 27, { ppg: 9.7, rpg: 8.0, apg: 0.8, spg: 0.4, bpg: 1.0 }, 38, true),
+  p('knueppel', 'Kon Knueppel', 'CHA', 'SG', 20, { ppg: 11.5, rpg: 3.2, apg: 2.8, spg: 0.7, bpg: 0.2 }, 42, false),
+  p('green_j', 'Josh Green', 'CHA', 'SG', 24, { ppg: 8.2, rpg: 3.1, apg: 2.0, spg: 0.8, bpg: 0.3 }, 34, false),
+  p('simpson', 'KJ Simpson', 'CHA', 'PG', 22, { ppg: 6.8, rpg: 2.0, apg: 3.5, spg: 0.6, bpg: 0.1 }, 26, false),
+
+  // Chicago Bulls
+  p('lavine', 'Zach LaVine', 'CHI', 'SG', 30, { ppg: 23.1, rpg: 4.3, apg: 4.0, spg: 0.8, bpg: 0.2 }, 72, true),
+  p('vucevic', 'Nikola Vucevic', 'CHI', 'C', 34, { ppg: 18.5, rpg: 10.1, apg: 3.2, spg: 0.7, bpg: 0.7 }, 58, true),
+  p('williams_p', 'Patrick Williams', 'CHI', 'PF', 23, { ppg: 10.5, rpg: 4.2, apg: 1.8, spg: 0.7, bpg: 0.5 }, 42, true),
+  p('dosunmu', 'Ayo Dosunmu', 'CHI', 'SG', 25, { ppg: 12.2, rpg: 3.1, apg: 3.5, spg: 0.8, bpg: 0.3 }, 44, true),
+  p('giddey', 'Josh Giddey', 'CHI', 'PG', 22, { ppg: 14.8, rpg: 7.2, apg: 6.8, spg: 0.8, bpg: 0.4 }, 56, true),
+  p('carter', 'Wendell Carter Jr.', 'CHI', 'C', 25, { ppg: 11.8, rpg: 8.5, apg: 2.1, spg: 0.6, bpg: 0.8 }, 46, false),
+  p('buzelis', 'Matas Buzelis', 'CHI', 'SF', 20, { ppg: 8.5, rpg: 3.8, apg: 1.2, spg: 0.5, bpg: 0.6 }, 36, false),
+  p('white_c', 'Coby White', 'CHI', 'PG', 25, { ppg: 18.2, rpg: 3.8, apg: 4.5, spg: 0.7, bpg: 0.2 }, 52, false),
+
+  // Cleveland Cavaliers
+  p('mitchell', 'Donovan Mitchell', 'CLE', 'SG', 28, { ppg: 24.0, rpg: 4.5, apg: 5.0, spg: 1.3, bpg: 0.2 }, 84, true, true),
+  p('garland', 'Darius Garland', 'CLE', 'PG', 25, { ppg: 20.6, rpg: 2.7, apg: 6.6, spg: 1.0, bpg: 0.1 }, 76, true),
+  p('mobley', 'Evan Mobley', 'CLE', 'PF', 23, { ppg: 18.5, rpg: 9.3, apg: 3.2, spg: 0.9, bpg: 1.4 }, 80, true),
+  p('allen', 'Jarrett Allen', 'CLE', 'C', 26, { ppg: 13.7, rpg: 9.4, apg: 2.1, spg: 0.7, bpg: 1.0 }, 62, true),
+  p('strus', 'Max Strus', 'CLE', 'SF', 28, { ppg: 12.2, rpg: 4.5, apg: 4.0, spg: 0.6, bpg: 0.2 }, 44, true),
+  p('merrill', 'Sam Merrill', 'CLE', 'SG', 28, { ppg: 10.5, rpg: 2.8, apg: 2.1, spg: 0.5, bpg: 0.1 }, 36, false),
+  p('jerome', 'Ty Jerome', 'CLE', 'PG', 27, { ppg: 12.5, rpg: 2.5, apg: 3.8, spg: 0.9, bpg: 0.2 }, 42, false),
+  p('wade', 'Dean Wade', 'CLE', 'PF', 28, { ppg: 6.5, rpg: 4.8, apg: 1.5, spg: 0.6, bpg: 0.5 }, 30, false),
+
+  // Detroit Pistons
+  p('cade', 'Cade Cunningham', 'DET', 'PG', 23, { ppg: 26.1, rpg: 6.1, apg: 9.1, spg: 1.0, bpg: 0.8 }, 82, true, true),
+  p('duren', 'Jalen Duren', 'DET', 'C', 21, { ppg: 13.8, rpg: 11.6, apg: 2.4, spg: 0.6, bpg: 1.1 }, 62, true),
+  p('harris_t', 'Tobias Harris', 'DET', 'PF', 32, { ppg: 13.7, rpg: 5.9, apg: 2.5, spg: 0.7, bpg: 0.5 }, 48, true),
+  p('beasley', 'Malik Beasley', 'DET', 'SG', 28, { ppg: 16.3, rpg: 2.8, apg: 1.7, spg: 0.6, bpg: 0.1 }, 40, true),
+  p('holland', 'Ron Holland II', 'DET', 'SF', 19, { ppg: 9.8, rpg: 4.2, apg: 1.5, spg: 0.8, bpg: 0.4 }, 44, true),
+  p('fontecchio', 'Simone Fontecchio', 'DET', 'SF', 29, { ppg: 10.5, rpg: 3.8, apg: 1.5, spg: 0.5, bpg: 0.2 }, 34, false),
+  p('jenkins', 'Javonte Green', 'DET', 'SG', 31, { ppg: 7.2, rpg: 3.5, apg: 1.2, spg: 0.8, bpg: 0.4 }, 28, false),
+  p('sasser', 'Marcus Sasser', 'DET', 'PG', 24, { ppg: 8.5, rpg: 1.8, apg: 3.2, spg: 0.6, bpg: 0.1 }, 32, false),
+
+  // Indiana Pacers
+  p('haliburton', 'Tyrese Haliburton', 'IND', 'PG', 24, { ppg: 18.6, rpg: 3.5, apg: 9.2, spg: 1.4, bpg: 0.3 }, 88, true, true),
+  p('siakam', 'Pascal Siakam', 'IND', 'PF', 30, { ppg: 20.2, rpg: 6.9, apg: 3.9, spg: 0.9, bpg: 0.3 }, 72, true),
+  p('turner', 'Myles Turner', 'IND', 'C', 28, { ppg: 15.9, rpg: 6.9, apg: 1.3, spg: 0.6, bpg: 2.0 }, 58, true),
+  p('nesmith', 'Aaron Nesmith', 'IND', 'SF', 25, { ppg: 12.2, rpg: 3.8, apg: 1.5, spg: 0.7, bpg: 0.3 }, 42, true),
+  p('mathurin', 'Bennedict Mathurin', 'IND', 'SG', 22, { ppg: 16.1, rpg: 5.3, apg: 1.9, spg: 0.7, bpg: 0.2 }, 58, true),
+  p('toppin', 'Obi Toppin', 'IND', 'PF', 26, { ppg: 10.3, rpg: 3.9, apg: 1.5, spg: 0.5, bpg: 0.4 }, 38, false),
+  p('mcconnell', 'T.J. McConnell', 'IND', 'PG', 32, { ppg: 9.1, rpg: 3.2, apg: 5.5, spg: 1.2, bpg: 0.1 }, 36, false),
+  p('sheppard', 'Ben Sheppard', 'IND', 'SG', 22, { ppg: 6.5, rpg: 3.0, apg: 1.8, spg: 0.6, bpg: 0.2 }, 28, false),
+
+  // Miami Heat
+  p('butler', 'Jimmy Butler', 'MIA', 'SF', 35, { ppg: 17.5, rpg: 5.4, apg: 5.4, spg: 1.4, bpg: 0.3 }, 72, true, true),
+  p('adebayo', 'Bam Adebayo', 'MIA', 'C', 27, { ppg: 18.1, rpg: 9.6, apg: 4.7, spg: 1.1, bpg: 0.9 }, 78, true),
+  p('herro', 'Tyler Herro', 'MIA', 'SG', 25, { ppg: 23.2, rpg: 5.0, apg: 5.5, spg: 0.9, bpg: 0.2 }, 72, true),
+  p('rozier', 'Terry Rozier', 'MIA', 'PG', 30, { ppg: 16.4, rpg: 4.2, apg: 4.6, spg: 0.8, bpg: 0.2 }, 52, true),
+  p('highsmith', 'Haywood Highsmith', 'MIA', 'PF', 28, { ppg: 6.5, rpg: 3.8, apg: 1.2, spg: 0.7, bpg: 0.3 }, 28, true),
+  p('ware', 'Kel\'el Ware', 'MIA', 'C', 21, { ppg: 9.8, rpg: 7.2, apg: 0.8, spg: 0.4, bpg: 1.2 }, 42, false),
+  p('larsson', 'Pelle Larsson', 'MIA', 'SG', 24, { ppg: 7.5, rpg: 2.5, apg: 2.0, spg: 0.5, bpg: 0.1 }, 30, false),
+  p('jovic', 'Nikola Jovic', 'MIA', 'PF', 22, { ppg: 10.8, rpg: 4.2, apg: 2.5, spg: 0.6, bpg: 0.3 }, 40, false),
+
+  // Milwaukee Bucks
+  p('giannis', 'Giannis Antetokounmpo', 'MIL', 'PF', 30, { ppg: 30.4, rpg: 11.9, apg: 6.5, spg: 0.9, bpg: 1.2 }, 97, true, true),
+  p('lillard', 'Damian Lillard', 'MIL', 'PG', 34, { ppg: 24.3, rpg: 4.4, apg: 7.0, spg: 1.0, bpg: 0.2 }, 78, true),
+  p('lopez', 'Brook Lopez', 'MIL', 'C', 36, { ppg: 12.5, rpg: 5.2, apg: 1.6, spg: 0.5, bpg: 1.9 }, 48, true),
+  p('kuzma', 'Kyle Kuzma', 'MIL', 'SF', 29, { ppg: 14.8, rpg: 5.7, apg: 2.4, spg: 0.6, bpg: 0.4 }, 50, true),
+  p('prince', 'Taurean Prince', 'MIL', 'SF', 30, { ppg: 8.1, rpg: 3.5, apg: 1.8, spg: 0.6, bpg: 0.3 }, 32, true),
+  p('portis', 'Bobby Portis', 'MIL', 'PF', 29, { ppg: 13.9, rpg: 7.4, apg: 1.3, spg: 0.6, bpg: 0.3 }, 44, false),
+  p('rollins', 'Ryan Rollins', 'MIL', 'PG', 23, { ppg: 8.2, rpg: 2.5, apg: 2.8, spg: 0.7, bpg: 0.2 }, 30, false),
+  p('green_a', 'AJ Green', 'MIL', 'SG', 25, { ppg: 10.2, rpg: 2.8, apg: 1.5, spg: 0.5, bpg: 0.1 }, 34, false),
+
+  // New York Knicks
+  p('brunson', 'Jalen Brunson', 'NYK', 'PG', 28, { ppg: 26.0, rpg: 3.1, apg: 7.3, spg: 0.9, bpg: 0.1 }, 88, true, true),
+  p('towns', 'Karl-Anthony Towns', 'NYK', 'C', 29, { ppg: 24.4, rpg: 12.8, apg: 3.1, spg: 0.7, bpg: 0.7 }, 82, true),
+  p('anunoby', 'OG Anunoby', 'NYK', 'SF', 27, { ppg: 15.6, rpg: 4.8, apg: 2.0, spg: 1.5, bpg: 0.5 }, 62, true),
+  p('hart', 'Josh Hart', 'NYK', 'SG', 29, { ppg: 13.6, rpg: 9.6, apg: 5.5, spg: 1.0, bpg: 0.3 }, 58, true),
+  p('bridges_mikal_nyk', 'Mikal Bridges', 'NYK', 'SF', 28, { ppg: 17.6, rpg: 3.2, apg: 3.7, spg: 1.0, bpg: 0.5 }, 66, true),
+  p('mcbride', 'Miles McBride', 'NYK', 'PG', 24, { ppg: 9.5, rpg: 2.5, apg: 2.8, spg: 0.7, bpg: 0.1 }, 36, false),
+  p('sims', 'Jericho Sims', 'NYK', 'C', 26, { ppg: 4.5, rpg: 5.8, apg: 0.8, spg: 0.4, bpg: 0.6 }, 26, false),
+  p('payne', 'Cameron Payne', 'NYK', 'PG', 30, { ppg: 6.8, rpg: 1.8, apg: 2.5, spg: 0.5, bpg: 0.1 }, 28, false),
+
+  // Orlando Magic
+  p('banchero', 'Paolo Banchero', 'ORL', 'PF', 22, { ppg: 25.7, rpg: 7.5, apg: 4.8, spg: 0.9, bpg: 0.6 }, 86, true, true),
+  p('wagner', 'Franz Wagner', 'ORL', 'SF', 23, { ppg: 24.2, rpg: 5.7, apg: 4.7, spg: 1.3, bpg: 0.4 }, 80, true),
+  p('carter_w', 'Wendell Carter Jr.', 'ORL', 'C', 25, { ppg: 11.8, rpg: 8.5, apg: 2.1, spg: 0.6, bpg: 0.8 }, 52, true),
+  p('isaac', 'Jonathan Isaac', 'ORL', 'PF', 27, { ppg: 6.1, rpg: 4.5, apg: 0.8, spg: 0.8, bpg: 1.2 }, 40, true),
+  p('black', 'Anthony Black', 'ORL', 'PG', 21, { ppg: 10.5, rpg: 3.2, apg: 3.5, spg: 1.0, bpg: 0.5 }, 48, true),
+  p('suggs', 'Jalen Suggs', 'ORL', 'SG', 23, { ppg: 12.6, rpg: 3.1, apg: 2.7, spg: 1.4, bpg: 0.3 }, 50, false),
+  p('caldwell', 'Cole Anthony', 'ORL', 'PG', 24, { ppg: 11.2, rpg: 3.5, apg: 3.8, spg: 0.7, bpg: 0.2 }, 42, false),
+  p('bitadze', 'Goga Bitadze', 'ORL', 'C', 25, { ppg: 7.5, rpg: 5.8, apg: 1.2, spg: 0.5, bpg: 1.0 }, 32, false),
+
+  // Philadelphia 76ers
+  p('embiid', 'Joel Embiid', 'PHI', 'C', 30, { ppg: 23.8, rpg: 8.2, apg: 4.5, spg: 0.7, bpg: 1.2 }, 90, true, true),
+  p('maxey', 'Tyrese Maxey', 'PHI', 'PG', 24, { ppg: 26.3, rpg: 3.3, apg: 6.1, spg: 1.0, bpg: 0.3 }, 84, true),
+  p('george', 'Paul George', 'PHI', 'SF', 34, { ppg: 16.2, rpg: 5.3, apg: 4.3, spg: 1.3, bpg: 0.3 }, 62, true),
+  p('barlow', 'Dominick Barlow', 'PHI', 'PF', 22, { ppg: 5.8, rpg: 4.2, apg: 1.0, spg: 0.5, bpg: 0.6 }, 28, true),
+  p('oconnor', 'Kelly Oubre Jr.', 'PHI', 'SG', 28, { ppg: 15.1, rpg: 5.0, apg: 1.5, spg: 1.1, bpg: 0.5 }, 48, true),
+  p('drummond', 'Andre Drummond', 'PHI', 'C', 31, { ppg: 8.4, rpg: 10.2, apg: 1.5, spg: 0.7, bpg: 0.8 }, 38, false),
+  p('edgecombe', 'VJ Edgecombe', 'PHI', 'SG', 20, { ppg: 9.5, rpg: 3.5, apg: 2.0, spg: 0.8, bpg: 0.3 }, 40, false),
+  p('gordon_a', 'Eric Gordon', 'PHI', 'SG', 36, { ppg: 8.2, rpg: 1.8, apg: 1.5, spg: 0.5, bpg: 0.2 }, 26, false),
+
+  // Toronto Raptors
+  p('barnes', 'Scottie Barnes', 'TOR', 'SF', 23, { ppg: 19.3, rpg: 7.7, apg: 5.8, spg: 1.1, bpg: 1.0 }, 78, true, true),
+  p('quickley', 'Immanuel Quickley', 'TOR', 'PG', 25, { ppg: 17.1, rpg: 3.5, apg: 5.8, spg: 0.8, bpg: 0.1 }, 56, true),
+  p('barrett', 'RJ Barrett', 'TOR', 'SG', 24, { ppg: 17.0, rpg: 5.5, apg: 3.2, spg: 0.7, bpg: 0.3 }, 54, true),
+  p('poeltl', 'Jakob Poeltl', 'TOR', 'C', 29, { ppg: 11.1, rpg: 8.6, apg: 2.1, spg: 0.5, bpg: 1.4 }, 48, true),
+  p('dick', 'Gradey Dick', 'TOR', 'SG', 21, { ppg: 14.5, rpg: 2.8, apg: 1.8, spg: 0.6, bpg: 0.1 }, 46, true),
+  p('brown_b', 'Bruce Brown', 'TOR', 'SG', 28, { ppg: 9.0, rpg: 4.2, apg: 2.5, spg: 0.8, bpg: 0.2 }, 38, false),
+  p('shead', 'Jamal Shead', 'TOR', 'PG', 22, { ppg: 8.5, rpg: 2.5, apg: 5.2, spg: 0.7, bpg: 0.1 }, 36, false),
+  p('bateman', 'Ja\'Kobe Walter', 'TOR', 'SG', 21, { ppg: 7.2, rpg: 2.8, apg: 1.5, spg: 0.6, bpg: 0.2 }, 30, false),
+
+  // Washington Wizards
+  p('poole', 'Jordan Poole', 'WAS', 'SG', 25, { ppg: 20.1, rpg: 3.0, apg: 4.5, spg: 1.0, bpg: 0.3 }, 52, true),
+  p('kuzma_was', 'Kyle Kuzma', 'WAS', 'PF', 29, { ppg: 18.2, rpg: 6.6, apg: 4.2, spg: 0.6, bpg: 0.5 }, 54, true),
+  p('sarr', 'Alex Sarr', 'WAS', 'C', 20, { ppg: 13.0, rpg: 6.5, apg: 2.4, spg: 0.7, bpg: 1.8 }, 52, true),
+  p('george_k', 'Kyshawn George', 'WAS', 'SF', 21, { ppg: 9.5, rpg: 4.2, apg: 2.8, spg: 0.8, bpg: 0.4 }, 38, true),
+  p('johnson_bub', 'Bub Carrington', 'WAS', 'PG', 20, { ppg: 8.8, rpg: 3.5, apg: 4.2, spg: 0.6, bpg: 0.2 }, 36, true),
+  p('bagley', 'Marvin Bagley III', 'WAS', 'PF', 25, { ppg: 10.5, rpg: 6.8, apg: 1.2, spg: 0.5, bpg: 0.5 }, 36, false),
+  p('kispert', 'Corey Kispert', 'WAS', 'SF', 26, { ppg: 11.2, rpg: 2.8, apg: 1.5, spg: 0.4, bpg: 0.1 }, 34, false),
+  p('whitman', 'Cam Whitmore', 'WAS', 'SF', 21, { ppg: 9.8, rpg: 3.2, apg: 1.0, spg: 0.5, bpg: 0.2 }, 32, false),
+
+  // Dallas Mavericks
+  p('doncic', 'Luka Doncic', 'DAL', 'PG', 26, { ppg: 28.2, rpg: 8.2, apg: 7.7, spg: 1.8, bpg: 0.4 }, 97, true, true),
+  p('irving', 'Kyrie Irving', 'DAL', 'SG', 32, { ppg: 24.7, rpg: 4.8, apg: 4.6, spg: 1.3, bpg: 0.3 }, 76, true),
+  p('washington', 'P.J. Washington', 'DAL', 'PF', 26, { ppg: 14.2, rpg: 7.8, apg: 2.5, spg: 0.8, bpg: 0.8 }, 52, true),
+  p('grimes', 'Quentin Grimes', 'DAL', 'SG', 24, { ppg: 14.0, rpg: 4.5, apg: 2.8, spg: 0.9, bpg: 0.3 }, 48, true),
+  p('gafford', 'Daniel Gafford', 'DAL', 'C', 26, { ppg: 12.3, rpg: 6.8, apg: 1.5, spg: 0.5, bpg: 1.8 }, 50, true),
+  p('kessler', 'Walker Kessler', 'DAL', 'C', 23, { ppg: 8.5, rpg: 7.2, apg: 1.0, spg: 0.5, bpg: 2.0 }, 44, false),
+  p('reaves_dal', 'Austin Reaves', 'DAL', 'SG', 26, { ppg: 16.1, rpg: 4.1, apg: 5.2, spg: 0.8, bpg: 0.1 }, 58, false),
+  p('hachimura', 'Rui Hachimura', 'DAL', 'PF', 27, { ppg: 13.0, rpg: 5.2, apg: 1.5, spg: 0.5, bpg: 0.3 }, 44, false),
+  p('exum', 'Dante Exum', 'DAL', 'PG', 29, { ppg: 8.5, rpg: 2.5, apg: 3.2, spg: 0.6, bpg: 0.2 }, 32, false),
+
+  // Denver Nuggets
+  p('jokic', 'Nikola Jokic', 'DEN', 'C', 30, { ppg: 29.6, rpg: 12.7, apg: 10.2, spg: 1.8, bpg: 0.6 }, 99, true, true),
+  p('murray', 'Jamal Murray', 'DEN', 'PG', 27, { ppg: 21.4, rpg: 4.0, apg: 6.2, spg: 1.0, bpg: 0.3 }, 78, true),
+  p('porter', 'Michael Porter Jr.', 'DEN', 'SF', 26, { ppg: 18.2, rpg: 7.0, apg: 1.8, spg: 0.6, bpg: 0.5 }, 62, true),
+  p('braun', 'Christian Braun', 'DEN', 'SG', 23, { ppg: 15.4, rpg: 5.2, apg: 2.6, spg: 0.8, bpg: 0.4 }, 54, true),
+  p('watson', 'Peyton Watson', 'DEN', 'SF', 22, { ppg: 8.5, rpg: 3.8, apg: 1.2, spg: 0.7, bpg: 1.0 }, 40, true),
+  p('westbrook', 'Russell Westbrook', 'DEN', 'PG', 36, { ppg: 13.3, rpg: 4.9, apg: 6.1, spg: 1.1, bpg: 0.4 }, 42, false),
+  p('strawther', 'Julian Strawther', 'DEN', 'SG', 22, { ppg: 7.5, rpg: 2.5, apg: 1.5, spg: 0.4, bpg: 0.2 }, 30, false),
+  p('najee', 'Zeke Nnaji', 'DEN', 'PF', 24, { ppg: 5.5, rpg: 3.8, apg: 0.5, spg: 0.3, bpg: 0.5 }, 26, false),
+
+  // Golden State Warriors
+  p('curry', 'Stephen Curry', 'GSW', 'PG', 36, { ppg: 24.5, rpg: 4.4, apg: 6.0, spg: 0.9, bpg: 0.4 }, 88, true, true),
+  p('butler_gsw', 'Jimmy Butler', 'GSW', 'SF', 35, { ppg: 17.5, rpg: 5.4, apg: 5.4, spg: 1.4, bpg: 0.3 }, 72, true),
+  p('green', 'Draymond Green', 'GSW', 'PF', 34, { ppg: 8.6, rpg: 6.1, apg: 6.0, spg: 1.0, bpg: 1.2 }, 52, true),
+  p('kuminga', 'Jonathan Kuminga', 'GSW', 'PF', 22, { ppg: 15.3, rpg: 4.6, apg: 2.2, spg: 0.7, bpg: 0.5 }, 56, true),
+  p('podz', 'Brandin Podziemski', 'GSW', 'SG', 22, { ppg: 11.7, rpg: 5.1, apg: 3.4, spg: 0.8, bpg: 0.2 }, 46, true),
+  p('hield', 'Buddy Hield', 'GSW', 'SG', 31, { ppg: 12.1, rpg: 3.2, apg: 1.8, spg: 0.6, bpg: 0.2 }, 40, false),
+  p('jackson_d', 'Trayce Jackson-Davis', 'GSW', 'C', 24, { ppg: 7.5, rpg: 5.8, apg: 1.5, spg: 0.5, bpg: 0.8 }, 34, false),
+  p('melton', 'De\'Anthony Melton', 'GSW', 'SG', 26, { ppg: 10.2, rpg: 3.5, apg: 2.5, spg: 1.2, bpg: 0.3 }, 38, false),
+
+  // Houston Rockets
+  p('sengun', 'Alperen Sengun', 'HOU', 'C', 22, { ppg: 19.1, rpg: 10.3, apg: 4.9, spg: 1.1, bpg: 0.7 }, 78, true, true),
+  p('green_jalen', 'Jalen Green', 'HOU', 'SG', 22, { ppg: 21.0, rpg: 4.6, apg: 3.4, spg: 0.8, bpg: 0.2 }, 72, true),
+  p('smith', 'Jabari Smith Jr.', 'HOU', 'PF', 21, { ppg: 13.7, rpg: 8.1, apg: 1.6, spg: 0.6, bpg: 0.9 }, 58, true),
+  p('thompson', 'Amen Thompson', 'HOU', 'SF', 22, { ppg: 14.1, rpg: 8.2, apg: 3.8, spg: 1.4, bpg: 0.6 }, 68, true),
+  p('vanvleet', 'Fred VanVleet', 'HOU', 'PG', 30, { ppg: 14.1, rpg: 3.8, apg: 5.6, spg: 1.4, bpg: 0.3 }, 52, true),
+  p('brooks', 'Dillon Brooks', 'HOU', 'SF', 29, { ppg: 14.0, rpg: 3.4, apg: 1.8, spg: 0.9, bpg: 0.2 }, 44, false),
+  p('eason', 'Tari Eason', 'HOU', 'PF', 23, { ppg: 12.0, rpg: 6.5, apg: 1.5, spg: 1.2, bpg: 0.8 }, 48, false),
+  p('whitmore_h', 'Cam Whitmore', 'HOU', 'SF', 21, { ppg: 9.8, rpg: 3.2, apg: 1.0, spg: 0.5, bpg: 0.2 }, 36, false),
+
+  // LA Clippers
+  p('leonard', 'Kawhi Leonard', 'LAC', 'SF', 33, { ppg: 21.5, rpg: 5.9, apg: 4.0, spg: 1.6, bpg: 0.5 }, 82, true, true),
+  p('harden', 'James Harden', 'LAC', 'PG', 35, { ppg: 22.8, rpg: 5.8, apg: 8.7, spg: 1.5, bpg: 0.7 }, 76, true),
+  p('zubac', 'Ivica Zubac', 'LAC', 'C', 27, { ppg: 16.8, rpg: 12.7, apg: 2.8, spg: 0.6, bpg: 1.0 }, 62, true),
+  p('powell', 'Norman Powell', 'LAC', 'SG', 31, { ppg: 21.8, rpg: 3.1, apg: 2.1, spg: 1.1, bpg: 0.2 }, 58, true),
+  p('dunn', 'Kris Dunn', 'LAC', 'PG', 30, { ppg: 8.1, rpg: 3.5, apg: 2.8, spg: 1.2, bpg: 0.3 }, 36, true),
+  p('jones', 'Derrick Jones Jr.', 'LAC', 'SF', 27, { ppg: 10.5, rpg: 3.8, apg: 1.2, spg: 0.7, bpg: 0.8 }, 40, false),
+  p('batum', 'Nicolas Batum', 'LAC', 'SF', 36, { ppg: 5.5, rpg: 3.8, apg: 2.5, spg: 0.8, bpg: 0.5 }, 30, false),
+  p('hyland', 'Bones Hyland', 'LAC', 'PG', 24, { ppg: 8.2, rpg: 2.0, apg: 3.5, spg: 0.6, bpg: 0.2 }, 32, false),
+
+  // Los Angeles Lakers
+  p('doncic_lal', 'Luka Doncic', 'LAL', 'PG', 26, { ppg: 28.2, rpg: 8.2, apg: 7.7, spg: 1.8, bpg: 0.4 }, 97, true, true),
+  p('reaves', 'Austin Reaves', 'LAL', 'SG', 26, { ppg: 16.1, rpg: 4.1, apg: 5.2, spg: 0.8, bpg: 0.1 }, 58, true),
+  p('hachimura_lal', 'Rui Hachimura', 'LAL', 'PF', 27, { ppg: 13.0, rpg: 5.2, apg: 1.5, spg: 0.5, bpg: 0.3 }, 44, true),
+  p('kessler_lal', 'Walker Kessler', 'LAL', 'C', 23, { ppg: 8.5, rpg: 7.2, apg: 1.0, spg: 0.5, bpg: 2.0 }, 44, true),
+  p('grimes_lal', 'Quentin Grimes', 'LAL', 'SG', 24, { ppg: 14.0, rpg: 4.5, apg: 2.8, spg: 0.9, bpg: 0.3 }, 48, true),
+  p('hayes', 'Jaxson Hayes', 'LAL', 'C', 24, { ppg: 6.5, rpg: 4.8, apg: 0.8, spg: 0.4, bpg: 0.6 }, 28, false),
+  p('vanderbilt', 'Jarred Vanderbilt', 'LAL', 'PF', 25, { ppg: 5.2, rpg: 5.8, apg: 1.5, spg: 0.8, bpg: 0.3 }, 34, false),
+  p('redish', 'Cam Reddish', 'LAL', 'SF', 25, { ppg: 6.8, rpg: 2.5, apg: 1.2, spg: 0.6, bpg: 0.3 }, 26, false),
+
+  // Memphis Grizzlies
+  p('morant', 'Ja Morant', 'MEM', 'PG', 25, { ppg: 23.2, rpg: 4.1, apg: 7.3, spg: 1.0, bpg: 0.3 }, 84, true, true),
+  p('jackson', 'Jaren Jackson Jr.', 'MEM', 'PF', 25, { ppg: 22.2, rpg: 5.6, apg: 2.0, spg: 1.2, bpg: 1.5 }, 82, true),
+  p('beaupre', 'Desmond Bane', 'MEM', 'SG', 26, { ppg: 19.2, rpg: 4.3, apg: 5.3, spg: 1.0, bpg: 0.4 }, 68, true),
+  p('aldama', 'Santi Aldama', 'MEM', 'PF', 24, { ppg: 12.7, rpg: 6.8, apg: 2.8, spg: 0.7, bpg: 0.8 }, 50, true),
+  p('clark', 'Jaylen Clark', 'MEM', 'SG', 23, { ppg: 8.5, rpg: 3.2, apg: 1.5, spg: 1.0, bpg: 0.3 }, 34, true),
+  p('konchar', 'John Konchar', 'MEM', 'SG', 28, { ppg: 6.5, rpg: 4.8, apg: 1.5, spg: 0.8, bpg: 0.4 }, 30, false),
+  p('peppard', 'Scotty Pippen Jr.', 'MEM', 'PG', 24, { ppg: 7.2, rpg: 2.5, apg: 3.8, spg: 0.8, bpg: 0.2 }, 30, false),
+  p('williams_v', 'Vince Williams Jr.', 'MEM', 'SG', 24, { ppg: 8.5, rpg: 3.5, apg: 3.2, spg: 0.7, bpg: 0.2 }, 32, false),
+
+  // Minnesota Timberwolves
+  p('edwards', 'Anthony Edwards', 'MIN', 'SG', 23, { ppg: 27.6, rpg: 5.7, apg: 4.5, spg: 1.2, bpg: 0.6 }, 94, true, true),
+  p('gobert', 'Rudy Gobert', 'MIN', 'C', 32, { ppg: 14.0, rpg: 12.7, apg: 1.8, spg: 0.6, bpg: 2.1 }, 62, true),
+  p('mcdaniels', 'Jaden McDaniels', 'MIN', 'SF', 24, { ppg: 12.2, rpg: 5.7, apg: 2.0, spg: 0.9, bpg: 0.8 }, 54, true),
+  p('conley', 'Mike Conley', 'MIN', 'PG', 37, { ppg: 10.9, rpg: 2.9, apg: 6.1, spg: 1.0, bpg: 0.2 }, 40, true),
+  p('reid', 'Naz Reid', 'MIN', 'C', 25, { ppg: 14.2, rpg: 6.0, apg: 2.3, spg: 0.7, bpg: 0.9 }, 52, true),
+  p('alexander_w', 'Nickeil Alexander-Walker', 'MIN', 'SG', 26, { ppg: 9.0, rpg: 2.8, apg: 2.5, spg: 0.7, bpg: 0.3 }, 36, false),
+  p('shannon', 'Terrence Shannon Jr.', 'MIN', 'SG', 24, { ppg: 7.5, rpg: 2.5, apg: 1.2, spg: 0.5, bpg: 0.1 }, 28, false),
+  p('clark_r', 'Rudy Gobert', 'MIN', 'C', 32, { ppg: 14.0, rpg: 12.7, apg: 1.8, spg: 0.6, bpg: 2.1 }, 62, false),
+
+  // New Orleans Pelicans
+  p('williamson', 'Zion Williamson', 'NOP', 'PF', 24, { ppg: 24.6, rpg: 7.2, apg: 5.3, spg: 1.2, bpg: 0.6 }, 82, true, true),
+  p('ingram', 'Brandon Ingram', 'NOP', 'SF', 27, { ppg: 22.2, rpg: 5.6, apg: 5.2, spg: 0.8, bpg: 0.6 }, 72, true),
+  p('murphy', 'Trey Murphy III', 'NOP', 'SF', 24, { ppg: 21.2, rpg: 5.1, apg: 3.5, spg: 1.1, bpg: 0.5 }, 68, true),
+  p('mccollum', 'CJ McCollum', 'NOP', 'SG', 33, { ppg: 19.0, rpg: 4.0, apg: 4.6, spg: 0.8, bpg: 0.3 }, 56, true),
+  p('jones_h', 'Herbert Jones', 'NOP', 'SF', 26, { ppg: 10.2, rpg: 3.8, apg: 2.5, spg: 1.4, bpg: 0.5 }, 48, true),
+  p('hawkins', 'Jordan Hawkins', 'NOP', 'SG', 22, { ppg: 11.5, rpg: 3.2, apg: 1.8, spg: 0.6, bpg: 0.2 }, 40, false),
+  p('robinson', 'Jeremiah Robinson-Earl', 'NOP', 'PF', 24, { ppg: 6.5, rpg: 4.8, apg: 1.2, spg: 0.5, bpg: 0.3 }, 28, false),
+  p('matkovic', 'Karlo Matkovic', 'NOP', 'PF', 24, { ppg: 5.2, rpg: 4.2, apg: 0.8, spg: 0.3, bpg: 0.5 }, 24, false),
+
+  // Oklahoma City Thunder
+  p('sga', 'Shai Gilgeous-Alexander', 'OKC', 'PG', 26, { ppg: 32.7, rpg: 5.0, apg: 6.4, spg: 1.7, bpg: 1.0 }, 96, true, true),
+  p('holmgren', 'Chet Holmgren', 'OKC', 'C', 23, { ppg: 15.7, rpg: 8.0, apg: 2.4, spg: 0.6, bpg: 2.2 }, 72, true),
+  p('williams_j', 'Jalen Williams', 'OKC', 'SF', 23, { ppg: 21.6, rpg: 5.3, apg: 5.1, spg: 1.3, bpg: 0.5 }, 80, true),
+  p('dort', 'Luguentz Dort', 'OKC', 'SG', 25, { ppg: 10.9, rpg: 4.0, apg: 1.6, spg: 1.1, bpg: 0.3 }, 48, true),
+  p('hartenstein', 'Isaiah Hartenstein', 'OKC', 'C', 27, { ppg: 11.2, rpg: 10.7, apg: 3.8, spg: 0.8, bpg: 1.1 }, 54, true),
+  p('wallace', 'Cason Wallace', 'OKC', 'SG', 21, { ppg: 8.5, rpg: 3.2, apg: 2.5, spg: 1.0, bpg: 0.3 }, 42, false),
+  p('caruso', 'Alex Caruso', 'OKC', 'SG', 30, { ppg: 7.8, rpg: 3.5, apg: 2.8, spg: 1.5, bpg: 0.5 }, 44, false),
+  p('wiggins', 'Andrew Wiggins', 'OKC', 'SF', 29, { ppg: 17.8, rpg: 4.5, apg: 2.5, spg: 0.9, bpg: 0.6 }, 56, false),
+
+  // Phoenix Suns
+  p('booker', 'Devin Booker', 'PHX', 'SG', 28, { ppg: 25.6, rpg: 4.1, apg: 7.1, spg: 0.9, bpg: 0.2 }, 86, true, true),
+  p('durant', 'Kevin Durant', 'PHX', 'SF', 36, { ppg: 26.6, rpg: 6.0, apg: 4.2, spg: 0.8, bpg: 1.2 }, 84, true),
+  p('beal', 'Bradley Beal', 'PHX', 'SG', 31, { ppg: 17.8, rpg: 4.3, apg: 3.7, spg: 0.9, bpg: 0.5 }, 58, true),
+  p('allen_p', 'Jarrett Allen', 'PHX', 'C', 26, { ppg: 13.7, rpg: 9.4, apg: 2.1, spg: 0.7, bpg: 1.0 }, 58, true),
+  p('plumlee', 'Mason Plumlee', 'PHX', 'C', 34, { ppg: 5.5, rpg: 5.8, apg: 1.5, spg: 0.4, bpg: 0.4 }, 26, true),
+  p('okogie', 'Josh Okogie', 'PHX', 'SG', 26, { ppg: 6.5, rpg: 3.2, apg: 1.2, spg: 1.0, bpg: 0.3 }, 32, false),
+  p('goodwin', 'Jordan Goodwin', 'PHX', 'PG', 26, { ppg: 8.2, rpg: 3.5, apg: 2.8, spg: 0.9, bpg: 0.2 }, 30, false),
+  p('bol', 'Bol Bol', 'PHX', 'C', 25, { ppg: 7.5, rpg: 4.2, apg: 0.8, spg: 0.4, bpg: 1.0 }, 30, false),
+
+  // Portland Trail Blazers
+  p('simons', 'Anfernee Simons', 'POR', 'SG', 25, { ppg: 19.3, rpg: 2.8, apg: 4.8, spg: 0.8, bpg: 0.2 }, 58, true),
+  p('ayton_por', 'Deandre Ayton', 'POR', 'C', 26, { ppg: 14.4, rpg: 10.2, apg: 1.5, spg: 0.6, bpg: 0.8 }, 52, true),
+  p('henderson', 'Scoot Henderson', 'POR', 'PG', 21, { ppg: 14.7, rpg: 3.2, apg: 5.4, spg: 0.8, bpg: 0.2 }, 54, true),
+  p('sharpe', 'Shaedon Sharpe', 'POR', 'SG', 21, { ppg: 18.5, rpg: 4.5, apg: 2.8, spg: 0.8, bpg: 0.3 }, 56, true),
+  p('avdija', 'Deni Avdija', 'POR', 'SF', 24, { ppg: 16.2, rpg: 7.2, apg: 3.8, spg: 0.8, bpg: 0.5 }, 54, true),
+  p('clingan', 'Donovan Clingan', 'POR', 'C', 21, { ppg: 6.5, rpg: 7.8, apg: 1.0, spg: 0.4, bpg: 1.5 }, 40, false),
+  p('thybulle', 'Matisse Thybulle', 'POR', 'SF', 27, { ppg: 5.5, rpg: 2.8, apg: 1.2, spg: 1.5, bpg: 0.5 }, 34, false),
+  p('rupert', 'Rayan Rupert', 'POR', 'SG', 20, { ppg: 5.2, rpg: 2.5, apg: 1.0, spg: 0.5, bpg: 0.2 }, 26, false),
+
+  // Sacramento Kings
+  p('fox', 'De\'Aaron Fox', 'SAC', 'PG', 27, { ppg: 23.5, rpg: 4.8, apg: 5.6, spg: 1.5, bpg: 0.3 }, 82, true, true),
+  p('sabonis', 'Domantas Sabonis', 'SAC', 'C', 28, { ppg: 19.1, rpg: 13.9, apg: 7.8, spg: 0.7, bpg: 0.4 }, 78, true),
+  p('murray_k', 'Keegan Murray', 'SAC', 'PF', 24, { ppg: 15.2, rpg: 6.0, apg: 1.4, spg: 0.8, bpg: 0.6 }, 54, true),
+  p('huerter', 'Kevin Huerter', 'SAC', 'SG', 26, { ppg: 10.5, rpg: 3.2, apg: 2.5, spg: 0.5, bpg: 0.2 }, 38, true),
+  p('monk', 'Malik Monk', 'SAC', 'SG', 26, { ppg: 15.4, rpg: 3.5, apg: 5.1, spg: 0.6, bpg: 0.3 }, 50, true),
+  p('ellis', 'Keon Ellis', 'SAC', 'SG', 24, { ppg: 6.5, rpg: 2.5, apg: 1.2, spg: 0.8, bpg: 0.3 }, 28, false),
+  p('len', 'Alex Len', 'SAC', 'C', 31, { ppg: 4.5, rpg: 4.2, apg: 0.8, spg: 0.3, bpg: 0.5 }, 22, false),
+  p('mcdermott', 'Doug McDermott', 'SAC', 'SF', 33, { ppg: 8.2, rpg: 2.5, apg: 1.0, spg: 0.3, bpg: 0.1 }, 28, false),
+
+  // San Antonio Spurs
+  p('wemby', 'Victor Wembanyama', 'SAS', 'C', 21, { ppg: 24.3, rpg: 11.0, apg: 3.7, spg: 1.1, bpg: 3.8 }, 94, true, true),
+  p('vassell', 'Devin Vassell', 'SAS', 'SG', 24, { ppg: 16.3, rpg: 3.9, apg: 2.8, spg: 1.0, bpg: 0.3 }, 56, true),
+  p('castle', 'Stephon Castle', 'SAS', 'PG', 20, { ppg: 14.5, rpg: 3.8, apg: 4.2, spg: 0.9, bpg: 0.3 }, 52, true),
+  p('sochan', 'Jeremy Sochan', 'SAS', 'PF', 22, { ppg: 11.6, rpg: 6.4, apg: 2.8, spg: 0.8, bpg: 0.5 }, 48, true),
+  p('champagnie', 'Julian Champagnie', 'SAS', 'SF', 23, { ppg: 9.5, rpg: 4.2, apg: 1.5, spg: 0.6, bpg: 0.4 }, 36, true),
+  p('johnson_k', 'Keldon Johnson', 'SAS', 'SF', 25, { ppg: 12.8, rpg: 5.5, apg: 1.8, spg: 0.7, bpg: 0.3 }, 44, false),
+  p('collins', 'Zach Collins', 'SAS', 'C', 27, { ppg: 11.2, rpg: 6.8, apg: 2.5, spg: 0.5, bpg: 0.8 }, 40, false),
+  p('branham', 'Blake Wesley', 'SAS', 'PG', 21, { ppg: 5.5, rpg: 1.8, apg: 2.5, spg: 0.5, bpg: 0.1 }, 26, false),
+
+  // Utah Jazz
+  p('markkanen', 'Lauri Markkanen', 'UTA', 'PF', 27, { ppg: 19.0, rpg: 5.9, apg: 1.5, spg: 0.6, bpg: 0.3 }, 64, true, true),
+  p('sexton', 'Collin Sexton', 'UTA', 'SG', 26, { ppg: 18.7, rpg: 2.6, apg: 4.9, spg: 0.8, bpg: 0.1 }, 52, true),
+  p('george_k', 'Keyonte George', 'UTA', 'PG', 21, { ppg: 16.8, rpg: 3.2, apg: 5.2, spg: 0.7, bpg: 0.1 }, 54, true),
+  p('hendricks', 'Taylor Hendricks', 'UTA', 'PF', 21, { ppg: 7.2, rpg: 5.8, apg: 1.0, spg: 0.5, bpg: 0.8 }, 38, true),
+  p('kessler_uta', 'Walker Kessler', 'UTA', 'C', 23, { ppg: 8.5, rpg: 7.2, apg: 1.0, spg: 0.5, bpg: 2.0 }, 44, true),
+  p('filipowski', 'Kyle Filipowski', 'UTA', 'C', 21, { ppg: 10.5, rpg: 6.2, apg: 2.0, spg: 0.5, bpg: 0.6 }, 40, false),
+  p('collier', 'Isaiah Collier', 'UTA', 'PG', 20, { ppg: 6.8, rpg: 2.5, apg: 4.5, spg: 0.6, bpg: 0.1 }, 34, false),
+  p('williams_jazz', 'John Collins', 'UTA', 'PF', 27, { ppg: 13.5, rpg: 6.8, apg: 1.5, spg: 0.5, bpg: 0.5 }, 42, false),
+
+  // Low-value bench players for starting pool
+  p('hayes_k', 'Killian Hayes', 'NOP', 'PG', 23, { ppg: 4.2, rpg: 1.8, apg: 2.5, spg: 0.5, bpg: 0.1 }, 22, false),
+  p('holmes', 'Richaun Holmes', 'WAS', 'C', 31, { ppg: 5.5, rpg: 4.2, apg: 0.8, spg: 0.4, bpg: 0.5 }, 24, false),
+  p('tillman', 'Xavier Tillman', 'BOS', 'PF', 26, { ppg: 4.8, rpg: 3.5, apg: 1.0, spg: 0.5, bpg: 0.4 }, 26, false),
+  p('beauchamp', 'MarJon Beauchamp', 'MIL', 'SF', 24, { ppg: 5.2, rpg: 2.8, apg: 0.8, spg: 0.4, bpg: 0.2 }, 24, false),
+  p('mcgowens', 'Bryce McGowens', 'CHA', 'SG', 22, { ppg: 5.8, rpg: 2.2, apg: 1.0, spg: 0.4, bpg: 0.1 }, 22, false),
+  p('minott', 'Josh Minott', 'MIN', 'SF', 22, { ppg: 4.5, rpg: 2.5, apg: 0.8, spg: 0.3, bpg: 0.2 }, 20, false),
+  p('brissett', 'Oshae Brissett', 'PHI', 'PF', 26, { ppg: 5.5, rpg: 3.8, apg: 0.8, spg: 0.4, bpg: 0.2 }, 24, false),
+  p('moore', 'Wendell Moore Jr.', 'DET', 'SG', 23, { ppg: 4.2, rpg: 1.8, apg: 1.2, spg: 0.4, bpg: 0.1 }, 20, false),
+  p('prosper', 'Olivier-Maxence Prosper', 'DAL', 'PF', 22, { ppg: 4.8, rpg: 2.5, apg: 0.8, spg: 0.3, bpg: 0.2 }, 22, false),
+  p('manon', 'Chris Manon', 'LAL', 'SG', 23, { ppg: 3.5, rpg: 1.5, apg: 0.8, spg: 0.3, bpg: 0.1 }, 18, false),
+  p('cain', 'Jamal Cain', 'MIA', 'SF', 26, { ppg: 5.2, rpg: 2.8, apg: 0.8, spg: 0.4, bpg: 0.2 }, 22, false),
+];
+
+export const ALL_PLAYERS: TradePlayer[] = ROSTER.filter((pl) => pl.id !== 'davis_g' && pl.id !== 'clark_r');
+
+const TRADE_POOL_MIN_VALUE = 22;
+
+export function getPlayersByTeam(teamId: string): TradePlayer[] {
+  return ALL_PLAYERS.filter((pl) => pl.teamId === teamId);
+}
+
+export function getTeamTradePool(teamId: string): TradePlayer[] {
+  const roster = getPlayersByTeam(teamId);
+  const starters = roster
+    .filter((pl) => pl.isStarter)
+    .sort((a, b) => b.tradeValue - a.tradeValue)
+    .slice(0, 5);
+
+  const starterIds = new Set(starters.map((pl) => pl.id));
+  const rotation = roster
+    .filter((pl) => !starterIds.has(pl.id) && pl.tradeValue >= TRADE_POOL_MIN_VALUE)
+    .sort((a, b) => b.tradeValue - a.tradeValue);
+
+  let bench = rotation.slice(0, 5);
+  if (starters.length + bench.length < 10) {
+    const extra = roster
+      .filter((pl) => !starterIds.has(pl.id) && !bench.some((b) => b.id === pl.id))
+      .sort((a, b) => b.tradeValue - a.tradeValue);
+    bench = [...bench, ...extra].slice(0, 10 - starters.length);
+  }
+
+  return [...starters, ...bench].slice(0, 10);
+}
+
+export function getPlayerById(id: string): TradePlayer | undefined {
+  return ALL_PLAYERS.find((pl) => pl.id === id);
+}
+
+export function getLowValueStarters(): TradePlayer[] {
+  return ALL_PLAYERS.filter((pl) => pl.tradeValue >= 18 && pl.tradeValue <= 32);
+}

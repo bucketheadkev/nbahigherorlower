@@ -1,0 +1,123 @@
+DETROIT PISTONS
+========================================================================
+
+Isiah Thomas | PG | 19.2 PPG | 3.6 RPG | 9.3 APG
+Joe Dumars | SG | 17.0 PPG | 2.7 RPG | 4.5 APG
+Vinnie Johnson | SG | 12.8 PPG | 2.5 RPG | 3.5 APG
+John Long | SG | 15.5 PPG | 2.8 RPG | 2.8 APG
+Kelly Tripucka | SF | 21.6 PPG | 5.0 RPG | 2.6 APG
+Adrian Dantley | SF | 21.3 PPG | 4.8 RPG | 3.0 APG
+Dennis Rodman | PF | 8.7 PPG | 9.7 RPG | 1.3 APG
+Rick Mahorn | C | 7.5 PPG | 6.8 RPG | 1.1 APG
+Bill Laimbeer | C | 13.5 PPG | 10.1 RPG | 2.1 APG
+James Edwards | C | 15.5 PPG | 6.7 RPG | 1.3 APG
+John Salley | PF | 9.3 PPG | 5.9 RPG | 1.1 APG
+Mark Aguirre | SF | 20.0 PPG | 5.0 RPG | 3.1 APG
+Dan Roundfield | PF | 12.0 PPG | 9.0 RPG | 2.0 APG
+Terry Tyler | PF | 12.0 PPG | 6.0 RPG | 2.0 APG
+Kent Benson | C | 8.8 PPG | 6.3 RPG | 1.4 APG
+Eric Money | PG | 12.0 PPG | 2.5 RPG | 4.5 APG
+Sedale Threatt | PG | 12.0 PPG | 3.0 RPG | 7.0 APG
+Steve Colter | PG | 7.0 PPG | 2.0 RPG | 4.0 APG
+Earl Cureton | PF | 6.5 PPG | 5.5 RPG | 0.8 APG
+David Greenwood | PF | 9.0 PPG | 7.0 RPG | 1.5 APG
+
+========================================================================
+GOLDEN STATE WARRIORS
+========================================================================
+
+Chris Mullin | SF | 25.9 PPG | 5.9 RPG | 4.3 APG
+Sleepy Floyd | PG | 17.1 PPG | 2.7 RPG | 8.1 APG
+Purvis Short | SF | 22.8 PPG | 5.5 RPG | 2.5 APG
+Joe Barry Carroll | C | 19.9 PPG | 8.4 RPG | 1.9 APG
+Larry Smith | PF | 8.7 PPG | 10.0 RPG | 1.2 APG
+World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
+Mitch Richmond | SG | 22.0 PPG | 5.9 RPG | 4.2 APG
+Terry Teagle | SG | 15.3 PPG | 3.2 RPG | 2.0 APG
+Phil Smith | SG | 15.5 PPG | 3.0 RPG | 4.0 APG
+Eric "Sleepy" Whitehead | PG | 10.0 PPG | 3.0 RPG | 5.0 APG
+Sam Williams | PF | 14.5 PPG | 8.0 RPG | 1.5 APG
+Ricky Pierce | SG | 14.0 PPG | 2.8 RPG | 2.2 APG
+Tom Tolbert | PF | 8.0 PPG | 5.0 RPG | 2.0 APG
+Manute Bol | C | 3.7 PPG | 4.3 RPG | 0.3 APG
+Winston Garland | PG | 12.0 PPG | 2.8 RPG | 6.0 APG
+Jim Petersen | C | 8.0 PPG | 5.0 RPG | 1.2 APG
+Steve Johnson | C | 13.0 PPG | 7.0 RPG | 1.0 APG
+Mickey Johnson | PF | 9.0 PPG | 5.0 RPG | 1.2 APG
+Keith Smart | PG | 8.0 PPG | 2.0 RPG | 4.0 APG
+Reggie Williams | SF | 14.5 PPG | 4.5 RPG | 2.5 APG
+
+========================================================================
+HOUSTON ROCKETS
+========================================================================
+
+Hakeem Olajuwon | C | 22.5 PPG | 11.5 RPG | 2.1 APG
+Ralph Sampson | C | 19.7 PPG | 10.5 RPG | 2.9 APG
+Otis Thorpe | PF | 14.5 PPG | 9.5 RPG | 2.0 APG
+Rodney McCray | SF | 15.9 PPG | 7.0 RPG | 4.0 APG
+Robert Reid | SF | 13.5 PPG | 5.5 RPG | 3.5 APG
+Lewis Lloyd | SG | 17.5 PPG | 5.0 RPG | 2.8 APG
+Mitchell Wiggins | SG | 15.0 PPG | 3.8 RPG | 2.3 APG
+John Lucas | PG | 15.8 PPG | 3.0 RPG | 7.5 APG
+Allen Leavell | SG | 11.8 PPG | 2.3 RPG | 4.5 APG
+Buck Johnson | SF | 12.5 PPG | 6.5 RPG | 1.7 APG
+Jim Petersen | C | 8.5 PPG | 5.5 RPG | 1.5 APG
+Major Jones | PF | 7.5 PPG | 6.2 RPG | 1.0 APG
+Caldwell Jones | C | 5.5 PPG | 6.5 RPG | 1.5 APG
+Granville Waiters | C | 5.8 PPG | 5.0 RPG | 0.7 APG
+Mike Dunleavy | SG | 10.5 PPG | 2.8 RPG | 4.2 APG
+Steve Harris | PG | 7.5 PPG | 2.0 RPG | 4.0 APG
+Billy Paultz | C | 8.0 PPG | 6.8 RPG | 2.0 APG
+Sleepy Floyd | PG | 17.0 PPG | 2.7 RPG | 8.0 APG
+Mike Woodson | SG | 16.0 PPG | 3.0 RPG | 2.5 APG
+Robert McNamara | PG | 4.8 PPG | 1.8 RPG | 3.1 APG
+
+========================================================================
+INDIANA PACERS
+========================================================================
+
+Chuck Person | SF | 19.0 PPG | 8.0 RPG | 3.0 APG
+Wayman Tisdale | PF | 18.5 PPG | 7.5 RPG | 1.2 APG
+Clark Kellogg | PF | 18.9 PPG | 9.1 RPG | 2.9 APG
+Herb Williams | C | 15.8 PPG | 8.3 RPG | 1.5 APG
+Steve Stipanovich | C | 13.2 PPG | 7.8 RPG | 2.0 APG
+Vern Fleming | PG | 14.2 PPG | 3.1 RPG | 7.0 APG
+John Long | SG | 16.5 PPG | 3.5 RPG | 2.8 APG
+Ricky Sobers | SG | 16.0 PPG | 3.0 RPG | 3.0 APG
+Billy Knight | SF | 17.0 PPG | 4.0 RPG | 2.5 APG
+Butch Carter | SG | 11.0 PPG | 3.0 RPG | 3.5 APG
+Darnell Hillman | PF | 9.0 PPG | 7.0 RPG | 1.5 APG
+James Edwards | C | 16.0 PPG | 7.0 RPG | 1.3 APG
+Johnny Davis | PG | 10.0 PPG | 2.0 RPG | 6.0 APG
+Michael Williams | PG | 10.5 PPG | 2.8 RPG | 8.0 APG
+Jerry Sichting | PG | 10.0 PPG | 2.0 RPG | 5.0 APG
+Reggie Miller | SG | 18.0 PPG | 3.0 RPG | 3.0 APG
+Detlef Schrempf | SF | 13.0 PPG | 6.0 RPG | 3.5 APG
+Steve Johnson | C | 11.5 PPG | 6.5 RPG | 1.0 APG
+Stuart Gray | PF | 7.5 PPG | 5.0 RPG | 1.0 APG
+Wayne Radford | SG | 9.0 PPG | 2.5 RPG | 2.5 APG
+
+========================================================================
+KANSAS CITY / SACRAMENTO KINGS
+========================================================================
+
+Reggie Theus | PG | 18.5 PPG | 3.0 RPG | 6.0 APG
+Otis Birdsong | SG | 18.0 PPG | 3.5 RPG | 3.0 APG
+Eddie Johnson | SG | 19.0 PPG | 4.0 RPG | 2.5 APG
+Mike Woodson | SG | 18.0 PPG | 3.0 RPG | 2.5 APG
+Larry Drew | PG | 8.0 PPG | 2.5 RPG | 7.0 APG
+Sleepy Floyd | PG | 17.0 PPG | 2.7 RPG | 8.0 APG
+Phil Ford | PG | 11.0 PPG | 2.5 RPG | 6.5 APG
+Kenny Smith | PG | 13.1 PPG | 2.1 RPG | 7.1 APG
+Lionel Simmons | SF | 18.0 PPG | 8.0 RPG | 4.0 APG
+Wayman Tisdale | PF | 18.5 PPG | 7.5 RPG | 1.2 APG
+LaSalle Thompson | PF | 12.5 PPG | 8.5 RPG | 1.2 APG
+Joe Kleine | C | 7.5 PPG | 6.0 RPG | 1.0 APG
+Sam Lacey | C | 12.0 PPG | 9.0 RPG | 4.0 APG
+Mark Olberding | PF | 10.5 PPG | 6.5 RPG | 2.0 APG
+Larry Smith | PF | 8.5 PPG | 9.0 RPG | 1.2 APG
+Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
+Billy Owens | SF | 14.3 PPG | 8.0 RPG | 2.4 APG
+Rory Sparrow | PG | 10.0 PPG | 2.5 RPG | 6.5 APG
+Danny Ainge | SG | 12.0 PPG | 3.0 RPG | 5.0 APG
+Ed Pinckney | C | 8.0 PPG | 6.0 RPG | 1.0 APG.

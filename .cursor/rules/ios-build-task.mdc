@@ -1,0 +1,22 @@
+---
+description: When the user says "ios", run the project ios build task
+alwaysApply: true
+---
+
+# iOS build shortcut
+
+When the user's message is effectively just **ios** (for example `ios`, `run ios`, or `ios build` with no other request):
+
+1. Immediately run the project task that executes `npm run build:ios`.
+2. Prefer running in the integrated terminal via:
+   ```bash
+   npm run build:ios
+   ```
+   from the workspace root (`${workspaceFolder}`).
+3. Request network permissions if needed (Capacitor sync).
+4. Do not ask for confirmation first.
+5. After it finishes, briefly report success or failure (and the key error if it failed).
+
+This maps to the reusable VS Code/Cursor task labeled **ios** in `.vscode/tasks.json`.
+
+If the user says "ios" **and** also asks for other work in the same message, finish that work first, then run `npm run build:ios`.

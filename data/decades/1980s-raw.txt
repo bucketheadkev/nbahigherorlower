@@ -1,0 +1,471 @@
+NBA 1980s — PART 1
+
+Coverage: 1980-81 through 1989-90
+Stats are each player's team-specific, game-weighted averages during the decade.
+Format: Player | Position | PPG | RPG | APG | Games | Seasons
+
+========================================================================
+ATLANTA HAWKS
+========================================================================
+Dominique Wilkins | SF | 26.0 PPG | 6.8 RPG | 2.4 APG | 559 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Tree Rollins | C | 6.7 PPG | 7.4 RPG | 0.7 APG | 653 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+Doc Rivers | PG | 12.6 PPG | 3.5 RPG | 7.4 APG | 441 G | 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Eddie Johnson | SG | 16.4 PPG | 2.4 RPG | 5.7 APG | 462 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87
+Dan Roundfield | PF | 18.1 PPG | 10.7 RPG | 2.6 APG | 355 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85
+Cliff Levingston | PF | 9.2 PPG | 6.6 RPG | 0.9 APG | 399 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Kevin Willis | PF | 12.3 PPG | 8.2 RPG | 0.5 APG | 320 G | 1985-86, 1986-87, 1987-88, 1988-89
+Randy Wittman | SG | 10.0 PPG | 1.7 RPG | 2.9 APG | 353 G | 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+John Drew | SF | 19.9 PPG | 5.7 RPG | 1.3 APG | 217 G | 1980-81, 1981-82, 1982-83
+Antoine Carr | PF | 7.4 PPG | 3.3 RPG | 1.1 APG | 302 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Steve Hawes | PF | 9.3 PPG | 6.4 RPG | 2.0 APG | 251 G | 1980-81, 1981-82, 1982-83, 1983-84
+Jon Koncak | C | 6.2 PPG | 6.1 RPG | 0.6 APG | 287 G | 1986-87, 1987-88, 1988-89, 1989-90
+Mike Glenn | SG | 8.0 PPG | 1.3 RPG | 1.9 APG | 263 G | 1982-83, 1983-84, 1984-85, 1985-86
+Tom McMillen | C | 8.6 PPG | 4.0 RPG | 1.3 APG | 266 G | 1980-81, 1981-82, 1982-83, 1983-84
+Spud Webb | PG | 6.0 PPG | 1.6 RPG | 4.1 APG | 275 G | 1986-87, 1987-88, 1988-89, 1989-90
+John Battle | SG | 7.8 PPG | 1.4 RPG | 2.0 APG | 277 G | 1986-87, 1987-88, 1988-89, 1989-90
+Scott Hastings | PF | 3.1 PPG | 2.4 RPG | 0.5 APG | 299 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+Charlie Criss | PG | 8.4 PPG | 1.5 RPG | 3.5 APG | 187 G | 1980-81, 1981-82, 1982-83, 1984-85, 1985-86
+Johnny Davis | SG | 11.3 PPG | 1.8 RPG | 4.9 APG | 155 G | 1983-84, 1984-85, 1986-87
+Rudy Macklin | SF | 6.5 PPG | 3.0 RPG | 0.8 APG | 152 G | 1982-83, 1983-84
+
+========================================================================
+BOSTON CELTICS
+========================================================================
+Larry Bird | PF | 25.0 PPG | 10.2 RPG | 6.1 APG | 717 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Robert Parish | C | 18.0 PPG | 10.4 RPG | 1.8 APG | 714 G | 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Kevin McHale | PF | 18.5 PPG | 7.6 RPG | 1.8 APG | 694 G | 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Danny Ainge | SG | 11.3 PPG | 2.8 RPG | 4.4 APG | 556 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Cedric Maxwell | SF | 13.8 PPG | 6.3 RPG | 2.4 APG | 455 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86
+Dennis Johnson | PG | 13.5 PPG | 3.3 RPG | 6.4 APG | 466 G | 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Tiny Archibald | PG | 12.9 PPG | 2.0 RPG | 7.6 APG | 294 G | 1980-81, 1981-82, 1982-83, 1983-84
+Gerald Henderson | PG | 8.8 PPG | 1.6 RPG | 2.8 APG | 400 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85
+M.L. Carr | SF | 6.3 PPG | 2.3 RPG | 1.3 APG | 363 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86
+Rick Robey | C | 7.9 PPG | 4.7 RPG | 1.2 APG | 303 G | 1980-81, 1981-82, 1982-83, 1983-84
+Scott Wedman | SF | 6.2 PPG | 2.1 RPG | 1.0 APG | 271 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88
+Chris Ford | SG | 8.6 PPG | 2.0 RPG | 2.8 APG | 231 G | 1980-81, 1981-82, 1982-83
+Quinn Buckner | PG | 4.8 PPG | 1.8 RPG | 2.8 APG | 226 G | 1983-84, 1984-85, 1985-86
+Jerry Sichting | PG | 5.9 PPG | 1.2 RPG | 2.4 APG | 184 G | 1986-87, 1987-88, 1988-89
+Greg Kite | C | 1.6 PPG | 2.0 RPG | 0.3 APG | 241 G | 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+Reggie Lewis | SF | 13.2 PPG | 3.4 RPG | 1.9 APG | 130 G | 1988-89, 1989-90
+Fred Roberts | PF | 5.8 PPG | 2.4 RPG | 1.0 APG | 147 G | 1987-88, 1988-89
+Dave Cowens | C | 14.2 PPG | 8.1 RPG | 3.1 APG | 66 G | 1980-81
+Bill Walton | C | 7.0 PPG | 6.4 RPG | 1.9 APG | 90 G | 1986-87, 1987-88
+Rick Carlisle | SG | 2.2 PPG | 0.8 RPG | 1.0 APG | 157 G | 1985-86, 1986-87, 1987-88
+
+========================================================================
+CHICAGO BULLS
+========================================================================
+Michael Jordan | SG | 32.6 PPG | 6.2 RPG | 5.9 APG | 345 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Dave Corzine | C | 9.8 PPG | 6.3 RPG | 2.0 APG | 556 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Dave Greenwood | PF | 12.6 PPG | 9.1 RPG | 2.2 APG | 464 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86
+Reggie Theus | SG | 19.3 PPG | 3.5 RPG | 5.7 APG | 359 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85
+Orlando Woolridge | SF | 17.4 PPG | 4.7 RPG | 1.9 APG | 354 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87
+Artis Gilmore | C | 16.7 PPG | 9.1 RPG | 1.9 APG | 236 G | 1980-81, 1981-82, 1982-83, 1988-89
+John Paxson | PG | 8.0 PPG | 1.4 RPG | 4.3 APG | 316 G | 1986-87, 1987-88, 1988-89, 1989-90
+Quintin Dailey | SG | 16.4 PPG | 2.8 RPG | 2.9 APG | 272 G | 1983-84, 1984-85, 1985-86, 1986-87
+Charles Oakley | PF | 12.2 PPG | 11.6 RPG | 2.8 APG | 241 G | 1986-87, 1987-88, 1988-89
+Dwight Jones | PF | 8.2 PPG | 5.4 RPG | 1.3 APG | 261 G | 1980-81, 1981-82, 1982-83, 1983-84
+Ricky Sobers | PG | 13.1 PPG | 2.3 RPG | 4.3 APG | 233 G | 1980-81, 1981-82, 1982-83
+Brad Sellers | PF | 8.3 PPG | 3.5 RPG | 1.4 APG | 242 G | 1987-88, 1988-89, 1989-90
+Rod Higgins | SF | 7.2 PPG | 3.1 RPG | 1.6 APG | 233 G | 1983-84, 1984-85, 1985-86, 1986-87
+Coby Dietrick | C | 4.8 PPG | 3.5 RPG | 1.8 APG | 235 G | 1980-81, 1981-82, 1982-83
+Ronnie Lester | PG | 8.7 PPG | 2.3 RPG | 4.5 APG | 191 G | 1981-82, 1982-83, 1983-84, 1984-85
+Horace Grant | PF | 9.8 PPG | 7.0 RPG | 1.6 APG | 160 G | 1988-89, 1989-90
+Gene Banks | SF | 10.4 PPG | 4.6 RPG | 2.9 APG | 145 G | 1986-87, 1987-88
+Scottie Pippen | SF | 11.0 PPG | 4.9 RPG | 2.8 APG | 152 G | 1988-89, 1989-90
+Sidney Green | PF | 9.2 PPG | 6.1 RPG | 1.1 APG | 177 G | 1984-85, 1985-86, 1986-87
+Jawann Oldham | C | 4.8 PPG | 4.2 RPG | 0.5 APG | 195 G | 1983-84, 1984-85, 1985-86, 1986-87
+
+========================================================================
+CLEVELAND CAVALIERS
+========================================================================
+Phil Hubbard | SF | 10.6 PPG | 5.0 RPG | 1.2 APG | 469 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+World B. Free | SG | 23.0 PPG | 2.9 RPG | 3.9 APG | 275 G | 1983-84, 1984-85, 1985-86, 1986-87
+John Bagley | PG | 9.4 PPG | 2.9 RPG | 6.2 APG | 375 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88
+Brad Daugherty | C | 17.8 PPG | 8.6 RPG | 3.9 APG | 237 G | 1987-88, 1988-89, 1989-90
+Ron Harper | SG | 19.4 PPG | 4.6 RPG | 5.0 APG | 221 G | 1987-88, 1988-89, 1989-90
+Hot Rod Williams | PF | 12.4 PPG | 6.7 RPG | 1.5 APG | 239 G | 1987-88, 1988-89, 1989-90
+Mark Price | PG | 14.2 PPG | 2.4 RPG | 5.9 APG | 222 G | 1987-88, 1988-89, 1989-90
+Mike Mitchell | SF | 22.8 PPG | 6.5 RPG | 1.4 APG | 191 G | 1980-81, 1981-82, 1982-83
+Roy Hinson | SF | 13.6 PPG | 7.3 RPG | 1.0 APG | 238 G | 1984-85, 1985-86, 1986-87
+Geoff Huston | PG | 10.4 PPG | 1.7 RPG | 6.1 APG | 268 G | 1981-82, 1982-83, 1983-84, 1984-85, 1985-86
+Kenny Carr | PF | 14.1 PPG | 9.0 RPG | 1.6 APG | 201 G | 1980-81, 1981-82, 1982-83
+Cliff Robinson | PF | 17.6 PPG | 10.5 RPG | 2.1 APG | 180 G | 1982-83, 1983-84, 1984-85
+Melvin Turpin | C | 10.4 PPG | 5.4 RPG | 0.6 APG | 223 G | 1985-86, 1986-87, 1987-88
+Mark West | C | 5.7 PPG | 4.5 RPG | 0.5 APG | 264 G | 1985-86, 1986-87, 1987-88, 1988-89
+Ben Poquette | PF | 5.0 PPG | 4.5 RPG | 0.9 APG | 248 G | 1984-85, 1985-86, 1986-87, 1987-88
+Craig Ehlo | SG | 7.0 PPG | 3.6 RPG | 2.8 APG | 205 G | 1987-88, 1988-89, 1989-90
+Larry Nance | PF | 17.0 PPG | 7.9 RPG | 2.4 APG | 100 G | 1988-89, 1989-90
+Randy Smith | SG | 16.1 PPG | 2.7 RPG | 4.4 APG | 164 G | 1980-81, 1981-82
+Dave Robisch | C | 14.6 PPG | 8.0 RPG | 2.5 APG | 93 G | 1980-81, 1981-82
+Lonnie Shelton | PF | 7.9 PPG | 4.4 RPG | 1.9 APG | 180 G | 1984-85, 1985-86, 1986-87
+
+========================================================================
+DALLAS MAVERICKS
+========================================================================
+Rolando Blackman | SG | 19.2 PPG | 3.7 RPG | 3.1 APG | 630 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Brad Davis | PG | 9.5 PPG | 2.0 RPG | 5.7 APG | 697 G | 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Mark Aguirre | SF | 24.6 PPG | 5.7 RPG | 3.8 APG | 566 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Derek Harper | PG | 12.9 PPG | 2.6 RPG | 5.9 APG | 483 G | 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Sam Perkins | PF | 14.1 PPG | 8.1 RPG | 1.7 APG | 395 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Jay Vincent | PF | 16.9 PPG | 6.5 RPG | 2.2 APG | 382 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87
+James Donaldson | C | 8.8 PPG | 10.4 RPG | 0.9 APG | 285 G | 1986-87, 1987-88, 1988-89, 1989-90
+Kurt Nimphius | C | 6.2 PPG | 5.2 RPG | 1.7 APG | 321 G | 1982-83, 1983-84, 1984-85, 1985-86, 1986-87
+Detlef Schrempf | SF | 8.3 PPG | 3.6 RPG | 1.9 APG | 264 G | 1986-87, 1987-88, 1988-89, 1989-90
+Jim Spanarkel | SG | 10.5 PPG | 2.7 RPG | 2.4 APG | 219 G | 1981-82, 1982-83, 1983-84, 1984-85
+Roy Tarpley | PF | 11.3 PPG | 9.8 RPG | 0.9 APG | 175 G | 1987-88, 1988-89, 1989-90
+Pat Cummings | C | 12.8 PPG | 8.2 RPG | 1.9 APG | 161 G | 1983-84, 1984-85
+Dale Ellis | SF | 8.2 PPG | 3.1 RPG | 0.7 APG | 211 G | 1984-85, 1985-86, 1986-87
+Bill Wennington | C | 3.4 PPG | 2.8 RPG | 0.5 APG | 209 G | 1986-87, 1987-88, 1988-89, 1989-90
+Bill Garnett | PF | 5.7 PPG | 4.8 RPG | 1.5 APG | 155 G | 1983-84, 1984-85
+Elston Turner | SF | 5.4 PPG | 2.9 RPG | 1.8 APG | 186 G | 1982-83, 1983-84, 1984-85
+Tom LaGarde | C | 11.1 PPG | 6.8 RPG | 2.2 APG | 129 G | 1981-82, 1982-83
+Uwe Blab | C | 2.2 PPG | 1.6 RPG | 0.4 APG | 188 G | 1986-87, 1987-88, 1988-89, 1989-90
+Geoff Huston | PG | 16.1 PPG | 1.8 RPG | 4.9 APG | 56 G | 1981-82
+Ollie Mack | SG | 9.1 PPG | 3.3 RPG | 2.3 APG | 75 G | 1981-82, 1982-83
+
+========================================================================
+DENVER NUGGETS
+========================================================================
+Alex English | SF | 26.7 PPG | 5.8 RPG | 4.6 APG | 757 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Dan Issel | C | 20.5 PPG | 7.2 RPG | 2.2 APG | 476 G | 1980-81, 1981-82, 1982-83, 1983-84, 1984-85, 1985-86
+T.R. Dunn | SG | 5.2 PPG | 5.1 RPG | 1.9 APG | 652 G | 1981-82, 1982-83, 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+Fat Lever | PG | 16.8 PPG | 7.3 RPG | 7.7 APG | 395 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Danny Schayes | C | 9.3 PPG | 5.7 RPG | 1.1 APG | 483 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Bill Hanzlik | SF | 7.9 PPG | 2.8 RPG | 3.1 APG | 512 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Kiki Vandeweghe | PF | 23.3 PPG | 5.3 RPG | 2.7 APG | 293 G | 1981-82, 1982-83, 1983-84, 1984-85
+Wayne Cooper | C | 9.5 PPG | 7.4 RPG | 1.0 APG | 351 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Mike Evans | PG | 8.7 PPG | 1.4 RPG | 2.6 APG | 419 G | 1983-84, 1984-85, 1985-86, 1986-87, 1987-88, 1988-89
+Calvin Natt | PF | 17.8 PPG | 6.3 RPG | 2.4 APG | 189 G | 1985-86, 1986-87, 1987-88, 1988-89, 1989-90
+Glen Gondrezick | PF | 6.3 PPG | 4.5 RPG | 1.4 APG | 288 G | 1980-81, 1981-82, 1982-83, 1983-84
+Blair Rasmussen | C | 8.8 PPG | 4.6 RPG | 0.7 APG | 278 G | 1986-87, 1987-88, 1988-89, 1989-90
+David Thompson | SG | 21.0 PPG | 3.4 RPG | 2.7 APG | 177 G | 1980-81, 1981-82, 1982-83
+Michael Adams | PG | 16.1 PPG | 3.2 RPG | 6.2 APG | 159 G | 1988-89, 1989-90
+Billy McKinney | PG | 10.4 PPG | 1.9 RPG | 4.2 APG | 198 G | 1981-82, 1982-83, 1983-84
+Elston Turner | SF | 4.8 PPG | 3.0 RPG | 2.0 APG | 232 G | 1985-86, 1986-87, 1989-90
+Dave Robisch | C | 7.4 PPG | 3.9 RPG | 1.4 APG | 165 G | 1981-82, 1982-83, 1983-84, 1984-85
+John Roche | PG | 9.2 PPG | 1.2 RPG | 4.3 APG | 147 G | 1980-81, 1981-82, 1982-83
+Rob Williams | PG | 8.6 PPG | 2.2 RPG | 5.4 APG | 153 G | 1983-84, 1984-85
+Walter Davis | SG | 15.6 PPG | 1.9 RPG | 2.3 APG | 81 G | 1989-90
+
+DETROIT PISTONS
+========================================================================
+
+Isiah Thomas | PG | 19.2 PPG | 3.6 RPG | 9.3 APG
+Joe Dumars | SG | 17.0 PPG | 2.7 RPG | 4.5 APG
+Vinnie Johnson | SG | 12.8 PPG | 2.5 RPG | 3.5 APG
+John Long | SG | 15.5 PPG | 2.8 RPG | 2.8 APG
+Kelly Tripucka | SF | 21.6 PPG | 5.0 RPG | 2.6 APG
+Adrian Dantley | SF | 21.3 PPG | 4.8 RPG | 3.0 APG
+Dennis Rodman | PF | 8.7 PPG | 9.7 RPG | 1.3 APG
+Rick Mahorn | C | 7.5 PPG | 6.8 RPG | 1.1 APG
+Bill Laimbeer | C | 13.5 PPG | 10.1 RPG | 2.1 APG
+James Edwards | C | 15.5 PPG | 6.7 RPG | 1.3 APG
+John Salley | PF | 9.3 PPG | 5.9 RPG | 1.1 APG
+Mark Aguirre | SF | 20.0 PPG | 5.0 RPG | 3.1 APG
+Dan Roundfield | PF | 12.0 PPG | 9.0 RPG | 2.0 APG
+Terry Tyler | PF | 12.0 PPG | 6.0 RPG | 2.0 APG
+Kent Benson | C | 8.8 PPG | 6.3 RPG | 1.4 APG
+Eric Money | PG | 12.0 PPG | 2.5 RPG | 4.5 APG
+Sedale Threatt | PG | 12.0 PPG | 3.0 RPG | 7.0 APG
+Steve Colter | PG | 7.0 PPG | 2.0 RPG | 4.0 APG
+Earl Cureton | PF | 6.5 PPG | 5.5 RPG | 0.8 APG
+David Greenwood | PF | 9.0 PPG | 7.0 RPG | 1.5 APG
+
+========================================================================
+GOLDEN STATE WARRIORS
+========================================================================
+
+Chris Mullin | SF | 25.9 PPG | 5.9 RPG | 4.3 APG
+Sleepy Floyd | PG | 17.1 PPG | 2.7 RPG | 8.1 APG
+Purvis Short | SF | 22.8 PPG | 5.5 RPG | 2.5 APG
+Joe Barry Carroll | C | 19.9 PPG | 8.4 RPG | 1.9 APG
+Larry Smith | PF | 8.7 PPG | 10.0 RPG | 1.2 APG
+World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
+Mitch Richmond | SG | 22.0 PPG | 5.9 RPG | 4.2 APG
+Terry Teagle | SG | 15.3 PPG | 3.2 RPG | 2.0 APG
+Phil Smith | SG | 15.5 PPG | 3.0 RPG | 4.0 APG
+Eric "Sleepy" Whitehead | PG | 10.0 PPG | 3.0 RPG | 5.0 APG
+Sam Williams | PF | 14.5 PPG | 8.0 RPG | 1.5 APG
+Ricky Pierce | SG | 14.0 PPG | 2.8 RPG | 2.2 APG
+Tom Tolbert | PF | 8.0 PPG | 5.0 RPG | 2.0 APG
+Manute Bol | C | 3.7 PPG | 4.3 RPG | 0.3 APG
+Winston Garland | PG | 12.0 PPG | 2.8 RPG | 6.0 APG
+Jim Petersen | C | 8.0 PPG | 5.0 RPG | 1.2 APG
+Steve Johnson | C | 13.0 PPG | 7.0 RPG | 1.0 APG
+Mickey Johnson | PF | 9.0 PPG | 5.0 RPG | 1.2 APG
+Keith Smart | PG | 8.0 PPG | 2.0 RPG | 4.0 APG
+Reggie Williams | SF | 14.5 PPG | 4.5 RPG | 2.5 APG
+
+========================================================================
+HOUSTON ROCKETS
+========================================================================
+
+Hakeem Olajuwon | C | 22.5 PPG | 11.5 RPG | 2.1 APG
+Ralph Sampson | C | 19.7 PPG | 10.5 RPG | 2.9 APG
+Otis Thorpe | PF | 14.5 PPG | 9.5 RPG | 2.0 APG
+Rodney McCray | SF | 15.9 PPG | 7.0 RPG | 4.0 APG
+Robert Reid | SF | 13.5 PPG | 5.5 RPG | 3.5 APG
+Lewis Lloyd | SG | 17.5 PPG | 5.0 RPG | 2.8 APG
+Mitchell Wiggins | SG | 15.0 PPG | 3.8 RPG | 2.3 APG
+John Lucas | PG | 15.8 PPG | 3.0 RPG | 7.5 APG
+Allen Leavell | SG | 11.8 PPG | 2.3 RPG | 4.5 APG
+Buck Johnson | SF | 12.5 PPG | 6.5 RPG | 1.7 APG
+Jim Petersen | C | 8.5 PPG | 5.5 RPG | 1.5 APG
+Major Jones | PF | 7.5 PPG | 6.2 RPG | 1.0 APG
+Caldwell Jones | C | 5.5 PPG | 6.5 RPG | 1.5 APG
+Granville Waiters | C | 5.8 PPG | 5.0 RPG | 0.7 APG
+Mike Dunleavy | SG | 10.5 PPG | 2.8 RPG | 4.2 APG
+Steve Harris | PG | 7.5 PPG | 2.0 RPG | 4.0 APG
+Billy Paultz | C | 8.0 PPG | 6.8 RPG | 2.0 APG
+Sleepy Floyd | PG | 17.0 PPG | 2.7 RPG | 8.0 APG
+Mike Woodson | SG | 16.0 PPG | 3.0 RPG | 2.5 APG
+Robert McNamara | PG | 4.8 PPG | 1.8 RPG | 3.1 APG
+
+========================================================================
+INDIANA PACERS
+========================================================================
+
+Chuck Person | SF | 19.0 PPG | 8.0 RPG | 3.0 APG
+Wayman Tisdale | PF | 18.5 PPG | 7.5 RPG | 1.2 APG
+Clark Kellogg | PF | 18.9 PPG | 9.1 RPG | 2.9 APG
+Herb Williams | C | 15.8 PPG | 8.3 RPG | 1.5 APG
+Steve Stipanovich | C | 13.2 PPG | 7.8 RPG | 2.0 APG
+Vern Fleming | PG | 14.2 PPG | 3.1 RPG | 7.0 APG
+John Long | SG | 16.5 PPG | 3.5 RPG | 2.8 APG
+Ricky Sobers | SG | 16.0 PPG | 3.0 RPG | 3.0 APG
+Billy Knight | SF | 17.0 PPG | 4.0 RPG | 2.5 APG
+Butch Carter | SG | 11.0 PPG | 3.0 RPG | 3.5 APG
+Darnell Hillman | PF | 9.0 PPG | 7.0 RPG | 1.5 APG
+James Edwards | C | 16.0 PPG | 7.0 RPG | 1.3 APG
+Johnny Davis | PG | 10.0 PPG | 2.0 RPG | 6.0 APG
+Michael Williams | PG | 10.5 PPG | 2.8 RPG | 8.0 APG
+Jerry Sichting | PG | 10.0 PPG | 2.0 RPG | 5.0 APG
+Reggie Miller | SG | 18.0 PPG | 3.0 RPG | 3.0 APG
+Detlef Schrempf | SF | 13.0 PPG | 6.0 RPG | 3.5 APG
+Steve Johnson | C | 11.5 PPG | 6.5 RPG | 1.0 APG
+Stuart Gray | PF | 7.5 PPG | 5.0 RPG | 1.0 APG
+Wayne Radford | SG | 9.0 PPG | 2.5 RPG | 2.5 APG
+
+========================================================================
+KANSAS CITY / SACRAMENTO KINGS
+========================================================================
+
+Reggie Theus | PG | 18.5 PPG | 3.0 RPG | 6.0 APG
+Otis Birdsong | SG | 18.0 PPG | 3.5 RPG | 3.0 APG
+Eddie Johnson | SG | 19.0 PPG | 4.0 RPG | 2.5 APG
+Mike Woodson | SG | 18.0 PPG | 3.0 RPG | 2.5 APG
+Larry Drew | PG | 8.0 PPG | 2.5 RPG | 7.0 APG
+Sleepy Floyd | PG | 17.0 PPG | 2.7 RPG | 8.0 APG
+Phil Ford | PG | 11.0 PPG | 2.5 RPG | 6.5 APG
+Kenny Smith | PG | 13.1 PPG | 2.1 RPG | 7.1 APG
+Lionel Simmons | SF | 18.0 PPG | 8.0 RPG | 4.0 APG
+Wayman Tisdale | PF | 18.5 PPG | 7.5 RPG | 1.2 APG
+LaSalle Thompson | PF | 12.5 PPG | 8.5 RPG | 1.2 APG
+Joe Kleine | C | 7.5 PPG | 6.0 RPG | 1.0 APG
+Sam Lacey | C | 12.0 PPG | 9.0 RPG | 4.0 APG
+Mark Olberding | PF | 10.5 PPG | 6.5 RPG | 2.0 APG
+Larry Smith | PF | 8.5 PPG | 9.0 RPG | 1.2 APG
+Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
+Billy Owens | SF | 14.3 PPG | 8.0 RPG | 2.4 APG
+Rory Sparrow | PG | 10.0 PPG | 2.5 RPG | 6.5 APG
+Danny Ainge | SG | 12.0 PPG | 3.0 RPG | 5.0 APG
+Ed Pinckney | C | 8.0 PPG | 6.0 RPG | 1.0 APG.
+
+LOS ANGELES CLIPPERS (SAN DIEGO/LA)
+========================================================================
+
+Norm Nixon | PG | 17.0 PPG | 2.8 RPG | 8.8 APG
+Ron Harper | SG | 22.9 PPG | 5.9 RPG | 4.8 APG
+World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
+Quentin Dailey | SG | 20.3 PPG | 3.9 RPG | 3.1 APG
+Michael Brooks | PG | 16.8 PPG | 3.0 RPG | 6.5 APG
+Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
+Marques Johnson | SF | 20.3 PPG | 7.0 RPG | 3.6 APG
+Michael Cage | PF | 11.0 PPG | 11.0 RPG | 1.5 APG
+Terry Cummings | PF | 23.7 PPG | 10.6 RPG | 2.7 APG
+Tom Chambers | PF | 20.0 PPG | 6.6 RPG | 2.3 APG
+Benoit Benjamin | C | 12.8 PPG | 8.0 RPG | 1.3 APG
+James Donaldson | C | 11.0 PPG | 9.0 RPG | 1.0 APG
+Swen Nater | C | 8.5 PPG | 8.0 RPG | 1.0 APG
+Ken Norman | PF | 11.6 PPG | 5.8 RPG | 1.5 APG
+Danny Manning | PF | 16.7 PPG | 6.6 RPG | 2.5 APG
+
+========================================================================
+LOS ANGELES LAKERS
+========================================================================
+
+Magic Johnson | PG | 19.5 PPG | 7.2 RPG | 11.2 APG
+Norm Nixon | PG | 17.6 PPG | 2.8 RPG | 8.8 APG
+Byron Scott | SG | 17.5 PPG | 3.0 RPG | 3.5 APG
+Michael Cooper | SG | 10.0 PPG | 3.0 RPG | 4.2 APG
+James Worthy | SF | 21.1 PPG | 5.4 RPG | 3.0 APG
+Jamaal Wilkes | SF | 18.0 PPG | 5.1 RPG | 2.8 APG
+A.C. Green | PF | 11.8 PPG | 8.7 RPG | 1.2 APG
+Kurt Rambis | PF | 9.0 PPG | 7.5 RPG | 2.0 APG
+Kareem Abdul-Jabbar | C | 22.0 PPG | 7.9 RPG | 2.5 APG
+Mychal Thompson | C | 15.7 PPG | 7.4 RPG | 2.0 APG
+Bob McAdoo | C | 10.0 PPG | 4.5 RPG | 1.0 APG
+Orlando Woolridge | SF | 20.6 PPG | 5.0 RPG | 2.7 APG
+Sam Perkins | PF | 15.0 PPG | 8.0 RPG | 2.0 APG
+Vlade Divac | C | 8.5 PPG | 6.0 RPG | 1.5 APG
+Mike McGee | SG | 10.5 PPG | 2.5 RPG | 2.0 APG
+
+========================================================================
+MILWAUKEE BUCKS
+========================================================================
+
+Sidney Moncrief | SG | 20.2 PPG | 5.0 RPG | 4.5 APG
+Terry Cummings | PF | 23.7 PPG | 10.6 RPG | 2.7 APG
+Paul Pressey | SF | 12.9 PPG | 4.9 RPG | 5.7 APG
+Jack Sikma | C | 15.6 PPG | 9.4 RPG | 3.5 APG
+Ricky Pierce | SG | 17.6 PPG | 2.8 RPG | 2.3 APG
+Alvin Robertson | SG | 17.0 PPG | 5.5 RPG | 5.0 APG
+Junior Bridgeman | SG | 13.6 PPG | 3.5 RPG | 2.4 APG
+Craig Hodges | PG | 10.0 PPG | 2.0 RPG | 4.0 APG
+Brian Winters | SG | 16.0 PPG | 2.5 RPG | 4.0 APG
+Marques Johnson | SF | 20.6 PPG | 7.4 RPG | 3.6 APG
+Bob Lanier | C | 18.7 PPG | 9.3 RPG | 3.0 APG
+Dave Meyers | PF | 11.0 PPG | 5.0 RPG | 2.0 APG
+Jay Humphries | PG | 13.0 PPG | 3.0 RPG | 6.0 APG
+Jerome Whitehead | C | 8.0 PPG | 6.0 RPG | 1.5 APG
+Randy Breuer | C | 8.0 PPG | 5.5 RPG | 1.0 APG
+
+========================================================================
+NEW JERSEY NETS
+========================================================================
+
+Buck Williams | PF | 16.4 PPG | 11.9 RPG | 1.3 APG
+Otis Birdsong | SG | 18.0 PPG | 3.5 RPG | 3.0 APG
+Albert King | SF | 17.4 PPG | 4.8 RPG | 2.7 APG
+Micheal Ray Richardson | PG | 14.0 PPG | 5.0 RPG | 7.0 APG
+Darryl Dawkins | C | 14.1 PPG | 7.0 RPG | 1.3 APG
+Orlando Woolridge | SF | 20.6 PPG | 5.0 RPG | 2.7 APG
+Mike Gminski | C | 16.0 PPG | 8.0 RPG | 2.0 APG
+Dennis Hopson | SG | 15.8 PPG | 3.7 RPG | 2.6 APG
+Roy Hinson | PF | 19.0 PPG | 7.0 RPG | 2.0 APG
+Benoit Benjamin | C | 12.8 PPG | 8.0 RPG | 1.3 APG
+Chris Morris | SF | 14.0 PPG | 5.0 RPG | 2.0 APG
+Sam Bowie | C | 10.9 PPG | 7.1 RPG | 2.1 APG
+Tony Brown | SG | 11.0 PPG | 3.0 RPG | 2.5 APG
+Chris Dudley | C | 4.0 PPG | 7.0 RPG | 0.5 APG
+John Bagley | PG | 10.0 PPG | 2.5 RPG | 6.0 APG
+
+NEW YORK KNICKS
+========================================================================
+
+Patrick Ewing | C | 24.0 PPG | 10.7 RPG | 2.0 APG
+Bill Cartwright | C | 17.5 PPG | 7.9 RPG | 1.2 APG
+Gerald Wilkins | SG | 15.3 PPG | 3.4 RPG | 2.5 APG
+Rory Sparrow | PG | 10.0 PPG | 2.5 RPG | 6.5 APG
+Trent Tucker | SG | 11.4 PPG | 2.0 RPG | 3.0 APG
+Mark Jackson | PG | 13.6 PPG | 4.8 RPG | 10.6 APG
+Johnny Newman | SF | 16.0 PPG | 4.5 RPG | 2.0 APG
+Bernard King | SF | 26.5 PPG | 5.2 RPG | 3.0 APG
+Kiki Vandeweghe | SF | 20.0 PPG | 3.8 RPG | 2.0 APG
+Charles Oakley | PF | 12.0 PPG | 12.0 RPG | 2.0 APG
+Sidney Green | PF | 12.0 PPG | 7.0 RPG | 1.5 APG
+Truck Robinson | PF | 15.0 PPG | 8.0 RPG | 1.5 APG
+Stuart Granger | SG | 8.0 PPG | 2.5 RPG | 2.0 APG
+Ray Williams | PG | 17.0 PPG | 3.5 RPG | 6.8 APG
+Louis Orr | SF | 12.0 PPG | 4.5 RPG | 2.0 APG
+
+========================================================================
+PHILADELPHIA 76ERS
+========================================================================
+
+Julius Erving | SF | 22.4 PPG | 6.7 RPG | 4.0 APG
+Moses Malone | C | 24.0 PPG | 13.0 RPG | 1.5 APG
+Charles Barkley | PF | 23.0 PPG | 11.7 RPG | 3.1 APG
+Maurice Cheeks | PG | 12.0 PPG | 2.8 RPG | 6.9 APG
+Andrew Toney | SG | 20.3 PPG | 3.1 RPG | 4.3 APG
+Bobby Jones | PF | 9.0 PPG | 4.0 RPG | 2.0 APG
+Clint Richardson | SG | 13.0 PPG | 3.0 RPG | 2.0 APG
+Tony Campbell | SF | 12.0 PPG | 4.5 RPG | 2.0 APG
+Sedale Threatt | PG | 14.0 PPG | 3.0 RPG | 7.0 APG
+Mike Gminski | C | 16.0 PPG | 8.0 RPG | 2.0 APG
+Manute Bol | C | 3.7 PPG | 6.0 RPG | 0.3 APG
+Jeff Ruland | C | 17.4 PPG | 9.6 RPG | 3.7 APG
+Hersey Hawkins | SG | 15.0 PPG | 3.0 RPG | 2.5 APG
+Johnny Dawkins | PG | 13.0 PPG | 3.0 RPG | 6.0 APG
+Mike Schmidt* | SF | (omit if keeping NBA-only)
+
+========================================================================
+PHOENIX SUNS
+========================================================================
+
+Walter Davis | SG | 20.6 PPG | 3.8 RPG | 3.0 APG
+Larry Nance | PF | 20.0 PPG | 8.0 RPG | 2.0 APG
+Kevin Johnson | PG | 20.4 PPG | 3.7 RPG | 12.2 APG
+Tom Chambers | PF | 23.3 PPG | 6.6 RPG | 2.3 APG
+Jeff Hornacek | SG | 17.5 PPG | 3.5 RPG | 5.4 APG
+Alvan Adams | C | 14.1 PPG | 7.0 RPG | 4.1 APG
+Mike Sanders | SF | 9.0 PPG | 4.5 RPG | 2.0 APG
+Eddie Johnson | SG | 21.5 PPG | 4.0 RPG | 2.5 APG
+Mark West | C | 8.0 PPG | 7.0 RPG | 1.0 APG
+James Edwards | C | 16.0 PPG | 7.0 RPG | 1.3 APG
+Jeff Cook | PF | 8.0 PPG | 4.0 RPG | 1.0 APG
+Armen Gilliam | PF | 18.0 PPG | 8.0 RPG | 2.0 APG
+Curtis Perry | PF | 9.0 PPG | 5.0 RPG | 1.0 APG
+Kyle Macy | PG | 9.0 PPG | 2.5 RPG | 4.5 APG
+Larry Drew | PG | 8.0 PPG | 2.5 RPG | 7.0 APG
+
+========================================================================
+PORTLAND TRAIL BLAZERS
+========================================================================
+
+Clyde Drexler | SG | 21.5 PPG | 6.5 RPG | 5.7 APG
+Terry Porter | PG | 17.0 PPG | 3.5 RPG | 8.0 APG
+Jerome Kersey | SF | 14.7 PPG | 6.8 RPG | 2.0 APG
+Buck Williams | PF | 13.0 PPG | 9.5 RPG | 1.5 APG
+Kevin Duckworth | C | 15.8 PPG | 7.2 RPG | 1.2 APG
+Mychal Thompson | C | 15.7 PPG | 7.4 RPG | 2.0 APG
+Kiki Vandeweghe | SF | 26.0 PPG | 4.5 RPG | 2.8 APG
+Calvin Natt | PF | 17.0 PPG | 7.0 RPG | 2.0 APG
+Fat Lever | PG | 13.9 PPG | 6.3 RPG | 6.5 APG
+Steve Johnson | C | 13.0 PPG | 7.0 RPG | 1.0 APG
+Sam Bowie | C | 10.9 PPG | 7.1 RPG | 2.1 APG
+Jim Paxson | SG | 20.0 PPG | 3.0 RPG | 2.5 APG
+Kenny Carr | PF | 12.0 PPG | 5.5 RPG | 1.5 APG
+Wayne Cooper | C | 9.0 PPG | 6.0 RPG | 1.2 APG
+Mike Schuler | SG | 8.0 PPG | 2.0 RPG | 2.0 APG
+
+========================================================================
+SAN ANTONIO SPURS
+========================================================================
+
+George Gervin | SG | 26.2 PPG | 4.6 RPG | 2.8 APG
+Alvin Robertson | SG | 17.0 PPG | 5.5 RPG | 5.0 APG
+Johnny Moore | PG | 10.8 PPG | 3.0 RPG | 8.3 APG
+Mike Mitchell | SF | 19.8 PPG | 5.6 RPG | 2.3 APG
+Artis Gilmore | C | 18.0 PPG | 9.0 RPG | 1.5 APG
+Larry Kenon | PF | 15.0 PPG | 7.0 RPG | 2.5 APG
+Gene Banks | SF | 16.0 PPG | 5.0 RPG | 2.0 APG
+David Greenwood | PF | 10.0 PPG | 7.0 RPG | 2.0 APG
+Frank Brickowski | PF | 12.0 PPG | 6.0 RPG | 2.0 APG
+Willie Anderson | SG | 13.7 PPG | 4.0 RPG | 3.5 APG
+John Paxson | PG | 11.0 PPG | 2.0 RPG | 6.0 APG
+Walter Berry | PF | 14.0 PPG | 4.5 RPG | 2.0 APG
+Tyrone Corbin | SF | 10.0 PPG | 5.0 RPG | 2.0 APG
+Greg Anderson | PF | 11.0 PPG | 6.0 RPG | 1.0 APG
+Jon Sundvold | SG | 9.0 PPG | 2.0 RPG | 2.5 APG
+
+========================================================================
+SEATTLE SUPERSONICS
+========================================================================
+
+Dale Ellis | SG | 24.9 PPG | 5.6 RPG | 2.7 APG
+Tom Chambers | PF | 21.0 PPG | 6.9 RPG | 2.3 APG
+Xavier McDaniel | SF | 20.5 PPG | 7.0 RPG | 2.5 APG
+Nate McMillan | PG | 8.0 PPG | 4.0 RPG | 7.0 APG
+Jack Sikma | C | 15.6 PPG | 9.4 RPG | 3.5 APG
+Al Wood | SG | 15.0 PPG | 3.0 RPG | 2.0 APG
+Derrick McKey | SF | 14.0 PPG | 5.0 RPG | 3.0 APG
+Sedale Threatt | PG | 14.0 PPG | 3.0 RPG | 7.0 APG
+Gerald Henderson | SG | 13.0 PPG | 3.0 RPG | 2.5 APG
+Paul Westphal | SG | 20.6 PPG | 3.0 RPG | 3.5 APG
+Marvin Webster | C | 10.0 PPG | 8.0 RPG | 1.0 APG
+Sam Perkins | PF | 15.0 PPG | 8.0 RPG | 2.0 APG
+Olden Polynice | C | 8.0 PPG | 7.0 RPG | 1.0 APG
+Fred Brown | SG | 14.6 PPG | 2.0 RPG | 3.0 APG
+Danny Vranes | SF | 5.0 PPG | 5.0 RPG | 1.5 APG

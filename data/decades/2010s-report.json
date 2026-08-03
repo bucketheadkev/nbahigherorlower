@@ -1,0 +1,163 @@
+{
+  "format": "modern",
+  "duplicatePlayersRemoved": [],
+  "formattingIssuesFixed": [
+    {
+      "team": "DETROIT PISTONS",
+      "from": "Pistons",
+      "to": "(dropped)",
+      "reason": "Non-player fragment line under team"
+    },
+    {
+      "team": "DETROIT PISTONS",
+      "from": "Rip Hamilton",
+      "to": "Richard Hamilton",
+      "reason": "Nickname → formal name (Richard Hamilton)"
+    }
+  ],
+  "omittedPlayers": [],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "team": "SAN ANTONIO SPURS",
+      "name": "Danny Ferry",
+      "note": "Retired as a player before the 2010s (later Spurs front office). Left as-is."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "CHICAGO BULLS",
+      "name": "Ben Gordon",
+      "note": "Left Bulls after 2008-09; 2010s Bulls listing is wrong-team/wrong-decade for CHI. Left as-is."
+    }
+  ],
+  "otherInconsistencies": [
+    "BPG intentionally used as third counting stat for several bigs — preserved.",
+    "Nene / Nené spelling variants preserved as provided (different teams).",
+    "Marcus Morris and Marcus Morris Sr. left as distinct name keys (as provided).",
+    "Canonical file: data/decades/2010s.txt (30 sections, 450 players)."
+  ],
+  "teamCounts": {
+    "ATLANTA HAWKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "BOSTON CELTICS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "BROOKLYN NETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHARLOTTE HORNETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHICAGO BULLS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CLEVELAND CAVALIERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DALLAS MAVERICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DENVER NUGGETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DETROIT PISTONS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "GOLDEN STATE WARRIORS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "HOUSTON ROCKETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "INDIANA PACERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES CLIPPERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES LAKERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MEMPHIS GRIZZLIES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MIAMI HEAT": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MILWAUKEE BUCKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MINNESOTA TIMBERWOLVES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW ORLEANS PELICANS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW YORK KNICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "OKLAHOMA CITY THUNDER": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "ORLANDO MAGIC": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHILADELPHIA 76ERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHOENIX SUNS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PORTLAND TRAIL BLAZERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SACRAMENTO KINGS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SAN ANTONIO SPURS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "TORONTO RAPTORS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "UTAH JAZZ": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "WASHINGTON WIZARDS": {
+      "claimed": 15,
+      "afterClean": 15
+    }
+  },
+  "status": "COMPLETE — 30 team sections, 450 players."
+}

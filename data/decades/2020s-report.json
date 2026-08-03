@@ -1,0 +1,197 @@
+{
+  "format": "modern",
+  "duplicatePlayersRemoved": [
+    {
+      "team": "ATLANTA HAWKS",
+      "teamTitle": "ATLANTA HAWKS",
+      "name": "Onyeka Okongwu",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "BOSTON CELTICS",
+      "teamTitle": "BOSTON CELTICS",
+      "name": "Jrue Holiday",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "INDIANA PACERS",
+      "teamTitle": "INDIANA PACERS",
+      "name": "Myles Turner",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "SACRAMENTO KINGS",
+      "teamTitle": "SACRAMENTO KINGS",
+      "name": "DeMar DeRozan",
+      "keptSeasons": null,
+      "removedSeasons": null
+    },
+    {
+      "team": "UTAH JAZZ",
+      "teamTitle": "UTAH JAZZ",
+      "name": "Collin Sexton",
+      "keptSeasons": null,
+      "removedSeasons": null
+    }
+  ],
+  "formattingIssuesFixed": [
+    {
+      "team": "MIAMI HEAT",
+      "from": "PJ Tucker",
+      "to": "P.J. Tucker",
+      "reason": "Punctuation normalize (P.J. Tucker)"
+    },
+    {
+      "team": "MILWAUKEE BUCKS",
+      "from": "PJ Tucker",
+      "to": "P.J. Tucker",
+      "reason": "Punctuation normalize (P.J. Tucker)"
+    }
+  ],
+  "omittedPlayers": [],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "note": "Several late-2025 moves appear in this paste (e.g. Trae Young WAS, Luka LAL, Anthony Davis DAL, De'Aaron Fox SAS). Left as provided for 2020s era coverage; 2026 live roster remains separate in lib/tradeup/rosters.ts."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "DETROIT PISTONS",
+      "name": "Jalen Brunson",
+      "note": "Brunson never played for Detroit — likely paste error. Left as-is."
+    }
+  ],
+  "otherInconsistencies": [
+    "Same-team duplicates removed (Okongwu ATL, Holiday BOS, Turner IND, DeRozan SAC, Sexton UTA).",
+    "BPG thirds preserved.",
+    "Canonical decade file: data/decades/2020s.txt. Current-season 2026: lib/tradeup/rosters.ts (unchanged)."
+  ],
+  "teamCounts": {
+    "ATLANTA HAWKS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "BOSTON CELTICS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "BROOKLYN NETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHARLOTTE HORNETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CHICAGO BULLS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "CLEVELAND CAVALIERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DALLAS MAVERICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DENVER NUGGETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "DETROIT PISTONS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "GOLDEN STATE WARRIORS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "HOUSTON ROCKETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "INDIANA PACERS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "LOS ANGELES CLIPPERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES LAKERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MEMPHIS GRIZZLIES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MIAMI HEAT": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MILWAUKEE BUCKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MINNESOTA TIMBERWOLVES": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW ORLEANS PELICANS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW YORK KNICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "OKLAHOMA CITY THUNDER": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "ORLANDO MAGIC": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHILADELPHIA 76ERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHOENIX SUNS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PORTLAND TRAIL BLAZERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SACRAMENTO KINGS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "SAN ANTONIO SPURS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "TORONTO RAPTORS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "UTAH JAZZ": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "WASHINGTON WIZARDS": {
+      "claimed": 15,
+      "afterClean": 15
+    }
+  },
+  "status": "COMPLETE — 2020-2025 era DB. Current 2026 roster (lib/tradeup/rosters.ts) left untouched.",
+  "coverage": "2020-21 through ~2024-25 / 2025 franchise spans as pasted; does NOT replace 2026 current-season roster."
+}

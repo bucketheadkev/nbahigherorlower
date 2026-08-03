@@ -1,0 +1,175 @@
+{
+  "format": "modern",
+  "duplicatePlayersRemoved": [],
+  "formattingIssuesFixed": [
+    {
+      "team": "KANSAS CITY / SACRAMENTO KINGS",
+      "from": "Ed Pinckney | C | 8.0 PPG | 6.0 RPG | 1.0 APG.",
+      "to": "stripped trailing period",
+      "reason": "Trailing punctuation on stats line"
+    },
+    {
+      "team": "LOS ANGELES CLIPPERS (SAN DIEGO/LA)",
+      "from": "Quentin Dailey",
+      "to": "Quintin Dailey",
+      "reason": "Obvious spelling typo (Quintin Dailey)"
+    },
+    {
+      "team": "NEW YORK KNICKS",
+      "from": "Stuart Granger",
+      "to": "Stewart Granger",
+      "reason": "Obvious spelling typo (Stewart Granger)"
+    },
+    {
+      "team": "PHOENIX SUNS",
+      "from": "Armen Gilliam",
+      "to": "Armon Gilliam",
+      "reason": "Obvious spelling typo (Armon Gilliam)"
+    }
+  ],
+  "omittedPlayers": [
+    {
+      "team": "PHILADELPHIA 76ERS",
+      "name": "Mike Schmidt*",
+      "reason": "Explicit omit marker in source (NBA-only)",
+      "line": "Mike Schmidt* | SF | (omit if keeping NBA-only)"
+    }
+  ],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "team": "GOLDEN STATE WARRIORS",
+      "name": "Eric \"Sleepy\" Whitehead",
+      "note": "No known NBA player; likely corrupt (Sleepy Floyd already listed)."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "HOUSTON ROCKETS",
+      "name": "Robert McNamara",
+      "note": "Could not verify as a 1980s Rocket."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "KANSAS CITY / SACRAMENTO KINGS",
+      "name": "Lionel Simmons",
+      "note": "NBA debut 1990-91, outside 1980-81–1989-90 coverage."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "KANSAS CITY / SACRAMENTO KINGS",
+      "name": "Billy Owens",
+      "note": "NBA debut 1991-92, outside stated 1980s coverage."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "LOS ANGELES CLIPPERS (SAN DIEGO/LA)",
+      "name": "Michael Brooks",
+      "note": "Listed as PG; historically a forward."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "PORTLAND TRAIL BLAZERS",
+      "name": "Mike Schuler",
+      "note": "Mike Schuler was a Blazers coach, not an NBA player. Left as-is pending your decision to remove."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "PHOENIX SUNS",
+      "name": "Curtis Perry",
+      "note": "Career effectively ended before the 1980s; verify if intentional."
+    }
+  ],
+  "otherInconsistencies": [
+    "Part 1 rows include Games/Seasons; later parts omit them. Required Name/Pos/PPG/RPG/APG present throughout.",
+    "Utah Jazz and Washington Bullets/Wizards absent from all 1980s pastes.",
+    "Canonical file: data/decades/1980s.txt (21 teams, 369 players)."
+  ],
+  "teamCounts": {
+    "ATLANTA HAWKS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "BOSTON CELTICS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "CHICAGO BULLS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "CLEVELAND CAVALIERS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "DALLAS MAVERICKS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "DENVER NUGGETS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "DETROIT PISTONS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "GOLDEN STATE WARRIORS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "HOUSTON ROCKETS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "INDIANA PACERS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "KANSAS CITY / SACRAMENTO KINGS": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "LOS ANGELES CLIPPERS (SAN DIEGO/LA)": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "LOS ANGELES LAKERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "MILWAUKEE BUCKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW JERSEY NETS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "NEW YORK KNICKS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PHILADELPHIA 76ERS": {
+      "claimed": 14,
+      "afterClean": 14
+    },
+    "PHOENIX SUNS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "PORTLAND TRAIL BLAZERS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SAN ANTONIO SPURS": {
+      "claimed": 15,
+      "afterClean": 15
+    },
+    "SEATTLE SUPERSONICS": {
+      "claimed": 15,
+      "afterClean": 15
+    }
+  },
+  "status": "COMPLETE for provided pastes — 21 teams, 369 players. Note: Utah Jazz and Washington Bullets were not included in any 1980s paste."
+}

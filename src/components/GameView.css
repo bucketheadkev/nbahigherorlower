@@ -1,0 +1,20 @@
+.game-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  background: #08080c;
+}
+
+.game-canvas {
+  max-width: 100%;
+  max-height: 100vh;
+  width: min(100vw, 1280px);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  border: 2px solid #222;
+  box-shadow: 0 0 60px rgba(94, 203, 255, 0.08);
+}

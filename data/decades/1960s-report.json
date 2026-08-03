@@ -1,0 +1,127 @@
+{
+  "duplicatePlayersRemoved": [],
+  "formattingIssuesFixed": [
+    {
+      "team": "DET",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "LAL",
+      "from": "Hot Rod",
+      "to": "Hot Rod Hundley",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "NYK",
+      "from": "Dick Van",
+      "to": "Dick Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "PHO",
+      "from": "Dick Van",
+      "to": "Dick Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "SAC",
+      "from": "Tom Van",
+      "to": "Tom Van Arsdale",
+      "reason": "Truncated / incomplete name"
+    },
+    {
+      "team": "WAS",
+      "from": "George Bon",
+      "to": "George Bon Salle",
+      "reason": "Truncated / incomplete name"
+    }
+  ],
+  "missingFields": [],
+  "potentialWrongTeam": [
+    {
+      "status": "flagged-not-changed",
+      "note": "No players were removed for wrong-team. Modern abbreviations map historical 1960s franchises (St. Louis Hawks→ATL, San Diego Rockets→HOU, Seattle SuperSonics→OKC, Cincinnati Royals→SAC, Chicago Packers/Zephyrs & Baltimore Bullets→WAS, Syracuse Nationals→PHI). Confirm that franchise continuity mapping is intentional."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "PHI",
+      "name": "Paul Seymour",
+      "seasons": "1960",
+      "gp": 4,
+      "note": "Appears under 76ers (PHI) for 1960; historically Syracuse Nationals that season (same franchise lineage as PHI). Left as-is pending your confirmation of franchise mapping."
+    },
+    {
+      "status": "flagged-not-changed",
+      "team": "PHI",
+      "name": "George Yardley*",
+      "seasons": "1960",
+      "gp": 73,
+      "note": "Same Syracuse→PHI franchise mapping case for 1960."
+    }
+  ],
+  "otherInconsistencies": [
+    "Team-specific decade averages were preserved as-is across multi-team careers (e.g. Wilt Chamberlain GSW/PHI/LAL differ by design). Rule 11 first-occurrence flattening was NOT applied across teams because this dataset is explicitly team-specific.",
+    "Asterisks (*) kept as Hall of Fame markers from source.",
+    "Canonical cleaned file: data/decades/1960s.txt (609 players, 14 teams). Raw paste preserved at data/decades/1960s-raw.txt."
+  ],
+  "teamCounts": {
+    "Hawks (ATL)": {
+      "claimed": 60,
+      "afterClean": 60
+    },
+    "Celtics (BOS)": {
+      "claimed": 45,
+      "afterClean": 45
+    },
+    "Bulls (CHI)": {
+      "claimed": 26,
+      "afterClean": 26
+    },
+    "Pistons (DET)": {
+      "claimed": 63,
+      "afterClean": 63
+    },
+    "Warriors (GSW)": {
+      "claimed": 56,
+      "afterClean": 56
+    },
+    "Rockets (HOU)": {
+      "claimed": 20,
+      "afterClean": 20
+    },
+    "Lakers (LAL)": {
+      "claimed": 54,
+      "afterClean": 54
+    },
+    "Bucks (MIL)": {
+      "claimed": 17,
+      "afterClean": 17
+    },
+    "Knicks (NYK)": {
+      "claimed": 71,
+      "afterClean": 71
+    },
+    "SuperSonics / Thunder (OKC)": {
+      "claimed": 19,
+      "afterClean": 19
+    },
+    "76ers (PHI)": {
+      "claimed": 48,
+      "afterClean": 48
+    },
+    "Suns (PHO)": {
+      "claimed": 13,
+      "afterClean": 13
+    },
+    "Royals / Kings (SAC)": {
+      "claimed": 51,
+      "afterClean": 51
+    },
+    "Bullets / Wizards (WAS)": {
+      "claimed": 66,
+      "afterClean": 66
+    }
+  }
+}
