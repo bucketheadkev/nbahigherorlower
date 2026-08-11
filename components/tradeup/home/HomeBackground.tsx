@@ -3,7 +3,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 
-const HOME_DUST = Array.from({ length: 28 }, (_, index) => ({
+const HOME_DUST = Array.from({ length: 10 }, (_, index) => ({
   x: (index * 41 + 7) % 100,
   y: (index * 67 + 13) % 100,
   size: 1 + ((index * 5) % 3),

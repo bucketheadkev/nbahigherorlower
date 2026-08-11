@@ -1,6 +1,13 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type CSSProperties,
+} from 'react';
 import {
   hapticWheelStart,
   hapticWheelStop,
@@ -12,6 +19,14 @@ import {
   startTicketSpinHum,
   stopTicketSpinHum,
 } from '@/lib/tradeup/gameAudio';
+import { qualityAllows } from '@/lib/tradeup/perf/adaptiveQuality';
+import { getDiagnosticFlags } from '@/lib/tradeup/perf/diagnosticMode';
+import {
+  cancelFrame,
+  easeOutQuint,
+  scheduleFrame,
+} from '@/lib/tradeup/perf/rafClock';
+import { setMetricsAnimating } from '@/lib/tradeup/perf/frameMetrics';
 
 export interface NameReelItem {
   id: string;
@@ -31,11 +46,9 @@ interface HorizontalNameReelProps {
   variant?: 'team' | 'decade';
   onSpinComplete?: () => void;
   ownAudio?: boolean;
-}
-
-function easeOutQuint(t: number) {
-  const x = Math.min(1, Math.max(0, t));
-  return 1 - Math.pow(1 - x, 5);
+  /** CSS custom props for decade color without remounting cells */
+  style?: CSSProperties;
+  className?: string;
 }
 
 function indexOfId(items: NameReelItem[], id: string): number {
@@ -43,10 +56,16 @@ function indexOfId(items: NameReelItem[], id: string): number {
   return i >= 0 ? i : 0;
 }
 
+function mod(n: number, m: number) {
+  return ((n % m) + m) % m;
+}
+
 /**
- * Big horizontal name reel — GPU transform only, stable cell width, clean ease-out.
+ * Horizontal name reel — ONE copy of each item, wrap via modulo translate.
+ * Animates only with translate3d on the track (no per-frame React state).
+ * Mounts N cells (teams≈30 / decades≈7), not N×reps.
  */
-export function HorizontalNameReel({
+export const HorizontalNameReel = memo(function HorizontalNameReel({
   items,
   targetId,
   spinToken,
@@ -57,6 +76,8 @@ export function HorizontalNameReel({
   variant = 'team',
   onSpinComplete,
   ownAudio = true,
+  style,
+  className = '',
 }: HorizontalNameReelProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -67,14 +88,12 @@ export function HorizontalNameReel({
   const lastTickRef = useRef(-1);
   const completeRef = useRef(onSpinComplete);
   completeRef.current = onSpinComplete;
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
-  const strip = useMemo(() => {
-    if (items.length === 0) return [] as NameReelItem[];
-    // 6 reps is enough drama without a huge DOM
-    const reps: NameReelItem[] = [];
-    for (let r = 0; r < 6; r += 1) reps.push(...items);
-    return reps;
-  }, [items]);
+  const plain = getDiagnosticFlags().plainTextSpinners;
+
+  const strip = useMemo(() => items, [items]);
 
   const readCell = () => {
     const root = rootRef.current;
@@ -88,17 +107,15 @@ export function HorizontalNameReel({
     return w;
   };
 
-  const applyX = (x: number) => {
-    offsetRef.current = x;
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(${-x}px,0,0)`;
-    }
+  const applyVisualX = (logicalX: number) => {
+    offsetRef.current = logicalX;
+    const track = trackRef.current;
+    if (!track) return;
+    const loop = Math.max(1, itemsRef.current.length) * cellWRef.current;
+    const visual = mod(logicalX, loop);
+    track.style.transform = `translate3d(${-visual}px,0,0)`;
   };
 
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
-
-  // Spin — layout effect so motion starts before paint (instant feel)
   useLayoutEffect(() => {
     if (!spinning || !targetId) return;
     const pool = itemsRef.current;
@@ -106,23 +123,24 @@ export function HorizontalNameReel({
     const runId = ++runRef.current;
     const cell = readCell();
     const winner = indexOfId(pool, targetId);
-    const landIndex = pool.length * 4 + winner;
+    const loopW = pool.length * cell;
     const start = offsetRef.current;
-    let end = landIndex * cell;
-    const minTravel = pool.length * 2 * cell;
-    if (end - start < minTravel) {
-      end = start + minTravel + winner * cell;
-      const loops = Math.floor(end / (pool.length * cell));
-      end = (loops * pool.length + winner) * cell;
-    }
+    // Travel ≥ 2 full loops then land on winner
+    const minTravel = loopW * 2 + winner * cell;
+    let end = start + minTravel;
+    // Snap end so visual land == winner (modulo)
+    const endMod = mod(end, loopW);
+    const wantMod = winner * cell;
+    end += wantMod - endMod;
+    if (end - start < minTravel) end += loopW;
 
-    if (reduceMotion) {
-      applyX(end);
+    if (reduceMotion || getDiagnosticFlags().staticOnly) {
+      applyVisualX(end);
       completeRef.current?.();
       return;
     }
 
-    cancelAnimationFrame(rafRef.current);
+    cancelFrame(rafRef.current);
     if (ownAudio) {
       startTicketSpinHum();
       hapticWheelStart();
@@ -131,16 +149,19 @@ export function HorizontalNameReel({
     const t0 = performance.now();
     const dur = Math.max(750, durationMs);
     let lastTickAt = 0;
+    const track = trackRef.current;
+    if (track) track.style.willChange = 'transform';
+    setMetricsAnimating(true);
 
     const step = (now: number) => {
       if (runId !== runRef.current) return;
       const t = Math.min(1, (now - t0) / dur);
-      const eased = easeOutQuint(t);
-      const x = start + (end - start) * eased;
-      applyX(x);
+      const x = start + (end - start) * easeOutQuint(t);
+      applyVisualX(x);
 
       const idx = Math.floor(x / cell);
-      if (idx !== lastTickRef.current && now - lastTickAt > 48) {
+      const tickGap = qualityAllows('tickHaptics') ? 72 : 9999;
+      if (idx !== lastTickRef.current && now - lastTickAt > tickGap) {
         lastTickRef.current = idx;
         lastTickAt = now;
         if (ownAudio) {
@@ -150,10 +171,12 @@ export function HorizontalNameReel({
       }
 
       if (t < 1) {
-        rafRef.current = requestAnimationFrame(step);
+        rafRef.current = scheduleFrame(step);
         return;
       }
-      applyX(end);
+      applyVisualX(end);
+      if (track) track.style.willChange = 'auto';
+      setMetricsAnimating(false);
       if (ownAudio) {
         stopTicketSpinHum();
         playWheelStopSound();
@@ -161,38 +184,61 @@ export function HorizontalNameReel({
       }
       completeRef.current?.();
     };
-    rafRef.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafRef.current);
+    rafRef.current = scheduleFrame(step);
+    return () => {
+      cancelFrame(rafRef.current);
+      setMetricsAnimating(false);
+      if (track) track.style.willChange = 'auto';
+    };
   }, [spinToken, spinning, targetId, reduceMotion, durationMs, ownAudio]);
 
-  // Park when idle
   useLayoutEffect(() => {
     if (spinning || !targetId || items.length === 0) return;
     const cell = readCell();
     const winner = indexOfId(items, targetId);
-    applyX((items.length * 2 + winner) * cell);
+    applyVisualX(winner * cell);
   }, [targetId, spinning, items, compact]);
+
+  useEffect(
+    () => () => {
+      cancelFrame(rafRef.current);
+      setMetricsAnimating(false);
+    },
+    [],
+  );
 
   return (
     <div
       ref={rootRef}
       className={`hn-reel hn-reel--${variant}${compact ? ' is-compact' : ''}${
         spinning ? ' is-spinning' : ''
-      }`}
+      }${plain ? ' is-plain' : ''} ${className}`.trim()}
       aria-label={variant === 'decade' ? 'Decade spinner' : 'Team spinner'}
-      style={{ '--hn-cell': `${cellWRef.current}px` } as CSSProperties}
+      style={
+        {
+          '--hn-cell': `${cellWRef.current}px`,
+          ...style,
+        } as CSSProperties
+      }
     >
       <div className="hn-reel__window">
         <div className="hn-reel__pointer" aria-hidden />
         <div ref={trackRef} className="hn-reel__track">
-          {strip.map((item, i) => (
+          {strip.map((item) => (
             <div
-              key={`${item.id}-${i}`}
+              key={item.id}
               className="hn-reel__cell"
-              style={{
-                background: item.background,
-                color: item.color,
-              }}
+              style={
+                plain
+                  ? {
+                      background: 'var(--hn-plain-bg, #1e293b)',
+                      color: 'var(--hn-plain-fg, #f8fafc)',
+                    }
+                  : {
+                      background: item.background,
+                      color: item.color,
+                    }
+              }
             >
               <strong className="hn-reel__label">{item.label}</strong>
             </div>
@@ -201,4 +247,4 @@ export function HorizontalNameReel({
       </div>
     </div>
   );
-}
+});

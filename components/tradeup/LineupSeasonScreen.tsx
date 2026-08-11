@@ -10,7 +10,7 @@ import {
 import type { Position, TradePlayer } from '@/lib/tradeup/types';
 import { useSound } from '@/hooks/useSound';
 import { GameBackground } from './game/GameBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 import { PerfectSeasonCelebration } from './PerfectSeasonCelebration';
 import { PlayerCardVisual } from './PlayerCardVisual';
 import { formatUserTeamLabel, type UserTeamIdentity } from '@/lib/tradeup/userTeam';
@@ -93,7 +93,7 @@ export function LineupSeasonScreen({
         <GameBackground />
         <main className="season-screen__content">
           <header className="season-screen__header">
-            <TradeUpLogo size="xs" className="game-screen-brand" />
+            <BallionWordmark />
             <p className="season-screen__eyebrow">Postseason Path</p>
             <h1 className="season-screen__title">Season Complete</h1>
             <p className="season-screen__team">{formatUserTeamLabel(userTeam)}</p>
@@ -117,7 +117,7 @@ export function LineupSeasonScreen({
 
       <main className="season-screen__content">
         <header className="season-screen__header">
-          <TradeUpLogo size="xs" className="game-screen-brand" />
+          <BallionWordmark />
           <p className="season-screen__eyebrow">Postseason Path</p>
           <h1 className="season-screen__title">
             {isPerfectSeason ? 'Perfect Season' : 'Season Complete'}

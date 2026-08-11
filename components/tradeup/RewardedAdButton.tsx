@@ -11,7 +11,6 @@ import {
   type RewardedAdPlacement,
 } from '@/lib/tradeup/ads/adConfig';
 import { hapticTap } from '@/lib/tradeup/haptics';
-import { playGameSound } from '@/lib/tradeup/gameAudio';
 
 interface RewardedAdButtonProps {
   placement: RewardedAdPlacement;
@@ -70,14 +69,12 @@ export function RewardedAdButton({
   const handlePress = useCallback(async () => {
     if (disabled) return;
     hapticTap();
-    playGameSound('ui_confirm');
     setMessage(null);
 
     const result: RewardedAdResult = await RewardedAdService.show(placement);
     if (result === 'rewarded') {
       onRewarded();
       setMessage('Reward unlocked');
-      playGameSound('bank_coin');
       return;
     }
     if (result === 'busy') {

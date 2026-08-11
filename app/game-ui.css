@@ -39,7 +39,7 @@
 .game-bg__brand-watermark {
   position: absolute;
   inset: 0;
-  background: url('/images/trade-up-logo.png?v=2') center 14% / min(68vw, 18rem) no-repeat;
+  background: url('/images/ballion-logo.png?v=5') center 14% / min(52vw, 12rem) no-repeat;
   opacity: 0.045;
   pointer-events: none;
 }

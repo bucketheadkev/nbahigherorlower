@@ -6,24 +6,24 @@ import './globals.css';
 import './game-ui.css';
 
 export const metadata: Metadata = {
-  title: 'Trade Up',
-  description: 'Start with one NBA player. Trade your way to a superstar.',
-  applicationName: 'Trade Up',
+  title: '$1B RUN',
+  description: 'Build your five. Reach one billion dollars.',
+  applicationName: '$1B RUN',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Trade Up',
+    title: '$1B RUN',
   },
   openGraph: {
-    title: 'Trade Up',
-    description: 'Start with one NBA player. Trade your way to a superstar.',
+    title: '$1B RUN',
+    description: 'Build your five. Reach one billion dollars.',
     type: 'website',
   },
   manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#050B1F',
+  themeColor: '#031942',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -37,11 +37,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
+      style={{ background: '#061018' }}
     >
       <head>
+        <link rel="preload" as="image" href="/images/1b-splash.png?v=2" />
+        <link rel="preload" as="image" href="/images/1b-logo.png?v=2" />
+        <meta name="theme-color" content="#061018" />
         <script dangerouslySetInnerHTML={{ __html: FULL_MOTION_BOOT_SCRIPT }} />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased" style={{ background: '#061018' }}>
+        {children}
+      </body>
     </html>
   );
 }

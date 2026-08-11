@@ -535,15 +535,24 @@ export function eraShortLabel(era: DecadeEra): string {
   return era.replace('19', '').replace('20', '').replace('s', '') + 's';
 }
 
-/** All valid team×era pairs from the historical DB. */
+/** Cached once — never rebuild the full team×era scan during spins. */
+let cachedValidSpinPairs: SpinPair[] | null = null;
+
 export function listValidSpinPairs(): SpinPair[] {
+  if (cachedValidSpinPairs) return cachedValidSpinPairs;
   const pairs: SpinPair[] = [];
   for (const era of ERAS) {
     for (const team of teamsForEra(era)) {
       pairs.push({ team, era });
     }
   }
+  cachedValidSpinPairs = pairs;
   return pairs;
+}
+
+/** Warm the spin-pair index during idle boot (before first Play). */
+export function warmSpinPairIndex(): void {
+  void listValidSpinPairs();
 }
 
 /**

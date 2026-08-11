@@ -9,7 +9,7 @@ import {
   type PackKind,
 } from '@/lib/tradeup/billionDollar';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 interface PackSelectScreenProps {
   onSelect: (pack: PackDefinition) => void;
@@ -54,7 +54,7 @@ export function PackSelectScreen({ onSelect, onExit }: PackSelectScreenProps) {
         animate={{ opacity: leaving ? 0 : 1, y: leaving ? -8 : 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
-        <TradeUpLogo size="sm" priority />
+        <BallionWordmark />
         <h1>Choose Your Pack</h1>
         <p>Four sealed deals. One roster. Open the one that fits your run.</p>
       </motion.header>

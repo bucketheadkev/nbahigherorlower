@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import type { ChampionshipRing } from '@/lib/tradeup/achievements';
 import { ChampionshipRingVisual } from './ChampionshipRingVisual';
 import { HomeBackground } from './home/HomeBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 interface AchievementsLockerProps {
   rings: ChampionshipRing[];
@@ -37,7 +37,7 @@ export function AchievementsLocker({ rings }: AchievementsLockerProps) {
       <HomeBackground />
 
       <header className="hub-screen-header">
-        <TradeUpLogo size="xs" />
+        <BallionWordmark />
         <div className="hub-screen-header__copy">
           <p className="hub-screen-header__eyebrow">Trophy Case</p>
           <h1 className="hub-screen-header__title">Championships</h1>

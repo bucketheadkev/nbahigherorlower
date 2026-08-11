@@ -15,7 +15,7 @@ import {
   WORLD_POOL_SIZE,
   formatWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 interface BillionResultScreenProps {
   kind: 'won' | 'lost';
@@ -39,9 +39,9 @@ function buildShareText(
   const recordBit = record ? ` (${record.wins}–${record.losses})` : '';
   const rankBit = worldRank > 0 ? ` World rank ${formatWorldRank(worldRank)}.` : '';
   if (kind === 'won') {
-    return `I just built a ${formatDollarsExact(teamValue)} NBA roster${recordBit} and cleared $1B on Trade Up.${rankBit}`;
+    return `I just built a ${formatDollarsExact(teamValue)} NBA roster${recordBit} and cleared $1B on Ballion.${rankBit}`;
   }
-  return `Ran it back to ${formatDollarsExact(teamValue)}${recordBit} on Trade Up — still chasing $1B.${rankBit}`;
+  return `Ran it back to ${formatDollarsExact(teamValue)}${recordBit} on Ballion — still chasing $1B.${rankBit}`;
 }
 
 async function renderSharePng(node: HTMLElement): Promise<Blob | null> {
@@ -212,7 +212,7 @@ export function BillionResultScreen({
           await navigator.share({
             files: [file],
             text,
-            title: 'Trade Up',
+            title: 'Ballion',
           });
           setSharing(false);
           return;
@@ -249,7 +249,7 @@ export function BillionResultScreen({
         <div className="billion-result__glow" aria-hidden />
 
         <div className="billion-result__topbar">
-          <TradeUpLogo size="sm" />
+          <BallionWordmark />
           {isNewPersonalBest ? (
             <span className="billion-result__pb-banner">New Personal Best</span>
           ) : null}

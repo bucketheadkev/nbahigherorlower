@@ -55,7 +55,7 @@ export function GameOverScreen({
     const text = buildShareText(names, tradesCompleted, score, title);
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Trade Up', text });
+        await navigator.share({ title: 'Ballion', text });
         return;
       } catch {
         /* fall through */

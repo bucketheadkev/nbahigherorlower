@@ -80,7 +80,7 @@ export function GmTradeChat({
   const gmName = gmTeam?.fullName ? `${gmTeam.name} GM` : 'Opposing GM';
 
   return (
-    <div className="gm-chat" role="dialog" aria-modal="true" aria-label="Trade Up GM chat">
+    <div className="gm-chat" role="dialog" aria-modal="true" aria-label="Ballion GM chat">
       <button type="button" className="gm-chat__backdrop" aria-label="Close" onClick={onClose} />
 
       <motion.section

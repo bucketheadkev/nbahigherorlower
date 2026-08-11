@@ -29,7 +29,7 @@ import type { Position, TradePlayer } from '@/lib/tradeup/types';
 import { useSound } from '@/hooks/useSound';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 import { ChampionshipCelebration } from './ChampionshipCelebration';
 import { ChampionshipRingVisual } from './ChampionshipRingVisual';
 import { PlayoffBracketView } from './PlayoffBracketView';
@@ -342,7 +342,7 @@ export function PlayoffRunScreen({
             <span className="playoff-screen__header-spacer" aria-hidden />
           )}
           <div className="playoff-screen__brand">
-            <TradeUpLogo size="xs" className="game-screen-brand" />
+            <BallionWordmark />
             <p className="playoff-screen__eyebrow">Postseason</p>
           </div>
           <h1 className="playoff-screen__title playoff-screen__title--xl">{roundTitle}</h1>

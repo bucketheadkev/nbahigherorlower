@@ -1,11 +1,10 @@
 /**
- * Trade Up premium SFX — cohesive file-based library for Capacitor iOS.
- *
- * Design rules:
- * - Real MP3 assets under /sounds (never oscillator beeps as primary UX)
- * - One HTMLAudioElement per cue (no overlapping copies / leaks)
- * - Immediate play from user-gesture paths; continuous loops stop on completion
- * - Haptics live elsewhere and must not be altered from this module
+ * Ballion SFX — intentionally sparse.
+ * Sound plays ONLY for:
+ *  1) Team/decade spin (ticket print + wheel ambience)
+ *  2) $1B success
+ *  3) Optional restrained failure
+ * All other game events are silent (haptics handle feedback).
  */
 
 import { getAudioSettings, setSfxMuted, setSfxVolume } from './audioSettings';
@@ -60,110 +59,41 @@ export type GameSoundEvent =
   | 'ui_secondary';
 
 type SoundId =
-  | 'ui_tap'
-  | 'ui_back'
-  | 'ui_confirm'
-  | 'ui_secondary'
-  | 'slot_place'
-  | 'reject'
   | 'ticket_print'
   | 'ticket_release'
   | 'wheel_spin'
-  | 'wheel_tick'
   | 'wheel_stop'
-  | 'success_soft'
-  | 'success_rich'
   | 'success_peak'
-  | 'keep_lock'
-  | 'card_flip'
-  | 'reveal'
-  | 'collect';
+  | 'defeat';
 
 type SoundDef = {
   path: string;
-  /** 0–1 peak gain before master sfx volume */
   volume: number;
   debounceMs: number;
   loop?: boolean;
 };
 
-/** Public asset paths — copied into Capacitor `out/sounds` on build:ios. */
 export const TICKET_PRINT_SOUND_PATH = '/sounds/ticket-print.mp3';
 
 const SOUND_DEFS: Record<SoundId, SoundDef> = {
-  ui_tap: { path: '/sounds/ui-tap.mp3', volume: 0.34, debounceMs: 36 },
-  ui_back: { path: '/sounds/ui-back.mp3', volume: 0.3, debounceMs: 70 },
-  ui_confirm: { path: '/sounds/ui-confirm.mp3', volume: 0.36, debounceMs: 80 },
-  ui_secondary: { path: '/sounds/ui-secondary.mp3', volume: 0.32, debounceMs: 70 },
-  slot_place: { path: '/sounds/slot-place.mp3', volume: 0.38, debounceMs: 90 },
-  reject: { path: '/sounds/reject.mp3', volume: 0.3, debounceMs: 90 },
   ticket_print: {
     path: TICKET_PRINT_SOUND_PATH,
-    volume: 0.36,
+    volume: 0.32,
     debounceMs: 0,
     loop: true,
   },
-  ticket_release: { path: '/sounds/ticket-release.mp3', volume: 0.4, debounceMs: 120 },
-  wheel_spin: { path: '/sounds/wheel-spin.mp3', volume: 0.24, debounceMs: 0, loop: true },
-  wheel_tick: { path: '/sounds/wheel-tick.mp3', volume: 0.18, debounceMs: 42 },
-  wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.4, debounceMs: 140 },
-  success_soft: { path: '/sounds/success-soft.mp3', volume: 0.34, debounceMs: 200 },
-  success_rich: { path: '/sounds/success-rich.mp3', volume: 0.36, debounceMs: 280 },
-  success_peak: { path: '/sounds/success-peak.mp3', volume: 0.38, debounceMs: 400 },
-  keep_lock: { path: '/sounds/keep-lock.mp3', volume: 0.36, debounceMs: 220 },
-  card_flip: { path: '/sounds/card-flip.mp3', volume: 0.32, debounceMs: 70 },
-  reveal: { path: '/sounds/reveal.mp3', volume: 0.34, debounceMs: 180 },
-  collect: { path: '/audio/add-collection.wav', volume: 0.32, debounceMs: 350 },
+  ticket_release: { path: '/sounds/ticket-release.mp3', volume: 0.34, debounceMs: 120 },
+  wheel_spin: { path: '/sounds/wheel-spin.mp3', volume: 0.2, debounceMs: 0, loop: true },
+  wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.36, debounceMs: 140 },
+  success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
+  defeat: { path: '/sounds/reject.mp3', volume: 0.22, debounceMs: 280 },
 };
 
+/** Only major moments map to audio. Everything else is intentionally silent. */
 const EVENT_TO_SOUND: Partial<Record<GameSoundEvent, SoundId>> = {
-  ui_hover: 'ui_tap',
-  ui_press: 'ui_tap',
-  ui_back: 'ui_back',
-  ui_confirm: 'ui_confirm',
-  ui_secondary: 'ui_secondary',
-  accept: 'ui_confirm',
-  reject: 'reject',
-  slot_place: 'slot_place',
-  card_lift: 'ui_secondary',
-  card_flip: 'card_flip',
-  card_land: 'ui_tap',
-  reveal_standard: 'reveal',
-  reveal_hidden_s: 'success_rich',
-  keep: 'keep_lock',
-  keep_lock: 'keep_lock',
-  credit_reward: 'success_soft',
-  credit_spend: 'ui_secondary',
-  trade_open: 'ui_secondary',
-  trade_complete: 'success_soft',
-  market_reroll: 'ui_secondary',
-  lineup_complete: 'success_rich',
-  match_go: 'ui_confirm',
-  matchmaking: 'ui_tap',
-  opponent_found: 'success_soft',
-  opponent_reveal: 'reveal',
-  match_calc: 'ui_secondary',
-  battle_round_appear: 'ui_tap',
-  battle_charge: 'ui_secondary',
-  battle_lunge: 'ui_tap',
-  battle_slap: 'slot_place',
-  battle_knockout: 'wheel_stop',
-  battle_counter: 'ui_secondary',
-  battle_round_win: 'success_soft',
-  battle_round_loss: 'reject',
-  victory: 'success_peak',
   perfect_sweep: 'success_peak',
-  defeat: 'reject',
-  trophy_gain: 'success_soft',
-  trophy_loss: 'reject',
-  rank_up: 'success_rich',
-  rank_down: 'reject',
-  unlock: 'success_soft',
-  collect: 'collect',
-  bank_coin: 'success_soft',
-  ticket_print: 'ticket_print',
-  ticket_ding: 'ticket_release',
-  ticket_tear: 'ticket_release',
+  victory: 'success_peak',
+  defeat: 'defeat',
 };
 
 let ctx: AudioContext | null = null;
@@ -192,7 +122,6 @@ function applyMasterVolume(): void {
 
 function masterScale(): number {
   const { sfxVolume, sfxMuted } = getAudioSettings();
-  // Product rule: mute UI removed — still honor stored mute if ever set.
   if (sfxMuted) return 0;
   return Math.min(1, Math.max(0.15, sfxVolume));
 }
@@ -216,7 +145,6 @@ export function unlockGameAudio(): void {
 
 export function syncAudioSettings(): void {
   applyMasterVolume();
-  // Refresh volumes on cached elements when settings change.
   players.forEach((el, id) => {
     const def = SOUND_DEFS[id];
     el.volume = Math.min(1, def.volume * masterScale());
@@ -251,6 +179,9 @@ function ensurePlayer(id: SoundId): HTMLAudioElement | null {
 
 function playSound(id: SoundId, opts?: { force?: boolean }): void {
   if (typeof window === 'undefined') return;
+  const { sfxMuted } = getAudioSettings();
+  if (sfxMuted) return;
+
   const def = SOUND_DEFS[id];
   if (!opts?.force && !canPlay(id, def.debounceMs)) return;
 
@@ -269,8 +200,8 @@ function playSound(id: SoundId, opts?: { force?: boolean }): void {
 
   const result = el.play();
   if (result && typeof result.then === 'function') {
-    result.catch((err: unknown) => {
-      console.error(`[sfx] play() failed for ${id} (${def.path}):`, err);
+    result.catch(() => {
+      /* autoplay / unlock failures are silent */
     });
   }
 }
@@ -286,7 +217,7 @@ function stopSound(id: SoundId): void {
   }
 }
 
-/** Preload the full premium library (and legacy collect wav). */
+/** Preload only the sparse major-moment library. */
 export function preloadGameAudio(): void {
   if (typeof window === 'undefined' || preloaded) return;
   unlockGameAudio();
@@ -301,7 +232,6 @@ export function preloadTicketPrintSound(): void {
   ensurePlayer('ticket_print')?.load();
   ensurePlayer('ticket_release')?.load();
   ensurePlayer('wheel_spin')?.load();
-  ensurePlayer('wheel_tick')?.load();
   ensurePlayer('wheel_stop')?.load();
 }
 
@@ -325,19 +255,19 @@ export function playTicketReleaseSound(): void {
   playSound('ticket_release');
 }
 
-/** Tiny mechanical reel tick — keep sparse; synced from reel progress. */
+/** Wheel ticks are haptic-only — no audio. */
 export function playWheelTickSound(): void {
-  playSound('wheel_tick');
+  /* intentionally silent */
 }
 
-/** Satisfying mechanical stop when reels lock. */
+/** Mechanical stop when reels lock — part of the spin sequence. */
 export function playWheelStopSound(): void {
   playSound('wheel_stop');
 }
 
-/** Extremely subtle snap when a player locks into a roster slot. */
+/** Roster slot place — haptic-only. */
 export function playSlotPlaceSound(): void {
-  playSound('slot_place');
+  /* intentionally silent */
 }
 
 export function playGameSound(
@@ -345,20 +275,10 @@ export function playGameSound(
   _options?: { withCreditReward?: boolean },
 ): void {
   if (typeof window === 'undefined') return;
-
-  // Continuous printer is owned by TicketDispenser start/stop APIs.
   if (event === 'ticket_print') return;
 
   const id = EVENT_TO_SOUND[event];
   if (!id) return;
-
-  // keep + credit: slightly richer, still the same family
-  if (event === 'keep' && _options?.withCreditReward) {
-    playSound('keep_lock');
-    window.setTimeout(() => playSound('success_soft'), 90);
-    return;
-  }
-
   playSound(id);
   void unlocked;
 }

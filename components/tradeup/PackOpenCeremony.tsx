@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { POSITION_LABELS } from '@/lib/tradeup/startingLineup';
 import type { Position } from '@/lib/tradeup/types';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 export type PackCeremonyPhase = 'closed' | 'opening' | 'dealing' | 'open';
 
@@ -176,7 +176,7 @@ export function PackOpenCeremony({
                   <span />
                   <span />
                 </div>
-                <TradeUpLogo size="md" priority className="pack-ceremony__logo" />
+                <BallionWordmark />
                 <p className="pack-ceremony__pack-title">{packTitle}</p>
                 <p className="pack-ceremony__pack-sub">{packSubtitle}</p>
               </motion.div>

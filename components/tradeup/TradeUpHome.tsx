@@ -1,93 +1,74 @@
 'use client';
 
-import { useGameReducedMotion } from '@/hooks/useGameReducedMotion';
-import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent } from 'react';
 import { useSound } from '@/hooks/useSound';
-import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
-import { getBestRosterValue } from '@/lib/tradeup/storage';
-import { HomeBackground } from './home/HomeBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { hapticLight } from '@/lib/tradeup/haptics';
+import { SoundSettings } from './SoundSettings';
 
 interface TradeUpHomeProps {
   onPlay: () => void;
-  launching?: boolean;
+  onHeadToHead: () => void;
 }
 
-export function TradeUpHome({ onPlay, launching = false }: TradeUpHomeProps) {
-  const reduceMotion = useGameReducedMotion();
-  const { resume, playAccept } = useSound();
-  const [personalBest, setPersonalBest] = useState(0);
+/**
+ * $1B RUN home — minimal sport UI: title + two primary mode buttons.
+ */
+export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
+  const { resume } = useSound();
 
-  useEffect(() => {
-    setPersonalBest(getBestRosterValue());
-  }, []);
+  const press = (fn: () => void) => (e: ReactPointerEvent) => {
+    e.preventDefault();
+    resume();
+    hapticLight();
+    fn();
+  };
 
   return (
-    <div
-      className={`tradeup-shell tradeup-shell--home tradeup-shell--hub${
-        launching ? ' is-launching' : ''
-      }`}
-    >
-      <HomeBackground interactive={!launching} />
+    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub run-home run-home--tabbed">
+      <div className="run-home__arena" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="run-home__arena-img"
+          src="/images/home-gym-navy.png?v=1"
+          alt=""
+          decoding="async"
+        />
+        <div className="run-home__arena-wash" />
+      </div>
 
-      <main className="home-menu hub-scroll">
-        <motion.div
-          className="home-menu__stack home-menu__stack--play"
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{
-            opacity: launching ? 0.35 : 1,
-            y: 0,
-            scale: launching ? 0.98 : 1,
-          }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <header className="home-menu__brand">
-            <TradeUpLogo size="hero" priority />
-            <p className="home-menu__goal">Draft a roster worth $1,000,000,000.</p>
-            {personalBest > 0 ? (
-              <p className="home-menu__pb">
-                Personal best <strong>{formatDollarsExact(personalBest)}</strong>
-              </p>
-            ) : null}
-          </header>
+      <div className="run-home__ui">
+        <header className="run-home__top">
+          <p className="run-home__brand">$1B RUN</p>
+          <SoundSettings variant="gear" />
+        </header>
 
-          <motion.button
-            type="button"
-            className={`home-play-cta${launching ? ' is-launching' : ''}`}
-            disabled={launching}
-            onClick={() => {
-              if (launching) return;
-              resume();
-              playAccept();
-              onPlay();
-            }}
-            aria-label="Play"
-            whileHover={
-              reduceMotion || launching
-                ? undefined
-                : {
-                    scale: 1.03,
-                    transition: { type: 'spring', stiffness: 420, damping: 18 },
-                  }
-            }
-            whileTap={
-              reduceMotion || launching
-                ? undefined
-                : { scale: 0.97, transition: { duration: 0.08 } }
-            }
-          >
-            <span className="home-play-cta__glow" aria-hidden />
-            <span className="home-play-cta__wings" aria-hidden />
-            <span className="home-play-cta__label">Play</span>
-            <span className="home-play-cta__wings home-play-cta__wings--right" aria-hidden />
-          </motion.button>
+        <div className="run-home__main">
+          <section className="run-home__hero" aria-label="Challenge">
+            <h1 className="run-home__title">BUILD YOUR $1B FIVE</h1>
+            <p className="run-home__subtitle">Draft five players. Reach $1 billion.</p>
+          </section>
 
-          <p className="home-menu__hint">
-            Print franchise tickets, pick your five from the player list, then feed them into the value chamber.
-          </p>
-        </motion.div>
-      </main>
+          <div className="run-home__modes" role="group" aria-label="Game modes">
+            <button
+              type="button"
+              className="run-btn run-btn--primary"
+              onPointerDown={press(onPlay)}
+            >
+              <strong>CLASSIC RUN</strong>
+              <span>Build a five worth $1 billion</span>
+            </button>
+
+            <button
+              type="button"
+              className="run-btn run-btn--secondary"
+              onPointerDown={press(onHeadToHead)}
+            >
+              <strong>1V1</strong>
+              <span>Build a better five than your opponent</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

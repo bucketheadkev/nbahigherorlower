@@ -1,0 +1,15 @@
+---
+description: When the user ends a message with "ios", run the Capacitor iOS production sync
+alwaysApply: true
+---
+
+# iOS sync shortcut
+
+If the user's message ends with `ios` (as its own last word/token, or the entire message is just `ios`):
+
+1. Run `npm run build:ios` from the project root (`CAPACITOR_BUILD=1 next build && npx cap sync ios`).
+2. Do this after finishing any other work requested in the same message.
+3. If the message is only `ios`, just run the sync — no other changes.
+4. Confirm briefly when sync succeeds (e.g. "iOS production build synced.").
+
+Do not ask for confirmation before running the sync when this shortcut is used.

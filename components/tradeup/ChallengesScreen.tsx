@@ -1,19 +1,19 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BILLION_GOAL, formatDollars } from '@/lib/tradeup/billionDollar';
+import {
+  BILLION_GOAL,
+  formatDollars,
+  formatDollarsExact,
+} from '@/lib/tradeup/billionDollar';
+import { getBillionRuns } from '@/lib/tradeup/billionRuns';
 import {
   getBestFourPlayerSum,
   getBestRosterValue,
-  getBestWorldRank,
 } from '@/lib/tradeup/storage';
-import { HomeBackground } from './home/HomeBackground';
-import { TradeUpLogo } from './TradeUpLogo';
 
 interface ChallengesScreenProps {
-  /** Optional refresh token from parent after a run. */
   personalBest?: number;
-  bestWorldRank?: number;
   bestFourPlayerSum?: number;
 }
 
@@ -23,100 +23,96 @@ interface ChallengeDef {
   blurb: string;
   progress: number;
   goal: number;
-  reward: string;
-}
-
-function rankProgress(bestRank: number, target: number): number {
-  if (bestRank <= 0) return 0;
-  return bestRank <= target ? 1 : 0;
 }
 
 export function ChallengesScreen({
   personalBest,
-  bestWorldRank,
   bestFourPlayerSum,
 }: ChallengesScreenProps) {
   const pb = personalBest ?? getBestRosterValue();
-  const rank = bestWorldRank ?? getBestWorldRank();
   const four = bestFourPlayerSum ?? getBestFourPlayerSum();
+  const billionRuns = useMemo(() => getBillionRuns().length, []);
 
   const challenges = useMemo<ChallengeDef[]>(() => {
     return [
       {
-        id: 'billion-club',
-        title: 'Billion Dollar Club',
-        blurb: `Surpass ${formatDollars(BILLION_GOAL)} in team value on a finished run.`,
+        id: 'hit-1b',
+        title: 'Billion Club',
+        blurb: 'Finish a Classic run worth $1,000,000,000 or more.',
         progress: Math.min(pb, BILLION_GOAL),
         goal: BILLION_GOAL,
-        reward: 'Dynasty crest',
+      },
+      {
+        id: 'hit-1-05b',
+        title: 'Over the Top',
+        blurb: 'Build a five worth $1,050,000,000 or more.',
+        progress: Math.min(pb, 1_050_000_000),
+        goal: 1_050_000_000,
+      },
+      {
+        id: 'hit-1-1b',
+        title: 'Market Peak',
+        blurb: 'Push a finished roster to $1,100,000,000 or more.',
+        progress: Math.min(pb, 1_100_000_000),
+        goal: 1_100_000_000,
+      },
+      {
+        id: 'hit-1-25b',
+        title: 'Supermax Five',
+        blurb: 'Reach $1,250,000,000 or more on a single run.',
+        progress: Math.min(pb, 1_250_000_000),
+        goal: 1_250_000_000,
+      },
+      {
+        id: 'hit-1-5b',
+        title: 'Dynasty Cap',
+        blurb: 'Post $1,500,000,000 or more with your starting five.',
+        progress: Math.min(pb, 1_500_000_000),
+        goal: 1_500_000_000,
       },
       {
         id: 'four-man-billion',
         title: 'Four-Man Fortune',
-        blurb: `Surpass ${formatDollars(BILLION_GOAL)} using only your top four players' combined value.`,
+        blurb: 'Have your top four players alone combine for $1,000,000,000+.',
         progress: Math.min(four, BILLION_GOAL),
         goal: BILLION_GOAL,
-        reward: 'Assay vault skin',
       },
       {
-        id: 'top-100',
-        title: 'World Top 100',
-        blurb: 'Enter the top 100 on the global leaderboard.',
-        progress: rankProgress(rank, 100),
-        goal: 1,
-        reward: '100-club badge',
+        id: 'three-billion-runs',
+        title: 'Repeat Billionaire',
+        blurb: 'Complete 3 separate Classic runs at $1,000,000,000 or more.',
+        progress: Math.min(billionRuns, 3),
+        goal: 3,
       },
       {
-        id: 'top-20',
-        title: 'World Top 20',
-        blurb: 'Climb into the top 20 GMs worldwide.',
-        progress: rankProgress(rank, 20),
-        goal: 1,
-        reward: 'Elite board flair',
-      },
-      {
-        id: 'top-5',
-        title: 'Featured Five',
-        blurb: 'Break into the top 5 on the leaderboard.',
-        progress: rankProgress(rank, 5),
-        goal: 1,
-        reward: 'Featured rival slot',
-      },
-      {
-        id: 'world-number-one',
-        title: 'Number One',
-        blurb: 'Claim #1 ranked in the world.',
-        progress: rankProgress(rank, 1),
-        goal: 1,
-        reward: 'Global crown',
+        id: 'five-billion-runs',
+        title: 'Board Room Regular',
+        blurb: 'Bank 5 billion-dollar squads in My Runs.',
+        progress: Math.min(billionRuns, 5),
+        goal: 5,
       },
     ];
-  }, [four, pb, rank]);
+  }, [billionRuns, four, pb]);
 
   const doneCount = challenges.filter((c) => c.progress >= c.goal).length;
 
   return (
-    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub">
-      <HomeBackground />
-
-      <header className="hub-screen-header">
-        <TradeUpLogo size="xs" />
-        <div className="hub-screen-header__copy">
-          <p className="hub-screen-header__eyebrow">Season Goals</p>
-          <h1 className="hub-screen-header__title">Challenges</h1>
-        </div>
-        <p className="hub-screen-header__meta">
-          {doneCount}/{challenges.length}
+    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub">
+      <header className="oneb-hub__header">
+        <p className="oneb-hub__eyebrow">SEASON GOALS</p>
+        <h1 className="oneb-hub__title">Challenges</h1>
+        <p className="oneb-hub__meta">
+          {doneCount}/{challenges.length} complete
         </p>
       </header>
 
-      <main className="hub-scroll challenges-main">
-        <p className="challenges-intro">
-          Clear billion-dollar milestones and climb the world board. Progress saves with
-          your personal best.
+      <main className="oneb-hub__scroll">
+        <p className="oneb-hub__intro">
+          Hit billion-dollar milestones with your five. Progress tracks your best Classic
+          roster value.
         </p>
 
-        <ul className="challenges-list">
+        <ul className="challenges-list oneb-challenges">
           {challenges.map((challenge) => {
             const complete = challenge.progress >= challenge.goal;
             const pct = Math.min(
@@ -146,10 +142,10 @@ export function ChallengesScreen({
                   aria-valuenow={pct}
                   aria-valuemin={0}
                   aria-valuemax={100}
+                  aria-label={`${challenge.title}: ${formatDollarsExact(challenge.progress)} of goal`}
                 >
                   <span style={{ width: `${pct}%` }} />
                 </div>
-                <p className="challenges-card__reward">Reward · {challenge.reward}</p>
               </li>
             );
           })}

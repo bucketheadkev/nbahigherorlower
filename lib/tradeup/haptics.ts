@@ -39,11 +39,11 @@ const NOTIFY_TYPE_MAP: Record<NotificationType, string> = {
 };
 
 const IMPACT_COOLDOWN_MS: Record<ImpactStyle, number> = {
-  light: 28,
-  soft: 32,
-  medium: 55,
-  rigid: 55,
-  heavy: 80,
+  light: 70,
+  soft: 72,
+  medium: 90,
+  rigid: 90,
+  heavy: 110,
 };
 
 const NOTIFY_COOLDOWN_MS = 120;
@@ -205,7 +205,7 @@ export async function hapticNotification(
 
 /** Fire-and-forget wrappers safe to call from click handlers / rAF. */
 export function hapticTap(): void {
-  void hapticSelection();
+  void hapticImpact('light');
 }
 
 export function hapticLight(): void {
@@ -224,6 +224,14 @@ export function hapticSuccess(): void {
   void hapticNotification('success');
 }
 
+export function hapticWarning(): void {
+  void hapticNotification('warning');
+}
+
+export function hapticError(): void {
+  void hapticNotification('error');
+}
+
 /** Call once when a prize wheel / ticket reel begins spinning. */
 export function hapticWheelStart(): void {
   spinActive = true;
@@ -240,19 +248,31 @@ export function hapticWheelTick(offsetItems: number): void {
   if (!spinActive) return;
   const idx = Math.floor(offsetItems);
   if (idx <= lastTickIndex) return;
-  if (lastTickIndex >= 0 && idx - lastTickIndex > 3) {
+  // Skip bursts — only one tick per discrete cell, and skip if we jumped many cells
+  if (lastTickIndex >= 0 && idx - lastTickIndex > 2) {
     lastTickIndex = idx;
     return;
   }
   lastTickIndex = idx;
+  // Fire-and-forget; never await on the animation thread
   void hapticImpact('light');
 }
 
-/** Stronger success feel when the final result locks. */
+/** Alias — spinner selection ticks. */
+export function hapticSpinTick(offsetItems: number): void {
+  hapticWheelTick(offsetItems);
+}
+
+/** Stronger lock feel when the final result settles. */
 export function hapticWheelStop(): void {
   spinActive = false;
   lastTickIndex = -1;
-  void hapticNotification('success');
+  void hapticImpact('heavy');
+}
+
+/** Alias — spinner stop lock. */
+export function hapticSpinStop(): void {
+  hapticWheelStop();
 }
 
 /** Short crisp confirm when a player locks into a roster slot. */
@@ -261,19 +281,20 @@ export function hapticSlotConfirm(): void {
 }
 
 export function hapticTicketPrint(): void {
-  void hapticImpact('light');
-}
-
-export function hapticPlayerReveal(): void {
   void hapticImpact('medium');
 }
 
-export function hapticTicketInsert(): void {
+export function hapticPlayerReveal(): void {
   void hapticImpact('light');
 }
 
+export function hapticTicketInsert(): void {
+  void hapticImpact('medium');
+}
+
+/** One light pulse when a player value finishes counting — never during count-up. */
 export function hapticValueComplete(): void {
-  void hapticNotification('success');
+  void hapticImpact('light');
 }
 
 /** Cancel any in-flight web vibrate pattern (Android only). */

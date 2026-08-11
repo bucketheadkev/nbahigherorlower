@@ -1,6 +1,6 @@
 const config = {
   appId: 'com.kova.pickfive',
-  appName: 'PickFive',
+  appName: '$1B',
   webDir: 'out',
 };
 

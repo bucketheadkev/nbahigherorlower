@@ -1,6 +1,6 @@
 'use client';
 
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 interface TradeUpErrorProps {
   message: string;
@@ -11,7 +11,7 @@ export function TradeUpError({ message, onRetry }: TradeUpErrorProps) {
   return (
     <div className="tradeup-shell">
       <header className="tradeup-header">
-        <TradeUpLogo size="sm" />
+        <BallionWordmark />
       </header>
       <div className="tradeup-error">
         <p className="tradeup-error-title">Something went wrong</p>

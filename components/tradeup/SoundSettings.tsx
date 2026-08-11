@@ -1,125 +1,273 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useSound } from '@/hooks/useSound';
+import { hapticTap } from '@/lib/tradeup/haptics';
+import {
+  getH2HUsername,
+  isValidH2HUsername,
+  setH2HUsername,
+} from '@/lib/tradeup/h2hUsername';
 
-export function SoundSettings() {
+interface SoundSettingsProps {
+  /** Compact gear on redesigned home; text toggle elsewhere. */
+  variant?: 'gear' | 'text';
+}
+
+/**
+ * Feedback settings — Sound Effects + Haptics (+ H2H username).
+ * Gear variant opens a right-edge drawer.
+ */
+export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   const {
     muted,
-    sfxVolume,
-    musicMuted,
-    musicVolume,
     hapticsEnabled,
     toggleMute,
-    setSfxVolume,
-    toggleMusicMute,
-    setMusicVolume,
     toggleHaptics,
     resume,
   } = useSound();
   const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setUsername(getH2HUsername() ?? '');
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        if (editingName) {
+          setEditingName(false);
+          setNameError(null);
+          return;
+        }
+        setOpen(false);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, editingName]);
+
+  const close = () => {
+    setEditingName(false);
+    setNameError(null);
+    setOpen(false);
+  };
+
+  const closeNameModal = () => {
+    setEditingName(false);
+    setNameError(null);
+  };
+
+  const saveName = (e?: FormEvent) => {
+    e?.preventDefault();
+    if (!isValidH2HUsername(draftName)) {
+      setNameError('Use 2–16 letters or numbers.');
+      return;
+    }
+    const saved = setH2HUsername(draftName);
+    if (!saved) {
+      setNameError('That name can’t be used.');
+      return;
+    }
+    setUsername(saved);
+    setEditingName(false);
+    setNameError(null);
+    hapticTap();
+  };
+
+  const openNameModal = () => {
+    resume();
+    hapticTap();
+    setDraftName(username);
+    setEditingName(true);
+    setNameError(null);
+  };
+
+  const settingsBody = (
+    <>
+      <label className="sound-settings__row">
+        <span>Sound Effects</span>
+        <button
+          type="button"
+          className={`tu-btn tu-btn--secondary sound-settings__switch${muted ? '' : ' is-on'}`}
+          onPointerDown={() => {
+            resume();
+            hapticTap();
+            toggleMute();
+          }}
+        >
+          {muted ? 'Off' : 'On'}
+        </button>
+      </label>
+
+      <label className="sound-settings__row">
+        <span>Haptics</span>
+        <button
+          type="button"
+          className={`tu-btn tu-btn--secondary sound-settings__switch${hapticsEnabled ? ' is-on' : ''}`}
+          onPointerDown={() => {
+            resume();
+            hapticTap();
+            toggleHaptics();
+          }}
+        >
+          {hapticsEnabled ? 'On' : 'Off'}
+        </button>
+      </label>
+
+      <div className="sound-settings__row sound-settings__row--stack">
+        <span>Head-to-Head Name</span>
+        <button
+          type="button"
+          className="tu-btn tu-btn--secondary sound-settings__switch"
+          onPointerDown={openNameModal}
+        >
+          {username || 'Set name'}
+        </button>
+      </div>
+    </>
+  );
+
+  const nameModal = editingName ? (
+    <div
+      className="settings-name-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit head-to-head name"
+    >
+      <button
+        type="button"
+        className="settings-name-modal__scrim"
+        aria-label="Close"
+        onPointerDown={closeNameModal}
+      />
+      <form className="settings-name-modal__card" onSubmit={saveName}>
+        <p className="settings-name-modal__kicker">1V1</p>
+        <h3 className="settings-name-modal__title">Head-to-Head Name</h3>
+        <p className="settings-name-modal__copy">
+          This is the name opponents will see.
+        </p>
+        <label className="settings-name-modal__field">
+          <span>YOUR USERNAME</span>
+          <input
+            value={draftName}
+            maxLength={16}
+            autoFocus
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="ClutchKev"
+            onChange={(e) => {
+              setDraftName(e.target.value);
+              setNameError(null);
+            }}
+          />
+        </label>
+        {nameError ? <p className="settings-name-modal__error">{nameError}</p> : null}
+        <div className="settings-name-modal__actions">
+          <button
+            type="button"
+            className="settings-name-modal__cancel"
+            onPointerDown={closeNameModal}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="settings-name-modal__save">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  ) : null;
+
+  if (variant === 'gear') {
+    return (
+      <div className="sound-settings sound-settings--ballion sound-settings--gear">
+        <button
+          type="button"
+          className="sound-settings__gear"
+          aria-expanded={open}
+          aria-label="Settings"
+          onPointerDown={() => {
+            resume();
+            hapticTap();
+            setOpen(true);
+            setEditingName(false);
+            setNameError(null);
+          }}
+        >
+          <svg
+            className="sound-settings__gear-icon"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
+            <path
+              d="M5 7h14M5 12h14M5 17h14"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+
+        {open ? (
+          <div className="settings-drawer" role="dialog" aria-modal="true" aria-label="Settings">
+            <button
+              type="button"
+              className="settings-drawer__scrim"
+              aria-label="Close settings"
+              onPointerDown={close}
+            />
+            <aside className="settings-drawer__panel">
+              <header className="settings-drawer__header">
+                <h2>Settings</h2>
+                <button
+                  type="button"
+                  className="settings-drawer__close"
+                  aria-label="Close"
+                  onPointerDown={close}
+                >
+                  ✕
+                </button>
+              </header>
+              <div className="settings-drawer__body">{settingsBody}</div>
+            </aside>
+            {nameModal}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
-    <div className="sound-settings">
+    <div className="sound-settings sound-settings--ballion">
       <button
         type="button"
         className="sound-settings__toggle tu-btn tu-btn--ghost"
         aria-expanded={open}
-        aria-label={muted ? 'Sound settings, muted' : 'Sound settings'}
-        onClick={() => {
+        aria-label="Settings"
+        onPointerDown={() => {
           resume();
+          hapticTap();
           setOpen((value) => !value);
+          setEditingName(false);
+          setNameError(null);
         }}
       >
-        {muted ? 'Sound Off' : 'Sound'}
+        Settings
       </button>
 
       {open ? (
-        <div className="sound-settings__panel" role="dialog" aria-label="Sound settings">
-          <label className="sound-settings__row">
-            <span>Sound effects</span>
-            <button
-              type="button"
-              className={`tu-btn tu-btn--secondary sound-settings__switch${muted ? '' : ' is-on'}`}
-              onClick={() => {
-                resume();
-                toggleMute();
-              }}
-            >
-              {muted ? 'Off' : 'On'}
-            </button>
-          </label>
-
-          <label className="sound-settings__row">
-            <span>SFX volume</span>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={sfxVolume}
-              disabled={muted}
-              onChange={(event) => {
-                resume();
-                setSfxVolume(Number(event.target.value));
-              }}
-            />
-          </label>
-
-          <label className="sound-settings__row">
-            <span>Music</span>
-            <button
-              type="button"
-              className={`tu-btn tu-btn--secondary sound-settings__switch${musicMuted ? '' : ' is-on'}`}
-              onClick={() => {
-                resume();
-                toggleMusicMute();
-              }}
-            >
-              {musicMuted ? 'Off' : 'On'}
-            </button>
-          </label>
-
-          <label className="sound-settings__row">
-            <span>Music volume</span>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={musicVolume}
-              disabled={musicMuted}
-              onChange={(event) => {
-                resume();
-                setMusicVolume(Number(event.target.value));
-              }}
-            />
-          </label>
-
-          <label className="sound-settings__row">
-            <span>Haptics</span>
-            <button
-              type="button"
-              className={`tu-btn tu-btn--secondary sound-settings__switch${hapticsEnabled ? ' is-on' : ''}`}
-              onClick={() => {
-                resume();
-                toggleHaptics();
-              }}
-            >
-              {hapticsEnabled ? 'On' : 'Off'}
-            </button>
-          </label>
+        <div className="sound-settings__panel" role="dialog" aria-label="Settings">
+          {settingsBody}
         </div>
       ) : null}
+      {nameModal}
     </div>
   );
 }

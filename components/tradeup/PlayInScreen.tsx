@@ -12,7 +12,7 @@ import {
 import { useSound } from '@/hooks/useSound';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 import { formatUserTeamLabel, type UserTeamIdentity } from '@/lib/tradeup/userTeam';
 
 interface PlayInScreenProps {
@@ -83,7 +83,7 @@ export function PlayInScreen({
 
       <main className="playin-screen__content">
         <header className="playin-screen__header">
-          <TradeUpLogo size="xs" className="game-screen-brand" />
+          <BallionWordmark />
           <p className="playin-screen__eyebrow">Play-In Tournament</p>
           <h1 className="playin-screen__title">{playInSeedLabel(seed)}</h1>
           <p className="playin-screen__season">

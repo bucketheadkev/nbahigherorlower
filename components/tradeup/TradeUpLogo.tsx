@@ -2,7 +2,10 @@
 
 import Image from 'next/image';
 
-const LOGO_SRC = '/images/trade-up-logo.png?v=2';
+/** Official $1B logo mark (transparent crop). */
+export const BALLION_LOGO_SRC = '/images/1b-logo.png?v=2';
+/** Splash / launch mark — $1B RUN on brand navy. */
+export const BALLION_SPLASH_LOGO_SRC = '/images/1b-run-splash.png?v=1';
 
 const SIZE_CLASS = {
   hero: 'tradeup-logo--hero',
@@ -11,41 +14,47 @@ const SIZE_CLASS = {
   xs: 'tradeup-logo--xs',
 } as const;
 
-export type TradeUpLogoSize = keyof typeof SIZE_CLASS;
+export type BallionLogoSize = keyof typeof SIZE_CLASS;
 
-interface TradeUpLogoProps {
-  size?: TradeUpLogoSize;
+interface BallionLogoProps {
+  size?: BallionLogoSize;
   className?: string;
   priority?: boolean;
 }
 
-/** Official Trade Up logo mark — use on home, headers, loading, and watermarks. */
-export function TradeUpLogo({
+/** Official $1B logo — headers, loading, watermarks. */
+export function BallionLogo({
   size = 'md',
   className = '',
   priority = false,
-}: TradeUpLogoProps) {
+}: BallionLogoProps) {
   return (
     <div
-      className={`tradeup-logo ${SIZE_CLASS[size]}${className ? ` ${className}` : ''}`}
+      className={`tradeup-logo ballion-logo oneb-logo ${SIZE_CLASS[size]}${
+        className ? ` ${className}` : ''
+      }`}
       aria-hidden={size === 'xs'}
     >
       <Image
-        src={LOGO_SRC}
-        alt="Trade Up"
+        src={BALLION_LOGO_SRC}
+        alt="$1B logo"
         fill
         sizes={
           size === 'hero'
-            ? '(max-width: 640px) 88vw, 22rem'
+            ? '(max-width: 640px) 72vw, 18rem'
             : size === 'md'
-              ? '12rem'
+              ? '10rem'
               : size === 'sm'
-                ? '7rem'
-                : '4rem'
+                ? '6.5rem'
+                : '3.5rem'
         }
         priority={priority}
-        className="tradeup-logo__img"
+        className="tradeup-logo__img ballion-logo__img"
       />
     </div>
   );
 }
+
+/** @deprecated Use BallionLogo — kept so existing imports keep working. */
+export const TradeUpLogo = BallionLogo;
+export type TradeUpLogoSize = BallionLogoSize;

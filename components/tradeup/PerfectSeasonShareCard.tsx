@@ -40,7 +40,7 @@ function drawShareImage(lineup: string[]): Promise<Blob | null> {
   ctx.fillStyle = '#ead78f';
   ctx.font = '700 42px system-ui, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('TRADE UP', width / 2, 140);
+  ctx.fillText('BALLION', width / 2, 140);
 
   ctx.fillStyle = '#fff4b8';
   ctx.font = '850 56px system-ui, sans-serif';
@@ -113,7 +113,7 @@ export function PerfectSeasonShareCard({ lineup }: PerfectSeasonShareCardProps) 
 
       if (file && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
-          title: 'Trade Up — Perfect Season',
+          title: 'Ballion — Perfect Season',
           text,
           files: [file],
         });
@@ -122,7 +122,7 @@ export function PerfectSeasonShareCard({ lineup }: PerfectSeasonShareCardProps) 
       }
 
       if (navigator.share) {
-        await navigator.share({ title: 'Trade Up — Perfect Season', text });
+        await navigator.share({ title: 'Ballion — Perfect Season', text });
         setStatus('Shared');
         return;
       }
@@ -157,7 +157,7 @@ export function PerfectSeasonShareCard({ lineup }: PerfectSeasonShareCardProps) 
   return (
     <div className="perfect-share">
       <article className="perfect-share__card" aria-label="Shareable perfect season result">
-        <p className="perfect-share__eyebrow">Trade Up</p>
+        <p className="perfect-share__eyebrow">Ballion</p>
         <ChampionshipRingVisual size="lg" />
         <h3 className="perfect-share__title">Perfect Season</h3>
         <p className="perfect-share__record">82–0</p>

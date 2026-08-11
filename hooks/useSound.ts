@@ -17,12 +17,18 @@ import {
   type GameSoundEvent,
 } from '@/lib/tradeup/gameAudio';
 import {
+  hapticError,
   hapticMedium,
   hapticPlayerReveal,
   hapticSuccess,
   hapticTap,
+  hapticWarning,
 } from '@/lib/tradeup/haptics';
 
+/**
+ * Sound + haptics settings hook.
+ * UI / navigation helpers are haptic-only — audio reserved for major moments.
+ */
 export function useSound() {
   const [muted, setMutedState] = useState(false);
   const [sfxVolume, setSfxVolumeState] = useState(0.55);
@@ -87,84 +93,76 @@ export function useSound() {
   );
 
   const playTap = useCallback(() => {
-    play('ui_press');
     hapticTap();
-  }, [play]);
+  }, []);
   const playAccept = useCallback(() => {
-    play('ui_confirm');
     hapticTap();
-  }, [play]);
-  const playBankCoin = useCallback(() => play('bank_coin'), [play]);
+  }, []);
+  const playBankCoin = useCallback(() => {
+    /* silent — haptic elsewhere if needed */
+  }, []);
   const playReject = useCallback(() => {
-    play('reject');
-    hapticTap();
-  }, [play]);
+    hapticError();
+  }, []);
   const playCardFlip = useCallback(() => {
-    play('card_flip');
     hapticMedium();
-  }, [play]);
+  }, []);
   const playCardLift = useCallback(() => {
-    play('card_lift');
     hapticTap();
-  }, [play]);
-  const playCardLand = useCallback(() => play('card_land'), [play]);
+  }, []);
+  const playCardLand = useCallback(() => {}, []);
   const playCardPickup = useCallback(() => {
-    play('card_lift');
     hapticTap();
-  }, [play]);
+  }, []);
   const playRevealImpact = useCallback(
-    (strength: 'standard' | 'strong' | 'elite' = 'standard') => {
-      if (strength === 'elite' || strength === 'strong') {
-        play('reveal_hidden_s');
-        hapticPlayerReveal();
-      } else {
-        hapticPlayerReveal();
-      }
+    (_strength: 'standard' | 'strong' | 'elite' = 'standard') => {
+      hapticPlayerReveal();
     },
-    [play],
+    [],
   );
-  const playLifeGain = useCallback(() => play('credit_reward'), [play]);
-  const playLifeLost = useCallback(() => play('reject'), [play]);
-  const playUnlock = useCallback(() => play('unlock'), [play]);
-  /** Retired for Keep — kept for store/collection only. */
-  const playSellCredits = useCallback(() => play('credit_reward'), [play]);
-  const playAddCollection = useCallback(() => play('collect'), [play]);
-  const playSeasonSimulation = useCallback(() => play('match_calc'), [play]);
+  const playLifeGain = useCallback(() => {}, []);
+  const playLifeLost = useCallback(() => {
+    hapticWarning();
+  }, []);
+  const playUnlock = useCallback(() => {}, []);
+  const playSellCredits = useCallback(() => {}, []);
+  const playAddCollection = useCallback(() => {}, []);
+  const playSeasonSimulation = useCallback(() => {}, []);
   const playChampionship = useCallback(() => {
     play('victory');
     hapticSuccess();
   }, [play]);
 
-  const playKeep = useCallback((withCreditReward: boolean) => {
-    play(withCreditReward ? 'keep' : 'keep_lock', { withCreditReward });
+  const playKeep = useCallback((_withCreditReward?: boolean) => {
     hapticMedium();
-  }, [play]);
+  }, []);
 
-  const playTradeOpen = useCallback(() => play('trade_open'), [play]);
+  const playTradeOpen = useCallback(() => {}, []);
   const playTradeComplete = useCallback(() => {
-    play('trade_complete');
     hapticMedium();
-  }, [play]);
-  const playMarketReroll = useCallback(() => play('market_reroll'), [play]);
-  const playLineupComplete = useCallback(() => play('lineup_complete'), [play]);
-  const playMatchmaking = useCallback(() => play('matchmaking'), [play]);
-  const playOpponentFound = useCallback(() => play('opponent_found'), [play]);
+  }, []);
+  const playMarketReroll = useCallback(() => {
+    hapticMedium();
+  }, []);
+  const playLineupComplete = useCallback(() => {
+    hapticMedium();
+  }, []);
+  const playMatchmaking = useCallback(() => {}, []);
+  const playOpponentFound = useCallback(() => {}, []);
   const playOpponentReveal = useCallback(() => {
-    play('opponent_reveal');
     hapticPlayerReveal();
-  }, [play]);
-  const playMatchCalc = useCallback(() => play('match_calc'), [play]);
-  const playBattleRoundAppear = useCallback(() => play('battle_round_appear'), [play]);
-  const playBattleCharge = useCallback(() => play('battle_charge'), [play]);
-  const playBattleLunge = useCallback(() => play('battle_lunge'), [play]);
+  }, []);
+  const playMatchCalc = useCallback(() => {}, []);
+  const playBattleRoundAppear = useCallback(() => {}, []);
+  const playBattleCharge = useCallback(() => {}, []);
+  const playBattleLunge = useCallback(() => {}, []);
   const playBattleSlap = useCallback(() => {
-    play('battle_slap');
     hapticMedium();
-  }, [play]);
-  const playBattleKnockout = useCallback(() => play('battle_knockout'), [play]);
-  const playBattleCounter = useCallback(() => play('battle_counter'), [play]);
-  const playBattleRoundWin = useCallback(() => play('battle_round_win'), [play]);
-  const playBattleRoundLoss = useCallback(() => play('battle_round_loss'), [play]);
+  }, []);
+  const playBattleKnockout = useCallback(() => {}, []);
+  const playBattleCounter = useCallback(() => {}, []);
+  const playBattleRoundWin = useCallback(() => {}, []);
+  const playBattleRoundLoss = useCallback(() => {}, []);
   const playVictory = useCallback(() => {
     play('victory');
     hapticSuccess();
@@ -173,19 +171,20 @@ export function useSound() {
     play('perfect_sweep');
     hapticSuccess();
   }, [play]);
-  const playDefeat = useCallback(() => play('defeat'), [play]);
-  const playTrophyGain = useCallback(() => play('trophy_gain'), [play]);
-  const playTrophyLoss = useCallback(() => play('trophy_loss'), [play]);
+  const playDefeat = useCallback(() => {
+    play('defeat');
+    hapticWarning();
+  }, [play]);
+  const playTrophyGain = useCallback(() => {}, []);
+  const playTrophyLoss = useCallback(() => {}, []);
   const playRankUp = useCallback(() => {
-    play('rank_up');
     hapticSuccess();
-  }, [play]);
-  const playRankDown = useCallback(() => play('rank_down'), [play]);
+  }, []);
+  const playRankDown = useCallback(() => {}, []);
   const playUiBack = useCallback(() => {
-    play('ui_back');
     hapticTap();
-  }, [play]);
-  const playCreditSpend = useCallback(() => play('credit_spend'), [play]);
+  }, []);
+  const playCreditSpend = useCallback(() => {}, []);
 
   return {
     muted,

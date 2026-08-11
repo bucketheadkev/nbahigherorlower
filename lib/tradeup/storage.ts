@@ -273,7 +273,7 @@ export function buildShareText(
   gmTitle: string,
 ): string {
   const chain = path.join(' → ');
-  return `Trade Up 🏀\nGM Score: ${gmScore} — ${gmTitle}\n${chain}\n${trades} successful trades`;
+  return `Ballion 🏀\nGM Score: ${gmScore} — ${gmTitle}\n${chain}\n${trades} successful trades`;
 }
 
 export { VALID_STARTING_TIERS };

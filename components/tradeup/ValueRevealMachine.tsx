@@ -1,17 +1,14 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react';
 import {
   BILLION_GOAL,
-  formatDollars,
   formatDollarsExact,
   getDollarValue,
   type ValuedPlayer,
@@ -19,43 +16,27 @@ import {
 import { playGameSound } from '@/lib/tradeup/gameAudio';
 import {
   hapticCancel,
-  hapticHeavy,
+  hapticPlayerReveal,
   hapticSuccess,
-  hapticTicketInsert,
+  hapticTap,
   hapticValueComplete,
+  hapticWarning,
 } from '@/lib/tradeup/haptics';
-import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
-import { getTeamColors } from '@/lib/tradeup/teamColors';
-import type { Position } from '@/lib/tradeup/types';
 import {
-  WORLD_POOL_SIZE,
-  formatWorldRank,
-} from '@/lib/tradeup/worldLeaderboard';
+  cancelFrame,
+  easeOutCubic,
+  scheduleFrame,
+} from '@/lib/tradeup/perf/rafClock';
+import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
+import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 
-type RevealStage =
-  | 'ready'
-  | 'inserting'
-  | 'reading'
-  | 'projecting'
-  | 'calculating'
-  | 'counting'
-  | 'complete';
-
-type TicketPhase = 'hidden' | 'ready' | 'inserting' | 'gone';
+type RevealStage = 'ready' | 'reading' | 'adding' | 'results';
 
 interface ValueRevealMachineProps {
   roster: ValuedPlayer[];
   reduceMotion?: boolean;
-  personalBest?: number;
-  isNewPersonalBest?: boolean;
-  worldRank?: number;
-  /** Start automatic sequential feed on mount (default after fifth player). */
   autoStart?: boolean;
-  onComplete: (payload: { teamValue: number }) => {
-    personalBest?: number;
-    isNewPersonalBest?: boolean;
-    worldRank?: number;
-  };
+  onComplete: (payload: { teamValue: number }) => void;
   onExit: () => void;
   onPlayAgain: () => void;
 }
@@ -67,43 +48,14 @@ function playerInitials(name: string): string {
   return `${parts[0]![0] ?? ''}${parts[parts.length - 1]![0] ?? ''}`.toUpperCase();
 }
 
+function firstName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts[0] ?? name;
+}
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
-  });
-}
-
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
-/** Fast rise early, soft landing near the end. */
-function easeOutExpo(t: number) {
-  const x = Math.min(1, Math.max(0, t));
-  return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
-}
-
-function animateFeedIn(
-  from: number,
-  to: number,
-  ms: number,
-  onFrame: (feed: number) => void,
-  reduceMotion: boolean,
-): Promise<void> {
-  return new Promise((resolve) => {
-    if (reduceMotion || ms < 40) {
-      onFrame(to);
-      resolve();
-      return;
-    }
-    const t0 = performance.now();
-    const step = (now: number) => {
-      const t = Math.min(1, (now - t0) / ms);
-      onFrame(from + (to - from) * easeInOutCubic(t));
-      if (t < 1) requestAnimationFrame(step);
-      else resolve();
-    };
-    requestAnimationFrame(step);
   });
 }
 
@@ -114,31 +66,17 @@ function projectedTotal(fedValues: number[]): number {
 }
 
 /**
- * Assay Vault — feed tickets, show ON PACE FOR projections, then final count-up.
- * Never reveals per-player dollar values during the feed sequence.
+ * Value Chamber — reads each rostered player PG→C (2s reading + 2s green add).
+ * No ticket feed animation. Results on a clean white roster page.
  */
 export function ValueRevealMachine({
   roster,
   reduceMotion = false,
-  personalBest = 0,
-  isNewPersonalBest = false,
-  worldRank = 0,
   autoStart = false,
   onComplete,
   onExit,
   onPlayAgain,
 }: ValueRevealMachineProps) {
-  const byId = useMemo(() => new Map(roster.map((p) => [p.id, p])), [roster]);
-
-  const slotPlayers = useMemo(() => {
-    const map = new Map<Position, ValuedPlayer>();
-    LINEUP_POSITIONS.forEach((pos, i) => {
-      const p = roster[i];
-      if (p) map.set(pos, p);
-    });
-    return map;
-  }, [roster]);
-
   const teamValue = useMemo(
     () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
     [roster],
@@ -146,288 +84,200 @@ export function ValueRevealMachine({
   const isBillion = teamValue >= BILLION_GOAL;
   const shortfall = Math.max(0, BILLION_GOAL - teamValue);
 
-  const [fedIds, setFedIds] = useState<Set<string>>(() => new Set());
   const [stage, setStage] = useState<RevealStage>('ready');
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [processed, setProcessed] = useState(0);
   const [projected, setProjected] = useState(0);
-  const [displayFinal, setDisplayFinal] = useState(0);
-  const [activePlayer, setActivePlayer] = useState<ValuedPlayer | null>(null);
-  const [activeSlot, setActiveSlot] = useState<Position | null>(null);
-  const [ticketPhase, setTicketPhase] = useState<TicketPhase>('hidden');
-  const [ticketQuick, setTicketQuick] = useState(false);
-  const [insertFeed, setInsertFeed] = useState(1);
-  const [busy, setBusy] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [showSuccessBurst, setShowSuccessBurst] = useState(false);
-  const [resultReady, setResultReady] = useState(false);
+  const [addFlash, setAddFlash] = useState<number | null>(null);
 
   const busyRef = useRef(false);
-  const projectedRef = useRef(0);
-  const finalRef = useRef(0);
+  const skipRef = useRef(false);
+  const totalRef = useRef(0);
   const completedRef = useRef(false);
   const autoStartedRef = useRef(false);
-  const shareCardRef = useRef<HTMLDivElement | null>(null);
-  const projRafRef = useRef(0);
   const countRafRef = useRef(0);
+  const totalElRef = useRef<HTMLParagraphElement | null>(null);
+  const paceElRef = useRef<HTMLSpanElement | null>(null);
+  const addElRef = useRef<HTMLParagraphElement | null>(null);
 
-  const remaining = useMemo(
-    () => roster.filter((p) => !fedIds.has(p.id)),
-    [roster, fedIds],
-  );
+  const activePlayer = activeIndex >= 0 ? roster[activeIndex] ?? null : null;
+  const activeSlot =
+    activeIndex >= 0 ? LINEUP_POSITIONS[activeIndex] ?? null : null;
 
-  const [resultMeta, setResultMeta] = useState({
-    personalBest,
-    isNewPersonalBest,
-    worldRank,
-  });
+  const paintTotal = useCallback((n: number) => {
+    totalRef.current = n;
+    if (totalElRef.current) {
+      totalElRef.current.textContent = formatDollarsExact(n);
+    }
+  }, []);
+
+  const paintPace = useCallback((n: number) => {
+    if (paceElRef.current) {
+      paceElRef.current.textContent = formatDollarsExact(n);
+    }
+  }, []);
 
   useEffect(
     () => () => {
-      cancelAnimationFrame(projRafRef.current);
-      cancelAnimationFrame(countRafRef.current);
+      cancelFrame(countRafRef.current);
       hapticCancel();
     },
     [],
   );
 
-  const animateProjectedTo = useCallback(
-    (target: number, ms: number) =>
-      new Promise<void>((resolve) => {
-        cancelAnimationFrame(projRafRef.current);
-        if (reduceMotion || ms < 60) {
-          projectedRef.current = target;
-          setProjected(target);
-          resolve();
-          return;
-        }
-        const start = projectedRef.current;
-        const t0 = performance.now();
-        let lastPaint = 0;
-        const step = (now: number) => {
-          const t = Math.min(1, (now - t0) / ms);
-          const next = Math.round(start + (target - start) * easeInOutCubic(t));
-          projectedRef.current = next;
-          // Throttle React paints ~30fps for iPhone smoothness
-          if (now - lastPaint >= 32 || t >= 1) {
-            lastPaint = now;
-            setProjected(next);
-          }
-          if (t < 1) {
-            projRafRef.current = requestAnimationFrame(step);
-          } else {
-            setProjected(target);
-            resolve();
-          }
-        };
-        projRafRef.current = requestAnimationFrame(step);
-      }),
-    [reduceMotion],
-  );
+  useEffect(() => {
+    paintTotal(0);
+    paintPace(0);
+  }, [paintPace, paintTotal]);
 
-  const animateFinalCount = useCallback(
-    (target: number, ms: number) =>
+  const animateTotalTo = useCallback(
+    (from: number, to: number, ms: number) =>
       new Promise<void>((resolve) => {
-        cancelAnimationFrame(countRafRef.current);
-        finalRef.current = 0;
-        setDisplayFinal(0);
-        if (reduceMotion || ms < 80) {
-          finalRef.current = target;
-          setDisplayFinal(target);
+        cancelFrame(countRafRef.current);
+        if (skipRef.current || reduceMotion || ms < 60) {
+          paintTotal(to);
           resolve();
           return;
         }
         const t0 = performance.now();
-        let lastPaint = 0;
         const step = (now: number) => {
-          const t = Math.min(1, (now - t0) / ms);
-          // Accelerate early, decelerate into the exact final
-          const eased = easeOutExpo(t);
-          const next =
-            t >= 1 ? target : Math.round(target * eased);
-          finalRef.current = next;
-          if (now - lastPaint >= 32 || t >= 1) {
-            lastPaint = now;
-            setDisplayFinal(next);
-          }
-          if (t < 1) {
-            countRafRef.current = requestAnimationFrame(step);
-          } else {
-            setDisplayFinal(target);
+          if (skipRef.current) {
+            paintTotal(to);
             resolve();
+            return;
           }
+          const t = Math.min(1, (now - t0) / ms);
+          paintTotal(Math.round(from + (to - from) * easeOutCubic(t)));
+          if (t < 1) {
+            countRafRef.current = scheduleFrame(step);
+            return;
+          }
+          paintTotal(to);
+          resolve();
         };
-        countRafRef.current = requestAnimationFrame(step);
+        countRafRef.current = scheduleFrame(step);
       }),
-    [reduceMotion],
+    [paintTotal, reduceMotion],
   );
 
-  const runInsertCycle = useCallback(
-    async (
-      player: ValuedPlayer,
-      slot: Position | null,
-      alreadyFed: Set<string>,
-      quick: boolean,
-    ) => {
-      const nextFed = new Set(alreadyFed);
-      nextFed.add(player.id);
-      const fedValues = [...nextFed].map((id) => {
-        const p = byId.get(id);
-        return p ? getDollarValue(p) : 0;
-      });
-      const nextProjection = projectedTotal(fedValues);
-
-      setActivePlayer(player);
-      setActiveSlot(slot);
-      setTicketQuick(quick);
-      setStage('inserting');
-      setInsertFeed(1);
-      setTicketPhase('ready');
-
-      const presentMs = reduceMotion ? 40 : quick ? 280 : 420;
-      const insertMs = reduceMotion ? 90 : quick ? 720 : 900;
-      const readMs = reduceMotion ? 50 : quick ? 180 : 260;
-      const projMs = reduceMotion ? 80 : quick ? 360 : 480;
-      const holdMs = reduceMotion ? 40 : quick ? 200 : 280;
-
-      await wait(presentMs);
-      setTicketPhase('inserting');
-      hapticTicketInsert();
-      playGameSound('slot_place');
-
-      await animateFeedIn(1, 0, insertMs, setInsertFeed, reduceMotion);
-      setTicketPhase('gone');
-
-      setStage('reading');
-      await wait(readMs);
-
-      setActivePlayer(null);
-      setActiveSlot(null);
-      setTicketPhase('hidden');
-      setInsertFeed(1);
-      setFedIds(new Set(nextFed));
-
-      setStage('projecting');
-      playGameSound('reveal_standard');
-      await animateProjectedTo(nextProjection, projMs);
-      await wait(holdMs);
-
-      return nextFed;
-    },
-    [animateProjectedTo, byId, reduceMotion],
-  );
-
-  const finishLineup = useCallback(async () => {
-    // Remove projection → calculating
-    setStage('calculating');
-    playGameSound('match_calc');
-    hapticHeavy();
-    await wait(reduceMotion ? 160 : 560);
-    hapticHeavy();
-    await wait(reduceMotion ? 60 : 220);
-
-    // Count from $0 → true total
-    setStage('counting');
-    playGameSound('reveal_standard');
-    const countMs = reduceMotion ? 180 : 1800;
-    await animateFinalCount(teamValue, countMs);
-
-    // Land exactly, then result
-    finalRef.current = teamValue;
-    setDisplayFinal(teamValue);
-    hapticValueComplete();
+  const finishToResults = useCallback(() => {
+    paintTotal(teamValue);
+    setActiveIndex(-1);
+    setProcessed(LINEUP_POSITIONS.length);
+    setAddFlash(null);
+    setProjected(teamValue);
+    paintPace(teamValue);
+    setStage('results');
+    busyRef.current = false;
 
     if (!completedRef.current) {
       completedRef.current = true;
-      const meta = onComplete({ teamValue }) ?? {};
-      setResultMeta({
-        personalBest: meta.personalBest ?? personalBest,
-        isNewPersonalBest: meta.isNewPersonalBest ?? false,
-        worldRank: meta.worldRank ?? worldRank,
-      });
-    }
-
-    await wait(reduceMotion ? 60 : 220);
-    setStage('complete');
-    setResultReady(true);
-
-    if (teamValue >= BILLION_GOAL) {
-      playGameSound('perfect_sweep');
-      hapticSuccess();
-      setShowSuccessBurst(true);
-      if (!reduceMotion) {
-        window.setTimeout(() => setShowSuccessBurst(false), 3200);
+      onComplete({ teamValue });
+      if (isBillion) {
+        playGameSound('perfect_sweep');
+        hapticSuccess();
       } else {
-        setShowSuccessBurst(false);
+        playGameSound('defeat');
+        hapticWarning();
       }
-    } else {
-      playGameSound('defeat');
-      hapticHeavy();
     }
-  }, [
-    animateFinalCount,
-    onComplete,
-    personalBest,
-    reduceMotion,
-    teamValue,
-    worldRank,
-  ]);
+  }, [isBillion, onComplete, paintPace, paintTotal, teamValue]);
 
-  const feedPlayer = useCallback(
-    async (player: ValuedPlayer, slot: Position) => {
-      if (busyRef.current || fedIds.has(player.id) || stage === 'complete') return;
-      busyRef.current = true;
-      setBusy(true);
-      const nextFed = await runInsertCycle(player, slot, fedIds, false);
-      if (nextFed.size >= roster.length) {
-        await finishLineup();
-        busyRef.current = false;
-        setBusy(false);
-        return;
+  const runPlayerCycle = useCallback(
+    async (index: number, runningTotal: number, fedValues: number[]) => {
+      if (skipRef.current) {
+        return { total: runningTotal, fed: fedValues };
       }
-      setStage('ready');
-      busyRef.current = false;
-      setBusy(false);
+      const player = roster[index];
+      if (!player) return { total: runningTotal, fed: fedValues };
+
+      const value = getDollarValue(player);
+      const readMs = reduceMotion ? 80 : 2000;
+      const addMs = reduceMotion ? 100 : 2000;
+
+      setActiveIndex(index);
+      setAddFlash(null);
+      setStage('reading');
+      paintTotal(runningTotal);
+      hapticPlayerReveal();
+
+      await wait(readMs);
+      if (skipRef.current) {
+        return { total: runningTotal, fed: fedValues };
+      }
+
+      setStage('adding');
+      setAddFlash(value);
+      const nextTotal = runningTotal + value;
+      await animateTotalTo(runningTotal, nextTotal, addMs);
+      if (skipRef.current) {
+        return { total: nextTotal, fed: fedValues };
+      }
+      hapticValueComplete();
+
+      const nextFed = [...fedValues, value];
+      const pace = projectedTotal(nextFed);
+      setProjected(pace);
+      paintPace(pace);
+      setProcessed(index + 1);
+      setAddFlash(null);
+      return { total: nextTotal, fed: nextFed };
     },
-    [fedIds, finishLineup, roster.length, runInsertCycle, stage],
+    [animateTotalTo, paintPace, paintTotal, reduceMotion, roster],
   );
 
-  const feedAll = useCallback(async () => {
-    if (busyRef.current || stage === 'complete') return;
-    const queue = LINEUP_POSITIONS.map((pos) => ({
-      pos,
-      player: slotPlayers.get(pos),
-    })).filter(
-      (row): row is { pos: Position; player: ValuedPlayer } =>
-        Boolean(row.player) && !fedIds.has(row.player!.id),
-    );
-    if (queue.length === 0) return;
-
+  const runAll = useCallback(async () => {
+    if (busyRef.current || skipRef.current) return;
     busyRef.current = true;
-    setBusy(true);
-    let running = new Set(fedIds);
-    for (const { pos, player } of queue) {
-      running = await runInsertCycle(player, pos, running, true);
-    }
-    await finishLineup();
-    busyRef.current = false;
-    setBusy(false);
-  }, [fedIds, finishLineup, runInsertCycle, slotPlayers, stage]);
+    let total = 0;
+    let fed: number[] = [];
+    paintTotal(0);
+    paintPace(0);
 
-  // Auto-start evaluation once after fifth-player transition
+    for (let i = 0; i < LINEUP_POSITIONS.length; i += 1) {
+      if (skipRef.current) return;
+      if (!roster[i]) continue;
+      const result = await runPlayerCycle(i, total, fed);
+      if (skipRef.current) return;
+      total = result.total;
+      fed = result.fed;
+    }
+
+    if (skipRef.current) return;
+    finishToResults();
+  }, [finishToResults, paintPace, paintTotal, roster, runPlayerCycle]);
+
+  const handleSkipToResult = useCallback(() => {
+    if (skipRef.current || completedRef.current || stage === 'results') return;
+    skipRef.current = true;
+    cancelFrame(countRafRef.current);
+    hapticTap();
+    finishToResults();
+  }, [finishToResults, stage]);
+
+  const runAllRef = useRef(runAll);
+  runAllRef.current = runAll;
+
+  // Start once when the chamber mounts with a full roster.
+  // Do not depend on runAll identity — that was cancelling the start timer.
   useEffect(() => {
     if (!autoStart || autoStartedRef.current) return;
     if (roster.length < 5) return;
-    autoStartedRef.current = true;
     const t = window.setTimeout(() => {
-      void feedAll();
-    }, reduceMotion ? 80 : 280);
+      if (autoStartedRef.current) return;
+      autoStartedRef.current = true;
+      void runAllRef.current();
+    }, reduceMotion ? 60 : 280);
     return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
-  }, [autoStart]);
+  }, [autoStart, reduceMotion, roster.length]);
+
+  const [sharing, setSharing] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement | null>(null);
 
   const handleShareX = useCallback(async () => {
     if (sharing) return;
     setSharing(true);
-    const text = `I just drafted a ${formatDollarsExact(teamValue)} NBA roster on Trade Up — a billion-dollar board.`;
+    const text = `I just drafted a ${formatDollarsExact(teamValue)} NBA roster on Ballion.`;
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     try {
       const node = shareCardRef.current;
@@ -438,23 +288,23 @@ export function ValueRevealMachine({
           blob = await toBlob(node, {
             pixelRatio: 2,
             cacheBust: true,
-            backgroundColor: '#06070b',
+            backgroundColor: '#0b1220',
           });
         } catch {
           blob = null;
         }
       }
       if (blob) {
-        const file = new File([blob], 'trade-up-billion.png', { type: 'image/png' });
+        const file = new File([blob], 'ballion-roster.png', { type: 'image/png' });
         if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text, title: 'Trade Up' });
+          await navigator.share({ files: [file], text, title: 'Ballion' });
           setSharing(false);
           return;
         }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'trade-up-billion.png';
+        a.download = 'ballion-roster.png';
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -466,429 +316,168 @@ export function ValueRevealMachine({
     }
   }, [sharing, teamValue]);
 
-  const machineBusy =
-    stage === 'inserting' ||
-    stage === 'reading' ||
-    stage === 'projecting' ||
-    stage === 'calculating' ||
-    stage === 'counting';
-  const isComplete = stage === 'complete';
-
-  const screenLabel =
-    stage === 'ready' && fedIds.size === 0
-      ? 'AWAITING TICKETS'
-      : stage === 'inserting' || stage === 'reading'
-        ? 'READING TICKET…'
-        : stage === 'projecting' || (stage === 'ready' && fedIds.size > 0)
-          ? 'ON PACE FOR'
-          : stage === 'calculating'
-            ? 'CALCULATING…'
-            : stage === 'counting'
-              ? 'TEAM VALUE'
-              : isBillion
-                ? '$1 BILLION REACHED'
-                : 'THRESHOLD NOT REACHED';
-
-  const showPace =
-    !isComplete &&
-    stage !== 'calculating' &&
-    stage !== 'counting' &&
-    (projected > 0 || fedIds.size > 0);
-
-  return (
-    <motion.div
-      className={`value-vault value-vault--neo${isComplete ? ' is-complete' : ''}${
-        isBillion && isComplete ? ' is-billion' : ''
-      }${!isBillion && isComplete ? ' is-fail' : ''}${
-        stage === 'calculating' || stage === 'counting' ? ' is-finalizing' : ''
-      }`}
-      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0.12 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <AnimatePresence>
-        {showSuccessBurst ? (
-          <motion.div
-            className="value-vault__billion-drama"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            aria-live="assertive"
-          >
-            <div className="value-vault__billion-confetti" aria-hidden>
-              {Array.from({ length: 28 }, (_, i) => (
-                <span key={i} className={`value-vault__billion-bit bit-${i % 7}`} />
-              ))}
-            </div>
-            <motion.div
-              className="value-vault__billion-burst"
-              aria-hidden
-              initial={{ scale: 0.35, opacity: 0 }}
-              animate={{ scale: [0.35, 1.45, 1.1], opacity: [0, 1, 0.4] }}
-              transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-            />
-            <motion.div
-              className="value-vault__billion-ring"
-              aria-hidden
-              initial={{ scale: 0.2, opacity: 0 }}
-              animate={{ scale: [0.2, 1.9], opacity: [0, 0.9, 0] }}
-              transition={{ duration: 2.1, ease: 'easeOut' }}
-            />
-            <motion.p
-              className="value-vault__billion-kicker"
-              initial={{ y: 28, opacity: 0, letterSpacing: '0.45em' }}
-              animate={{ y: 0, opacity: 1, letterSpacing: '0.22em' }}
-              transition={{ delay: 0.08, duration: 0.55 }}
-            >
-              DYNASTY UNLOCKED
-            </motion.p>
-            <motion.h2
-              className="value-vault__billion-title"
-              initial={{ scale: 0.55, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ delay: 0.18, type: 'spring', stiffness: 140, damping: 12 }}
-            >
-              $1 BILLION
-            </motion.h2>
-            <motion.p
-              className="value-vault__billion-sub"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42, duration: 0.5 }}
-            >
-              {formatDollarsExact(teamValue)} · Board cleared
-            </motion.p>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      {!isComplete ? (
-        <div className="value-vault__intro">
-          <p className="value-vault__eyebrow">Value Chamber</p>
-          <h2 className="value-vault__title">Feed Your Tickets</h2>
-          <p className="value-vault__hint">
-            {autoStart
-              ? 'Evaluating your five tickets automatically…'
-              : 'Feed one at a time — or feed all five.'}
-          </p>
-        </div>
-      ) : (
-        <div className="value-vault__intro value-vault__intro--result">
-          <p className="value-vault__eyebrow">
-            {isBillion ? 'Threshold cleared' : 'Assay complete'}
-          </p>
-          <h2 className="value-vault__title">
-            {isBillion ? '$1 Billion Reached' : 'Threshold Not Reached'}
-          </h2>
-        </div>
-      )}
-
+  if (stage === 'results') {
+    return (
       <div
-        className={`neo-booth neo-booth--vault value-vault__press${
-          machineBusy ? ' is-printing is-calculating' : ''
-        }${isComplete ? ' is-reveal is-complete' : ''}${
-          !machineBusy && !isComplete ? ' is-idle' : ''
-        }${!isBillion && isComplete ? ' is-rejected' : ''}`}
+        className={`billion-result-page billion-result-page--arena${
+          isBillion ? ' is-success' : ''
+        }`}
+        aria-label="Final roster"
       >
-        <div className="neo-booth__chassis" aria-hidden>
-          <span className="neo-booth__rivet neo-booth__rivet--tl" />
-          <span className="neo-booth__rivet neo-booth__rivet--tr" />
-          <span className="neo-booth__rivet neo-booth__rivet--bl" />
-          <span className="neo-booth__rivet neo-booth__rivet--br" />
-          <span className="neo-booth__trim neo-booth__trim--top" />
-          <span className="neo-booth__trim neo-booth__trim--bot" />
-          <span className="neo-booth__lamp neo-booth__lamp--l" />
-          <span className="neo-booth__lamp neo-booth__lamp--r" />
+        <div ref={shareCardRef} className="billion-result-page__card">
+          <p className="billion-result-page__kicker">FINAL ROSTER</p>
+          <p className="billion-result-page__goal">$1 BILLION GOAL</p>
+          <p className="billion-result-page__total">
+            {formatDollarsExact(teamValue)}
+          </p>
+          <p
+            className={`billion-result-page__short${
+              isBillion ? ' is-reached' : ' is-short'
+            }`}
+          >
+            {isBillion
+              ? '$1 BILLION REACHED'
+              : `${formatDollarsExact(shortfall)} SHORT`}
+          </p>
+
+          <ul className="billion-result-page__list">
+            {LINEUP_POSITIONS.map((pos, index) => {
+              const player = roster[index];
+              const colors = player
+                ? getTeamColors(player.teamId)
+                : { primary: '#10202b' };
+              const ink = contrastOnPrimary(colors.primary);
+              const value = player ? getDollarValue(player) : 0;
+              return (
+                <li
+                  key={pos}
+                  style={{
+                    background: colors.primary,
+                    color: ink,
+                  }}
+                >
+                  <span style={{ color: ink, opacity: 0.78 }}>{pos}</span>
+                  <strong style={{ color: ink }}>{player?.name ?? '—'}</strong>
+                  <em style={{ color: ink }}>{formatDollarsExact(value)}</em>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
-        <div className="neo-booth__glass">
-          <div className="neo-booth__marquee" aria-live="polite">
-            <span className="neo-booth__brand">TRADE UP</span>
-            <span className="neo-booth__status">
-              {isComplete
-                ? isBillion
-                  ? 'CLEARED'
-                  : 'REJECTED'
-                : machineBusy
-                  ? stage === 'calculating' || stage === 'counting'
-                    ? 'ASSAY'
-                    : 'READING'
-                  : 'READY'}
-            </span>
-            <span
-              className={`neo-booth__pulse${
-                machineBusy ? ' is-printing' : !isComplete ? ' is-idle' : ''
-              }`}
-              aria-hidden
-            />
-          </div>
-
-          <div className="neo-booth__chamber value-vault__cavity value-vault__cavity--ipad">
-            <div
-              className={`value-vault__led value-vault__led--ipad${
-                showPace ? ' is-pace' : ''
-              }${
-                stage === 'counting' || (isComplete && isBillion)
-                  ? ' is-total is-billion'
-                  : ''
-              }${isComplete && !isBillion ? ' is-fail' : ''}${
-                stage === 'calculating' ? ' is-calc' : ''
-              }${
-                stage === 'inserting' || stage === 'reading' ? ' is-reading' : ''
-              }`}
-            >
-              <div className="value-vault__led-glass" aria-hidden />
-              <div className="value-vault__led-sheen" aria-hidden />
-
-              <p className="value-vault__led-status">{screenLabel}</p>
-
-              <div className="value-vault__led-body">
-                {stage === 'calculating' ? (
-                  <p className="value-vault__led-calc">CALCULATING…</p>
-                ) : stage === 'counting' ? (
-                  <p className="value-vault__led-total is-counting is-final">
-                    {formatDollarsExact(displayFinal)}
-                  </p>
-                ) : isComplete ? (
-                  <p
-                    className={`value-vault__led-total is-final${
-                      isBillion ? '' : ' is-dim'
-                    }`}
-                  >
-                    {formatDollarsExact(teamValue)}
-                  </p>
-                ) : showPace ? (
-                  <div className="value-vault__pace">
-                    <span className="value-vault__pace-kicker">ON PACE FOR</span>
-                    <strong className="value-vault__pace-value">
-                      {formatDollarsExact(projected)}
-                    </strong>
-                  </div>
-                ) : stage === 'inserting' || stage === 'reading' ? (
-                  <p className="value-vault__led-reading">READING TICKET…</p>
-                ) : (
-                  <p className="value-vault__led-dash">— — —</p>
-                )}
-              </div>
-
-              {!isComplete ? (
-                <p className="value-vault__led-goal">
-                  GOAL {formatDollars(BILLION_GOAL)}
-                </p>
-              ) : isBillion ? (
-                <p className="value-vault__led-goal">Threshold reached</p>
-              ) : (
-                <p className="value-vault__led-goal value-vault__led-goal--short">
-                  You fell {formatDollarsExact(shortfall)} short of $1 billion
-                </p>
-              )}
-            </div>
-
-            {!isComplete ? (
-              <div
-                className={`neo-booth__mouth value-vault__mouth-slot${
-                  ticketPhase === 'inserting' ? ' is-feeding' : ''
-                }`}
-              >
-                <span className="value-vault__mouth-lip" aria-hidden />
-                {activePlayer &&
-                ticketPhase !== 'hidden' &&
-                ticketPhase !== 'gone' ? (
-                  <div
-                    className={`value-vault__mouth-ticket is-${ticketPhase}${
-                      ticketQuick ? ' is-quick' : ''
-                    }`}
-                    style={
-                      {
-                        '--feed': insertFeed,
-                      } as CSSProperties
-                    }
-                  >
-                    <em>{playerInitials(activePlayer.name)}</em>
-                    <strong>{activePlayer.name.split(' ').slice(-1)[0]}</strong>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="neo-booth__mouth" aria-hidden>
-                <span />
-              </div>
-            )}
-          </div>
+        <div className="billion-result-page__actions">
+          <button
+            type="button"
+            className="billion-result-page__share"
+            onPointerDown={() => {
+              hapticTap();
+              void handleShareX();
+            }}
+            disabled={sharing}
+          >
+            {sharing ? 'Preparing…' : 'Share on X'}
+          </button>
+          <button
+            type="button"
+            className="billion-result-page__again"
+            onPointerDown={() => {
+              hapticTap();
+              onPlayAgain();
+            }}
+          >
+            Build Another
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {isComplete && resultReady ? (
-        <>
-          <div
-            ref={shareCardRef}
-            className={`value-vault__result-card${
-              isBillion ? ' is-success' : ' is-fail'
-            }`}
-            aria-label="Roster result"
-          >
-            {isBillion ? (
-              <div className="value-vault__threshold value-vault__threshold--ok">
-                <span>$1 BILLION REACHED</span>
-                <strong>{formatDollarsExact(teamValue)}</strong>
-              </div>
-            ) : (
-              <div className="value-vault__threshold value-vault__threshold--fail">
-                <span>THRESHOLD NOT REACHED</span>
-                <strong>{formatDollarsExact(teamValue)}</strong>
-                <p className="value-vault__shortfall">
-                  You fell{' '}
-                  <em>{formatDollarsExact(shortfall)}</em> short of $1 billion.
-                </p>
-              </div>
-            )}
+  const statusLabel =
+    stage === 'ready'
+      ? 'READY'
+      : stage === 'reading' && activePlayer
+        ? `Reading ${firstName(activePlayer.name)}`
+        : stage === 'adding'
+          ? 'ADDING VALUE'
+          : 'LIVE';
 
-            {resultMeta.worldRank > 0 ? (
-              <p className="value-vault__rank">
-                World rank {formatWorldRank(resultMeta.worldRank)} of{' '}
-                {WORLD_POOL_SIZE.toLocaleString('en-US')}
-              </p>
-            ) : null}
+  return (
+    <div
+      className={`value-vault value-vault--fullscreen${
+        stage === 'reading' || stage === 'adding' ? ' is-processing' : ''
+      }`}
+    >
+      <p className="value-vault__led-status value-vault__led-status--fs">{statusLabel}</p>
 
-            {resultMeta.isNewPersonalBest ? (
-              <p className="value-vault__pb-banner">New personal best</p>
-            ) : resultMeta.personalBest > 0 ? (
-              <p className="value-vault__pb">
-                Personal best{' '}
-                {formatDollarsExact(Math.max(resultMeta.personalBest, teamValue))}
-              </p>
-            ) : null}
-
-            <ul className="value-vault__result-five" aria-label="Your five">
-              {LINEUP_POSITIONS.map((pos, index) => {
-                const player = roster[index];
-                return (
-                  <li key={pos}>
-                    <span>{pos}</span>
-                    <strong>{player?.name ?? '—'}</strong>
-                  </li>
-                );
-              })}
-            </ul>
+      <div className="value-vault__led-body value-vault__led-body--fs">
+        {activePlayer && activeSlot ? (
+          <div className="value-vault__id-card">
+            <em>{POSITION_LABELS[activeSlot] ?? activeSlot}</em>
+            <strong>{activePlayer.name}</strong>
           </div>
+        ) : null}
 
-          <div className="value-vault__actions value-vault__actions--end">
-            {isBillion ? (
-              <button
-                type="button"
-                className="value-vault__share"
-                onClick={() => void handleShareX()}
-                disabled={sharing}
-              >
-                {sharing ? 'Preparing…' : 'Share to X'}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="value-vault__build-another"
-              onClick={onPlayAgain}
+        <p
+          ref={totalElRef}
+          className={`value-vault__led-total is-green${
+            stage === 'adding' ? ' is-counting' : ''
+          }`}
+        >
+          {formatDollarsExact(totalRef.current)}
+        </p>
+
+        {addFlash != null ? (
+          <p ref={addElRef} className="value-vault__add-flash is-green-add">
+            +{formatDollarsExact(addFlash)}
+          </p>
+        ) : null}
+      </div>
+
+      <p className="value-vault__led-pace value-vault__led-pace--fs">
+        ON PACE{' '}
+        <span ref={paceElRef}>{formatDollarsExact(projected)}</span>
+      </p>
+
+      <div className="value-vault__roster-dock" aria-label="Your five">
+        {LINEUP_POSITIONS.map((slot, index) => {
+          const player = roster[index];
+          if (!player) return null;
+          const colors = getTeamColors(player.teamId);
+          const done = index < processed;
+          const active = index === activeIndex;
+          return (
+            <div
+              key={slot}
+              className={`value-vault__roster-dock-item${done ? ' is-done' : ''}${
+                active ? ' is-active' : ''
+              }`}
             >
-              Build Another
-            </button>
-            <button type="button" className="value-vault__home" onClick={onExit}>
-              Home
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <aside className="value-vault__awaiting" aria-label="Awaiting tickets">
-            <div className="value-vault__five-head">
-              <div>
-                <p className="value-vault__five-title">Awaiting tickets</p>
-                <p className="value-vault__five-sub">
-                  {autoStart && busy
-                    ? 'Feeding into the machine…'
-                    : 'Your five ready for evaluation'}
-                </p>
-              </div>
-              <span className="value-vault__five-count">
-                {fedIds.size}/{roster.length}
-              </span>
-            </div>
-            <div className="value-vault__awaiting-grid">
-              {LINEUP_POSITIONS.map((slot) => {
-                const player = slotPlayers.get(slot);
-                if (!player) return null;
-                const fed = fedIds.has(player.id);
-                const colors = getTeamColors(player.teamId);
-                const active =
-                  activePlayer?.id === player.id &&
-                  (stage === 'inserting' || stage === 'reading');
-                return (
-                  <button
-                    key={slot}
-                    type="button"
-                    className={`value-vault__await-card${fed ? ' is-fed' : ''}${
-                      active ? ' is-active' : ''
-                    }`}
-                    disabled={fed || busy || autoStart}
-                    onClick={() => void feedPlayer(player, slot)}
-                    aria-label={
-                      fed
-                        ? `${player.name} already fed`
-                        : `Feed ${player.name} (${POSITION_LABELS[slot]})`
-                    }
-                  >
-                    <span
-                      className="value-vault__await-mark"
-                      style={{
-                        backgroundColor: colors.primary,
-                        color: '#ffffff',
-                      }}
-                    >
-                      {playerInitials(player.name)}
-                    </span>
-                    <span className="value-vault__await-copy">
-                      <span className="value-vault__await-pos">
-                        {POSITION_LABELS[slot]}
-                      </span>
-                      <strong className="value-vault__await-name">
-                        {player.name}
-                      </strong>
-                      <em className="value-vault__await-meta">
-                        {player.teamId}
-                        {'era' in player && (player as { era?: string }).era
-                          ? ` · ${(player as { era?: string }).era}`
-                          : ''}
-                      </em>
-                    </span>
-                    {fed ? (
-                      <span className="value-vault__fed-tag">Fed</span>
-                    ) : active ? (
-                      <span className="value-vault__feed-chip">Reading</span>
-                    ) : (
-                      <span className="value-vault__feed-chip">Ready</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
-
-          {!autoStart ? (
-            <div className="value-vault__actions">
-              <button
-                type="button"
-                className="value-vault__feed-all"
-                disabled={busy || remaining.length === 0}
-                onClick={() => void feedAll()}
+              <span
+                className="value-vault__roster-dock-circle"
+                style={{
+                  backgroundColor: colors.primary,
+                  color: contrastOnPrimary(colors.primary),
+                  borderColor: colors.primary,
+                }}
               >
-                <span className="value-vault__feed-all-kicker">Bulk insert</span>
-                <span className="value-vault__feed-all-label">
-                  Feed All ({remaining.length})
-                </span>
-              </button>
+                {playerInitials(player.name)}
+              </span>
+              <span className="value-vault__roster-dock-pos">{slot}</span>
             </div>
-          ) : null}
-        </>
-      )}
-    </motion.div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        className="value-vault__skip"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          handleSkipToResult();
+        }}
+      >
+        Skip to result
+      </button>
+    </div>
   );
 }

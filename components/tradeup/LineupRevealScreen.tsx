@@ -8,7 +8,7 @@ import { useSound } from '@/hooks/useSound';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { AnimatePresence } from 'framer-motion';
 import { GameBackground } from './game/GameBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 import { LineupRevealCard } from './LineupRevealCard';
 import { GmTradeChat } from './GmTradeChat';
 import { PackOpenCeremony, type PackCeremonyPhase } from './PackOpenCeremony';
@@ -649,7 +649,7 @@ export function LineupRevealScreen({
             ← Home
           </button>
           <div className="lineup-reveal__brand">
-            <TradeUpLogo size="xs" />
+            <BallionWordmark />
             <p className="lineup-reveal__title">Starting Lineup</p>
           </div>
           <span className="lineup-header-rank__spacer" aria-hidden />

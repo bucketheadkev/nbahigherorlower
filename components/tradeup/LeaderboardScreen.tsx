@@ -11,7 +11,7 @@ import {
   getWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
 import { HomeBackground } from './home/HomeBackground';
-import { TradeUpLogo } from './TradeUpLogo';
+import { BallionWordmark } from './BallionWordmark';
 
 interface LeaderboardScreenProps {
   personalBest?: number;
@@ -28,7 +28,7 @@ export function LeaderboardScreen({ personalBest }: LeaderboardScreenProps) {
       <HomeBackground />
 
       <header className="hub-screen-header">
-        <TradeUpLogo size="xs" />
+        <BallionWordmark />
         <div className="hub-screen-header__copy">
           <p className="hub-screen-header__eyebrow">Global Board</p>
           <h1 className="hub-screen-header__title">Leaderboard</h1>

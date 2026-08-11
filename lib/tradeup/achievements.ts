@@ -111,7 +111,7 @@ export function awardNbaChampionshipRing(input: {
 export function buildPerfectSeasonShareText(lineup: string[]): string {
   const names = lineup.join(' · ');
   return [
-    'Trade Up — PERFECT SEASON',
+    'Ballion — PERFECT SEASON',
     '82–0',
     names,
     'Championship ring earned.',
