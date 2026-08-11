@@ -1,5 +1,6 @@
 import { ensureAnonymousSession } from '@/lib/supabase/auth';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { parseMatchResult, type MatchResultRow } from './match';
 import {
   mapRoomRpcError,
   type RoomActionResult,
@@ -78,6 +79,7 @@ export function parseRoom(row: Record<string, unknown>): RoomRow {
 }
 
 function parsePlayer(row: Record<string, unknown>): RoomPlayerRow {
+  const progress = Number(row.match_progress ?? 0);
   return {
     id: String(row.id),
     room_id: String(row.room_id),
@@ -86,6 +88,9 @@ function parsePlayer(row: Record<string, unknown>): RoomPlayerRow {
     player_number: asPlayerNumber(row.player_number),
     is_ready: Boolean(row.is_ready),
     joined_at: String(row.joined_at),
+    match_progress: Number.isFinite(progress)
+      ? Math.max(0, Math.min(5, Math.round(progress)))
+      : 0,
   };
 }
 
@@ -163,4 +168,44 @@ export async function fetchRoomLobby(roomId: string): Promise<RoomLobbySnapshot>
       parsePlayer(row as Record<string, unknown>),
     ),
   };
+}
+
+export async function updateMatchProgress(
+  roomId: string,
+  playerCount: number,
+): Promise<void> {
+  await ensureAnonymousSession();
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc('update_match_progress', {
+    room_id: roomId,
+    player_count: playerCount,
+  });
+  if (error) throw mapRoomRpcError(error);
+}
+
+export async function submitMatchResult(
+  roomId: string,
+  lineup: unknown,
+  totalValue: number,
+): Promise<void> {
+  await ensureAnonymousSession();
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc('submit_match_result', {
+    room_id: roomId,
+    lineup,
+    total_value: Math.round(totalValue),
+  });
+  if (error) throw mapRoomRpcError(error);
+}
+
+export async function fetchMatchResults(roomId: string): Promise<MatchResultRow[]> {
+  await ensureAnonymousSession();
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from('match_results')
+    .select('*')
+    .eq('room_id', roomId)
+    .order('submitted_at', { ascending: true });
+  if (error) throw mapRoomRpcError(error);
+  return (data ?? []).map((row) => parseMatchResult(row as Record<string, unknown>));
 }

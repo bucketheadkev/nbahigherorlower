@@ -1,6 +1,11 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { slotFor, useRoomLobby } from '@/hooks/useRoomLobby';
 import { clearActiveRoom, writeActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
@@ -10,16 +15,22 @@ interface H2HPregameScreenProps {
   roomId: string;
   userId: string;
   onLeft: () => void;
+  onContinue: () => void;
 }
 
 /**
- * Temporary Phase 2 pregame — both devices land here when room.status is playing.
- * No spinner / draft / values yet.
+ * Brief synchronized pregame before each player enters their independent run.
  */
-export function H2HPregameScreen({ roomId, userId, onLeft }: H2HPregameScreenProps) {
+export function H2HPregameScreen({
+  roomId,
+  userId,
+  onLeft,
+  onContinue,
+}: H2HPregameScreenProps) {
   const { snapshot, loading, error } = useRoomLobby({ roomId });
   const [leaving, setLeaving] = useState(false);
   const leaveLock = useRef(false);
+  const continued = useRef(false);
 
   const room = snapshot?.room ?? null;
   const players = snapshot?.players ?? [];
@@ -34,6 +45,16 @@ export function H2HPregameScreen({ roomId, userId, onLeft }: H2HPregameScreenPro
     if (!room?.room_code) return;
     writeActiveRoom(room.id, room.room_code);
   }, [room?.id, room?.room_code]);
+
+  useEffect(() => {
+    if (continued.current) return;
+    const id = window.setTimeout(() => {
+      if (continued.current) return;
+      continued.current = true;
+      onContinue();
+    }, 1400);
+    return () => window.clearTimeout(id);
+  }, [onContinue]);
 
   const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -54,6 +75,12 @@ export function H2HPregameScreen({ roomId, userId, onLeft }: H2HPregameScreenPro
       clearActiveRoom();
       onLeft();
     }
+  };
+
+  const handleContinue = () => {
+    if (continued.current) return;
+    continued.current = true;
+    onContinue();
   };
 
   return (
@@ -91,7 +118,7 @@ export function H2HPregameScreen({ roomId, userId, onLeft }: H2HPregameScreenPro
       </div>
 
       <p className="h2h-lobby__phase-note" role="status">
-        Match gameplay coming in Phase 3
+        Build your five. Opponent progress updates live — lineups stay hidden until both finish.
       </p>
 
       {error ? (
@@ -99,6 +126,15 @@ export function H2HPregameScreen({ roomId, userId, onLeft }: H2HPregameScreenPro
           {error}
         </p>
       ) : null}
+
+      <button
+        type="button"
+        className="run-btn run-btn--primary h2h-lobby__submit"
+        disabled={leaving}
+        onPointerDown={press(handleContinue, leaving)}
+      >
+        <strong>ENTER MATCH</strong>
+      </button>
 
       <button
         type="button"

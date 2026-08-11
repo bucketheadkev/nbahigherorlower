@@ -44,15 +44,24 @@ import { RewardedAdButton } from './RewardedAdButton';
 import { REWARDED_ADS_UI_ENABLED } from '@/lib/tradeup/ads/adConfig';
 import type { TicketRerollKind } from './BallionTicketMachine';
 import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
+import { serializeMatchLineup } from '@/lib/multiplayer/match';
 
 interface BillionTradeEngineProps {
   onExit: () => void;
   onPlayAgain?: () => void;
   onWin?: () => void;
-  /** Default billion run. `h2h` reuses draft/spinner; ends in value showdown. */
-  challengeMode?: 'billion' | 'h2h';
+  /** Default billion run. `h2h` = local AI showdown. `online` = private 1V1. */
+  challengeMode?: 'billion' | 'h2h' | 'online';
   h2hOpponent?: H2HOpponent | null;
   h2hPlayerName?: string | null;
+  /** Online 1V1: opponent display + live progress 0–5. */
+  onlineOpponentName?: string | null;
+  onlineOpponentProgress?: number;
+  onOnlineProgress?: (filledCount: number) => void;
+  onOnlineComplete?: (payload: {
+    lineup: ReturnType<typeof serializeMatchLineup>;
+    totalValue: number;
+  }) => void;
 }
 
 type RosterSlots = Record<Position, ValuedPlayer | null>;
@@ -104,9 +113,16 @@ export function BillionTradeEngine({
   challengeMode = 'billion',
   h2hOpponent = null,
   h2hPlayerName = null,
+  onlineOpponentName = null,
+  onlineOpponentProgress = 0,
+  onOnlineProgress,
+  onOnlineComplete,
 }: BillionTradeEngineProps) {
   const isH2H = challengeMode === 'h2h' && Boolean(h2hOpponent);
+  const isOnline = challengeMode === 'online';
   const playerHandle = (h2hPlayerName ?? 'YOU').trim() || 'YOU';
+  const oppLabel = (onlineOpponentName ?? 'OPPONENT').trim() || 'OPPONENT';
+  const oppProgress = Math.max(0, Math.min(5, Math.round(onlineOpponentProgress)));
   const reduceMotion = getPrefersReducedMotion();
   const { resume, playReject, playVictory, playDefeat, playUiBack } =
     useSound();
@@ -144,6 +160,13 @@ export function BillionTradeEngine({
   }, [resume]);
   const filled = useMemo(() => rosterList(slots), [slots]);
   const teamValue = useMemo(() => sumTeamValue(filled), [filled]);
+  const filledCount = filled.length;
+
+  useEffect(() => {
+    if (!isOnline || !onOnlineProgress) return;
+    onOnlineProgress(filledCount);
+  }, [filledCount, isOnline, onOnlineProgress]);
+
   const readyToDraft = Boolean(spunTeam && spunEra) && !ticketPrinting;
   const lockedPair = useMemo<SpinPair | null>(
     () => (spunTeam && spunEra ? { team: spunTeam, era: spunEra } : null),
@@ -298,7 +321,7 @@ export function BillionTradeEngine({
       saveBestWorldRank(rank);
 
       if (value >= BILLION_GOAL) {
-        if (!isH2H) {
+        if (!isH2H && !isOnline) {
           saveBillionRun(lineup, value);
         }
         playVictory();
@@ -311,14 +334,21 @@ export function BillionTradeEngine({
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };
     },
-    [isH2H, onWin, playDefeat, playVictory],
+    [isH2H, isOnline, onWin, playDefeat, playVictory],
   );
 
   const handleRevealComplete = useCallback(
     (payload: { teamValue: number }) => {
       finishRun(slots, payload.teamValue);
+      if (isOnline && onOnlineComplete) {
+        const lineup = serializeMatchLineup(rosterInSlotOrder(slots));
+        onOnlineComplete({
+          lineup,
+          totalValue: Math.round(payload.teamValue),
+        });
+      }
     },
-    [finishRun, slots],
+    [finishRun, isOnline, onOnlineComplete, slots],
   );
 
   const handleSelectOffer = useCallback(
@@ -447,7 +477,9 @@ export function BillionTradeEngine({
         setStatus(
           isH2H
             ? 'Lineup complete — value showdown…'
-            : 'Lineup complete — reading values…',
+            : isOnline
+              ? 'Lineup complete — reading values…'
+              : 'Lineup complete — reading values…',
         );
         setSelectedOfferId(null);
         setMovingFrom(null);
@@ -478,6 +510,7 @@ export function BillionTradeEngine({
       slots,
       spunEra,
       isH2H,
+      isOnline,
     ],
   );
 
@@ -490,12 +523,12 @@ export function BillionTradeEngine({
       className={`tradeup-shell tradeup-shell--game billion-shell billion-shell--draft820 billion-shell--neo${
         showDraft ? ' billion-shell--picking' : ''
       }${showReveal ? ' billion-shell--vault' : ''}${
-        isH2H ? ' billion-shell--h2h' : ''
+        isH2H || isOnline ? ' billion-shell--h2h' : ''
       }`}
     >
       <GameBackground />
 
-      <header className={`billion-top billion-top--spin${isH2H ? ' billion-top--h2h' : ''}`}>
+      <header className={`billion-top billion-top--spin${isH2H || isOnline ? ' billion-top--h2h' : ''}`}>
         <button
           type="button"
           className="tu-back"
@@ -507,7 +540,17 @@ export function BillionTradeEngine({
         >
           ← Home
         </button>
-        {isH2H && h2hOpponent ? (
+        {isOnline ? (
+          <div className="billion-h2h-bar billion-h2h-bar--online" aria-label="Match progress">
+            <span className="billion-h2h-bar__you">
+              YOU {filledCount}/5
+            </span>
+            <em>VS</em>
+            <span className="billion-h2h-bar__opp">
+              {oppLabel} {oppProgress}/5
+            </span>
+          </div>
+        ) : isH2H && h2hOpponent ? (
           <div className="billion-h2h-bar" aria-label="Matchup">
             <span className="billion-h2h-bar__you">YOU</span>
             <em>VS</em>
@@ -538,7 +581,7 @@ export function BillionTradeEngine({
           autoStart
           onComplete={handleRevealComplete}
           onExit={onExit}
-          onPlayAgain={onPlayAgain ?? onExit}
+          onPlayAgain={isOnline ? onExit : onPlayAgain ?? onExit}
         />
       ) : null}
 
@@ -558,7 +601,7 @@ export function BillionTradeEngine({
                   rerollFrom={rerollFrom}
                   holdTeam={spunTeam ?? rerollFrom?.team ?? null}
                   holdEra={spunEra ?? rerollFrom?.era ?? null}
-                  showGoal={!isH2H}
+                  showGoal={!isH2H && !isOnline}
                   onAutoRerollConsumed={() => setBoothReroll(null)}
                   onPrint={handleTicketPrint}
                   onResult={handleTicketResult}

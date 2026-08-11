@@ -18,6 +18,7 @@ export interface RoomPlayerRow {
   player_number: 1 | 2;
   is_ready: boolean;
   joined_at: string;
+  match_progress: number;
 }
 
 export interface RoomLobbySnapshot {
@@ -107,6 +108,21 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   }
   if (upper.includes('NOT_IN_ROOM')) {
     return new MultiplayerApiError('NOT_IN_ROOM', 'You are not in this lobby.');
+  }
+  if (upper.includes('ROOM_NOT_PLAYING')) {
+    return new MultiplayerApiError('ROOM_NOT_PLAYING', 'This match is not in progress.');
+  }
+  if (upper.includes('INVALID_PROGRESS') || upper.includes('PROGRESS_DECREASE')) {
+    return new MultiplayerApiError('INVALID_PROGRESS', 'Could not update match progress.');
+  }
+  if (upper.includes('INVALID_LINEUP')) {
+    return new MultiplayerApiError('INVALID_LINEUP', 'Lineup must contain exactly five players.');
+  }
+  if (upper.includes('INVALID_TOTAL')) {
+    return new MultiplayerApiError('INVALID_TOTAL', 'Match total did not match the lineup.');
+  }
+  if (upper.includes('ALREADY_SUBMITTED')) {
+    return new MultiplayerApiError('ALREADY_SUBMITTED', 'You already submitted this match.');
   }
 
   return new MultiplayerApiError(

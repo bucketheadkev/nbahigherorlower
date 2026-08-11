@@ -7,22 +7,23 @@ import {
   readActiveRoom,
   writeActiveRoom,
 } from '@/lib/multiplayer/activeRoom';
-import { fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import { fetchMatchResults, fetchRoomLobby } from '@/lib/multiplayer/rooms';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
 import { H2HJoinLobby } from './h2h/H2HJoinLobby';
+import { H2HMatchScreen } from './h2h/H2HMatchScreen';
 import { H2HPregameScreen } from './h2h/H2HPregameScreen';
 import { H2HWaitingLobby } from './h2h/H2HWaitingLobby';
 
-type LobbyScreen = 'entry' | 'create' | 'join' | 'waiting' | 'pregame';
+type LobbyScreen = 'entry' | 'create' | 'join' | 'waiting' | 'pregame' | 'match';
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
 }
 
 /**
- * 1V1 shell — Phase 2: lobby + host start → synchronized pregame.
- * Classic mode and match spinner are untouched.
+ * 1V1 shell — Phase 3A: lobby → start → private match → results.
+ * Classic mode remains a separate TradeUpApp path.
  */
 export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
   const auth = useAnonymousAuth();
@@ -58,7 +59,9 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
         const usable =
           member &&
           !expired &&
-          (snap.room.status === 'waiting' || snap.room.status === 'playing');
+          (snap.room.status === 'waiting' ||
+            snap.room.status === 'playing' ||
+            snap.room.status === 'finished');
 
         if (!usable) {
           clearActiveRoom();
@@ -68,7 +71,17 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
 
         writeActiveRoom(snap.room.id, snap.room.room_code);
         setRoomId(snap.room.id);
-        setScreen(snap.room.status === 'playing' ? 'pregame' : 'waiting');
+
+        if (snap.room.status === 'waiting') {
+          setScreen('waiting');
+        } else if (snap.room.status === 'finished') {
+          setScreen('match');
+        } else {
+          // playing — if I already submitted, match screen shows waiting/results
+          const results = await fetchMatchResults(snap.room.id);
+          if (cancelled) return;
+          setScreen(results.some((r) => r.user_id === auth.user.id) ? 'match' : 'pregame');
+        }
       } catch {
         if (!cancelled) clearActiveRoom();
       } finally {
@@ -111,6 +124,10 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     setScreen('pregame');
   }, []);
 
+  const handleEnterMatch = useCallback(() => {
+    setScreen('match');
+  }, []);
+
   if (restoring || auth.status === 'loading') {
     return (
       <div className="h2h-lobby" aria-label="Loading 1V1">
@@ -137,12 +154,23 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     );
   }
 
+  if (screen === 'match' && roomId && auth.status === 'ready') {
+    return (
+      <H2HMatchScreen
+        roomId={roomId}
+        userId={auth.user.id}
+        onLeft={handleLeftLobby}
+      />
+    );
+  }
+
   if (screen === 'pregame' && roomId && auth.status === 'ready') {
     return (
       <H2HPregameScreen
         roomId={roomId}
         userId={auth.user.id}
         onLeft={handleLeftLobby}
+        onContinue={handleEnterMatch}
       />
     );
   }

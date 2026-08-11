@@ -25466,3 +25466,113 @@ body:has(.ballion-splash) {
   margin-top: 1.25rem;
 }
 
+/* Phase 3A match wait / results (narrow scope) */
+.h2h-match-banner-error {
+  position: fixed;
+  top: calc(var(--safe-top) + 0.5rem);
+  left: 50%;
+  z-index: 40;
+  transform: translateX(-50%);
+  max-width: min(22rem, 92vw);
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  background: rgba(248, 113, 113, 0.92);
+  color: #031942;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.h2h-lobby--match-wait .h2h-lobby__leave,
+.h2h-lobby--results .h2h-lobby__submit {
+  margin-top: 1rem;
+}
+
+.h2h-results__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.h2h-results__card {
+  padding: 0.9rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(143, 163, 189, 0.22);
+  background: rgba(6, 37, 83, 0.72);
+}
+
+.h2h-results__card.is-winner {
+  border-color: rgba(41, 228, 144, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(41, 228, 144, 0.25);
+}
+
+.h2h-results__card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.h2h-results__card-top span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(200, 214, 232, 0.62);
+}
+
+.h2h-results__card-top strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f7fafc;
+}
+
+.h2h-results__total {
+  margin: 0.45rem 0 0.55rem;
+  font-size: 1.25rem;
+  font-weight: 850;
+  color: #29e490;
+}
+
+.h2h-results__lineup {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.h2h-results__lineup li {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr auto;
+  gap: 0.45rem;
+  align-items: baseline;
+  font-size: 0.86rem;
+}
+
+.h2h-results__lineup em {
+  font-style: normal;
+  font-weight: 800;
+  color: rgba(200, 214, 232, 0.55);
+}
+
+.h2h-results__lineup span {
+  color: #f7fafc;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.h2h-results__lineup b {
+  font-weight: 750;
+  color: rgba(200, 214, 232, 0.78);
+}
+
+.billion-h2h-bar--online {
+  gap: 0.45rem;
+  font-size: 0.72rem;
+}
+
+
