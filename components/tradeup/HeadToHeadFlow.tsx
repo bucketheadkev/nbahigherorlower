@@ -1,69 +1,92 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useCallback, useState } from 'react';
-import { useGameReducedMotion } from '@/hooks/useGameReducedMotion';
-import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
-import { HeadToHeadMatchmaking } from './HeadToHeadMatchmaking';
-import { TradeUpLoading } from './TradeUpLoading';
+import { useAnonymousAuth } from '@/hooks/useAnonymousAuth';
+import { H2HCreateLobby } from './h2h/H2HCreateLobby';
+import { H2HEntryScreen } from './h2h/H2HEntryScreen';
+import { H2HJoinLobby } from './h2h/H2HJoinLobby';
+import { H2HWaitingLobby } from './h2h/H2HWaitingLobby';
 
-const BillionTradeEngine = dynamic(
-  () =>
-    import('./BillionTradeEngine').then((mod) => ({
-      default: mod.BillionTradeEngine,
-    })),
-  { loading: () => <TradeUpLoading /> },
-);
-
-type H2HScreen = 'matchmaking' | 'playing';
+type LobbyScreen = 'entry' | 'create' | 'join' | 'waiting';
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
 }
 
 /**
- * Head-to-Head shell — matchmaking → reused Billion draft → value showdown.
- * Does not alter the Billion Challenge home path.
+ * 1V1 shell — Phase 1 private lobby entry (create / join / wait).
+ * Does not start a multiplayer match yet; Classic mode is untouched.
  */
 export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
-  const reduceMotion = useGameReducedMotion();
-  const [screen, setScreen] = useState<H2HScreen>('matchmaking');
-  const [opponent, setOpponent] = useState<H2HOpponent | null>(null);
-  const [excludeName, setExcludeName] = useState<string | null>(null);
-  const [runKey, setRunKey] = useState(0);
+  const auth = useAnonymousAuth();
+  const [screen, setScreen] = useState<LobbyScreen>('entry');
+  const [roomId, setRoomId] = useState<string | null>(null);
 
-  const handleReady = useCallback((next: H2HOpponent) => {
-    setOpponent(next);
-    setScreen('playing');
+  const handleCreated = useCallback((nextRoomId: string) => {
+    setRoomId(nextRoomId);
+    setScreen('waiting');
   }, []);
 
-  const handleFindNew = useCallback(() => {
-    setExcludeName(opponent?.displayName ?? null);
-    setOpponent(null);
-    setRunKey((k) => k + 1);
-    setScreen('matchmaking');
-  }, [opponent?.displayName]);
+  const handleJoined = useCallback((nextRoomId: string) => {
+    setRoomId(nextRoomId);
+    setScreen('waiting');
+  }, []);
 
-  if (screen === 'matchmaking' || !opponent) {
+  const handleLeftLobby = useCallback(() => {
+    setRoomId(null);
+    setScreen('entry');
+  }, []);
+
+  if (screen === 'create') {
     return (
-      <HeadToHeadMatchmaking
-        key={`mm-${runKey}`}
-        reduceMotion={reduceMotion}
-        excludeName={excludeName}
-        onReady={handleReady}
-        onExit={onExit}
+      <H2HCreateLobby
+        onCreated={handleCreated}
+        onBack={() => setScreen('entry')}
       />
     );
   }
 
+  if (screen === 'join') {
+    return (
+      <H2HJoinLobby
+        onJoined={handleJoined}
+        onBack={() => setScreen('entry')}
+      />
+    );
+  }
+
+  if (screen === 'waiting' && roomId) {
+    if (auth.status === 'ready') {
+      return (
+        <H2HWaitingLobby
+          roomId={roomId}
+          userId={auth.user.id}
+          onLeft={handleLeftLobby}
+        />
+      );
+    }
+
+    return (
+      <div className="h2h-lobby" aria-label="Connecting to lobby">
+        <p className="h2h-lobby__status">
+          {auth.status === 'error' ? auth.message : 'Connecting…'}
+        </p>
+        {auth.status === 'error' ? (
+          <button type="button" className="h2h-lobby__leave" onClick={handleLeftLobby}>
+            Back
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <BillionTradeEngine
-      key={`h2h-${runKey}-${opponent.id}`}
-      challengeMode="h2h"
-      h2hOpponent={opponent}
-      h2hPlayerName="YOU"
-      onExit={onExit}
-      onPlayAgain={handleFindNew}
+    <H2HEntryScreen
+      onCreate={() => setScreen('create')}
+      onJoin={() => setScreen('join')}
+      onBack={onExit}
+      authLoading={auth.status === 'loading'}
+      authError={auth.status === 'error' ? auth.message : null}
     />
   );
 }

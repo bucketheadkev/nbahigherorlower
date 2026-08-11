@@ -19,6 +19,8 @@
     "@capacitor/core": "^8.5.0",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.0",
+    "@capacitor/share": "^8.0.1",
+    "@supabase/supabase-js": "^2.112.2",
     "framer-motion": "^12.42.2",
     "geist": "^1.7.2",
     "html-to-image": "^1.11.13",
