@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchRoomLobby,
   setPlayerReady as setPlayerReadyRpc,
+  startRoom as startRoomRpc,
 } from '@/lib/multiplayer/rooms';
 import type { RoomLobbySnapshot, RoomPlayerRow } from '@/lib/multiplayer/types';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
@@ -21,11 +22,13 @@ interface UseRoomLobbyResult {
   refetch: () => Promise<void>;
   setReady: (ready: boolean) => Promise<void>;
   readyBusy: boolean;
+  startGame: () => Promise<void>;
+  startBusy: boolean;
 }
 
 /**
- * Loads lobby state and subscribes to room_players changes for one room.
- * Refetches on reconnect, tab focus, and app foreground.
+ * Loads lobby state and subscribes to rooms + room_players for one room.
+ * Single channel; cleans up on leave/unmount; refetches on reconnect/focus.
  */
 export function useRoomLobby({
   roomId,
@@ -35,6 +38,7 @@ export function useRoomLobby({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [readyBusy, setReadyBusy] = useState(false);
+  const [startBusy, setStartBusy] = useState(false);
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
 
@@ -66,8 +70,9 @@ export function useRoomLobby({
     void refetch();
 
     const supabase = getSupabaseBrowserClient();
+    // One channel per room; both tables share it (no duplicate channels).
     const channel = supabase
-      .channel(`room_players:${roomId}`)
+      .channel(`mp_room:${roomId}`)
       .on(
         'postgres_changes',
         {
@@ -75,6 +80,18 @@ export function useRoomLobby({
           schema: 'public',
           table: 'room_players',
           filter: `room_id=eq.${roomId}`,
+        },
+        () => {
+          void refetch();
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rooms',
+          filter: `id=eq.${roomId}`,
         },
         () => {
           void refetch();
@@ -107,7 +124,7 @@ export function useRoomLobby({
 
   const setReady = useCallback(
     async (ready: boolean) => {
-      if (readyBusy) return;
+      if (readyBusy || startBusy) return;
       setReadyBusy(true);
       setError(null);
       try {
@@ -126,10 +143,40 @@ export function useRoomLobby({
         setReadyBusy(false);
       }
     },
-    [readyBusy, refetch, roomId],
+    [readyBusy, refetch, roomId, startBusy],
   );
 
-  return { snapshot, loading, error, refetch, setReady, readyBusy };
+  const startGame = useCallback(async () => {
+    if (startBusy || readyBusy) return;
+    setStartBusy(true);
+    setError(null);
+    try {
+      await startRoomRpc(roomId);
+      await refetch();
+    } catch (err) {
+      const message =
+        err instanceof MultiplayerApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Could not start the match.';
+      setError(message);
+      throw err;
+    } finally {
+      setStartBusy(false);
+    }
+  }, [readyBusy, refetch, roomId, startBusy]);
+
+  return {
+    snapshot,
+    loading,
+    error,
+    refetch,
+    setReady,
+    readyBusy,
+    startGame,
+    startBusy,
+  };
 }
 
 export function slotFor(

@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { slotFor, useRoomLobby } from '@/hooks/useRoomLobby';
+import { clearActiveRoom, writeActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 
@@ -16,6 +17,8 @@ interface H2HWaitingLobbyProps {
   roomId: string;
   userId: string;
   onLeft: () => void;
+  /** Fired when Supabase room.status becomes playing (host + guest). */
+  onPlaying: () => void;
 }
 
 function inviteText(code: string): string {
@@ -47,12 +50,22 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps) {
-  const { snapshot, loading, error, setReady, readyBusy } = useRoomLobby({ roomId });
+export function H2HWaitingLobby({
+  roomId,
+  userId,
+  onLeft,
+  onPlaying,
+}: H2HWaitingLobbyProps) {
+  const { snapshot, loading, error, setReady, readyBusy, startGame, startBusy } =
+    useRoomLobby({ roomId });
   const [actionError, setActionError] = useState<string | null>(null);
   const [copyFlash, setCopyFlash] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const leaveLock = useRef(false);
+  const startLock = useRef(false);
+  const transitioned = useRef(false);
+  const onPlayingRef = useRef(onPlaying);
+  onPlayingRef.current = onPlaying;
 
   const room = snapshot?.room ?? null;
   const players = snapshot?.players ?? [];
@@ -60,6 +73,19 @@ export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps
   const p2 = slotFor(players, 2);
   const me = players.find((p) => p.user_id === userId) ?? null;
   const isHost = Boolean(room && me && room.host_user_id === me.user_id);
+  const bothReady = Boolean(p1?.is_ready && p2?.is_ready && p1 && p2);
+  const canHostStart = isHost && bothReady && room?.status === 'waiting';
+
+  useEffect(() => {
+    if (!room?.room_code) return;
+    writeActiveRoom(room.id, room.room_code);
+  }, [room?.id, room?.room_code]);
+
+  useEffect(() => {
+    if (!room || room.status !== 'playing' || transitioned.current) return;
+    transitioned.current = true;
+    onPlayingRef.current();
+  }, [room]);
 
   useEffect(() => {
     if (!copyFlash) return;
@@ -107,15 +133,31 @@ export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps
   }, [leaving, room?.room_code]);
 
   const handleReadyToggle = useCallback(async () => {
-    if (!me || readyBusy || leaving) return;
+    if (!me || readyBusy || leaving || startBusy || room?.status !== 'waiting') return;
     try {
       setActionError(null);
       await setReady(!me.is_ready);
       hapticMedium();
     } catch {
-      /* error surfaced by hook / local */
+      /* surfaced via hook error */
     }
-  }, [leaving, me, readyBusy, setReady]);
+  }, [leaving, me, readyBusy, room?.status, setReady, startBusy]);
+
+  const handleStart = useCallback(async () => {
+    if (!canHostStart || startLock.current || startBusy || leaving) return;
+    startLock.current = true;
+    setActionError(null);
+    try {
+      await startGame();
+      hapticMedium();
+      // Transition is driven by room.status realtime → onPlaying
+    } catch (err) {
+      startLock.current = false;
+      const message =
+        err instanceof Error ? err.message : 'Could not start the match.';
+      setActionError(message);
+    }
+  }, [canHostStart, leaving, startBusy, startGame]);
 
   const handleLeave = useCallback(async () => {
     if (leaveLock.current) return;
@@ -125,8 +167,9 @@ export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps
     try {
       await leaveRoom(roomId);
     } catch {
-      /* still exit locally so the user is never stuck */
+      /* still exit locally */
     } finally {
+      clearActiveRoom();
       onLeft();
     }
   }, [onLeft, roomId]);
@@ -187,12 +230,15 @@ export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps
         <p className="h2h-lobby__waiting h2h-lobby__waiting--ready">Opponent joined</p>
       )}
 
-      {me ? (
+      {me && room?.status === 'waiting' ? (
         <button
           type="button"
           className={`run-btn ${me.is_ready ? 'run-btn--secondary' : 'run-btn--primary'} h2h-lobby__submit`}
-          disabled={readyBusy || leaving || !p2}
-          onPointerDown={press(() => void handleReadyToggle(), readyBusy || leaving || !p2)}
+          disabled={readyBusy || leaving || startBusy || !p2}
+          onPointerDown={press(
+            () => void handleReadyToggle(),
+            readyBusy || leaving || startBusy || !p2,
+          )}
         >
           <strong>
             {readyBusy ? 'UPDATING…' : me.is_ready ? 'UNREADY' : 'READY'}
@@ -205,6 +251,29 @@ export function H2HWaitingLobby({ roomId, userId, onLeft }: H2HWaitingLobbyProps
                 : 'Tap when you’re ready to play'}
           </span>
         </button>
+      ) : null}
+
+      {isHost ? (
+        <button
+          type="button"
+          className="run-btn run-btn--primary h2h-lobby__start"
+          disabled={!canHostStart || startBusy || leaving}
+          onPointerDown={press(
+            () => void handleStart(),
+            !canHostStart || startBusy || leaving,
+          )}
+        >
+          <strong>{startBusy ? 'STARTING…' : 'START GAME'}</strong>
+          <span>
+            {bothReady
+              ? 'Both players are ready'
+              : 'Waiting for both players to ready up'}
+          </span>
+        </button>
+      ) : bothReady ? (
+        <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" aria-live="polite">
+          Waiting for host to start
+        </p>
       ) : null}
 
       {showError ? (

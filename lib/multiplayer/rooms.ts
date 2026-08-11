@@ -7,6 +7,7 @@ import {
   type RoomPlayerRow,
   type RoomRow,
   type RoomStatus,
+  type StartRoomResult,
 } from './types';
 
 function asRoomStatus(value: unknown): RoomStatus {
@@ -23,6 +24,12 @@ function asRoomStatus(value: unknown): RoomStatus {
 
 function asPlayerNumber(value: unknown): 1 | 2 {
   return value === 2 ? 2 : 1;
+}
+
+function asOptionalTimestamp(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
 }
 
 function parseActionResult(data: unknown): RoomActionResult {
@@ -43,7 +50,22 @@ function parseActionResult(data: unknown): RoomActionResult {
   };
 }
 
-function parseRoom(row: Record<string, unknown>): RoomRow {
+function parseStartResult(data: unknown): StartRoomResult {
+  if (!data || typeof data !== 'object') {
+    throw mapRoomRpcError(new Error('Empty start response'));
+  }
+  const row = data as Record<string, unknown>;
+  return {
+    room_id: String(row.room_id),
+    room_code: String(row.room_code).toUpperCase(),
+    host_user_id: String(row.host_user_id),
+    status: asRoomStatus(row.status),
+    expires_at: String(row.expires_at),
+    started_at: asOptionalTimestamp(row.started_at),
+  };
+}
+
+export function parseRoom(row: Record<string, unknown>): RoomRow {
   return {
     id: String(row.id),
     room_code: String(row.room_code).toUpperCase(),
@@ -51,6 +73,7 @@ function parseRoom(row: Record<string, unknown>): RoomRow {
     status: asRoomStatus(row.status),
     created_at: String(row.created_at),
     expires_at: String(row.expires_at),
+    started_at: asOptionalTimestamp(row.started_at),
   };
 }
 
@@ -105,6 +128,14 @@ export async function setPlayerReady(roomId: string, ready: boolean): Promise<vo
     ready,
   });
   if (error) throw mapRoomRpcError(error);
+}
+
+export async function startRoom(roomId: string): Promise<StartRoomResult> {
+  await ensureAnonymousSession();
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc('start_room', { room_id: roomId });
+  if (error) throw mapRoomRpcError(error);
+  return parseStartResult(data);
 }
 
 export async function fetchRoomLobby(roomId: string): Promise<RoomLobbySnapshot> {

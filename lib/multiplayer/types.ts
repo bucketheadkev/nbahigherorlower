@@ -7,6 +7,7 @@ export interface RoomRow {
   status: RoomStatus;
   created_at: string;
   expires_at: string;
+  started_at: string | null;
 }
 
 export interface RoomPlayerRow {
@@ -34,6 +35,15 @@ export interface RoomActionResult {
   player_number: 1 | 2;
   display_name: string;
   rejoined?: boolean;
+}
+
+export interface StartRoomResult {
+  room_id: string;
+  room_code: string;
+  host_user_id: string;
+  status: RoomStatus;
+  expires_at: string;
+  started_at: string | null;
 }
 
 export class MultiplayerApiError extends Error {
@@ -73,6 +83,18 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   }
   if (upper.includes('ROOM_ABANDONED')) {
     return new MultiplayerApiError('ROOM_ABANDONED', 'This lobby was abandoned.');
+  }
+  if (upper.includes('NOT_HOST')) {
+    return new MultiplayerApiError('NOT_HOST', 'Only the host can start the match.');
+  }
+  if (upper.includes('NEED_TWO_PLAYERS')) {
+    return new MultiplayerApiError('NEED_TWO_PLAYERS', 'Two players are required to start.');
+  }
+  if (upper.includes('PLAYERS_NOT_READY')) {
+    return new MultiplayerApiError(
+      'PLAYERS_NOT_READY',
+      'Both players must be ready before starting.',
+    );
   }
   if (upper.includes('INVALID_DISPLAY_NAME')) {
     return new MultiplayerApiError(

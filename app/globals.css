@@ -25429,3 +25429,40 @@ body:has(.ballion-splash) {
 .h2h-lobby--waiting .h2h-lobby__submit {
   margin-top: 0.15rem;
 }
+
+.h2h-lobby__start {
+  min-height: 4.6rem;
+  align-items: center;
+  text-align: center;
+}
+
+.h2h-lobby__start:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.15);
+}
+
+.h2h-lobby__inline-code {
+  font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.16em;
+  color: #29e490;
+  font-weight: 800;
+}
+
+.h2h-lobby__phase-note {
+  margin: 0.35rem 0 0;
+  padding: 0.95rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(41, 228, 144, 0.28);
+  background: rgba(41, 228, 144, 0.08);
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f7fafc;
+}
+
+.h2h-lobby--pregame .h2h-lobby__leave {
+  margin-top: 1.25rem;
+}
+
