@@ -8,6 +8,11 @@ export type AuthReadyState =
 
 let ensureInFlight: Promise<Session> | null = null;
 
+/** Clears in-flight anonymous sign-in (after account deletion). */
+export function resetAuthSessionCache(): void {
+  ensureInFlight = null;
+}
+
 function authErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     const msg = String((error as { message?: unknown }).message ?? '').trim();

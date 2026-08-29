@@ -6,20 +6,21 @@
 
 import { getAudioSettings } from './audioSettings';
 
-const EMOJI_MAX_SEC = 4;
+const EMOJI_MAX_SEC_DEFAULT = 4;
 const RESULT_MAX_SEC = 5;
+
+const EMOJI_MAX_SEC: Partial<Record<string, number>> = {
+  '🚀': 2,
+};
 
 const EMOJI_SRC: Record<string, string> = {
   '🐐': '/audio/h2h/goat.mp3',
   '👑': '/audio/h2h/crown.mp3',
-  '👏': '/audio/h2h/clap.mp3',
-  '😂': '/audio/h2h/laugh.mp3',
-  '🤣': '/audio/h2h/laugh.mp3',
+  '😂': '/audio/h2h/laugh-soft.mp3',
   '🔥': '/audio/h2h/fire.mp3',
   '🎯': '/audio/h2h/target.mp3',
   '🏆': '/audio/h2h/trophy.mp3',
   '⭐': '/audio/h2h/star.mp3',
-  '🙌': '/audio/h2h/cheer.mp3',
   '💰': '/audio/h2h/money.mp3',
   '🚀': '/audio/h2h/rocket.mp3',
   '🎉': '/audio/h2h/party.mp3',
@@ -138,15 +139,40 @@ export function schedulePlayerSlotSound(delayMs = 400): void {
 export function playEmojiTapSound(emoji: string): void {
   const scale = sfxScale();
   if (scale <= 0) return;
-  const src = EMOJI_SRC[emoji] ?? EMOJI_SRC['👏'];
+  const src = EMOJI_SRC[emoji] ?? EMOJI_SRC['🔥'];
   if (!src) return;
-  playSample(src, scale, EMOJI_MAX_SEC);
+  playSample(src, scale, EMOJI_MAX_SEC[emoji] ?? EMOJI_MAX_SEC_DEFAULT);
 }
 
 export function playH2HVictorySound(): void {
   const scale = sfxScale();
   if (scale <= 0) return;
   playSample(VICTORY_SRC, scale * 0.95, RESULT_MAX_SEC);
+}
+
+/** Short bright ping when you win a position round — not the full match victory sting. */
+export function playH2HRoundWinSound(): void {
+  prepareH2HEmojiAudio();
+  const audio = getCtx();
+  const scale = sfxScale();
+  if (!audio || scale <= 0) return;
+
+  const freqs = [523, 784] as const;
+  freqs.forEach((freq, i) => {
+    const t0 = audio.currentTime + i * 0.055;
+    const osc = audio.createOscillator();
+    const amp = audio.createGain();
+    const peak = 0.11 * scale;
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    amp.gain.setValueAtTime(0, t0);
+    amp.gain.linearRampToValueAtTime(peak, t0 + 0.006);
+    amp.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
+    osc.connect(amp);
+    amp.connect(master!);
+    osc.start(t0);
+    osc.stop(t0 + 0.16);
+  });
 }
 
 export function playH2HDefeatSound(): void {

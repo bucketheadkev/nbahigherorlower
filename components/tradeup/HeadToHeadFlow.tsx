@@ -7,7 +7,9 @@ import {
   readActiveRoom,
   writeActiveRoom,
 } from '@/lib/multiplayer/activeRoom';
-import { fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
+import { joinRoom, fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import { getH2HUsername, isValidH2HUsername, setH2HUsername } from '@/lib/tradeup/h2hUsername';
 import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
@@ -20,6 +22,9 @@ type LobbyScreen = 'entry' | 'modes' | 'create' | 'join' | 'waiting' | 'match';
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
+  /** Room code from invite deep link — auto-join when possible. */
+  pendingJoinCode?: string | null;
+  onJoinCodeConsumed?: () => void;
 }
 
 /**
@@ -27,13 +32,48 @@ interface HeadToHeadFlowProps {
  * Guests join by code and inherit the host’s mode (no purchase gate).
  * Classic single-player remains a separate TradeUpApp path.
  */
-export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
+export function HeadToHeadFlow({
+  onExit,
+  pendingJoinCode = null,
+  onJoinCodeConsumed,
+}: HeadToHeadFlowProps) {
   const auth = useAnonymousAuth();
-  const [screen, setScreen] = useState<LobbyScreen>('entry');
+  const [screen, setScreen] = useState<LobbyScreen>(() => {
+    if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
+      return 'join';
+    }
+    return 'entry';
+  });
   const [roomId, setRoomId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<H2HGameMode>('classic');
   const [restoring, setRestoring] = useState(true);
+  const [inviteJoinCode, setInviteJoinCode] = useState<string | null>(() => {
+    if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
+      return sanitizeH2HRoomCode(pendingJoinCode);
+    }
+    return null;
+  });
+  const [inviteJoinBusy, setInviteJoinBusy] = useState(false);
+  const [inviteJoinError, setInviteJoinError] = useState<string | null>(null);
   const restoreAttempted = useRef(false);
+  const inviteJoinAttempted = useRef(false);
+  const onJoinCodeConsumedRef = useRef(onJoinCodeConsumed);
+  onJoinCodeConsumedRef.current = onJoinCodeConsumed;
+
+  const enterRoom = useCallback((nextRoomId: string, nextCode: string) => {
+    writeActiveRoom(nextRoomId, nextCode);
+    setRoomId(nextRoomId);
+    setInviteJoinCode(null);
+    setScreen('waiting');
+  }, []);
+
+  useEffect(() => {
+    if (!pendingJoinCode) return;
+    const code = sanitizeH2HRoomCode(pendingJoinCode);
+    if (!isValidH2HRoomCode(code)) return;
+    setInviteJoinCode(code);
+    onJoinCodeConsumedRef.current?.();
+  }, [pendingJoinCode]);
 
   useEffect(() => {
     if (auth.status === 'loading') return;
@@ -41,6 +81,11 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     restoreAttempted.current = true;
 
     if (auth.status !== 'ready') {
+      setRestoring(false);
+      return;
+    }
+
+    if (inviteJoinCode) {
       setRestoring(false);
       return;
     }
@@ -62,9 +107,7 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
         const usable =
           member &&
           !expired &&
-          (snap.room.status === 'waiting' ||
-            snap.room.status === 'playing' ||
-            snap.room.status === 'finished');
+          snap.room.status === 'waiting';
 
         if (!usable) {
           clearActiveRoom();
@@ -75,19 +118,7 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
         writeActiveRoom(snap.room.id, snap.room.room_code);
         setRoomId(snap.room.id);
         setSelectedMode(snap.room.game_mode ?? 'classic');
-
-        if (snap.room.status === 'finished') {
-          clearActiveRoom();
-          setRoomId(null);
-          setRestoring(false);
-          return;
-        }
-
-        if (snap.room.status === 'waiting') {
-          setScreen('waiting');
-        } else {
-          setScreen('match');
-        }
+        setScreen('waiting');
       } catch {
         if (!cancelled) clearActiveRoom();
       } finally {
@@ -98,13 +129,38 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     return () => {
       cancelled = true;
     };
-  }, [auth]);
+  }, [auth, inviteJoinCode]);
 
-  const enterRoom = useCallback((nextRoomId: string, nextCode: string) => {
-    writeActiveRoom(nextRoomId, nextCode);
-    setRoomId(nextRoomId);
-    setScreen('waiting');
-  }, []);
+  useEffect(() => {
+    if (!inviteJoinCode || inviteJoinAttempted.current) return;
+    if (auth.status !== 'ready' || restoring) return;
+
+    const savedName = getH2HUsername();
+    if (!savedName || !isValidH2HUsername(savedName)) {
+      setScreen('join');
+      return;
+    }
+
+    inviteJoinAttempted.current = true;
+    setInviteJoinBusy(true);
+    setInviteJoinError(null);
+
+    void (async () => {
+      try {
+        setH2HUsername(savedName);
+        const result = await joinRoom(inviteJoinCode, savedName);
+        enterRoom(result.room_id, result.room_code);
+      } catch (err) {
+        inviteJoinAttempted.current = false;
+        const message =
+          err instanceof Error ? err.message : 'Could not join from invite link.';
+        setInviteJoinError(message);
+        setScreen('join');
+      } finally {
+        setInviteJoinBusy(false);
+      }
+    })();
+  }, [auth.status, enterRoom, inviteJoinCode, restoring]);
 
   const handleHostMode = useCallback((mode: H2HGameMode) => {
     setSelectedMode(mode);
@@ -136,10 +192,12 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     setScreen('match');
   }, []);
 
-  if (restoring || auth.status === 'loading') {
+  if (restoring || auth.status === 'loading' || inviteJoinBusy) {
     return (
       <div className="h2h-lobby" aria-label="Loading 1V1">
-        <p className="h2h-lobby__status">Loading…</p>
+        <p className="h2h-lobby__status">
+          {inviteJoinBusy ? 'Joining from invite…' : 'Loading…'}
+        </p>
       </div>
     );
   }
@@ -149,14 +207,25 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
       <H2HCreateLobby
         gameMode={selectedMode}
         onCreated={handleCreated}
-        onBack={() => setScreen('modes')}
+        onBack={() => setScreen('entry')}
       />
     );
   }
 
   if (screen === 'join') {
     return (
-      <H2HJoinLobby onJoined={handleJoined} onBack={() => setScreen('entry')} />
+      <H2HJoinLobby
+        initialRoomCode={inviteJoinCode ?? undefined}
+        inviteFromLink={Boolean(inviteJoinCode)}
+        initialError={inviteJoinError}
+        onJoined={handleJoined}
+        onBack={() => {
+          setInviteJoinCode(null);
+          setInviteJoinError(null);
+          inviteJoinAttempted.current = false;
+          setScreen('entry');
+        }}
+      />
     );
   }
 
@@ -211,7 +280,10 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
 
   return (
     <H2HEntryScreen
-      onCreate={() => setScreen('modes')}
+      onCreate={() => {
+        setSelectedMode('classic');
+        setScreen('create');
+      }}
       onJoin={() => setScreen('join')}
       onBack={onExit}
       authLoading={false}

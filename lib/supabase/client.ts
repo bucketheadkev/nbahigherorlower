@@ -37,3 +37,8 @@ export function getSupabaseBrowserClient(): SupabaseClient {
 
   return browserClient;
 }
+
+/** Reset singleton after sign-out / account deletion so the next client is fresh. */
+export function resetSupabaseBrowserClient(): void {
+  browserClient = null;
+}

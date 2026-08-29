@@ -5,6 +5,7 @@ import { FULL_MOTION_BOOT_SCRIPT } from '@/lib/tradeup/motionPreference';
 import './globals.css';
 import './game-ui.css';
 import './oneb-theme.css';
+import './run-home-ipad-portrait.css';
 
 export const metadata: Metadata = {
   title: '$1B RUN',

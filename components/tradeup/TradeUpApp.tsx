@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useGameReducedMotion } from '@/hooks/useGameReducedMotion';
+import { useH2HInviteLink } from '@/hooks/useH2HInviteLink';
+import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
 import {
@@ -53,6 +55,13 @@ export function TradeUpApp() {
   const [showPerf, setShowPerf] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [runsKey, setRunsKey] = useState(0);
+  const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
+
+  useH2HInviteLink((code) => {
+    setPendingH2HJoinCode(code);
+    setH2hKey((k) => k + 1);
+    setScreen('h2h');
+  });
 
   useEffect(() => {
     initAdaptiveQuality();
@@ -93,11 +102,13 @@ export function TradeUpApp() {
   }, []);
 
   const handleHeadToHead = useCallback(() => {
+    clearActiveRoom();
     setH2hKey((k) => k + 1);
     setScreen('h2h');
   }, []);
 
   const handleExit = useCallback(() => {
+    clearActiveRoom();
     setRunsKey((k) => k + 1);
     setHubTab('home');
     setScreen('hub');
@@ -137,7 +148,12 @@ export function TradeUpApp() {
           onPlayAgain={() => setEngineKey((k) => k + 1)}
         />
       ) : screen === 'h2h' ? (
-        <HeadToHeadFlow key={h2hKey} onExit={handleExit} />
+        <HeadToHeadFlow
+          key={h2hKey}
+          onExit={handleExit}
+          pendingJoinCode={pendingH2HJoinCode}
+          onJoinCodeConsumed={() => setPendingH2HJoinCode(null)}
+        />
       ) : screen === 'perf' ? (
         <PerformanceTestApp key={engineKey} onExit={handleExit} />
       ) : hubTab === 'challenges' ? (

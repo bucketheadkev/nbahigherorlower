@@ -5,6 +5,8 @@ import { H2H_POSITIONS, type H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HRoundPublic } from '@/lib/multiplayer/h2hState';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { H2HMatchupReveal } from './H2HMatchupReveal';
+import { H2HPositionTransition } from './H2HPositionTransition';
+
 interface H2HRevealSequenceProps {
   roomId: string;
   rounds: H2HRoundPublic[];
@@ -42,6 +44,9 @@ export function H2HRevealSequence({
   );
 
   const [index, setIndex] = useState(0);
+  const [pendingPosition, setPendingPosition] = useState<H2HPosition | null>(null);
+  const indexRef = useRef(0);
+  indexRef.current = index;
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowserClient>['channel']> | null>(
     null,
   );
@@ -56,7 +61,15 @@ export function H2HRevealSequence({
         const row = payload as { index?: number; from?: number };
         if (row.from === myPlayerNumber) return;
         if (typeof row.index === 'number') {
+          setPendingPosition(null);
           setIndex(Math.min(row.index, Math.max(0, orderedRounds.length - 1)));
+        }
+      })
+      .on('broadcast', { event: 'reveal_transition' }, ({ payload }) => {
+        const row = payload as { position?: H2HPosition; from?: number };
+        if (row.from === myPlayerNumber) return;
+        if (row.position && H2H_POSITIONS.includes(row.position)) {
+          setPendingPosition(row.position);
         }
       })
       .on('broadcast', { event: 'reveal_finish' }, ({ payload }) => {
@@ -72,18 +85,6 @@ export function H2HRevealSequence({
     };
   }, [myPlayerNumber, onComplete, orderedRounds.length, roomId]);
 
-  const runningTotals = useMemo(() => {
-    if (!round) return null;
-    const slice = orderedRounds.slice(0, index + 1);
-    const totals = scoreFormatter
-      ? scoreFormatter(slice)
-      : { p1: round.p1_total ?? 0, p2: round.p2_total ?? 0 };
-    const iAmP1 = myPlayerNumber === 1;
-    return {
-      left: iAmP1 ? totals.p1 : totals.p2,
-      right: iAmP1 ? totals.p2 : totals.p1,
-    };
-  }, [index, myPlayerNumber, orderedRounds, round, scoreFormatter]);
   const handleContinue = useCallback(() => {
     if (!isHost) return;
     if (isLast) {
@@ -95,17 +96,42 @@ export function H2HRevealSequence({
       onComplete();
       return;
     }
-    const next = index + 1;
-    setIndex(next);
+    const nextRound = orderedRounds[index + 1];
+    if (!nextRound) return;
+    const nextPos = nextRound.position as H2HPosition;
+    setPendingPosition(nextPos);
     void channelRef.current?.send({
       type: 'broadcast',
-      event: 'reveal_step',
-      payload: { index: next, from: myPlayerNumber },
+      event: 'reveal_transition',
+      payload: { position: nextPos, from: myPlayerNumber },
     });
-  }, [index, isHost, isLast, myPlayerNumber, onComplete]);
+  }, [index, isHost, isLast, myPlayerNumber, onComplete, orderedRounds]);
+
+  const finishTransition = useCallback(() => {
+    const next = indexRef.current + 1;
+    setPendingPosition(null);
+    setIndex(next);
+    if (isHost) {
+      void channelRef.current?.send({
+        type: 'broadcast',
+        event: 'reveal_step',
+        payload: { index: next, from: myPlayerNumber },
+      });
+    }
+  }, [isHost, myPlayerNumber]);
+
   useEffect(() => {
     if (orderedRounds.length === 0) onComplete();
   }, [onComplete, orderedRounds.length]);
+
+  if (pendingPosition) {
+    return (
+      <H2HPositionTransition
+        position={pendingPosition}
+        onDone={finishTransition}
+      />
+    );
+  }
 
   if (!round) return null;
 
@@ -120,8 +146,7 @@ export function H2HRevealSequence({
       isHost={isHost}
       continueBusy={false}
       isLast={isLast}
-      runningTotals={runningTotals}
-      formatScore={formatScore}
-      onContinue={handleContinue}    />
+      onContinue={handleContinue}
+    />
   );
 }

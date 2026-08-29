@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { emojiSetForPosition } from '@/lib/tradeup/h2hEmojiSets';
@@ -47,7 +47,7 @@ export function H2HEmojiReactions({
   myPlayerNumber,
   enabled,
 }: H2HEmojiReactionsProps) {
-  const emojis = emojiSetForPosition(position);
+  const emojis = useMemo(() => emojiSetForPosition(position).slice(0, 3), [position]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [mounted, setMounted] = useState(false);
   const lastTapRef = useRef(0);
@@ -103,6 +103,8 @@ export function H2HEmojiReactions({
 
   if (!enabled) return null;
 
+  const emojiButtons = emojis;
+
   const floatLayer =
     mounted && particles.length > 0
       ? createPortal(
@@ -134,13 +136,16 @@ export function H2HEmojiReactions({
     <div className="h2h-emoji" aria-label="Reactions">
       {floatLayer}
       <div className="h2h-emoji__dock">
-        {emojis.map((emoji) => (
+        {emojiButtons.map((emoji) => (
           <button
             key={`${position}-${emoji}`}
             type="button"
             className="h2h-emoji__btn"
             aria-label={`React ${emoji}`}
-            onClick={() => handleTap(emoji)}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleTap(emoji);
+            }}
           >
             {emoji}
           </button>

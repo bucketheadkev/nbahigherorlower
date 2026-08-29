@@ -138,6 +138,18 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   if (upper.includes('ALREADY_LOCKED')) {
     return new MultiplayerApiError('ALREADY_LOCKED', 'You already locked this position.');
   }
+  if (upper.includes('NO_PICK')) {
+    return new MultiplayerApiError(
+      'NO_PICK',
+      'That player is not in the slot you tapped — try again.',
+    );
+  }
+  if (upper.includes('MOVE_H2H_PICK') || upper.includes('move_h2h_pick')) {
+    return new MultiplayerApiError(
+      'RPC_MISSING',
+      'Move is not enabled on the server. Re-run supabase/migrations/20260829_h2h_move_pick.sql in Supabase.',
+    );
+  }
   if (upper.includes('WRONG_POSITION')) {
     return new MultiplayerApiError(
       'WRONG_POSITION',
@@ -146,6 +158,18 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   }
   if (upper.includes('WRONG_PHASE')) {
     return new MultiplayerApiError('WRONG_PHASE', 'This matchup is not ready for that action.');
+  }
+  if (upper.includes('DELETE_MY_DATA') || upper.includes('PGRST202')) {
+    const missingDelete =
+      upper.includes('DELETE_MY_DATA') ||
+      upper.includes('delete_my_data') ||
+      (upper.includes('SCHEMA CACHE') && upper.includes('DELETE'));
+    if (missingDelete) {
+      return new MultiplayerApiError(
+        'DELETE_UNAVAILABLE',
+        'Data deletion is not available yet. Contact onebillionrun@gmail.com for help.',
+      );
+    }
   }
   if (upper.includes('INVALID_POSITION') || upper.includes('INVALID_SELECTION')) {
     return new MultiplayerApiError('INVALID_SELECTION', 'That player pick is not valid for this round.');

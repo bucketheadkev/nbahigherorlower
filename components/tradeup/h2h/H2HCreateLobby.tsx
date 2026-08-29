@@ -101,7 +101,7 @@ export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyPr
 
         <button
           type="submit"
-          className="run-btn run-btn--primary h2h-lobby__submit"
+          className="run-btn run-btn--primary h2h-lobby__submit ui-tap"
           disabled={busy || !sanitizeH2HUsername(displayName)}
         >
           <strong>{busy ? 'CREATING…' : 'CREATE LOBBY'}</strong>

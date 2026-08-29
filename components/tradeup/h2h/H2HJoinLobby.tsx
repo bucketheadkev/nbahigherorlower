@@ -3,6 +3,7 @@
 import {
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
+  useEffect,
   useState,
 } from 'react';
 import { joinRoom } from '@/lib/multiplayer/rooms';
@@ -23,13 +24,36 @@ import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 interface H2HJoinLobbyProps {
   onJoined: (roomId: string, roomCode: string) => void;
   onBack: () => void;
+  /** Pre-filled from invite deep link. */
+  initialRoomCode?: string;
+  /** When true, room code field is read-only (from invite link). */
+  inviteFromLink?: boolean;
+  initialError?: string | null;
 }
 
-export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
+export function H2HJoinLobby({
+  onJoined,
+  onBack,
+  initialRoomCode = '',
+  inviteFromLink = false,
+  initialError = null,
+}: H2HJoinLobbyProps) {
   const [displayName, setDisplayName] = useState(() => getH2HUsername() ?? '');
-  const [roomCode, setRoomCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [roomCode, setRoomCode] = useState(() =>
+    initialRoomCode ? sanitizeH2HRoomCode(initialRoomCode) : '',
+  );
+  const [error, setError] = useState<string | null>(initialError);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (initialRoomCode) {
+      setRoomCode(sanitizeH2HRoomCode(initialRoomCode));
+    }
+  }, [initialRoomCode]);
+
+  useEffect(() => {
+    if (initialError) setError(initialError);
+  }, [initialError]);
 
   const pressBack = (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -38,21 +62,7 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
     onBack();
   };
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (busy) return;
-
-    const name = sanitizeH2HUsername(displayName);
-    const code = sanitizeH2HRoomCode(roomCode);
-    if (!isValidH2HUsername(name)) {
-      setError('Use 2–16 letters, numbers, spaces, or . _ -');
-      return;
-    }
-    if (!isValidH2HRoomCode(code)) {
-      setError(`Enter a valid ${H2H_ROOM_CODE_LENGTH}-character room code.`);
-      return;
-    }
-
+  const attemptJoin = async (name: string, code: string) => {
     setBusy(true);
     setError(null);
     try {
@@ -72,20 +82,47 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
     }
   };
 
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+
+    const name = sanitizeH2HUsername(displayName);
+    const code = sanitizeH2HRoomCode(roomCode);
+    if (!isValidH2HUsername(name)) {
+      setError('Use 2–16 letters, numbers, spaces, or . _ -');
+      return;
+    }
+    if (!isValidH2HRoomCode(code)) {
+      setError(`Enter a valid ${H2H_ROOM_CODE_LENGTH}-character room code.`);
+      return;
+    }
+
+    await attemptJoin(name, code);
+  };
+
   const canSubmit =
     sanitizeH2HUsername(displayName).length >= 2 && isValidH2HRoomCode(roomCode);
 
   return (
     <div className="h2h-lobby" aria-label="Join lobby">
-      <button type="button" className="h2h-lobby__back" disabled={busy} onPointerDown={pressBack}>
+      <button
+        type="button"
+        className="h2h-lobby__back ui-tap"
+        disabled={busy}
+        onPointerDown={pressBack}
+      >
         ← Back
       </button>
 
       <header className="h2h-lobby__header">
         <p className="h2h-lobby__eyebrow">1V1</p>
-        <h1 className="h2h-lobby__title">Join Lobby</h1>
+        <h1 className="h2h-lobby__title">
+          {inviteFromLink ? 'Join Invite' : 'Join Lobby'}
+        </h1>
         <p className="h2h-lobby__subtitle">
-          Enter your name and the host’s {H2H_ROOM_CODE_LENGTH}-character code.
+          {inviteFromLink
+            ? 'Enter your name — the room is already linked from the invite.'
+            : `Enter your name and the host’s ${H2H_ROOM_CODE_LENGTH}-character code.`}
         </p>
       </header>
 
@@ -101,6 +138,7 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
             maxLength={16}
             value={displayName}
             disabled={busy}
+            autoFocus
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your name"
           />
@@ -117,7 +155,8 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
             spellCheck={false}
             maxLength={H2H_ROOM_CODE_LENGTH}
             value={roomCode}
-            disabled={busy}
+            disabled={busy || inviteFromLink}
+            readOnly={inviteFromLink}
             onChange={(e) => setRoomCode(sanitizeH2HRoomCode(e.target.value))}
             placeholder="A2B3"
             aria-describedby={error ? 'join-lobby-error' : undefined}
@@ -132,7 +171,7 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
 
         <button
           type="submit"
-          className="run-btn run-btn--primary h2h-lobby__submit"
+          className="run-btn run-btn--primary h2h-lobby__submit ui-tap"
           disabled={busy || !canSubmit}
         >
           <strong>{busy ? 'JOINING…' : 'JOIN LOBBY'}</strong>

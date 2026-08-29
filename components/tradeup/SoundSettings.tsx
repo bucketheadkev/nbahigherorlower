@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
@@ -11,6 +12,7 @@ import {
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
 import { SettingsGuidePage } from './SettingsGuidePage';
+import { deleteUserData } from '@/lib/account/deleteUserData';
 
 interface SoundSettingsProps {
   /** Compact gear on redesigned home; text toggle elsewhere. */
@@ -29,6 +31,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     toggleHaptics,
     resume,
   } = useSound();
+  const router = useRouter();
   const { locale } = useLocale();
   const guideNav = GUIDE_NAV[locale] ?? GUIDE_NAV.en;
   const [open, setOpen] = useState(false);
@@ -37,6 +40,10 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   const [draftName, setDraftName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [activeGuide, setActiveGuide] = useState<GuideId | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccessOpen, setDeleteSuccessOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -52,17 +59,63 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           setNameError(null);
           return;
         }
+        if (deleteConfirmOpen) {
+          if (!deleteBusy) setDeleteConfirmOpen(false);
+          return;
+        }
+        if (deleteSuccessOpen) {
+          setDeleteSuccessOpen(false);
+          return;
+        }
         setOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, editingName, activeGuide]);
+  }, [open, editingName, activeGuide, deleteConfirmOpen, deleteBusy, deleteSuccessOpen]);
 
   const close = () => {
     setEditingName(false);
     setNameError(null);
     setActiveGuide(null);
+    setDeleteConfirmOpen(false);
+    setOpen(false);
+  };
+
+  const openDeleteConfirm = () => {
+    resume();
+    hapticTap();
+    setDeleteError(null);
+    setDeleteConfirmOpen(true);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmOpen(false);
+  };
+
+  const confirmDelete = () => {
+    if (deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    void (async () => {
+      const result = await deleteUserData();
+      setDeleteBusy(false);
+      if (result.ok === false) {
+        setDeleteError(result.message);
+        return;
+      }
+      setUsername('');
+      setDeleteConfirmOpen(false);
+      setEditingName(false);
+      setNameError(null);
+      setActiveGuide(null);
+      setDeleteSuccessOpen(true);
+      hapticTap();
+    })();
+  };
+
+  const closeDeleteSuccess = () => {
+    setDeleteSuccessOpen(false);
     setOpen(false);
   };
 
@@ -70,6 +123,16 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     resume();
     hapticTap();
     setActiveGuide(id);
+  };
+
+  const openLegalPage = (path: '/privacy' | '/support') => {
+    resume();
+    hapticTap();
+    setEditingName(false);
+    setNameError(null);
+    setActiveGuide(null);
+    setOpen(false);
+    router.push(path);
   };
 
   const closeNameModal = () => {
@@ -168,6 +231,40 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           </span>
         </button>
       </div>
+
+      <div className="sound-settings__guides" role="group" aria-label="Legal">
+        <p className="sound-settings__guides-label">Legal</p>
+        <button
+          type="button"
+          className="sound-settings__nav-link"
+          onPointerDown={() => openLegalPage('/privacy')}
+        >
+          <span>Privacy Policy</span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+        <button
+          type="button"
+          className="sound-settings__nav-link"
+          onPointerDown={() => openLegalPage('/support')}
+        >
+          <span>Support</span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+        <button
+          type="button"
+          className="sound-settings__nav-link sound-settings__nav-link--danger"
+          onPointerDown={openDeleteConfirm}
+        >
+          <span>Delete My Data</span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+      </div>
     </>
   );
 
@@ -220,6 +317,96 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           </button>
         </div>
       </form>
+    </div>
+  ) : null;
+
+  const deleteModal = deleteConfirmOpen ? (
+    <div
+      className="settings-name-modal settings-delete-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="settings-delete-title"
+      aria-describedby="settings-delete-desc"
+    >
+      <button
+        type="button"
+        className="settings-name-modal__scrim"
+        aria-label="Close"
+        disabled={deleteBusy}
+        onPointerDown={() => {
+          if (!deleteBusy) cancelDelete();
+        }}
+      />
+      <div className="settings-name-modal__card">
+        <p className="settings-name-modal__kicker">Legal</p>
+        <h3 id="settings-delete-title" className="settings-name-modal__title">
+          Delete My Data?
+        </h3>
+        <p id="settings-delete-desc" className="settings-name-modal__copy">
+          This permanently deletes your multiplayer identity, display name, game progress,
+          preferences, and other data associated with this installation. This cannot be undone.
+        </p>
+        {deleteError ? (
+          <p className="settings-name-modal__error" role="alert">
+            {deleteError}
+          </p>
+        ) : null}
+        <div className="settings-name-modal__actions">
+          <button
+            type="button"
+            className="settings-name-modal__cancel"
+            disabled={deleteBusy}
+            onPointerDown={() => {
+              if (!deleteBusy) cancelDelete();
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="settings-name-modal__save settings-name-modal__save--danger"
+            disabled={deleteBusy}
+            onPointerDown={confirmDelete}
+          >
+            {deleteBusy ? 'Deleting…' : 'Delete Permanently'}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const deleteSuccessModal = deleteSuccessOpen ? (
+    <div
+      className="settings-name-modal settings-success-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="settings-delete-success-title"
+      aria-describedby="settings-delete-success-desc"
+    >
+      <button
+        type="button"
+        className="settings-name-modal__scrim"
+        aria-label="Close"
+        onPointerDown={closeDeleteSuccess}
+      />
+      <div className="settings-name-modal__card">
+        <p className="settings-name-modal__kicker settings-name-modal__kicker--success">Success</p>
+        <h3 id="settings-delete-success-title" className="settings-name-modal__title">
+          Your data has been deleted
+        </h3>
+        <p id="settings-delete-success-desc" className="settings-name-modal__copy">
+          A new anonymous session was created. You can keep playing.
+        </p>
+        <div className="settings-name-modal__actions settings-name-modal__actions--single">
+          <button
+            type="button"
+            className="settings-name-modal__save"
+            onPointerDown={closeDeleteSuccess}
+          >
+            OK
+          </button>
+        </div>
+      </div>
     </div>
   ) : null;
 
@@ -283,7 +470,6 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               </header>
               <div className="settings-drawer__body">{settingsBody}</div>
             </aside>
-            {nameModal}
             {activeGuide ? (
               <SettingsGuidePage
                 guideId={activeGuide}
@@ -292,6 +478,9 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             ) : null}
           </div>
         ) : null}
+        {nameModal}
+        {deleteModal}
+        {deleteSuccessModal}
       </div>
     );
   }
@@ -320,6 +509,8 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         </div>
       ) : null}
       {nameModal}
+      {deleteModal}
+      {deleteSuccessModal}
       {activeGuide ? (
         <SettingsGuidePage
           guideId={activeGuide}

@@ -14,9 +14,11 @@
     "decade-rosters": "node scripts/build-decade-rosters.mjs",
     "decade-gap-check": "node scripts/gap-check-decades.mjs",
     "decade-fill-gaps": "node scripts/fill-gaps-from-bbr.mjs",
-    "migrate:h2h-draft": "node scripts/apply-h2h-draft-migration.mjs"
+    "migrate:h2h-draft": "node scripts/apply-h2h-draft-migration.mjs",
+    "migrate:delete-my-data": "node scripts/apply-delete-my-data-migration.mjs"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.3",

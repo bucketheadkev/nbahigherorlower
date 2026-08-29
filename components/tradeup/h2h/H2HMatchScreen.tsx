@@ -22,6 +22,7 @@ import { H2HTradeUpMatch } from './H2HTradeUpMatch';
 import { H2HKnockoutMatch } from './H2HKnockoutMatch';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
 import { H2HRevealSequence } from './H2HRevealSequence';
+import { MoneyRain } from '../MoneyRain';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
 
@@ -259,7 +260,6 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
       opponentName={opponentName}
       myPicks={state.my_picks ?? []}
       opponentPickCount={state.opponent_pick_count ?? 0}
-      lockBusy={lockBusy}
       error={error}
       onLock={(position, selection, raw) => lockPick(position, selection, raw)}
       onMove={(from, to, selection, raw) => movePick(from, to, selection, raw)}
@@ -282,7 +282,16 @@ function H2HFinalScreen({
     if (myWins) playH2HVictorySound();
     else if (oppWins) playH2HDefeatSound();
   }, [myWins, oppWins]);
-  return children;
+  return (
+    <>
+      {myWins ? (
+        <div className="h2h-win-celebration" aria-hidden>
+          <MoneyRain intense durationMs={3000} />
+        </div>
+      ) : null}
+      {children}
+    </>
+  );
 }
 
 function FinalBoard({

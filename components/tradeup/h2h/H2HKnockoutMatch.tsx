@@ -68,7 +68,6 @@ export function H2HKnockoutMatch({
         opponentName={opponentName}
         myPicks={myPicks}
         opponentPickCount={state.opponent_pick_count ?? 0}
-        lockBusy={lockBusy}
         error={error}
         onLock={onLock}
         onMove={onMove}

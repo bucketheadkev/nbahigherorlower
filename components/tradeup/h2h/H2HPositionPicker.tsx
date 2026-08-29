@@ -26,6 +26,7 @@ import type { TeamInfo } from '@/lib/tradeup/types';
 import type { Position } from '@/lib/tradeup/types';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
+import { MultiplayerApiError } from '@/lib/multiplayer/types';
 import { BallionTicketMachine, type TicketRerollKind } from '../BallionTicketMachine';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from '../DraftPlayerSlamFly';
 import { FranchisePickScreen } from '../FranchisePickScreen';
@@ -77,6 +78,8 @@ function valueForSlot(pick: H2HPickSelection, slot: H2HPosition): number {
 interface H2HPositionPickerProps {
   myPicks: Array<{ position: H2HPosition; selection: H2HPickSelection; raw_value: number }>;
   opponentPickCount: number;
+  /** All five slots filled — rearrange only, no new picks. */
+  lineupLocked?: boolean;
   busy?: boolean;
   error?: string | null;
   onLock: (position: H2HPosition, selection: H2HPickSelection, rawValue: number) => Promise<void>;
@@ -93,6 +96,7 @@ interface H2HPositionPickerProps {
 export function H2HPositionPicker({
   myPicks,
   opponentPickCount,
+  lineupLocked = false,
   busy = false,
   error = null,
   onLock,
@@ -117,21 +121,61 @@ export function H2HPositionPicker({
   const [slamSlot, setSlamSlot] = useState<H2HPosition | null>(null);
   const [justFilledSlot, setJustFilledSlot] = useState<H2HPosition | null>(null);
   const [movingFrom, setMovingFrom] = useState<H2HPosition | null>(null);
+  /** Sync move source immediately — React state can lag one frame behind taps. */
+  const movingFromRef = useRef<H2HPosition | null>(null);
   const [localSlots, setLocalSlots] = useState<Partial<Record<H2HPosition, H2HPickSelection>>>(
     () => picksToSlots(myPicks),
   );
+  const localSlotsRef = useRef(localSlots);
+  localSlotsRef.current = localSlots;
+  const moveInFlightRef = useRef(false);
+  /** Blocks myPicks sync until server reflects a completed move. */
+  const pendingMoveRef = useRef<{ from: H2HPosition; to: H2HPosition } | null>(null);
+  const lockingSlotRef = useRef<H2HPosition | null>(null);
+  lockingSlotRef.current = lockingSlot;
+  const slamPayloadRef = useRef(slamPayload);
+  slamPayloadRef.current = slamPayload;
   const pendingPickRef = useRef<{
     slot: H2HPosition;
     selection: H2HPickSelection;
     raw: number;
   } | null>(null);
   const lockQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const lastSlotTapRef = useRef<{ slot: H2HPosition; at: number } | null>(null);
+
+  const clearMoveMode = useCallback(() => {
+    movingFromRef.current = null;
+    setMovingFrom(null);
+  }, []);
+
+  const startMoveMode = useCallback((slot: H2HPosition) => {
+    movingFromRef.current = slot;
+    setMovingFrom(slot);
+  }, []);
 
   useEffect(() => {
-    setLocalSlots((prev) => {
-      const server = picksToSlots(myPicks);
-      return { ...prev, ...server };
-    });
+    const pending = pendingMoveRef.current;
+    if (pending) {
+      const atDest = myPicks.some((pick) => pick.position === pending.to);
+      const atSource = myPicks.some((pick) => pick.position === pending.from);
+      if (atDest && !atSource) {
+        pendingMoveRef.current = null;
+        moveInFlightRef.current = false;
+        setLocalSlots(picksToSlots(myPicks));
+        return;
+      }
+      // Keep optimistic layout until the server reflects the move.
+      return;
+    }
+
+    if (
+      lockingSlotRef.current ||
+      movingFromRef.current ||
+      slamPayloadRef.current
+    ) {
+      return;
+    }
+    setLocalSlots(picksToSlots(myPicks));
   }, [myPicks]);
 
   const rosteredNames = useMemo(
@@ -175,16 +219,18 @@ export function H2HPositionPicker({
   }, [spunEra, spunTeam, ticketPrinting]);
 
   const resetTableForNextPick = useCallback(() => {
+    clearMoveMode();
     setSpunTeam(null);
     setSpunEra(null);
     setTicketPrinting(false);
     setOffers([]);
     setSelectedId(null);
     setStatus('Tap ROLL for your next team and era.');
-  }, []);
+  }, [clearMoveMode]);
 
   const handlePrint = useCallback(() => {
     if (lockingSlot) return;
+    clearMoveMode();
     resume();
     setTicketPrinting(true);
     setSelectedId(null);
@@ -192,7 +238,7 @@ export function H2HPositionPicker({
     setSpunTeam(null);
     setSpunEra(null);
     setStatus('Rolling…');
-  }, [lockingSlot, resume]);
+  }, [clearMoveMode, lockingSlot, resume]);
 
   const handleResult = useCallback((pair: SpinPair) => {
     setSpunTeam(pair.team);
@@ -227,12 +273,12 @@ export function H2HPositionPicker({
       if (!readyToDraft || lockingSlot || slamPayload) return;
       resume();
       hapticTap();
-      setMovingFrom(null);
+      clearMoveMode();
       setSelectedId((id) => (id === player.id ? null : player.id));
       setLocalError(null);
       setStatus(`Selected ${player.name} (${formatEligiblePositions(player)}) — tap an open circle.`);
     },
-    [lockingSlot, readyToDraft, resume, slamPayload],
+    [clearMoveMode, lockingSlot, readyToDraft, resume, slamPayload],
   );
 
   const persistPick = useCallback(
@@ -278,7 +324,11 @@ export function H2HPositionPicker({
         setLocalError(null);
         try {
           await onMove(from, to, selection, raw);
+          pendingMoveRef.current = null;
+          moveInFlightRef.current = false;
         } catch (err) {
+          pendingMoveRef.current = null;
+          moveInFlightRef.current = false;
           setLocalSlots((prev) => {
             const next = { ...prev };
             delete next[to];
@@ -286,35 +336,46 @@ export function H2HPositionPicker({
             return next;
           });
           const message =
-            err instanceof Error && err.message.trim()
+            err instanceof MultiplayerApiError
               ? err.message
-              : 'Could not move that player — try again.';
+              : err instanceof Error && err.message.trim()
+                ? err.message
+                : 'Could not move that player — try again.';
           setLocalError(message);
           setStatus('Move failed to sync. Tap the player and try again.');
         } finally {
           setLockingSlot(null);
         }
       };
-      lockQueueRef.current = lockQueueRef.current.then(run, run);
-      return lockQueueRef.current;
+      void run();
     },
     [onMove],
   );
 
   const finalizeMove = useCallback(
     (from: H2HPosition, to: H2HPosition, selection: H2HPickSelection, raw: number) => {
-      const revertPick = localSlots[from]!;
+      const revertPick = localSlotsRef.current[from];
+      if (!revertPick) {
+        clearMoveMode();
+        setStatus('Move cancelled — tap the player again.');
+        return;
+      }
+      pendingMoveRef.current = { from, to };
+      moveInFlightRef.current = true;
+      setLockingSlot(to);
       setLocalSlots((prev) => {
         const next = { ...prev };
         delete next[from];
         next[to] = selection;
         return next;
       });
-      setMovingFrom(null);
+      clearMoveMode();
+      setSelectedId(null);
       hapticSlotConfirm();
+      setStatus(`${selection.name} moved to ${POSITION_LABELS[to]}.`);
       void persistMove(from, to, selection, raw, revertPick);
     },
-    [localSlots, persistMove],
+    [persistMove, clearMoveMode],
   );
   const finalizePick = useCallback(
     (slot: H2HPosition, selection: H2HPickSelection, raw: number) => {
@@ -342,76 +403,88 @@ export function H2HPositionPicker({
 
   const handleSlotClick = useCallback(
     (slot: H2HPosition) => {
-      if (lockingSlot || slamPayload) return;
+      if (lockingSlot) return;
+
+      const slots = localSlotsRef.current;
+      const occupantEarly = slots[slot];
+      if (slamPayload && !movingFromRef.current && !occupantEarly) return;
+
+      const activeMoveFrom = movingFromRef.current;
+      const movingPick = activeMoveFrom ? slots[activeMoveFrom] : undefined;
       resume();
       hapticTap();
 
-      const occupant = localSlots[slot];
+      const occupant = slots[slot];
 
-      if (movingFrom && movingPlayer) {
-        if (movingFrom === slot) {
-          setMovingFrom(null);
+      // Complete a move into an empty eligible slot.
+      if (activeMoveFrom && movingPick) {
+        if (activeMoveFrom === slot) {
+          clearMoveMode();
           setStatus('Move cancelled.');
           return;
         }
         if (occupant) {
           playReject();
-          setStatus('That slot is locked — you cannot replace a placed player.');
+          setStatus('That slot is taken — tap an open circle.');
           return;
         }
-        if (!canMoveToSlot(pickAsPlayer(movingPlayer), movingFrom, slot)) {
+        if (!canMoveToSlot(pickAsPlayer(movingPick), activeMoveFrom, slot)) {
           playReject();
-          setStatus(`${movingPlayer.name} can play ${formatEligiblePositions(pickAsPlayer(movingPlayer))} only.`);
-          return;
-        }
-        const raw = valueForSlot(movingPlayer, slot);
-        const moved: H2HPickSelection = {
-          ...movingPlayer,
-          position: slot,
-          dollarValue: raw,
-        };
-        finalizeMove(movingFrom, slot, moved, raw);
-        setStatus(`${movingPlayer.name} moved to ${slot}.`);
-        return;
-      }
-
-      if (occupant) {
-        if (!movingFrom) {
-          const alts = getEligiblePositions(pickAsPlayer(occupant));
-          const hasOpenAlt = alts.some((pos) => pos !== slot && !localSlots[pos as H2HPosition]);
-          if (!hasOpenAlt) {
-            playReject();
-            setStatus(
-              selected
-                ? `${occupant.name} has no open alternate slots — cannot free ${slot}.`
-                : alts.length <= 1
-                  ? `${occupant.name} is locked at ${slot} — no alternate slots open.`
-                  : `${occupant.name} has no open alternate slots right now.`,
-            );
-            return;
-          }
-          if (!selected) setSelectedId(null);
-          setMovingFrom(slot);
           setStatus(
-            selected
-              ? `Moving ${occupant.name} to free ${slot} for ${selected.name} — tap an open eligible circle.`
-              : `Moving ${occupant.name} (${formatEligiblePositions(pickAsPlayer(occupant))}) — tap an open eligible circle.`,
+            `${movingPick.name} can play ${formatEligiblePositions(pickAsPlayer(movingPick))} only.`,
           );
           return;
         }
-      }
-
-      if (!selected || !spunTeam || !spunEra) {
-        if (!occupant) {
-          setLocalError('Select a player from the list first.');
-          setStatus('Select a player from the list first, then tap a circle.');
-        }
+        const raw = valueForSlot(movingPick, slot);
+        const moved: H2HPickSelection = {
+          ...movingPick,
+          position: slot,
+          dollarValue: raw,
+        };
+        finalizeMove(activeMoveFrom, slot, moved, raw);
         return;
       }
 
       if (occupant) {
+        const alts = getEligiblePositions(pickAsPlayer(occupant));
+        const hasOpenAlt = alts.some((pos) => pos !== slot && !slots[pos as H2HPosition]);
+        if (!hasOpenAlt) {
+          playReject();
+          setStatus(
+            selected
+              ? `${occupant.name} has no open alternate slots — cannot free ${slot}.`
+              : alts.length <= 1
+                ? `${occupant.name} is locked at ${slot} — no alternate slots open.`
+                : `${occupant.name} has no open alternate slots right now.`,
+          );
+          return;
+        }
+        setSelectedId(null);
+        startMoveMode(slot);
+        setStatus(`Moving ${occupant.name} — tap an open ${formatEligiblePositions(pickAsPlayer(occupant))} circle.`);
+        return;
+      }
+
+      if (activeMoveFrom) {
+        clearMoveMode();
+        setStatus('Move cancelled — tap the player again.');
+        return;
+      }
+
+      if (!selected || !spunTeam || !spunEra) {
+        if (picksFilled > 0) {
+          setLocalError(null);
+          setStatus('Tap a placed circle to move that player.');
+          return;
+        }
+        setLocalError('Select a player from the list first.');
+        setStatus('Select a player from the list first, then tap a circle.');
+        return;
+      }
+
+      if (lineupLocked) {
         playReject();
-        setStatus('That slot is locked — tap a placed player to move them first.');
+        setStatus('Lineup full — tap a placed circle to move a player.');
         return;
       }
 
@@ -467,12 +540,10 @@ export function H2HPositionPicker({
       });
     },
     [
+      clearMoveMode,
       finalizeMove,
       finalizePick,
-      localSlots,
       lockingSlot,
-      movingFrom,
-      movingPlayer,
       playReject,
       reduceMotion,
       resume,
@@ -480,7 +551,21 @@ export function H2HPositionPicker({
       slamPayload,
       spunEra,
       spunTeam,
+      startMoveMode,
+      picksFilled,
+      lineupLocked,
     ],
+  );
+
+  const handleSlotTap = useCallback(
+    (slot: H2HPosition) => {
+      const now = Date.now();
+      const last = lastSlotTapRef.current;
+      if (last && last.slot === slot && now - last.at < 320) return;
+      lastSlotTapRef.current = { slot, at: now };
+      handleSlotClick(slot);
+    },
+    [handleSlotClick],
   );
 
   const availableOffers = useMemo(
@@ -519,7 +604,15 @@ export function H2HPositionPicker({
 
       <div className="billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth">
         <main className="billion-main billion-main--draft">
-          {!readyToDraft ? (
+          {lineupLocked ? (
+            <div className="billion-pick-stage h2h-rearrange-stage">
+              <p className="h2h-rearrange-stage__title">Lineup locked</p>
+              <p className="h2h-rearrange-stage__hint" role="status">
+                Waiting for opponent ({Math.min(5, opponentPickCount)}/5). Tap a placed circle
+                below to move a player.
+              </p>
+            </div>
+          ) : !readyToDraft ? (
             <div className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}>
               <BallionTicketMachine
                 locked={lockedPair}
@@ -579,12 +672,12 @@ export function H2HPositionPicker({
                 !slamPayload &&
                 playerFitsSlot(selected, slot);
               const moveCanDrop =
-                Boolean(movingPlayer && movingFrom) &&
+                Boolean(movingFrom && movingPlayer) &&
                 !pick &&
                 !lockingSlot &&
                 !slamPayload &&
-                canMoveToSlot(pickAsPlayer(movingPlayer!), movingFrom!, slot);
-              const canDrop = offerCanDrop || moveCanDrop;
+                canMoveToSlot(pickAsPlayer(movingPlayer), movingFrom, slot);
+              const canDrop = moveCanDrop || (offerCanDrop && !movingFrom);
               const isMovingSource = movingFrom === slot;
               const isLocking = lockingSlot === slot;
               const isSlamTarget = slamSlot === slot && !pick;
@@ -601,8 +694,11 @@ export function H2HPositionPicker({
                   }${isSlamTarget ? ' is-slam-target' : ''}${
                     isJustFilled ? ' is-just-filled' : ''
                   }`}
-                  disabled={Boolean(isLocking) || Boolean(slamPayload && !pick)}
-                  onClick={() => handleSlotClick(slot)}
+                  onPointerDown={(e) => {
+                    if (busy && !movingFromRef.current) return;
+                    e.preventDefault();
+                    handleSlotTap(slot);
+                  }}
                   aria-label={
                     pick
                       ? `${POSITION_LABELS[slot]}: ${pick.name}`

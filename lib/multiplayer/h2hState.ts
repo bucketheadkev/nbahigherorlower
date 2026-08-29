@@ -77,6 +77,9 @@ function asSelection(raw: unknown): H2HPickSelection | null {
     era: String(row.era ?? '—'),
     dollarValue: Math.round(Number(row.dollarValue ?? 0)),
     playerId: String(row.playerId ?? ''),
+    primarySlot: row.primarySlot != null ? asPosition(row.primarySlot) : undefined,
+    baseDollarValue:
+      row.baseDollarValue != null ? Math.round(Number(row.baseDollarValue)) : undefined,
   };
 }
 

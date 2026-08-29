@@ -20,7 +20,8 @@ const EMOJI_FILES = [
   'goat.mp3',
   'crown.mp3',
   'clap.mp3',
-  'laugh.mp3',
+  'laugh-soft.mp3',
+  'laugh-rofl.mp3',
   'fire.mp3',
   'target.mp3',
   'trophy.mp3',
@@ -42,9 +43,23 @@ function trimFile(file, maxSec) {
     return;
   }
   const tmp = `${input}.trim.tmp.mp3`;
+  const fadeStart = Math.max(0.5, maxSec - 0.85);
   execFileSync(
     ffmpegPath,
-    ['-y', '-i', input, '-t', String(maxSec), '-acodec', 'libmp3lame', '-q:a', '4', tmp],
+    [
+      '-y',
+      '-i',
+      input,
+      '-af',
+      `silenceremove=start_periods=1:start_silence=0.05:start_threshold=-45dB,afade=t=out:st=${fadeStart}:d=0.85`,
+      '-t',
+      String(maxSec),
+      '-acodec',
+      'libmp3lame',
+      '-q:a',
+      '4',
+      tmp,
+    ],
     { stdio: 'pipe' },
   );
   fs.renameSync(tmp, input);

@@ -44,7 +44,7 @@ export function H2HEntryScreen({
         <div className="h2h-lobby__actions">
           <button
             type="button"
-            className="run-btn run-btn--primary h2h-lobby__mode-btn"
+            className="run-btn run-btn--primary h2h-lobby__mode-btn ui-tap"
             disabled={locked}
             onPointerDown={press(onCreate, locked)}
           >
@@ -53,7 +53,7 @@ export function H2HEntryScreen({
 
           <button
             type="button"
-            className="run-btn run-btn--secondary h2h-lobby__mode-btn"
+            className="run-btn run-btn--secondary h2h-lobby__mode-btn ui-tap"
             disabled={locked}
             onPointerDown={press(onJoin, locked)}
           >

@@ -1,6 +1,5 @@
 'use client';
 
-import { Share } from '@capacitor/share';
 import {
   type PointerEvent as ReactPointerEvent,
   useCallback,
@@ -10,6 +9,10 @@ import {
 } from 'react';
 import { slotFor, useRoomLobby } from '@/hooks/useRoomLobby';
 import { clearActiveRoom, writeActiveRoom } from '@/lib/multiplayer/activeRoom';
+import {
+  buildH2HInviteText,
+  shareH2HInvite,
+} from '@/lib/multiplayer/h2hInvite';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import { modeDef, type H2HGameMode } from '@/lib/multiplayer/gameModes';
@@ -22,10 +25,6 @@ interface H2HWaitingLobbyProps {
   onPlaying: () => void;
   /** Host-selected mode while lobby row catches up. */
   preferredMode?: H2HGameMode;
-}
-
-function inviteText(code: string): string {
-  return `I challenged you to a 1B Run matchup. Open 1B Run and enter room code: ${code}`;
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -65,7 +64,9 @@ export function H2HWaitingLobby({
   });
   const [actionError, setActionError] = useState<string | null>(null);
   const [copyFlash, setCopyFlash] = useState(false);
+  const [inviteFlash, setInviteFlash] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
   const leaveLock = useRef(false);
   const transitioned = useRef(false);
   const autoStartAttempted = useRef(false);
@@ -117,6 +118,12 @@ export function H2HWaitingLobby({
     return () => window.clearTimeout(id);
   }, [copyFlash]);
 
+  useEffect(() => {
+    if (!inviteFlash) return;
+    const id = window.setTimeout(() => setInviteFlash(null), 2200);
+    return () => window.clearTimeout(id);
+  }, [inviteFlash]);
+
   const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
     e.preventDefault();
     if (disabled) return;
@@ -126,35 +133,38 @@ export function H2HWaitingLobby({
 
   const handleCopy = useCallback(async () => {
     if (!room?.room_code || leaving) return;
-    const ok = await copyText(room.room_code);
+    const ok = await copyText(buildH2HInviteText(room.room_code));
     if (ok) {
       hapticMedium();
       setCopyFlash(true);
       setActionError(null);
     } else {
-      setActionError('Could not copy the room code.');
+      setActionError('Could not copy the invite link.');
     }
   }, [leaving, room?.room_code]);
 
   const handleInvite = useCallback(async () => {
-    if (!room?.room_code || leaving) return;
+    if (!room?.room_code || leaving || inviteBusy) return;
+    setInviteBusy(true);
+    setActionError(null);
     try {
-      await Share.share({
-        title: '1B Run',
-        text: inviteText(room.room_code),
-        dialogTitle: 'Invite a friend',
-      });
-      hapticMedium();
-      setActionError(null);
-    } catch (err) {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message?: unknown }).message ?? '')
-          : '';
-      if (/cancel|dismiss/i.test(message)) return;
-      setActionError('Could not open the share sheet.');
+      const result = await shareH2HInvite(room.room_code);
+      if (result.ok === false && !result.cancelled) {
+        setActionError(result.message);
+        return;
+      }
+      if (result.ok) {
+        hapticMedium();
+        if (result.method === 'clipboard') {
+          setInviteFlash('Invite link copied');
+        } else {
+          setInviteFlash(null);
+        }
+      }
+    } finally {
+      setInviteBusy(false);
     }
-  }, [leaving, room?.room_code]);
+  }, [inviteBusy, leaving, room?.room_code]);
 
   const handleReadyToggle = useCallback(async () => {
     if (!me || readyBusy || leaving || room?.status !== 'waiting') return;
@@ -183,6 +193,7 @@ export function H2HWaitingLobby({
   }, [onLeft, roomId]);
 
   const showError = actionError || error;
+  const shareDisabled = !room?.room_code || leaving || inviteBusy;
 
   return (
     <div className="h2h-lobby h2h-lobby--waiting" aria-label="Waiting lobby">
@@ -196,19 +207,19 @@ export function H2HWaitingLobby({
       <div className="h2h-lobby__share-row">
         <button
           type="button"
-          className="h2h-lobby__chip-btn"
-          disabled={!room?.room_code || leaving}
-          onPointerDown={press(() => void handleCopy(), !room?.room_code || leaving)}
+          className="h2h-lobby__chip-btn ui-tap"
+          aria-disabled={shareDisabled}
+          onPointerDown={press(() => void handleCopy(), shareDisabled)}
         >
-          {copyFlash ? 'Copied' : 'Copy'}
+          {copyFlash ? 'Copied' : 'Copy link'}
         </button>
         <button
           type="button"
-          className="h2h-lobby__chip-btn h2h-lobby__chip-btn--accent"
-          disabled={!room?.room_code || leaving}
-          onPointerDown={press(() => void handleInvite(), !room?.room_code || leaving)}
+          className="h2h-lobby__chip-btn h2h-lobby__chip-btn--accent ui-tap"
+          aria-disabled={shareDisabled}
+          onPointerDown={press(() => void handleInvite(), shareDisabled)}
         >
-          Invite
+          {inviteBusy ? '…' : inviteFlash ?? 'Invite'}
         </button>
       </div>
 
@@ -240,7 +251,7 @@ export function H2HWaitingLobby({
       {me && room?.status === 'waiting' ? (
         <button
           type="button"
-          className={`run-btn ${me.is_ready ? 'run-btn--secondary' : 'run-btn--primary'} h2h-lobby__submit`}
+          className={`run-btn ${me.is_ready ? 'run-btn--secondary' : 'run-btn--primary'} h2h-lobby__submit ui-tap`}
           disabled={readyBusy || startBusy || leaving || !p2}
           onPointerDown={press(
             () => void handleReadyToggle(),
@@ -267,7 +278,7 @@ export function H2HWaitingLobby({
 
       <button
         type="button"
-        className="h2h-lobby__leave"
+        className="h2h-lobby__leave ui-tap"
         disabled={leaving}
         onPointerDown={press(() => void handleLeave(), leaving)}
       >

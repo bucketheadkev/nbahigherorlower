@@ -311,14 +311,39 @@ export async function moveH2HPick(
 ): Promise<void> {
   await ensureAnonymousSession();
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.rpc('move_h2h_pick', {
+  const args = {
     room_id: roomId,
     from_position: fromPosition,
     to_position: toPosition,
     selection,
     raw_value: Math.round(rawValue),
+  };
+
+  const { error } = await supabase.rpc('move_h2h_pick', args);
+  if (!error) return;
+
+  const upper = String(error.message ?? '').toUpperCase();
+  const hardStop =
+    upper.includes('WRONG_PHASE') ||
+    upper.includes('ROOM_NOT_PLAYING') ||
+    upper.includes('NOT_IN_ROOM') ||
+    upper.includes('NOT_AUTHENTICATED');
+
+  if (hardStop) throw mapRoomRpcError(error);
+
+  const { error: clearError } = await supabase.rpc('clear_h2h_pick', {
+    room_id: roomId,
+    player_position: fromPosition,
   });
-  if (error) throw mapRoomRpcError(error);
+  if (clearError) throw mapRoomRpcError(clearError);
+
+  const { error: lockError } = await supabase.rpc('lock_h2h_pick', {
+    room_id: roomId,
+    player_position: toPosition,
+    selection,
+    raw_value: Math.round(rawValue),
+  });
+  if (lockError) throw mapRoomRpcError(lockError);
 }
 
 export async function ackH2HContinue(roomId: string): Promise<void> {

@@ -551,7 +551,7 @@ TORONTO RAPTORS
 
 Kyle Lowry | PG | 17.2 PPG | 4.8 RPG | 7.0 APG
 DeMar DeRozan | SG | 20.0 PPG | 4.3 RPG | 3.8 APG
-Kawhi Leonard | SF | 18.7 PPG | 6.8 RPG | 2.6 APG
+Kawhi Leonard | SF | 26.6 PPG | 7.3 RPG | 3.3 APG
 Pascal Siakam | PF | 13.0 PPG | 6.0 RPG | 2.5 APG
 Chris Bosh | PF | 20.2 PPG | 9.4 RPG | 2.2 APG
 Jonas Valančiūnas | C | 13.0 PPG | 9.0 RPG | 1.0 APG

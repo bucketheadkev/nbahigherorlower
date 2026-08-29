@@ -50,6 +50,13 @@ import { REWARDED_ADS_UI_ENABLED } from '@/lib/tradeup/ads/adConfig';
 import type { TicketRerollKind } from './BallionTicketMachine';
 import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
 import { serializeMatchLineup } from '@/lib/multiplayer/match';
+import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
+import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
+import {
+  playerToH2HPick,
+  syncedPicksToSlots,
+  type SyncedH2HPick,
+} from '@/lib/tradeup/h2hDraftBridge';
 
 interface BillionTradeEngineProps {
   onExit: () => void;
@@ -67,6 +74,22 @@ interface BillionTradeEngineProps {
     lineup: ReturnType<typeof serializeMatchLineup>;
     totalValue: number;
   }) => void;
+  /** Online 1V1: hydrate from server + sync each lock/move. */
+  syncedPicks?: SyncedH2HPick[];
+  onPickLock?: (
+    position: H2HPosition,
+    selection: H2HPickSelection,
+    rawValue: number,
+  ) => Promise<void>;
+  onPickMove?: (
+    from: H2HPosition,
+    to: H2HPosition,
+    selection: H2HPickSelection,
+    rawValue: number,
+  ) => Promise<void>;
+  /** Online 1V1: stay on draft dock after 5/5; parent runs reveal when both ready. */
+  deferOnlineReveal?: boolean;
+  onlineDraftError?: string | null;
 }
 
 type RosterSlots = Record<Position, ValuedPlayer | null>;
@@ -122,6 +145,11 @@ export function BillionTradeEngine({
   onlineOpponentProgress = 0,
   onOnlineProgress,
   onOnlineComplete,
+  syncedPicks = [],
+  onPickLock,
+  onPickMove,
+  deferOnlineReveal = false,
+  onlineDraftError = null,
 }: BillionTradeEngineProps) {
   const isH2H = challengeMode === 'h2h' && Boolean(h2hOpponent);
   const isOnline = challengeMode === 'online';
@@ -148,7 +176,7 @@ export function BillionTradeEngine({
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
   } | null>(null);
-  /** One team reroll + one era reroll per printed ticket (restored each new pick). */
+  /** One team reroll + one era reroll for the entire run (offline can earn +1 each via ad). */
   const [teamRerolls, setTeamRerolls] = useState(1);
   const [eraRerolls, setEraRerolls] = useState(1);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);
@@ -162,6 +190,25 @@ export function BillionTradeEngine({
   const evalStartedRef = useRef(false);
   const resetTimerRef = useRef(0);
   const transitionTimerRef = useRef(0);
+  const lockInFlightRef = useRef(false);
+  const syncedSlotSetRef = useRef<Set<Position>>(new Set());
+
+  useEffect(() => {
+    if (!isOnline || syncedPicks.length === 0) return;
+    if (lockInFlightRef.current || slamPayload || movingFrom) return;
+
+    const fromServer = syncedPicksToSlots(syncedPicks);
+    setSlots(() => {
+      const next: RosterSlots = { ...EMPTY_ROSTER };
+      for (const pos of LINEUP_POSITIONS) {
+        next[pos] = fromServer[pos] ?? null;
+      }
+      return next;
+    });
+    syncedSlotSetRef.current = new Set(
+      syncedPicks.map((pick) => pick.position as Position),
+    );
+  }, [isOnline, syncedPicks, slamPayload, movingFrom]);
 
   useEffect(() => {
     resume();
@@ -316,6 +363,79 @@ export function BillionTradeEngine({
     setStatus('Tap ROLL for your next team and era.');
   }, []);
 
+  const finishPickPlacement = useCallback(
+    async (targetSlot: Position, player: ValuedPlayer & { era?: DecadeEra }) => {
+      const nextSlots: RosterSlots = { ...slots, [targetSlot]: player };
+      const full = LINEUP_POSITIONS.every((pos) => nextSlots[pos]);
+      setSlots(nextSlots);
+      setSelectedOfferId(null);
+      setMovingFrom(null);
+      setJustFilledSlot(targetSlot);
+      window.setTimeout(() => {
+        setJustFilledSlot((current) => (current === targetSlot ? null : current));
+      }, 360);
+
+      if (isOnline && onPickLock) {
+        lockInFlightRef.current = true;
+        try {
+          const era = (player.era ?? spunEra ?? '2020s') as DecadeEra;
+          const { selection, rawValue } = playerToH2HPick(
+            player,
+            targetSlot,
+            era,
+            spunTeam,
+          );
+          await onPickLock(targetSlot as H2HPosition, selection, rawValue);
+          syncedSlotSetRef.current.add(targetSlot);
+        } catch {
+          setSlots((prev) => ({ ...prev, [targetSlot]: null }));
+          setStatus('Pick failed to sync — tap the circle again.');
+          return;
+        } finally {
+          lockInFlightRef.current = false;
+        }
+      }
+
+      if (full) {
+        if (isOnline && deferOnlineReveal) {
+          setStatus('Lineup locked — waiting for opponent…');
+          resetTableForNextPick();
+          return;
+        }
+        if (evalStartedRef.current) return;
+        evalStartedRef.current = true;
+        setStatus(
+          isH2H
+            ? 'Lineup complete — value showdown…'
+            : 'Lineup complete — reading values…',
+        );
+        setSpunTeam(null);
+        setSpunEra(null);
+        setOffers([]);
+        setPhase('reveal');
+        return;
+      }
+
+      setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
+      if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = window.setTimeout(
+        () => resetTableForNextPick(),
+        reduceMotion ? 40 : 220,
+      );
+    },
+    [
+      deferOnlineReveal,
+      isH2H,
+      isOnline,
+      onPickLock,
+      reduceMotion,
+      resetTableForNextPick,
+      slots,
+      spunEra,
+      spunTeam,
+    ],
+  );
+
   const finishRun = useCallback(
     (nextSlots: RosterSlots, value: number) => {
       const lineup = rosterInSlotOrder(nextSlots);
@@ -410,8 +530,26 @@ export function BillionTradeEngine({
           [slot]: movingPlayer,
         };
         setSlots(nextSlots);
+        const moveFrom = movingFrom;
         setMovingFrom(null);
         hapticSlotConfirm();
+        if (isOnline && onPickMove && syncedSlotSetRef.current.has(moveFrom)) {
+          const era = (spunEra ?? '2020s') as DecadeEra;
+          const { selection, rawValue } = playerToH2HPick(
+            movingPlayer,
+            slot,
+            era,
+            spunTeam,
+          );
+          syncedSlotSetRef.current.delete(moveFrom);
+          syncedSlotSetRef.current.add(slot);
+          void onPickMove(
+            moveFrom as H2HPosition,
+            slot as H2HPosition,
+            selection,
+            rawValue,
+          );
+        }
         if (selectedOffer) {
           setStatus(
             `${movingPlayer.name} moved to ${POSITION_LABELS[slot]}. Now place ${selectedOffer.name}.`,
@@ -478,57 +616,19 @@ export function BillionTradeEngine({
         ...(spunEra ? { era: spunEra } : {}),
       };
 
-      const commitOffer = (targetSlot: Position, player: ValuedPlayer & { era?: DecadeEra }) => {
-        const nextSlots: RosterSlots = { ...slots, [targetSlot]: player };
-        const full = LINEUP_POSITIONS.every((pos) => nextSlots[pos]);
-        setSlots(nextSlots);
-        setSelectedOfferId(null);
-        setMovingFrom(null);
-        setJustFilledSlot(targetSlot);
-        window.setTimeout(() => {
-          setJustFilledSlot((current) => (current === targetSlot ? null : current));
-        }, 360);
-
-        if (full) {
-          if (evalStartedRef.current) return;
-          evalStartedRef.current = true;
-          setStatus(
-            isH2H
-              ? 'Lineup complete — value showdown…'
-              : isOnline
-                ? 'Lineup complete — reading values…'
-                : 'Lineup complete — reading values…',
-          );
-          setSelectedOfferId(null);
-          setMovingFrom(null);
-          setSpunTeam(null);
-          setSpunEra(null);
-          setOffers([]);
-          setPhase('reveal');
-          return;
-        }
-
-        setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
-        if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
-        resetTimerRef.current = window.setTimeout(
-          () => resetTableForNextPick(),
-          reduceMotion ? 40 : 220,
-        );
-      };
-
       const colors = getTeamColors(selectedOffer.teamId);
       const ink = contrastOnPrimary(colors.primary);
 
       if (reduceMotion) {
         hapticSlam();
-        commitOffer(slot, valued);
+        void finishPickPlacement(slot, valued);
         return;
       }
 
       const points = measureDraftSlam(selectedOffer.id, slot);
       if (!points) {
         hapticSlam();
-        commitOffer(slot, valued);
+        void finishPickPlacement(slot, valued);
         return;
       }
 
@@ -545,17 +645,19 @@ export function BillionTradeEngine({
       });
     },
     [
+      finishPickPlacement,
       movingFrom,
       movingPlayer,
+      onPickMove,
       phase,
       playReject,
       reduceMotion,
-      resetTableForNextPick,
       resume,
       selectedOffer,
       slamPayload,
       slots,
       spunEra,
+      spunTeam,
       isH2H,
       isOnline,
     ],
@@ -564,41 +666,9 @@ export function BillionTradeEngine({
   const handleSlamImpact = useCallback(() => {
     const pending = pendingAssignRef.current;
     if (!pending) return;
-    const nextSlots: RosterSlots = { ...slots, [pending.slot]: pending.valued };
-    const full = LINEUP_POSITIONS.every((pos) => nextSlots[pos]);
-    setSlots(nextSlots);
-    setSelectedOfferId(null);
-    setMovingFrom(null);
-    setJustFilledSlot(pending.slot);
-    window.setTimeout(() => {
-      setJustFilledSlot((current) => (current === pending.slot ? null : current));
-    }, 360);
     pendingAssignRef.current = null;
-
-    if (full) {
-      if (evalStartedRef.current) return;
-      evalStartedRef.current = true;
-      setStatus(
-        isH2H
-          ? 'Lineup complete — value showdown…'
-          : isOnline
-            ? 'Lineup complete — reading values…'
-            : 'Lineup complete — reading values…',
-      );
-      setSpunTeam(null);
-      setSpunEra(null);
-      setOffers([]);
-      setPhase('reveal');
-      return;
-    }
-
-    setStatus(`${pending.valued.name} locked at ${POSITION_LABELS[pending.slot]}.`);
-    if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
-    resetTimerRef.current = window.setTimeout(
-      () => resetTableForNextPick(),
-      reduceMotion ? 40 : 220,
-    );
-  }, [isH2H, isOnline, reduceMotion, resetTableForNextPick, slots]);
+    void finishPickPlacement(pending.slot, pending.valued);
+  }, [finishPickPlacement]);
 
   const handleSlamComplete = useCallback(() => {
     setSlamPayload(null);
@@ -607,6 +677,7 @@ export function BillionTradeEngine({
 
   const showDraft = phase === 'draft';
   const showReveal = phase === 'reveal';
+  const lineupLocked = isOnline && deferOnlineReveal && filledCount >= 5;
   const playerTeamValue = teamValue;
 
   return (
@@ -632,15 +703,7 @@ export function BillionTradeEngine({
           {t('game.home')}
         </button>
         {isOnline ? (
-          <div className="billion-h2h-bar billion-h2h-bar--online" aria-label="Match progress">
-            <span className="billion-h2h-bar__you">
-              YOU {filledCount}/5
-            </span>
-            <em>VS</em>
-            <span className="billion-h2h-bar__opp">
-              {oppLabel} {oppProgress}/5
-            </span>
-          </div>
+          <span className="billion-draft-meta billion-draft-meta--h2h-spacer" aria-hidden="true" />
         ) : isH2H && h2hOpponent ? (
           <div className="billion-h2h-bar" aria-label="Matchup">
             <span className="billion-h2h-bar__you">YOU</span>
@@ -669,7 +732,7 @@ export function BillionTradeEngine({
         />
       ) : null}
 
-      {showReveal && !isH2H ? (
+      {showReveal && !isH2H && !(isOnline && deferOnlineReveal) ? (
         <ValueRevealMachine
           roster={rosterInSlotOrder(slots)}
           reduceMotion={reduceMotion}
@@ -683,7 +746,26 @@ export function BillionTradeEngine({
       {showDraft ? (
         <div className="billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth">
           <main className="billion-main billion-main--draft">
-            {!readyToDraft ? (
+            {isOnline ? (
+              <div
+                className="billion-h2h-bar billion-h2h-bar--online billion-h2h-bar--draft"
+                aria-label="Match progress"
+              >
+                <span className="billion-h2h-bar__you">YOU {filledCount}/5</span>
+                <em>VS</em>
+                <span className="billion-h2h-bar__opp">
+                  {oppLabel} {oppProgress}/5
+                </span>
+              </div>
+            ) : null}
+            {lineupLocked ? (
+              <div className="h2h-rearrange-stage">
+                <p className="h2h-rearrange-stage__title">Lineup locked</p>
+                <p className="h2h-rearrange-stage__hint" role="status">
+                  Waiting for opponent ({oppProgress}/5)…
+                </p>
+              </div>
+            ) : !readyToDraft ? (
               <div className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}>
                 <BallionTicketMachine
                   locked={lockedPair}
@@ -724,7 +806,7 @@ export function BillionTradeEngine({
                   onReroll={handleTicketReroll}
                 />
 
-                {REWARDED_ADS_UI_ENABLED ? (
+                {REWARDED_ADS_UI_ENABLED && !isOnline ? (
                   <div className="draft-rewarded-row">
                     {teamRerolls <= 0 ? (
                       <RewardedAdButton
@@ -819,6 +901,11 @@ export function BillionTradeEngine({
             </div>
           </aside>
         </div>
+      ) : null}
+      {onlineDraftError ? (
+        <p className="h2h-match-banner-error" role="alert">
+          {onlineDraftError}
+        </p>
       ) : null}
       <DraftPlayerSlamFly
         payload={slamPayload}

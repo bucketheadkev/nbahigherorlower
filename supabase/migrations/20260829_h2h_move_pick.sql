@@ -24,6 +24,7 @@ DECLARE
   match_row public.h2h_matches%ROWTYPE;
   me public.room_players%ROWTYPE;
   sel_pos text;
+  moved_count integer;
 BEGIN
   IF p_room_id IS NULL OR p_from IS NULL OR p_to IS NULL THEN
     RAISE EXCEPTION 'ROOM_INVALID' USING ERRCODE = 'P0001';
@@ -100,6 +101,11 @@ BEGIN
   WHERE pk.room_id = target.id
     AND pk.user_id = uid
     AND pk.player_position = p_from;
+
+  GET DIAGNOSTICS moved_count = ROW_COUNT;
+  IF moved_count = 0 THEN
+    RAISE EXCEPTION 'NO_PICK' USING ERRCODE = 'P0001';
+  END IF;
 
   RETURN jsonb_build_object('ok', true, 'from', p_from, 'to', p_to);
 END;
