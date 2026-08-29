@@ -1,5 +1,4 @@
 import type { TeamInfo, TeamPreferences } from './types';
-import { getTeamLogoUrl } from './teamLogos';
 
 export const TEAMS: TeamInfo[] = [
   { id: 'ATL', city: 'Atlanta', name: 'Hawks', fullName: 'Atlanta Hawks', conference: 'East' },
@@ -68,10 +67,7 @@ export const TEAM_PREFERENCES: Record<string, TeamPreferences> = {
 };
 
 export function getTeam(id: string): TeamInfo | undefined {
-  const team = TEAMS.find((t) => t.id === id);
-  if (!team) return undefined;
-  const logoUrl = getTeamLogoUrl(id);
-  return logoUrl ? { ...team, logoUrl } : team;
+  return TEAMS.find((t) => t.id === id);
 }
 
 export function getTeamPreferences(id: string): TeamPreferences {

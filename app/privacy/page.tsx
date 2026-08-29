@@ -4,7 +4,7 @@ import { PRIVACY_POLICY } from '@/lib/legal/privacyPolicyContent';
 import '../legal-pages.css';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — $1B RUN',
+  title: 'Privacy Policy — 1B Run',
   description: 'Privacy Policy for 1B Run by KovA Studios.',
 };
 

@@ -8,16 +8,16 @@ import './oneb-theme.css';
 import './run-home-ipad-portrait.css';
 
 export const metadata: Metadata = {
-  title: '$1B RUN',
+  title: '1B Run',
   description: 'Build your five. Reach one billion dollars.',
-  applicationName: '$1B RUN',
+  applicationName: '1B Run',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: '$1B RUN',
+    title: '1B Run',
   },
   openGraph: {
-    title: '$1B RUN',
+    title: '1B Run',
     description: 'Build your five. Reach one billion dollars.',
     type: 'website',
   },

@@ -1,6 +1,6 @@
 {
-  "name": "$1B RUN",
-  "short_name": "$1B RUN",
+  "name": "1B Run",
+  "short_name": "1B Run",
   "description": "Build your five. Reach one billion dollars.",
   "start_url": "/",
   "display": "standalone",

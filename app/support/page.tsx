@@ -4,7 +4,7 @@ import { SUPPORT_CONTENT } from '@/lib/legal/privacyPolicyContent';
 import '../legal-pages.css';
 
 export const metadata: Metadata = {
-  title: 'Support — $1B RUN',
+  title: 'Support — 1B Run',
   description: 'Contact KovA Studios for 1B Run support.',
 };
 

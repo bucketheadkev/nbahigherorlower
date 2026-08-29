@@ -76,11 +76,6 @@ export function TradeUpApp() {
       mod.syncAudioSettings();
       mod.unlockGameAudio();
     });
-    const adTimer = window.setTimeout(() => {
-      void import('@/lib/tradeup/ads/rewardedAdService').then((mod) => {
-        void mod.RewardedAdService.initialize();
-      });
-    }, 2500);
 
     return () => {
       if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
@@ -92,7 +87,6 @@ export function TradeUpApp() {
       } else {
         window.clearTimeout(idle as number);
       }
-      window.clearTimeout(adTimer);
     };
   }, []);
 

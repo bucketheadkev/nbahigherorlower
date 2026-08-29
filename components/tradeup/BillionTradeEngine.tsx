@@ -44,8 +44,6 @@ import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly'
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ValueRevealMachine } from './ValueRevealMachine';
 import { HeadToHeadShowdown } from './HeadToHeadShowdown';
-import { RewardedAdButton } from './RewardedAdButton';
-import { REWARDED_ADS_UI_ENABLED } from '@/lib/tradeup/ads/adConfig';
 import type { TicketRerollKind } from './BallionTicketMachine';
 import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
 import { serializeMatchLineup } from '@/lib/multiplayer/match';
@@ -825,24 +823,6 @@ export function BillionTradeEngine({
                   onReroll={handleTicketReroll}
                 />
 
-                {REWARDED_ADS_UI_ENABLED && !isOnline ? (
-                  <div className="draft-rewarded-row">
-                    {teamRerolls <= 0 ? (
-                      <RewardedAdButton
-                        placement="extra_team_reroll"
-                        label="Watch ad · +1 Team Reroll"
-                        onRewarded={() => setTeamRerolls(1)}
-                      />
-                    ) : null}
-                    {eraRerolls <= 0 ? (
-                      <RewardedAdButton
-                        placement="extra_era_reroll"
-                        label="Watch ad · +1 Era Reroll"
-                        onRewarded={() => setEraRerolls(1)}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </main>

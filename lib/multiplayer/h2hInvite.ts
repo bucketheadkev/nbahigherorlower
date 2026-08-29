@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core';
-import { getSiteUrl } from '@/lib/share';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
 
 /** Custom URL scheme registered in iOS Info.plist — opens the native app directly. */
@@ -21,36 +20,24 @@ export function buildH2HInviteDeepLink(code: string): string {
   return `${H2H_INVITE_SCHEME}://join/${safe}`;
 }
 
-/** HTTPS fallback for web preview / browsers (/?join=ABCD). */
-export function buildH2HInviteWebLink(code: string): string {
-  const safe = sanitizeH2HRoomCode(code);
-  const base = getSiteUrl() || 'https://1brun.app';
-  const url = new URL(base.endsWith('/') ? base : `${base}/`);
-  url.searchParams.set('join', safe);
-  return url.toString();
-}
-
-/** Primary tappable link — native app uses deep link; web uses query URL. */
+/** Primary tappable link — native deep link only (no public web fallback). */
 export function buildH2HInviteLink(code: string): string {
-  return Capacitor.isNativePlatform()
-    ? buildH2HInviteDeepLink(code)
-    : buildH2HInviteWebLink(code);
+  return buildH2HInviteDeepLink(code);
 }
 
 export function buildH2HInviteText(code: string): string {
   const safe = sanitizeH2HRoomCode(code);
   const link = buildH2HInviteDeepLink(safe);
-  const web = buildH2HInviteWebLink(safe);
   return [
     'I challenged you to a 1B Run 1v1!',
     '',
-    `Tap to join: ${link}`,
-    web !== link ? `Web: ${web}` : '',
-    '',
     `Room code: ${safe}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
+    '',
+    'Open 1B Run → 1v1 → Join Game → enter the room code.',
+    Capacitor.isNativePlatform()
+      ? `Or tap to join if you already have the app: ${link}`
+      : 'Install 1B Run on your device, then enter the room code to join.',
+  ].join('\n');
 }
 
 export function parseH2HInviteUrl(raw: string): string | null {
@@ -176,7 +163,7 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
 
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     try {
-      await navigator.share({ title, text, url: deepLink });
+      await navigator.share({ title, text });
       return { ok: true, method: 'web-share' };
     } catch (err) {
       if (isShareCancelled(err)) {
