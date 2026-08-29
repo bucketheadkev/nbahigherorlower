@@ -22,14 +22,13 @@ import {
 import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import { saveBillionRun } from '@/lib/tradeup/billionRuns';
+import { processClassicRunChallenges } from '@/lib/tradeup/challenges';
 import {
-  saveBestFourPlayerSum,
   saveBestRosterValue,
   saveBestWorldRank,
 } from '@/lib/tradeup/storage';
 import {
   getWorldRank,
-  sumTopPlayerValues,
 } from '@/lib/tradeup/worldLeaderboard';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
@@ -188,6 +187,9 @@ export function BillionTradeEngine({
   const [isNewPersonalBest, setIsNewPersonalBest] = useState(false);
   const [worldRank, setWorldRank] = useState(0);
   const evalStartedRef = useRef(false);
+  const teamRerollUsedRef = useRef(false);
+  const eraRerollUsedRef = useRef(false);
+  const fourPlayerTotalBeforeFifthRef = useRef<number | null>(null);
   const resetTimerRef = useRef(0);
   const transitionTimerRef = useRef(0);
   const lockInFlightRef = useRef(false);
@@ -277,8 +279,13 @@ export function BillionTradeEngine({
     if (kind === 'era' && eraRerolls <= 0) return;
     if (!spunTeam || !spunEra) return;
     resume();
-    if (kind === 'team') setTeamRerolls(0);
-    else setEraRerolls(0);
+    if (kind === 'team') {
+      setTeamRerolls(0);
+      teamRerollUsedRef.current = true;
+    } else {
+      setEraRerolls(0);
+      eraRerollUsedRef.current = true;
+    }
     setSelectedOfferId(null);
     setMovingFrom(null);
     setOffers([]);
@@ -365,6 +372,14 @@ export function BillionTradeEngine({
 
   const finishPickPlacement = useCallback(
     async (targetSlot: Position, player: ValuedPlayer & { era?: DecadeEra }) => {
+      const priorCount = rosterList(slots).length;
+      if (priorCount === 4) {
+        fourPlayerTotalBeforeFifthRef.current = rosterList(slots).reduce(
+          (sum, p) => sum + getDollarValue(p),
+          0,
+        );
+      }
+
       const nextSlots: RosterSlots = { ...slots, [targetSlot]: player };
       const full = LINEUP_POSITIONS.every((pos) => nextSlots[pos]);
       setSlots(nextSlots);
@@ -443,12 +458,6 @@ export function BillionTradeEngine({
       setPersonalBest(best);
       setIsNewPersonalBest(isNewBest);
 
-      const fourSum = sumTopPlayerValues(
-        lineup.map((p) => getDollarValue(p)),
-        4,
-      );
-      saveBestFourPlayerSum(fourSum);
-
       const rank = getWorldRank(value);
       setWorldRank(rank);
       saveBestWorldRank(rank);
@@ -463,6 +472,16 @@ export function BillionTradeEngine({
       } else {
         playDefeat();
         setStatus(`Board full at ${formatDollarsExact(value)} — short of $1B.`);
+      }
+
+      if (!isH2H && !isOnline) {
+        processClassicRunChallenges({
+          teamValue: value,
+          players: lineup,
+          teamRerollUsed: teamRerollUsedRef.current,
+          eraRerollUsed: eraRerollUsedRef.current,
+          fourPlayerTotalBeforeFifth: fourPlayerTotalBeforeFifthRef.current,
+        });
       }
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };

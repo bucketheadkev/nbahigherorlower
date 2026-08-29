@@ -5,6 +5,7 @@ const APP_LOCAL_STORAGE_KEYS = [
   'ballion_h2h_entitlements_dev_v1',
   'oneb-run-locale',
   'oneb_billion_runs_v1',
+  'oneb_challenges_v1',
   'tradeup_muted',
   'tradeup_sfx_volume_v1',
   'tradeup_music_muted_v1',
