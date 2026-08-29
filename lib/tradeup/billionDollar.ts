@@ -16,7 +16,7 @@ import {
   teamsForEra,
   type DecadeEra,
 } from './decadeRosters';
-import type { TradePlayer, TeamInfo } from './types';
+import type { TradePlayer, TeamInfo, Position } from './types';
 
 export type { DecadeEra } from './decadeRosters';
 
@@ -140,8 +140,11 @@ export function generatePackChoices(): PackDefinition[] {
 /** Soft ceiling so huge DBs stay usable; typical team×era boards are ~20–80. */
 export const MAX_ERA_BOARD_SIZE = 100;
 
-/** Hard ceiling — high GOAT max (clean $250M). */
-export const MAX_PLAYER_DOLLARS = 250_000_000;
+/** Hard ceiling — high GOAT max ($225M). */
+export const MAX_PLAYER_DOLLARS = 225_000_000;
+
+/** Off-primary lineup slot — ~6% haircut (within the 5–7% design band). */
+export const OFF_PRIMARY_SLOT_VALUE_FACTOR = 0.94;
 
 export type DollarBand = {
   minTv: number;
@@ -162,7 +165,7 @@ export const TIER_DOLLAR_BANDS: Record<PlayerTier, DollarBand> = {
   /** Caps below low S so the A→S jump still hits. */
   A: { minTv: 78, maxTv: 91, minDollars: 112_000_000, maxDollars: 165_000_000 },
   S: { minTv: 92, maxTv: 96, minDollars: 180_000_000, maxDollars: 200_000_000 },
-  GOAT: { minTv: 97, maxTv: 99, minDollars: 200_000_000, maxDollars: 250_000_000 },
+  GOAT: { minTv: 97, maxTv: 99, minDollars: 200_000_000, maxDollars: 225_000_000 },
 };
 
 /**
@@ -180,9 +183,9 @@ export const S_SUB_BANDS: DollarBand[] = [
  * TV 97 · 98 · 99
  */
 export const GOAT_SUB_BANDS: DollarBand[] = [
-  { minTv: 97, maxTv: 97, minDollars: 200_000_000, maxDollars: 215_000_000 },
-  { minTv: 98, maxTv: 98, minDollars: 216_000_000, maxDollars: 232_000_000 },
-  { minTv: 99, maxTv: 99, minDollars: 233_000_000, maxDollars: 250_000_000 },
+  { minTv: 97, maxTv: 97, minDollars: 200_000_000, maxDollars: 208_000_000 },
+  { minTv: 98, maxTv: 98, minDollars: 209_000_000, maxDollars: 216_000_000 },
+  { minTv: 99, maxTv: 99, minDollars: 217_000_000, maxDollars: 225_000_000 },
 ];
 
 /** Midpoint fallback for display / legacy callers. */
@@ -218,6 +221,8 @@ export interface ValuedPlayer extends TradePlayer {
 
 export interface EraOfferPlayer extends ValuedPlayer {
   eraStats: { ppg: number; rpg: number; apg: number };
+  /** Decade roster this offer was drawn from (all-era boards). */
+  sourceEra?: DecadeEra;
 }
 
 /** Round to the nearest million for clean market prices (e.g. $255M, not odd cents). */
@@ -232,8 +237,61 @@ function pickSubBand(tv: number, bands: DollarBand[]): DollarBand | null {
   return null;
 }
 
+/**
+ * Hand-tuned Classic dollar pockets for specific decade cards.
+ * Key: `${era}|${teamId}|${exact player name}` (same shape as TV overrides).
+ * Looked up from hist_* player ids so buildEraRoster pricing stays exact.
+ */
+const DECADE_DOLLAR_BAND_OVERRIDES: Record<
+  string,
+  { minDollars: number; maxDollars: number }
+> = {
+  '1960s|BOS|Bill Russell': { minDollars: 190_000_000, maxDollars: 199_000_000 },
+  '1980s|BOS|Larry Bird': { minDollars: 200_000_000, maxDollars: 205_000_000 },
+};
+
+/** Every LeBron card — Lakers late-career band; all other stints stay elite ($201M+). */
+function lebronDollarBand(
+  player: TradePlayer,
+): { minDollars: number; maxDollars: number } | null {
+  if (player.name.trim() !== 'LeBron James') return null;
+  if (player.teamId === 'LAL') {
+    return { minDollars: 200_000_000, maxDollars: 205_000_000 };
+  }
+  return { minDollars: 201_000_000, maxDollars: 225_000_000 };
+}
+
+function customDollarBand(
+  player: TradePlayer,
+): { minDollars: number; maxDollars: number } | null {
+  const overrideKey = decadeDollarOverrideKey(player);
+  if (overrideKey != null) {
+    const decade = DECADE_DOLLAR_BAND_OVERRIDES[overrideKey];
+    if (decade) return decade;
+  }
+  return lebronDollarBand(player);
+}
+
+/** Parse `hist_{era}_{teamId}_{slug}` → override key using the live player name. */
+function decadeDollarOverrideKey(player: TradePlayer): string | null {
+  const match = /^hist_(\d{4}s)_([A-Z]{2,3})_/.exec(player.id);
+  if (!match) return null;
+  return `${match[1]}|${match[2]}|${player.name.trim()}`;
+}
+
 /** Resolve the pricing pocket for a player (S/GOAT use low/mid/high sub-bands). */
 export function resolveDollarBand(player: TradePlayer): DollarBand {
+  const custom = customDollarBand(player);
+  if (custom) {
+    const tv = player.tradeValue;
+    return {
+      minTv: tv,
+      maxTv: tv,
+      minDollars: custom.minDollars,
+      maxDollars: custom.maxDollars,
+    };
+  }
+
   const tier = getPlayerTier(player);
   const tv = player.tradeValue;
   if (tier === 'S') {
@@ -344,6 +402,20 @@ export function getDollarValue(player: TradePlayer): number {
     return valued.dollarValue;
   }
   return rollDollarValue(player);
+}
+
+/**
+ * Market price for a seated slot.
+ * Primary position keeps full value; secondary seats print slightly less.
+ */
+export function getDollarValueForSlot(player: TradePlayer, slot: Position): number {
+  const base = rollDollarValue(player);
+  if (player.primaryPosition === slot) {
+    return Math.min(MAX_PLAYER_DOLLARS, base);
+  }
+  return toCleanMillions(
+    Math.min(MAX_PLAYER_DOLLARS, base * OFF_PRIMARY_SLOT_VALUE_FACTOR),
+  );
 }
 
 export function sumTeamValue(players: TradePlayer[]): number {
@@ -635,6 +707,7 @@ export function buildEraRoster(team: TeamInfo, era: DecadeEra): EraOfferPlayer[]
             rpg: row.rpg,
             apg: row.apg,
           },
+          sourceEra: resolved.era,
         };
       })
       .sort((a, b) => b.dollarValue - a.dollarValue);
@@ -642,6 +715,19 @@ export function buildEraRoster(team: TeamInfo, era: DecadeEra): EraOfferPlayer[]
     console.warn('[billionDollar] buildEraRoster failed', err);
     return [];
   }
+}
+
+/**
+ * Full franchise board across every decade — for 1V1 picks (not era-limited).
+ */
+export function buildTeamAllErasRoster(team: TeamInfo): EraOfferPlayer[] {
+  const byId = new Map<string, EraOfferPlayer>();
+  for (const era of ERAS) {
+    for (const player of buildEraRoster(team, era)) {
+      if (!byId.has(player.id)) byId.set(player.id, player);
+    }
+  }
+  return [...byId.values()].sort((a, b) => b.dollarValue - a.dollarValue);
 }
 
 export interface BillionTradeResult {

@@ -1,33 +1,29 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import {
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { useMatchSync } from '@/hooks/useMatchSync';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useState } from 'react';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
-import {
-  deriveMatchOutcome,
-  type MatchLineupEntry,
-  type MatchResultRow,
-} from '@/lib/multiplayer/match';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
+import { useH2HMatch } from '@/hooks/useH2HMatch';
 import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
-import { getH2HUsername } from '@/lib/tradeup/h2hUsername';
 import { hapticLight } from '@/lib/tradeup/haptics';
-import { TradeUpLoading } from '../TradeUpLoading';
-
-const BillionTradeEngine = dynamic(
-  () =>
-    import('../BillionTradeEngine').then((mod) => ({
-      default: mod.BillionTradeEngine,
-    })),
-  { loading: () => <TradeUpLoading /> },
-);
+import {
+  playH2HDefeatSound,
+  playH2HVictorySound,
+  prepareH2HEmojiAudio,
+} from '@/lib/tradeup/h2hEmojiSound';
+import {
+  isH2HGameMode,
+  modeDef,
+  type H2HGameMode,
+} from '@/lib/multiplayer/gameModes';
+import { bountyAdjustedTotal, resolveBountyPosition } from '@/lib/multiplayer/modeConfig';
+import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
+import { H2HTradeUpMatch } from './H2HTradeUpMatch';
+import { H2HKnockoutMatch } from './H2HKnockoutMatch';
+import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
+import { H2HRevealSequence } from './H2HRevealSequence';
+import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
+import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
 
 interface H2HMatchScreenProps {
   roomId: string;
@@ -35,69 +31,33 @@ interface H2HMatchScreenProps {
   onLeft: () => void;
 }
 
-type MatchUi = 'playing' | 'waiting' | 'results';
-
 export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) {
   const {
-    snapshot,
-    results,
+    state,
+    loading,
     error,
-    opponentProgress,
+    lockBusy,
+    continueBusy,
+    rematchBusy,
+    lobby,
+    myName,
     opponentName,
-    myResult,
-    bothSubmitted,
-    pushProgress,
-    submitResult,
-    submitBusy,
-  } = useMatchSync({ roomId, userId });
+    lockPick,
+    movePick,
+    ackContinue,
+    ackRematch,
+  } = useH2HMatch({ roomId, userId });
 
-  const [ui, setUi] = useState<MatchUi>('playing');
-  const [localError, setLocalError] = useState<string | null>(null);
-  const completeLock = useRef(false);
+  const [revealDone, setRevealDone] = useState(false);
 
   useEffect(() => {
-    if (myResult && !bothSubmitted) setUi('waiting');
-    if (bothSubmitted) setUi('results');
-  }, [bothSubmitted, myResult]);
+    if (state?.phase !== 'finished') setRevealDone(false);
+  }, [state?.phase]);
 
-  // Restore: already submitted before mount
-  useEffect(() => {
-    if (myResult) {
-      completeLock.current = true;
-      setUi(bothSubmitted ? 'results' : 'waiting');
-    }
-  }, [bothSubmitted, myResult]);
+  const p1Name = state?.my_player_number === 1 ? myName : opponentName;
+  const p2Name = state?.my_player_number === 2 ? myName : opponentName;
 
-  const myName =
-    snapshot?.players.find((p) => p.user_id === userId)?.display_name ??
-    getH2HUsername() ??
-    'You';
-
-  const handleProgress = useCallback(
-    (count: number) => {
-      void pushProgress(count);
-    },
-    [pushProgress],
-  );
-
-  const handleComplete = useCallback(
-    async (payload: { lineup: MatchLineupEntry[]; totalValue: number }) => {
-      if (completeLock.current || submitBusy) return;
-      completeLock.current = true;
-      setLocalError(null);
-      try {
-        await pushProgress(5);
-        await submitResult(payload.lineup, payload.totalValue);
-        setUi('waiting');
-      } catch (err) {
-        completeLock.current = false;
-        setLocalError(err instanceof Error ? err.message : 'Submit failed.');
-      }
-    },
-    [pushProgress, submitBusy, submitResult],
-  );
-
-  const handleLeave = useCallback(async () => {
+  const handleLeave = async () => {
     try {
       await leaveRoom(roomId);
     } catch {
@@ -106,180 +66,259 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
       clearActiveRoom();
       onLeft();
     }
-  }, [onLeft, roomId]);
+  };
 
-  if (ui === 'results' && results.length >= 2) {
+  if (loading || !state) {
     return (
-      <H2HMatchResults
+      <div className="h2h-lobby" aria-label="Loading match">
+        <p className="h2h-lobby__status">{error ?? 'Loading match…'}</p>
+      </div>
+    );
+  }
+
+  // Prefer lobby room mode (source of truth). If state still defaults to classic
+  // while the lobby has a paid mode, keep the lobby mode.
+  const lobbyMode = isH2HGameMode(lobby?.room.game_mode) ? lobby!.room.game_mode : null;
+  const stateMode = isH2HGameMode(state.game_mode) ? state.game_mode : null;
+  const gameMode: H2HGameMode =
+    (lobbyMode && lobbyMode !== 'classic' ? lobbyMode : null) ??
+    (stateMode && stateMode !== 'classic' ? stateMode : null) ??
+    lobbyMode ??
+    stateMode ??
+    'classic';
+  if (gameMode === 'tradeUp') {
+    return (
+      <H2HTradeUpMatch
+        roomId={roomId}
         userId={userId}
+        myPlayerNumber={state.my_player_number}
         myName={myName}
         opponentName={opponentName}
-        results={results}
-        onLeft={() => void handleLeave()}
+        modeSeed={state.mode_seed}
+        modeConfig={state.mode_config}
+        phase={state.phase}
+        isHost={lobby?.room.host_user_id === userId}
+        rematchBusy={rematchBusy}
+        error={error}
+        onRematch={() => void ackRematch()}
+        onExit={() => void handleLeave()}
       />
     );
   }
 
-  if (ui === 'waiting') {
-    const myProg = myResult ? 5 : snapshot?.players.find((p) => p.user_id === userId)?.match_progress ?? 5;
+  if (gameMode === 'knockout') {
     return (
-      <div className="h2h-lobby h2h-lobby--match-wait" aria-label="Waiting for opponent">
-        <header className="h2h-lobby__header">
-          <p className="h2h-lobby__eyebrow">1V1 MATCH</p>
-          <h1 className="h2h-lobby__title">Waiting for opponent…</h1>
-          <p className="h2h-lobby__subtitle">Both runs sync when they finish.</p>
+      <H2HKnockoutMatch
+        roomId={roomId}
+        state={state}
+        myName={myName}
+        opponentName={opponentName}
+        lockBusy={lockBusy}
+        continueBusy={continueBusy}
+        rematchBusy={rematchBusy}
+        isHost={lobby?.room.host_user_id === userId}
+        error={error}
+        onLock={(position, selection, rawValue) => lockPick(position, selection, rawValue)}
+        onMove={(from, to, selection, rawValue) => movePick(from, to, selection, rawValue)}
+        onContinue={() => { if (lobby?.room.host_user_id === userId) void ackContinue(); }}
+        onRematch={() => void ackRematch()}
+        onExit={() => void handleLeave()}
+      />
+    );
+  }
+
+  const isHost = lobby?.room.host_user_id === userId;
+  const modeMeta = modeDef(gameMode);
+  const bountyPosition: H2HPosition = resolveBountyPosition(state.mode_config, roomId, state.mode_seed);
+  const bountyTotals =
+    gameMode === 'bounty'
+      ? bountyAdjustedTotal(state.resolved_rounds, bountyPosition, 2)
+      : { p1: state.p1_total, p2: state.p2_total };
+
+  if (state.phase === 'finished' && !revealDone && state.resolved_rounds.length > 0) {
+    return (
+      <H2HRevealSequence
+        roomId={roomId}
+        rounds={state.resolved_rounds}
+        p1Name={p1Name}
+        p2Name={p2Name}
+        myPlayerNumber={state.my_player_number}
+        isHost={isHost}
+        scoreFormatter={
+          gameMode === 'bounty'
+            ? (rounds) => bountyAdjustedTotal(rounds, bountyPosition, 2)
+            : undefined
+        }
+        onComplete={() => setRevealDone(true)}
+      />
+    );
+  }
+
+  if (state.phase === 'finished') {
+    const scoreP1 = gameMode === 'bounty' ? bountyTotals.p1 : state.p1_total;
+    const scoreP2 = gameMode === 'bounty' ? bountyTotals.p2 : state.p2_total;
+    const p1Wins = scoreP1 > scoreP2;
+    const p2Wins = scoreP2 > scoreP1;
+    const iAmP1 = state.my_player_number === 1;
+    const myNameFinal = iAmP1 ? p1Name : p2Name;
+    const oppNameFinal = iAmP1 ? p2Name : p1Name;
+    const myScore = iAmP1 ? scoreP1 : scoreP2;
+    const oppScore = iAmP1 ? scoreP2 : scoreP1;
+    const myWins = iAmP1 ? p1Wins : p2Wins;
+    const oppWins = iAmP1 ? p2Wins : p1Wins;
+    const headline = myWins
+      ? 'You win'
+      : oppWins
+        ? `${oppNameFinal.split(/\s+/)[0] ?? oppNameFinal} wins`
+        : 'Tie';
+
+    const myRounds = state.resolved_rounds.map((round) => ({
+      position: round.position,
+      selection: iAmP1 ? round.p1_selection : round.p2_selection,
+      value: iAmP1
+        ? round.p1_raw_value ?? round.p1_adjusted_value ?? 0
+        : round.p2_raw_value ?? round.p2_adjusted_value ?? 0,
+    }));
+    const oppRounds = state.resolved_rounds.map((round) => ({
+      position: round.position,
+      selection: iAmP1 ? round.p2_selection : round.p1_selection,
+      value: iAmP1
+        ? round.p2_raw_value ?? round.p2_adjusted_value ?? 0
+        : round.p1_raw_value ?? round.p1_adjusted_value ?? 0,
+    }));
+
+    return (
+      <H2HFinalScreen myWins={myWins} oppWins={oppWins}>
+      <div className="h2h-lobby h2h-lobby--results h2h-final" aria-label="Final results">
+        <header className="h2h-final__head">
+          <h1 className={`h2h-final__title${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
+            {headline}
+          </h1>
         </header>
-        <div className="h2h-lobby__slots">
-          <div className="h2h-lobby__slot is-filled">
-            <div className="h2h-lobby__slot-top">
-              <span className="h2h-lobby__slot-label">You</span>
-            </div>
-            <p className="h2h-lobby__slot-name">{myName}</p>
-            <p className="h2h-lobby__slot-ready is-on">{myProg}/5</p>
-          </div>
-          <div className="h2h-lobby__slot is-filled">
-            <div className="h2h-lobby__slot-top">
-              <span className="h2h-lobby__slot-label">Opponent</span>
-            </div>
-            <p className="h2h-lobby__slot-name">{opponentName}</p>
-            <p className={`h2h-lobby__slot-ready${opponentProgress >= 5 ? ' is-on' : ''}`}>
-              {opponentProgress}/5
-            </p>
-          </div>
+
+        <div className="h2h-final__boards">
+          <FinalBoard
+            label="You"
+            name={myNameFinal}
+            total={myScore}
+            rounds={myRounds}
+            winner={myWins}
+          />
+          <FinalBoard
+            label={oppNameFinal.split(/\s+/)[0] ?? 'Opp'}
+            name={oppNameFinal}
+            total={oppScore}
+            rounds={oppRounds}
+            winner={oppWins}
+          />
         </div>
-        {(localError || error) ? (
+        {error ? (
           <p className="h2h-lobby__error" role="alert">
-            {localError || error}
+            {error}
           </p>
         ) : null}
+        {isHost ? (
+          <button
+            type="button"
+            className="run-btn run-btn--primary h2h-lobby__submit"
+            disabled={rematchBusy}
+            onPointerDown={(e: ReactPointerEvent) => {
+              e.preventDefault();
+              hapticLight();
+              void ackRematch();
+            }}
+          >
+            <strong>{rematchBusy ? '…' : 'Run it back'}</strong>
+          </button>
+        ) : (
+          <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
+            Waiting…
+          </p>
+        )}
         <button
           type="button"
-          className="h2h-lobby__leave"
+          className="run-btn run-btn--secondary h2h-lobby__submit"
           onPointerDown={(e: ReactPointerEvent) => {
             e.preventDefault();
             hapticLight();
             void handleLeave();
           }}
         >
-          Leave Match
+          <strong>Leave</strong>
         </button>
       </div>
+      </H2HFinalScreen>
     );
   }
 
+  // Classic / Bounty: solo-style spin draft for all five, then results.
   return (
-    <>
-      {(localError || error) && ui === 'playing' ? (
-        <p className="h2h-match-banner-error" role="alert">
-          {localError || error}
-        </p>
-      ) : null}
-      <BillionTradeEngine
-        challengeMode="online"
-        h2hPlayerName={myName}
-        onlineOpponentName={opponentName}
-        onlineOpponentProgress={opponentProgress}
-        onOnlineProgress={handleProgress}
-        onOnlineComplete={(payload) => {
-          void handleComplete(payload);
-        }}
-        onExit={() => void handleLeave()}
-      />
-    </>
+    <H2HSoloStyleDraft
+      modeTitle={modeMeta.title}
+      myName={myName}
+      opponentName={opponentName}
+      myPicks={state.my_picks ?? []}
+      opponentPickCount={state.opponent_pick_count ?? 0}
+      lockBusy={lockBusy}
+      error={error}
+      onLock={(position, selection, raw) => lockPick(position, selection, raw)}
+      onMove={(from, to, selection, raw) => movePick(from, to, selection, raw)}
+      onExit={() => void handleLeave()}
+    />
   );
 }
 
-function H2HMatchResults({
-  userId,
-  myName,
-  opponentName,
-  results,
-  onLeft,
+function H2HFinalScreen({
+  myWins,
+  oppWins,
+  children,
 }: {
-  userId: string;
-  myName: string;
-  opponentName: string;
-  results: MatchResultRow[];
-  onLeft: () => void;
+  myWins: boolean;
+  oppWins: boolean;
+  children: ReactNode;
 }) {
-  const derived = deriveMatchOutcome(userId, results);
-  const mine = results.find((r) => r.user_id === userId)!;
-  const theirs = results.find((r) => r.user_id !== userId)!;
-  const headline =
-    derived?.outcome === 'win'
-      ? 'YOU WIN'
-      : derived?.outcome === 'loss'
-        ? 'YOU LOSE'
-        : 'TIE';
-
-  return (
-    <div className="h2h-lobby h2h-lobby--results" aria-label="Match results">
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">1V1 RESULTS</p>
-        <h1 className="h2h-lobby__title">{headline}</h1>
-        <p className="h2h-lobby__subtitle">Higher total wins. Winner is from stored totals only.</p>
-      </header>
-
-      <div className="h2h-results__grid">
-        <ResultCard
-          name={myName}
-          label="You"
-          total={mine.total_value}
-          lineup={mine.lineup}
-          highlight={derived?.outcome === 'win'}
-        />
-        <ResultCard
-          name={opponentName}
-          label="Opponent"
-          total={theirs.total_value}
-          lineup={theirs.lineup}
-          highlight={derived?.outcome === 'loss'}
-        />
-      </div>
-
-      <button
-        type="button"
-        className="run-btn run-btn--primary h2h-lobby__submit"
-        onPointerDown={(e: ReactPointerEvent) => {
-          e.preventDefault();
-          hapticLight();
-          onLeft();
-        }}
-      >
-        <strong>BACK TO 1V1</strong>
-      </button>
-    </div>
-  );
+  useEffect(() => {
+    prepareH2HEmojiAudio();
+    if (myWins) playH2HVictorySound();
+    else if (oppWins) playH2HDefeatSound();
+  }, [myWins, oppWins]);
+  return children;
 }
 
-function ResultCard({
-  name,
+function FinalBoard({
   label,
+  name,
   total,
-  lineup,
-  highlight,
+  rounds,
+  winner,
 }: {
-  name: string;
   label: string;
+  name: string;
   total: number;
-  lineup: MatchLineupEntry[];
-  highlight: boolean;
+  rounds: Array<{ position: H2HPosition; selection: H2HPickSelection | null | undefined; value: number }>;
+  winner: boolean;
 }) {
   return (
-    <div className={`h2h-results__card${highlight ? ' is-winner' : ''}`}>
-      <div className="h2h-results__card-top">
-        <span>{label}</span>
-        <strong>{name}</strong>
-      </div>
-      <p className="h2h-results__total">{formatDollarsExact(total)}</p>
-      <ul className="h2h-results__lineup">
-        {lineup.map((p) => (
-          <li key={`${p.position}-${p.name}`}>
-            <em>{p.position}</em>
-            <span>{p.name}</span>
-            <b>{formatDollarsExact(p.dollarValue)}</b>
-          </li>
-        ))}
+    <div className={`h2h-final__board${winner ? ' is-winner' : ''}`}>
+      <p className="h2h-final__board-label">{label}</p>
+      <p className="h2h-final__total">{formatDollarsExact(total)}</p>
+      <ul className="h2h-final__list">
+        {rounds.map((row) => {
+          const colors = row.selection
+            ? getTeamColors(row.selection.teamId)
+            : { primary: '#10202b' };
+          const ink = contrastOnPrimary(colors.primary);
+          return (
+            <li
+              key={row.position}
+              style={{ background: colors.primary, color: ink }}
+            >
+              <span style={{ color: ink, opacity: 0.78 }}>{row.position}</span>
+              <strong style={{ color: ink }}>{row.selection?.name ?? '—'}</strong>
+              <em style={{ color: ink }}>{formatDollarsExact(row.value)}</em>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

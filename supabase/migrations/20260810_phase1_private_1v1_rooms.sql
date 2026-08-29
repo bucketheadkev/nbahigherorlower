@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   created_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL,
   CONSTRAINT rooms_room_code_format_chk CHECK (
-    room_code ~ '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$'
+    room_code ~ '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$'
   ),
   CONSTRAINT rooms_status_chk CHECK (
     status IN ('waiting', 'playing', 'finished', 'abandoned')
@@ -108,7 +108,7 @@ DECLARE
 BEGIN
   FOR attempt IN 1..40 LOOP
     candidate := '';
-    FOR i IN 1..6 LOOP
+    FOR i IN 1..4 LOOP
       candidate := candidate || substr(
         alphabet,
         1 + floor(random() * length(alphabet))::integer,
@@ -180,7 +180,7 @@ DECLARE
   player_count integer;
   new_player public.room_players%ROWTYPE;
 BEGIN
-  IF code !~ '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$' THEN
+  IF code !~ '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$' THEN
     RAISE EXCEPTION 'ROOM_INVALID' USING ERRCODE = 'P0001';
   END IF;
 

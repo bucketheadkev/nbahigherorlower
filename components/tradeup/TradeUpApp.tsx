@@ -10,6 +10,7 @@ import {
   PERFORMANCE_TEST_BUILD,
   isPerfDebugEnabled,
 } from '@/lib/tradeup/perf/perfConfig';
+import { LocaleProvider } from '@/hooks/useLocale';
 import { BallionSplash } from './BallionSplash';
 import { ChallengesScreen } from './ChallengesScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
@@ -104,6 +105,17 @@ export function TradeUpApp() {
 
   const handleSplashDone = useCallback(() => {
     setShowSplash(false);
+    void import('@/lib/tradeup/gameAudio').then((mod) => {
+      mod.syncAudioSettings();
+      mod.unlockGameAudio();
+      mod.preloadGameAudio();
+    });
+  }, []);
+
+  // Never leave LAN / slow-hydrate devices stuck on the splash shell
+  useEffect(() => {
+    const failsafe = window.setTimeout(() => setShowSplash(false), 5000);
+    return () => window.clearTimeout(failsafe);
   }, []);
 
   const handleHubChange = useCallback((tab: HubTab) => {
@@ -112,11 +124,13 @@ export function TradeUpApp() {
     if (tab === 'runs') setRunsKey((k) => k + 1);
   }, []);
 
-  const showTabs = screen === 'hub';
+  const showTabs = screen === 'hub' && !showSplash;
 
   return (
-    <>
-      {screen === 'engine' ? (
+    <LocaleProvider>
+      {showSplash ? (
+        <BallionSplash onDone={handleSplashDone} reduceMotion={reduceMotion} />
+      ) : screen === 'engine' ? (
         <BillionTradeEngine
           key={engineKey}
           onExit={handleExit}
@@ -138,10 +152,7 @@ export function TradeUpApp() {
         <MobileBottomNav active={hubTab} onChange={handleHubChange} />
       ) : null}
 
-      {showSplash ? (
-        <BallionSplash onDone={handleSplashDone} reduceMotion={reduceMotion} />
-      ) : null}
       {showPerf && PERFORMANCE_DEBUG ? <DevPerfOverlay /> : null}
-    </>
+    </LocaleProvider>
   );
 }

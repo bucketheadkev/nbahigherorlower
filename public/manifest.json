@@ -4,12 +4,12 @@
   "description": "Build your five. Reach one billion dollars.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#031942",
-  "theme_color": "#031942",
+  "background_color": "#050708",
+  "theme_color": "#050708",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/images/1b-run-splash.png",
+      "src": "/images/1b-run-app-icon-squircle.png?v=1",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"

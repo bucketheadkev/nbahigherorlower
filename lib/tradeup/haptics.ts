@@ -10,6 +10,7 @@
  */
 
 import { getAudioSettings } from './audioSettings';
+import { playPlayerSlotSound } from './h2hEmojiSound';
 
 type ImpactStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
 type NotificationType = 'success' | 'warning' | 'error';
@@ -278,6 +279,12 @@ export function hapticSpinStop(): void {
 /** Short crisp confirm when a player locks into a roster slot. */
 export function hapticSlotConfirm(): void {
   void hapticImpact('light');
+}
+
+/** Pick-up then slam when a player locks into a roster circle. */
+export function hapticSlam(): void {
+  playPlayerSlotSound();
+  void hapticImpact('heavy');
 }
 
 export function hapticTicketPrint(): void {

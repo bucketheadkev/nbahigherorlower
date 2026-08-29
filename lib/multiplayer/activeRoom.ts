@@ -3,6 +3,8 @@
  * Never stores secrets or service-role keys.
  */
 
+import { isValidH2HRoomCode } from '@/lib/multiplayer/roomCode';
+
 const ACTIVE_ROOM_KEY = 'ballion_mp_active_room_v1';
 
 export interface ActiveRoomPersist {
@@ -27,7 +29,7 @@ export function readActiveRoom(): ActiveRoomPersist | null {
     const roomCode =
       typeof parsed.roomCode === 'string' ? parsed.roomCode.trim().toUpperCase() : '';
     const savedAt = typeof parsed.savedAt === 'string' ? parsed.savedAt : '';
-    if (!isUuid(roomId) || roomCode.length !== 6 || !savedAt) {
+    if (!isUuid(roomId) || !isValidH2HRoomCode(roomCode) || !savedAt) {
       clearActiveRoom();
       return null;
     }

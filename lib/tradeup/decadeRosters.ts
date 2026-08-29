@@ -104,39 +104,73 @@ export function estimateDecadeTradeValue(player: DecadeRosterPlayer): number {
  * Hand-tuned GOAT / S placements by era + franchise.
  * Key: `${era}|${teamId}|${exact player name}` → forced tradeValue.
  * GOAT = 97–99 · high S ≈ 95–96 · low S ≈ 92.
+ *
+ * The box-score estimator overweight raw PPG/RPG/BPG peaks (Wilt, Oscar) and
+ * under-ranks all-around primes (LeBron, Magic, Bird, Curry). Overrides restore
+ * an intuitive hierarchy without inflating ordinary roster players.
  */
 const DECADE_TV_OVERRIDES: Record<string, number> = {
-  // 1960s — only Wilt + Oscar stay GOAT
+  // 1960s — Wilt stays absolute peak; Russell rises above scoring-only formula
   '1960s|ATL|Bob Pettit': 95,
   '1960s|GSW|Rick Barry': 95,
   '1960s|HOU|Elvin Hayes': 95,
   '1960s|LAL|Elgin Baylor': 95,
   '1960s|WAS|Walt Bellamy': 95,
+  // Below GOAT dollar floor — priced via decade dollar-band override ($190–199M)
+  '1960s|BOS|Bill Russell': 96,
+  '1960s|GSW|Wilt Chamberlain': 99,
+  '1960s|PHI|Wilt Chamberlain': 98,
+  '1960s|SAC|Oscar Robertson': 98,
 
-  // 1970s — only Bucks Kareem stays GOAT
+  // 1970s — Bucks Kareem peak GOAT; Lakers Kareem high S
+  '1970s|MIL|Kareem Abdul-Jabbar': 98,
   '1970s|LAL|Kareem Abdul-Jabbar': 96,
   '1970s|HOU|Elvin Hayes': 95,
   '1970s|LAC|Bob McAdoo': 95,
   '1970s|NYK|Bob McAdoo': 95,
 
-  // 1980s — only Jordan stays GOAT
+  // 1980s — Peak MJ absolute top; Magic + Bird elite GOAT (not mid-S)
+  '1980s|CHI|Michael Jordan': 99,
+  '1980s|LAL|Magic Johnson': 98,
+  // Low GOAT — priced via decade dollar-band override ($200–205M)
+  '1980s|BOS|Larry Bird': 97,
   '1980s|HOU|Moses Malone': 94,
   '1980s|UTA|Adrian Dantley': 92,
 
-  // 2000s — AI + T-Mac drop to high S; LeBron CLE + both Shaqs stay GOAT
+  // 1990s — Second Jordan peak absolute top; Shaq/Hakeem high GOAT
+  '1990s|CHI|Michael Jordan': 99,
+  '1990s|ORL|Shaquille O\'Neal': 98,
+  '1990s|LAL|Shaquille O\'Neal': 98,
+  '1990s|HOU|Hakeem Olajuwon': 97,
+
+  // 2000s — AI + T-Mac high S; prime CLE LeBron absolute top; Shaq/Kobe GOAT
   '2000s|ORL|Tracy McGrady': 96,
   '2000s|PHI|Allen Iverson': 96,
+  '2000s|CLE|LeBron James': 99,
+  '2000s|LAL|Shaquille O\'Neal': 98,
+  '2000s|MIA|Shaquille O\'Neal': 98,
+  '2000s|LAL|Kobe Bryant': 97,
 
-  // 2010s — CLE/MIA LeBron GOAT; Lakers LeBron + Rockets Harden high S; OKC duo S
+  // 2010s — Peak CLE/MIA LeBron absolute top; Curry MVP decade GOAT; KD high S/GOAT
+  '2010s|CLE|LeBron James': 99,
+  '2010s|MIA|LeBron James': 99,
+  '2010s|LAL|LeBron James': 97,
+  '2010s|GSW|Stephen Curry': 97,
+  '2010s|OKC|Kevin Durant': 97,
+  '2010s|GSW|Kevin Durant': 97,
   '2010s|OKC|James Harden': 94,
   '2010s|OKC|Russell Westbrook': 94,
   '2010s|HOU|James Harden': 96,
-  '2010s|LAL|LeBron James': 96,
 
-  // 2020s — Lillard high S; Rockets Harden low GOAT; Lakers LeBron high S
+  // 2020s — Jokic/Giannis/Wemby high GOAT; Curry GOAT; late-career LAL LeBron still GOAT
+  '2020s|DEN|Nikola Jokić': 99,
+  '2020s|SAS|Victor Wembanyama': 98,
+  '2020s|MIL|Giannis Antetokounmpo': 98,
+  '2020s|GSW|Stephen Curry': 97,
+  '2020s|LAL|LeBron James': 97,
+  '2020s|PHI|LeBron James': 99,
   '2020s|POR|Damian Lillard': 96,
-  '2020s|HOU|James Harden': 97,
-  '2020s|LAL|LeBron James': 96,
+  '2020s|HOU|James Harden': 96,
 };
 
 function overrideKey(era: DecadeEra, teamId: string, name: string): string {

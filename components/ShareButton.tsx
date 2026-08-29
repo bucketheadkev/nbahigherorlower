@@ -33,7 +33,7 @@ export function ShareButton({ streak, variant = 'primary' }: ShareButtonProps) {
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row">
       <button type="button" onClick={handleShare} className={`btn-action flex-1 ${primaryClass}`}>
-        Share to X
+        Share
       </button>
       <button
         type="button"

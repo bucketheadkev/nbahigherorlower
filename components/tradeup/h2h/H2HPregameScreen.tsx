@@ -19,7 +19,7 @@ interface H2HPregameScreenProps {
 }
 
 /**
- * Brief synchronized pregame before each player enters their independent run.
+ * Brief pregame before the position-synced match (PG → C).
  */
 export function H2HPregameScreen({
   roomId,
@@ -91,7 +91,7 @@ export function H2HPregameScreen({
         <p className="h2h-lobby__subtitle">
           Room code{' '}
           <span className="h2h-lobby__inline-code">
-            {room?.room_code ?? (loading ? '······' : '————')}
+            {room?.room_code ?? (loading ? '····' : '————')}
           </span>
         </p>
       </header>
@@ -118,7 +118,7 @@ export function H2HPregameScreen({
       </div>
 
       <p className="h2h-lobby__phase-note" role="status">
-        Build your five. Opponent progress updates live — lineups stay hidden until both finish.
+        Pick PG through C, one slot at a time. Both of you must lock before each reveal.
       </p>
 
       {error ? (

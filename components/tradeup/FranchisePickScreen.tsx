@@ -51,8 +51,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
         onRevealed={() => {}}
       />
 
-      {(canRerollTeam || canRerollEra) ? (
-        <div className="franchise-pick__rerolls">
+      <div className="franchise-pick__rerolls">
           <button
             type="button"
             className="franchise-pick__reroll"
@@ -82,7 +81,6 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
             <strong>Reroll Era</strong>
           </button>
         </div>
-      ) : null}
 
       <p className="franchise-pick__hint">{hint}</p>
 
@@ -97,6 +95,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                 className={`franchise-pick__row${selected ? ' is-selected' : ''}${
                   canPlay ? '' : ' is-disabled'
                 }`}
+                data-draft-player-id={player.id}
                 disabled={!canPlay}
                 aria-disabled={!canPlay}
                 onPointerDown={(e) => {

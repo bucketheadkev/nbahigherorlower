@@ -2,13 +2,13 @@
 
 .tradeup-shell--game {
   position: relative;
-  background: #0a1a3a;
-  color: #f8fafc;
-  --game-credits-fg: #e0f2fe;
-  --game-credits-fg-muted: rgba(186, 230, 253, 0.78);
-  --game-credits-border: rgba(56, 189, 248, 0.35);
-  --game-credits-bg: rgba(37, 99, 235, 0.16);
-  --game-credits-bg-hover: rgba(37, 99, 235, 0.24);
+  background: var(--background);
+  color: var(--text-primary);
+  --game-credits-fg: var(--text-primary);
+  --game-credits-fg-muted: var(--silver-muted);
+  --game-credits-border: rgba(45, 232, 154, 0.28);
+  --game-credits-bg: rgba(45, 232, 154, 0.08);
+  --game-credits-bg-hover: rgba(45, 232, 154, 0.12);
 }
 
 .game-bg {
@@ -20,7 +20,7 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background: #0a1a3a;
+  background: var(--background);
   contain: strict;
   isolation: isolate;
 }
@@ -29,11 +29,11 @@
   position: absolute;
   inset: -8%;
   background:
-    radial-gradient(ellipse 74% 50% at 50% 22%, rgba(56, 189, 248, 0.28), transparent 66%),
-    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(37, 99, 235, 0.22), transparent 70%),
-    linear-gradient(165deg, #1d4ed8 0%, #172554 42%, #0b1738 72%, #071022 100%);
-  transform: scale(1.03);
-  animation: arena-blue-base-shift 18s ease-in-out infinite alternate;
+    radial-gradient(ellipse 74% 50% at 50% 22%, rgba(45, 232, 154, 0.06), transparent 66%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(168, 180, 192, 0.04), transparent 70%),
+    linear-gradient(165deg, var(--bg-deep) 0%, var(--background) 42%, var(--bg-deep) 100%);
+  transform: none;
+  animation: none;
 }
 
 .game-bg__brand-watermark {

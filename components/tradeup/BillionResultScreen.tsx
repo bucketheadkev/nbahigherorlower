@@ -11,6 +11,7 @@ import {
 import type { SeasonRecord } from '@/lib/tradeup/lineupSeason';
 import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
+import { openExternalUrl } from '@/lib/tradeup/openExternalUrl';
 import {
   WORLD_POOL_SIZE,
   formatWorldRank,
@@ -42,20 +43,6 @@ function buildShareText(
     return `I just built a ${formatDollarsExact(teamValue)} NBA roster${recordBit} and cleared $1B on Ballion.${rankBit}`;
   }
   return `Ran it back to ${formatDollarsExact(teamValue)}${recordBit} on Ballion — still chasing $1B.${rankBit}`;
-}
-
-async function renderSharePng(node: HTMLElement): Promise<Blob | null> {
-  try {
-    const { toBlob } = await import('html-to-image');
-    const blob = await toBlob(node, {
-      pixelRatio: 2,
-      cacheBust: true,
-      backgroundColor: '#06070b',
-    });
-    return blob;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -197,38 +184,15 @@ export function BillionResultScreen({
   const topFive = worldRank > 0 && worldRank <= 5;
   const topHundred = worldRank > 0 && worldRank <= 100;
 
-  const handleShareX = useCallback(async () => {
+  const handleShareX = useCallback(() => {
     if (sharing) return;
-    setSharing(true);
     const text = buildShareText(kind, teamValue, seasonRecord, worldRank);
-    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-
+    const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+    setSharing(true);
     try {
-      const node = cardRef.current;
-      const blob = node ? await renderSharePng(node) : null;
-      if (blob) {
-        const file = new File([blob], 'trade-up-billion.png', { type: 'image/png' });
-        if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            text,
-            title: 'Ballion',
-          });
-          setSharing(false);
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'trade-up-billion.png';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-      window.open(intent, '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(intent, '_blank', 'noopener,noreferrer');
+      openExternalUrl(intent);
     } finally {
-      setSharing(false);
+      window.setTimeout(() => setSharing(false), 600);
     }
   }, [kind, seasonRecord, sharing, teamValue, worldRank]);
 
@@ -357,7 +321,7 @@ export function BillionResultScreen({
           onClick={handleShareX}
           disabled={sharing}
         >
-          {sharing ? 'Preparing…' : 'Share to X'}
+          {sharing ? 'Preparing…' : 'Share'}
         </button>
         <button type="button" className="tu-btn tu-btn--secondary" onClick={onExit}>
           Home

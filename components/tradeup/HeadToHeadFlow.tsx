@@ -7,28 +7,31 @@ import {
   readActiveRoom,
   writeActiveRoom,
 } from '@/lib/multiplayer/activeRoom';
-import { fetchMatchResults, fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import { fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
 import { H2HJoinLobby } from './h2h/H2HJoinLobby';
 import { H2HMatchScreen } from './h2h/H2HMatchScreen';
-import { H2HPregameScreen } from './h2h/H2HPregameScreen';
+import { H2HModeSelectScreen } from './h2h/H2HModeSelectScreen';
 import { H2HWaitingLobby } from './h2h/H2HWaitingLobby';
 
-type LobbyScreen = 'entry' | 'create' | 'join' | 'waiting' | 'pregame' | 'match';
+type LobbyScreen = 'entry' | 'modes' | 'create' | 'join' | 'waiting' | 'match';
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
 }
 
 /**
- * 1V1 shell — Phase 3A: lobby → start → private match → results.
- * Classic mode remains a separate TradeUpApp path.
+ * 1V1 shell — entry (create/join) → host mode select → lobby → match → rematch.
+ * Guests join by code and inherit the host’s mode (no purchase gate).
+ * Classic single-player remains a separate TradeUpApp path.
  */
 export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
   const auth = useAnonymousAuth();
   const [screen, setScreen] = useState<LobbyScreen>('entry');
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<H2HGameMode>('classic');
   const [restoring, setRestoring] = useState(true);
   const restoreAttempted = useRef(false);
 
@@ -71,16 +74,19 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
 
         writeActiveRoom(snap.room.id, snap.room.room_code);
         setRoomId(snap.room.id);
+        setSelectedMode(snap.room.game_mode ?? 'classic');
+
+        if (snap.room.status === 'finished') {
+          clearActiveRoom();
+          setRoomId(null);
+          setRestoring(false);
+          return;
+        }
 
         if (snap.room.status === 'waiting') {
           setScreen('waiting');
-        } else if (snap.room.status === 'finished') {
-          setScreen('match');
         } else {
-          // playing — if I already submitted, match screen shows waiting/results
-          const results = await fetchMatchResults(snap.room.id);
-          if (cancelled) return;
-          setScreen(results.some((r) => r.user_id === auth.user.id) ? 'match' : 'pregame');
+          setScreen('match');
         }
       } catch {
         if (!cancelled) clearActiveRoom();
@@ -100,8 +106,14 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     setScreen('waiting');
   }, []);
 
+  const handleHostMode = useCallback((mode: H2HGameMode) => {
+    setSelectedMode(mode);
+    setScreen('create');
+  }, []);
+
   const handleCreated = useCallback(
-    (nextRoomId: string, nextCode: string) => {
+    (nextRoomId: string, nextCode: string, mode: H2HGameMode) => {
+      setSelectedMode(mode);
       enterRoom(nextRoomId, nextCode);
     },
     [enterRoom],
@@ -121,10 +133,6 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
   }, []);
 
   const handlePlaying = useCallback(() => {
-    setScreen('pregame');
-  }, []);
-
-  const handleEnterMatch = useCallback(() => {
     setScreen('match');
   }, []);
 
@@ -139,17 +147,27 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
   if (screen === 'create') {
     return (
       <H2HCreateLobby
+        gameMode={selectedMode}
         onCreated={handleCreated}
-        onBack={() => setScreen('entry')}
+        onBack={() => setScreen('modes')}
       />
     );
   }
 
   if (screen === 'join') {
     return (
-      <H2HJoinLobby
-        onJoined={handleJoined}
+      <H2HJoinLobby onJoined={handleJoined} onBack={() => setScreen('entry')} />
+    );
+  }
+
+  if (screen === 'modes') {
+    return (
+      <H2HModeSelectScreen
+        onHostMode={handleHostMode}
+        onJoin={() => setScreen('join')}
         onBack={() => setScreen('entry')}
+        authLoading={false}
+        authError={auth.status === 'error' ? auth.message : null}
       />
     );
   }
@@ -164,23 +182,13 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
     );
   }
 
-  if (screen === 'pregame' && roomId && auth.status === 'ready') {
-    return (
-      <H2HPregameScreen
-        roomId={roomId}
-        userId={auth.user.id}
-        onLeft={handleLeftLobby}
-        onContinue={handleEnterMatch}
-      />
-    );
-  }
-
   if (screen === 'waiting' && roomId) {
     if (auth.status === 'ready') {
       return (
         <H2HWaitingLobby
           roomId={roomId}
           userId={auth.user.id}
+          preferredMode={selectedMode}
           onLeft={handleLeftLobby}
           onPlaying={handlePlaying}
         />
@@ -203,7 +211,7 @@ export function HeadToHeadFlow({ onExit }: HeadToHeadFlowProps) {
 
   return (
     <H2HEntryScreen
-      onCreate={() => setScreen('create')}
+      onCreate={() => setScreen('modes')}
       onJoin={() => setScreen('join')}
       onBack={onExit}
       authLoading={false}

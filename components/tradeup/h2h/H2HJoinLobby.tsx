@@ -6,6 +6,11 @@ import {
   useState,
 } from 'react';
 import { joinRoom } from '@/lib/multiplayer/rooms';
+import {
+  H2H_ROOM_CODE_LENGTH,
+  isValidH2HRoomCode,
+  sanitizeH2HRoomCode,
+} from '@/lib/multiplayer/roomCode';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
 import {
   getH2HUsername,
@@ -15,21 +20,9 @@ import {
 } from '@/lib/tradeup/h2hUsername';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 
-const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
 interface H2HJoinLobbyProps {
   onJoined: (roomId: string, roomCode: string) => void;
   onBack: () => void;
-}
-
-function sanitizeRoomCode(raw: string): string {
-  return raw
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .split('')
-    .filter((ch) => ROOM_CODE_ALPHABET.includes(ch))
-    .join('')
-    .slice(0, 6);
 }
 
 export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
@@ -50,13 +43,13 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
     if (busy) return;
 
     const name = sanitizeH2HUsername(displayName);
-    const code = sanitizeRoomCode(roomCode);
+    const code = sanitizeH2HRoomCode(roomCode);
     if (!isValidH2HUsername(name)) {
       setError('Use 2–16 letters, numbers, spaces, or . _ -');
       return;
     }
-    if (code.length !== 6) {
-      setError('Enter a valid six-character room code.');
+    if (!isValidH2HRoomCode(code)) {
+      setError(`Enter a valid ${H2H_ROOM_CODE_LENGTH}-character room code.`);
       return;
     }
 
@@ -80,7 +73,7 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
   };
 
   const canSubmit =
-    sanitizeH2HUsername(displayName).length >= 2 && sanitizeRoomCode(roomCode).length === 6;
+    sanitizeH2HUsername(displayName).length >= 2 && isValidH2HRoomCode(roomCode);
 
   return (
     <div className="h2h-lobby" aria-label="Join lobby">
@@ -91,7 +84,9 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
       <header className="h2h-lobby__header">
         <p className="h2h-lobby__eyebrow">1V1</p>
         <h1 className="h2h-lobby__title">Join Lobby</h1>
-        <p className="h2h-lobby__subtitle">Enter your name and the host’s six-character code.</p>
+        <p className="h2h-lobby__subtitle">
+          Enter your name and the host’s {H2H_ROOM_CODE_LENGTH}-character code.
+        </p>
       </header>
 
       <form className="h2h-lobby__form" onSubmit={onSubmit}>
@@ -120,11 +115,11 @@ export function H2HJoinLobby({ onJoined, onBack }: H2HJoinLobbyProps) {
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
-            maxLength={6}
+            maxLength={H2H_ROOM_CODE_LENGTH}
             value={roomCode}
             disabled={busy}
-            onChange={(e) => setRoomCode(sanitizeRoomCode(e.target.value))}
-            placeholder="ABC234"
+            onChange={(e) => setRoomCode(sanitizeH2HRoomCode(e.target.value))}
+            placeholder="A2B3"
             aria-describedby={error ? 'join-lobby-error' : undefined}
           />
         </label>

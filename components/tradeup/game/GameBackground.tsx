@@ -1,10 +1,12 @@
 'use client';
 
-/** Flat Ballion surface — matches home screen navy (no blue arena wash). */
+import { ArenaAtmosphere } from '../ArenaAtmosphere';
+
+/** Shared $1B Run arena for Classic gameplay (court + graphite depth). */
 export function GameBackground() {
   return (
-    <div className="game-bg game-bg--ballion" aria-hidden>
-      <div className="game-bg__base" />
+    <div className="game-bg game-bg--arena" aria-hidden>
+      <ArenaAtmosphere intensity="game" />
     </div>
   );
 }

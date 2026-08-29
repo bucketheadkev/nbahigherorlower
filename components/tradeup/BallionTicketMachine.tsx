@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from 'react';
 import {
   listValidSpinPairs,
@@ -14,9 +15,15 @@ import {
   type SpinPair,
 } from '@/lib/tradeup/billionDollar';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
+import {
+  playWheelStopSound,
+  startWheelSpinSound,
+  stopWheelSpinSound,
+} from '@/lib/tradeup/gameAudio';
 import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { SpinReel, buildSpinStrip, stripFromLabels, type SpinStripItem } from './SpinReel';
+import { useLocale } from '@/hooks/useLocale';
 
 export type TicketRerollKind = 'team' | 'era';
 
@@ -161,6 +168,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   onResult,
   onReroll: _onReroll,
 }: BallionTicketMachineProps) {
+  const { t } = useLocale();
   const allPairs = useMemo(() => listValidSpinPairs(), []);
   const teams = useMemo(() => uniqueTeams(allPairs), [allPairs]);
 
@@ -191,6 +199,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     if (!pair || reportedRef.current) return;
     reportedRef.current = true;
     busyRef.current = false;
+    stopWheelSpinSound();
+    if (!reduceMotion) playWheelStopSound();
     setMode('landed');
     setResult(pair);
     if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
@@ -204,6 +214,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   useEffect(() => {
     return () => {
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
+      stopWheelSpinSound();
     };
   }, []);
 
@@ -215,6 +226,10 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       setResult(pair);
       setMode('spinning');
       setTeamLanded(false);
+
+      if (!reduceMotion && (axes.team || axes.era)) {
+        startWheelSpinSound(teamMs + eraMs + 180);
+      }
 
       if (axes.team) {
         const strip = buildTeamColorStrip(teams, pair.team, TEAM_STRIP_LEN);
@@ -245,7 +260,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         eraDoneRef.current = true;
       }
     },
-    [allPairs, teams],
+    [allPairs, reduceMotion, teams],
   );
 
   const handleRoll = useCallback(() => {
@@ -311,64 +326,88 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       : undefined;
 
   const busy = mode === 'spinning';
+  const teamPanelStyle =
+    teamFill && teamInk
+      ? ({
+          ['--team-accent' as string]: teamFill,
+          ['--team-ink' as string]: teamInk,
+        } as CSSProperties)
+      : undefined;
 
   return (
     <div className={`ter${showGoal ? ' ter--goal' : ''}`} aria-label="Team and era roll">
       {showGoal ? (
-        <p className="ter__goal" aria-label="Goal one billion dollars">
-          <span className="ter__goal-label">GOAL:</span>{' '}
-          <span className="ter__goal-amount">$1,000,000,000</span>
-        </p>
+        <div className="ter__goal-block">
+          <p className="ter__goal" aria-label="Goal one billion dollars">
+            <span className="ter__goal-label">{t('game.goal')}</span>{' '}
+            <span className="ter__goal-amount">$1,000,000,000</span>
+          </p>
+        </div>
       ) : null}
-      <div
-        className={`ter__panel ter__panel--team${teamFill ? ' is-filled' : ''}`}
-        style={
-          teamFill
-            ? { background: teamFill, color: teamInk, borderColor: teamFill }
-            : undefined
-        }
-      >
-        <p className="ter__kicker">TEAM</p>
-        <SpinReel
-          strip={spinTeam ? teamStrip : []}
-          spinId={spinTeam ? teamSpinId : 0}
-          itemHeight={TEAM_ITEM_H}
-          durationMs={teamMs}
-          reduceMotion={reduceMotion}
-          display={displayTeam ? teamLabel(displayTeam) : '—'}
-          className="spin-reel--team"
-          displayStyle={teamFill && teamInk ? { color: teamInk } : undefined}
-          onLocked={spinTeam ? onTeamLocked : undefined}
-        />
-      </div>
 
-      <div className="ter__panel ter__panel--era">
-        <p className="ter__kicker">ERA</p>
-        <SpinReel
-          strip={spinEra ? eraStrip : []}
-          spinId={spinEra ? eraSpinId : 0}
-          itemHeight={ERA_ITEM_H}
-          durationMs={eraMs}
-          reduceMotion={reduceMotion}
-          display={displayEra ?? '—'}
-          className="spin-reel--era"
-          onLocked={spinEra ? onEraLocked : undefined}
-        />
-      </div>
-
-      {mode === 'idle' && !autoReroll ? (
-        <button
-          type="button"
-          className="ter__roll"
-          disabled={busy}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            handleRoll();
-          }}
+      <div className="ter__stage">
+        <div
+          className={`ter__panel ter__panel--team${teamFill ? ' is-filled' : ''}${
+            !displayTeam && !spinTeam ? ' is-empty' : ''
+          }`}
+          style={teamPanelStyle}
         >
-          ROLL
-        </button>
-      ) : null}
+          <p className="ter__kicker">{t('game.team')}</p>
+          <div className="ter__viewport">
+            <SpinReel
+              strip={spinTeam ? teamStrip : []}
+              spinId={spinTeam ? teamSpinId : 0}
+              itemHeight={TEAM_ITEM_H}
+              durationMs={teamMs}
+              reduceMotion={reduceMotion}
+              display={displayTeam ? teamLabel(displayTeam) : '—'}
+              className="spin-reel--team"
+              displayStyle={
+                teamFill && teamInk
+                  ? { color: teamInk, background: teamFill }
+                  : undefined
+              }
+              onLocked={spinTeam ? onTeamLocked : undefined}
+            />
+          </div>
+        </div>
+
+        <div
+          className={`ter__panel ter__panel--era${displayEra || spinEra ? '' : ' is-empty'}`}
+        >
+          <p className="ter__kicker">{t('game.era')}</p>
+          <div className="ter__viewport">
+            <SpinReel
+              strip={spinEra ? eraStrip : []}
+              spinId={spinEra ? eraSpinId : 0}
+              itemHeight={ERA_ITEM_H}
+              durationMs={eraMs}
+              reduceMotion={reduceMotion}
+              display={displayEra ?? '—'}
+              className="spin-reel--era"
+              onLocked={spinEra ? onEraLocked : undefined}
+            />
+          </div>
+        </div>
+
+        {mode === 'idle' && !autoReroll ? (
+          <button
+            type="button"
+            className="ter__roll"
+            disabled={busy}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleRoll();
+            }}
+          >
+            {t('game.roll')}
+          </button>
+        ) : (
+          <div className="ter__roll ter__roll--placeholder" aria-hidden>
+            {t('game.roll')}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

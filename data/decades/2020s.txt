@@ -201,6 +201,7 @@ Kevin Porter Jr. | PG | 18.0 PPG | 5.0 RPG | 6.0 APG
 Christian Wood | PF | 20.0 PPG | 9.0 RPG | 2.0 APG
 Eric Gordon | SG | 15.0 PPG | 2.5 RPG | 2.5 APG
 James Harden | SG | 29.0 PPG | 6.3 RPG | 8.2 APG
+Kevin Durant | SF | 27.1 PPG | 7.0 RPG | 5.5 APG
 Russell Westbrook | PG | 22.0 PPG | 7.0 RPG | 7.0 APG
 Steven Adams | C | 10.0 PPG | 10.0 RPG | 3.0 APG
 Cam Whitmore | SF | 12.0 PPG | 4.0 RPG | 1.2 APG
@@ -419,6 +420,8 @@ Anthony Black | PG | 10.0 PPG | 4.0 RPG | 3.5 APG
 PHILADELPHIA 76ERS
 ========================================================================
 Joel Embiid | C | 30.0 PPG | 11.0 RPG | 4.0 APG
+LeBron James | SF | 26.0 PPG | 7.5 RPG | 8.0 APG
+Jaylen Brown | SG | 23.0 PPG | 6.0 RPG | 3.0 APG
 Tyrese Maxey | PG | 25.0 PPG | 3.7 RPG | 6.2 APG
 James Harden | PG | 22.0 PPG | 6.0 RPG | 8.5 APG
 Paul George | SF | 23.0 PPG | 6.0 RPG | 5.0 APG

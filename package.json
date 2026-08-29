@@ -6,17 +6,20 @@
     "dev": "next dev -p 3000 -H 0.0.0.0",
     "dev:clean": "node scripts/clean.mjs && next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
-    "build:ios": "CAPACITOR_BUILD=1 next build && npx cap sync ios",
+    "build:ios": "node scripts/build-ios.mjs",
     "start": "next start",
     "start:lan": "next start -p 3000 -H 0.0.0.0",
     "lint": "next lint",
     "clean": "node scripts/clean.mjs",
     "decade-rosters": "node scripts/build-decade-rosters.mjs",
     "decade-gap-check": "node scripts/gap-check-decades.mjs",
-    "decade-fill-gaps": "node scripts/fill-gaps-from-bbr.mjs"
+    "decade-fill-gaps": "node scripts/fill-gaps-from-bbr.mjs",
+    "migrate:h2h-draft": "node scripts/apply-h2h-draft-migration.mjs"
   },
   "dependencies": {
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/filesystem": "^8.1.3",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.0",
     "@capacitor/share": "^8.0.1",
@@ -36,5 +39,8 @@
     "@types/react-dom": "^19.1.2",
     "tailwindcss": "^4.1.8",
     "typescript": "^5.8.3"
+  },
+  "allowScripts": {
+    "ffmpeg-static@5.3.0": true
   }
 }

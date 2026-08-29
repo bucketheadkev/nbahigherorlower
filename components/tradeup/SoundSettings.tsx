@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
+import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
 import { hapticTap } from '@/lib/tradeup/haptics';
 import {
   getH2HUsername,
   isValidH2HUsername,
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
+import { SettingsGuidePage } from './SettingsGuidePage';
 
 interface SoundSettingsProps {
   /** Compact gear on redesigned home; text toggle elsewhere. */
@@ -26,17 +29,24 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     toggleHaptics,
     resume,
   } = useSound();
+  const { locale } = useLocale();
+  const guideNav = GUIDE_NAV[locale] ?? GUIDE_NAV.en;
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
+  const [activeGuide, setActiveGuide] = useState<GuideId | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setUsername(getH2HUsername() ?? '');
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (activeGuide) {
+          setActiveGuide(null);
+          return;
+        }
         if (editingName) {
           setEditingName(false);
           setNameError(null);
@@ -47,12 +57,19 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, editingName]);
+  }, [open, editingName, activeGuide]);
 
   const close = () => {
     setEditingName(false);
     setNameError(null);
+    setActiveGuide(null);
     setOpen(false);
+  };
+
+  const openGuide = (id: GuideId) => {
+    resume();
+    hapticTap();
+    setActiveGuide(id);
   };
 
   const closeNameModal = () => {
@@ -127,6 +144,30 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           {username || 'Set name'}
         </button>
       </div>
+
+      <div className="sound-settings__guides" role="group" aria-label={guideNav.guidesLabel}>
+        <p className="sound-settings__guides-label">{guideNav.guidesLabel}</p>
+        <button
+          type="button"
+          className="sound-settings__nav-link"
+          onPointerDown={() => openGuide('how-to-play')}
+        >
+          <span>{guideNav.howToPlay}</span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+        <button
+          type="button"
+          className="sound-settings__nav-link"
+          onPointerDown={() => openGuide('how-values-work')}
+        >
+          <span>{guideNav.howValues}</span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
+        </button>
+      </div>
     </>
   );
 
@@ -190,12 +231,17 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           className="sound-settings__gear"
           aria-expanded={open}
           aria-label="Settings"
-          onPointerDown={() => {
-            resume();
-            hapticTap();
+          onPointerDown={(e) => {
+            e.preventDefault();
+            if (open) return;
             setOpen(true);
             setEditingName(false);
             setNameError(null);
+            setActiveGuide(null);
+            queueMicrotask(() => {
+              resume();
+              hapticTap();
+            });
           }}
         >
           <svg
@@ -238,6 +284,12 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               <div className="settings-drawer__body">{settingsBody}</div>
             </aside>
             {nameModal}
+            {activeGuide ? (
+              <SettingsGuidePage
+                guideId={activeGuide}
+                onBack={() => setActiveGuide(null)}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -268,6 +320,12 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         </div>
       ) : null}
       {nameModal}
+      {activeGuide ? (
+        <SettingsGuidePage
+          guideId={activeGuide}
+          onBack={() => setActiveGuide(null)}
+        />
+      ) : null}
     </div>
   );
 }

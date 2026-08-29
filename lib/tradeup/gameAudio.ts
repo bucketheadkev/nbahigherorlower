@@ -8,6 +8,12 @@
  */
 
 import { getAudioSettings, setSfxMuted, setSfxVolume } from './audioSettings';
+import { prepareH2HEmojiAudio } from './h2hEmojiSound';
+import {
+  playDigitalWheelLock,
+  startDigitalWheelSpin,
+  stopDigitalWheelSpin,
+} from './digitalWheelSound';
 
 export type GameSoundEvent =
   | 'ui_hover'
@@ -56,7 +62,8 @@ export type GameSoundEvent =
   | 'ticket_tear'
   | 'slot_place'
   | 'ui_confirm'
-  | 'ui_secondary';
+  | 'ui_secondary'
+  | 'billion_celebration';
 
 type SoundId =
   | 'ticket_print'
@@ -64,6 +71,7 @@ type SoundId =
   | 'wheel_spin'
   | 'wheel_stop'
   | 'success_peak'
+  | 'billion_celebration'
   | 'defeat';
 
 type SoundDef = {
@@ -86,12 +94,18 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
   wheel_spin: { path: '/sounds/wheel-spin.mp3', volume: 0.2, debounceMs: 0, loop: true },
   wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.36, debounceMs: 140 },
   success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
+  billion_celebration: {
+    path: '/sounds/success-rich.mp3',
+    volume: 0.52,
+    debounceMs: 600,
+  },
   defeat: { path: '/sounds/reject.mp3', volume: 0.22, debounceMs: 280 },
 };
 
 /** Only major moments map to audio. Everything else is intentionally silent. */
 const EVENT_TO_SOUND: Partial<Record<GameSoundEvent, SoundId>> = {
-  perfect_sweep: 'success_peak',
+  perfect_sweep: 'billion_celebration',
+  billion_celebration: 'billion_celebration',
   victory: 'success_peak',
   defeat: 'defeat',
 };
@@ -141,6 +155,7 @@ export function unlockGameAudio(): void {
   unlocked = true;
   applyMasterVolume();
   if (audio.state === 'suspended') void audio.resume();
+  prepareH2HEmojiAudio();
 }
 
 export function syncAudioSettings(): void {
@@ -235,19 +250,29 @@ export function preloadTicketPrintSound(): void {
   ensurePlayer('wheel_stop')?.load();
 }
 
+/** Start digital prize-wheel ticks (team/era reels). */
+export function startWheelSpinSound(expectedDurationMs = 3200): void {
+  unlockGameAudio();
+  startDigitalWheelSpin(expectedDurationMs);
+}
+
+export function stopWheelSpinSound(): void {
+  stopDigitalWheelSpin({ playLock: false });
+}
+
 /**
  * Start thermal printer + weighted reel ambience.
  * Call synchronously from the Print / Reroll user gesture on iOS.
  */
 export function startTicketSpinHum(): void {
   playSound('ticket_print', { force: true });
-  playSound('wheel_spin', { force: true });
+  startWheelSpinSound();
 }
 
 /** Stop continuous machine loops (print + wheel). */
 export function stopTicketSpinHum(_fadeMs = 160): void {
   stopSound('ticket_print');
-  stopSound('wheel_spin');
+  stopWheelSpinSound();
 }
 
 /** Soft paper release when the ticket finishes feeding. */
@@ -260,9 +285,9 @@ export function playWheelTickSound(): void {
   /* intentionally silent */
 }
 
-/** Mechanical stop when reels lock — part of the spin sequence. */
+/** Mechanical stop when reels lock — synthesized digital lock-in. */
 export function playWheelStopSound(): void {
-  playSound('wheel_stop');
+  playDigitalWheelLock();
 }
 
 /** Roster slot place — haptic-only. */

@@ -15,13 +15,19 @@ import {
 } from '@/lib/tradeup/billionDollar';
 import { playGameSound } from '@/lib/tradeup/gameAudio';
 import {
+  captureRunShareCard,
+  shareRunResultImage,
+} from '@/lib/tradeup/shareRunResult';
+import {
   hapticCancel,
+  hapticHeavy,
   hapticPlayerReveal,
   hapticSuccess,
   hapticTap,
   hapticValueComplete,
   hapticWarning,
 } from '@/lib/tradeup/haptics';
+import { BillionCelebration } from './BillionCelebration';
 import {
   cancelFrame,
   easeOutCubic,
@@ -174,8 +180,11 @@ export function ValueRevealMachine({
       completedRef.current = true;
       onComplete({ teamValue });
       if (isBillion) {
-        playGameSound('perfect_sweep');
-        hapticSuccess();
+        playGameSound('billion_celebration');
+        void hapticHeavy();
+        window.setTimeout(() => {
+          hapticSuccess();
+        }, 420);
       } else {
         playGameSound('defeat');
         hapticWarning();
@@ -208,17 +217,18 @@ export function ValueRevealMachine({
 
       setStage('adding');
       setAddFlash(value);
+      const nextFed = [...fedValues, value];
+      const pace = projectedTotal(nextFed);
+      // Pace updates the instant +value appears — don't wait for total count-up.
+      setProjected(pace);
+      paintPace(pace);
       const nextTotal = runningTotal + value;
       await animateTotalTo(runningTotal, nextTotal, addMs);
       if (skipRef.current) {
-        return { total: nextTotal, fed: fedValues };
+        return { total: nextTotal, fed: nextFed };
       }
       hapticValueComplete();
 
-      const nextFed = [...fedValues, value];
-      const pace = projectedTotal(nextFed);
-      setProjected(pace);
-      paintPace(pace);
       setProcessed(index + 1);
       setAddFlash(null);
       return { total: nextTotal, fed: nextFed };
@@ -272,49 +282,34 @@ export function ValueRevealMachine({
   }, [autoStart, reduceMotion, roster.length]);
 
   const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement | null>(null);
 
   const handleShareX = useCallback(async () => {
     if (sharing) return;
+    const node = shareCardRef.current;
+    if (!node) {
+      setShareError('Could not capture results');
+      return;
+    }
+
     setSharing(true);
-    const text = `I just drafted a ${formatDollarsExact(teamValue)} NBA roster on Ballion.`;
-    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    setShareError(null);
+    hapticTap();
     try {
-      const node = shareCardRef.current;
-      let blob: Blob | null = null;
-      if (node) {
-        try {
-          const { toBlob } = await import('html-to-image');
-          blob = await toBlob(node, {
-            pixelRatio: 2,
-            cacheBust: true,
-            backgroundColor: '#0b1220',
-          });
-        } catch {
-          blob = null;
-        }
+      const blob = await captureRunShareCard(node);
+      if (!blob) {
+        setShareError('Could not capture results');
+        return;
       }
-      if (blob) {
-        const file = new File([blob], 'ballion-roster.png', { type: 'image/png' });
-        if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text, title: 'Ballion' });
-          setSharing(false);
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ballion-roster.png';
-        a.click();
-        URL.revokeObjectURL(url);
+      const result = await shareRunResultImage(blob);
+      if (result.ok === false && !result.cancelled) {
+        setShareError(result.message);
       }
-      window.open(intent, '_blank', 'noopener,noreferrer');
-    } catch {
-      window.open(intent, '_blank', 'noopener,noreferrer');
     } finally {
       setSharing(false);
     }
-  }, [sharing, teamValue]);
+  }, [sharing]);
 
   if (stage === 'results') {
     return (
@@ -324,59 +319,51 @@ export function ValueRevealMachine({
         }`}
         aria-label="Final roster"
       >
-        <div ref={shareCardRef} className="billion-result-page__card">
-          <p className="billion-result-page__kicker">FINAL ROSTER</p>
-          <p className="billion-result-page__goal">$1 BILLION GOAL</p>
-          <p className="billion-result-page__total">
-            {formatDollarsExact(teamValue)}
-          </p>
-          <p
-            className={`billion-result-page__short${
-              isBillion ? ' is-reached' : ' is-short'
-            }`}
-          >
-            {isBillion
-              ? '$1 BILLION REACHED'
-              : `${formatDollarsExact(shortfall)} SHORT`}
-          </p>
+        {isBillion ? <BillionCelebration /> : null}
+        <div className="billion-result-page__card">
+          <div ref={shareCardRef} className="billion-result-page__share-shot">
+            <p className="billion-result-page__kicker">FINAL ROSTER</p>
+            <p className="billion-result-page__total">
+              {formatDollarsExact(teamValue)}
+            </p>
+            <p
+              className={`billion-result-page__short${
+                isBillion ? ' is-reached' : ' is-short'
+              }`}
+            >
+              {isBillion
+                ? '$1 BILLION REACHED'
+                : `${formatDollarsExact(shortfall)} SHORT`}
+            </p>
+            <p className="billion-result-page__share-brand">1B RUN</p>
 
-          <ul className="billion-result-page__list">
-            {LINEUP_POSITIONS.map((pos, index) => {
-              const player = roster[index];
-              const colors = player
-                ? getTeamColors(player.teamId)
-                : { primary: '#10202b' };
-              const ink = contrastOnPrimary(colors.primary);
-              const value = player ? getDollarValue(player) : 0;
-              return (
-                <li
-                  key={pos}
-                  style={{
-                    background: colors.primary,
-                    color: ink,
-                  }}
-                >
-                  <span style={{ color: ink, opacity: 0.78 }}>{pos}</span>
-                  <strong style={{ color: ink }}>{player?.name ?? '—'}</strong>
-                  <em style={{ color: ink }}>{formatDollarsExact(value)}</em>
-                </li>
-              );
-            })}
-          </ul>
+            <ul className="billion-result-page__list">
+              {LINEUP_POSITIONS.map((pos, index) => {
+                const player = roster[index];
+                const colors = player
+                  ? getTeamColors(player.teamId)
+                  : { primary: '#10202b' };
+                const ink = contrastOnPrimary(colors.primary);
+                const value = player ? getDollarValue(player) : 0;
+                return (
+                  <li
+                    key={pos}
+                    style={{
+                      background: colors.primary,
+                      color: ink,
+                    }}
+                  >
+                    <span style={{ color: ink, opacity: 0.78 }}>{pos}</span>
+                    <strong style={{ color: ink }}>{player?.name ?? '—'}</strong>
+                    <em style={{ color: ink }}>{formatDollarsExact(value)}</em>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
 
         <div className="billion-result-page__actions">
-          <button
-            type="button"
-            className="billion-result-page__share"
-            onPointerDown={() => {
-              hapticTap();
-              void handleShareX();
-            }}
-            disabled={sharing}
-          >
-            {sharing ? 'Preparing…' : 'Share on X'}
-          </button>
           <button
             type="button"
             className="billion-result-page__again"
@@ -387,6 +374,21 @@ export function ValueRevealMachine({
           >
             Build Another
           </button>
+          <button
+            type="button"
+            className="billion-result-page__share"
+            onClick={() => {
+              void handleShareX();
+            }}
+            disabled={sharing}
+          >
+            {sharing ? 'Preparing…' : 'Share'}
+          </button>
+          {shareError ? (
+            <p className="billion-result-page__share-error" role="alert">
+              {shareError}
+            </p>
+          ) : null}
         </div>
       </div>
     );
@@ -403,7 +405,7 @@ export function ValueRevealMachine({
 
   return (
     <div
-      className={`value-vault value-vault--fullscreen${
+      className={`value-vault value-vault--fullscreen value-vault--classic${
         stage === 'reading' || stage === 'adding' ? ' is-processing' : ''
       }`}
     >
@@ -433,7 +435,11 @@ export function ValueRevealMachine({
         ) : null}
       </div>
 
-      <p className="value-vault__led-pace value-vault__led-pace--fs">
+      <p
+        className={`value-vault__led-pace value-vault__led-pace--fs${
+          projected >= BILLION_GOAL ? ' is-on-track' : ' is-off-track'
+        }`}
+      >
         ON PACE{' '}
         <span ref={paceElRef}>{formatDollarsExact(projected)}</span>
       </p>

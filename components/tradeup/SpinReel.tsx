@@ -126,10 +126,13 @@ export const SpinReel = memo(function SpinReel({
 
   const showStrip = spinId > 0 && strip.length > 0;
   const fallback = display ?? '—';
+  const isEmpty = !showStrip && (fallback === '—' || !display);
 
   return (
     <div
-      className={`spin-reel${className ? ` ${className}` : ''}`}
+      className={`spin-reel${className ? ` ${className}` : ''}${
+        showStrip ? ' is-spinning' : ''
+      }${isEmpty ? ' is-empty' : ''}`}
       style={{ height: itemHeight }}
       aria-live="polite"
     >
@@ -152,7 +155,9 @@ export const SpinReel = memo(function SpinReel({
         </div>
       ) : (
         <div
-          className="spin-reel__item spin-reel__item--static"
+          className={`spin-reel__item spin-reel__item--static${
+            isEmpty ? ' is-placeholder' : ''
+          }`}
           style={{ height: itemHeight, ...displayStyle }}
         >
           {fallback}

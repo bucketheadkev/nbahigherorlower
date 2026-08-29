@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { createRoom } from '@/lib/multiplayer/rooms';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
+import { modeDef, type H2HGameMode } from '@/lib/multiplayer/gameModes';
 import {
   getH2HUsername,
   isValidH2HUsername,
@@ -16,14 +17,16 @@ import {
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 
 interface H2HCreateLobbyProps {
-  onCreated: (roomId: string, roomCode: string) => void;
+  gameMode: H2HGameMode;
+  onCreated: (roomId: string, roomCode: string, gameMode: H2HGameMode) => void;
   onBack: () => void;
 }
 
-export function H2HCreateLobby({ onCreated, onBack }: H2HCreateLobbyProps) {
+export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyProps) {
   const [displayName, setDisplayName] = useState(() => getH2HUsername() ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const def = modeDef(gameMode);
 
   const pressBack = (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -46,9 +49,9 @@ export function H2HCreateLobby({ onCreated, onBack }: H2HCreateLobbyProps) {
     setError(null);
     try {
       setH2HUsername(name);
-      const result = await createRoom(name);
+      const result = await createRoom(name, gameMode);
       hapticMedium();
-      onCreated(result.room_id, result.room_code);
+      onCreated(result.room_id, result.room_code, result.game_mode ?? gameMode);
     } catch (err) {
       const message =
         err instanceof MultiplayerApiError
@@ -68,9 +71,9 @@ export function H2HCreateLobby({ onCreated, onBack }: H2HCreateLobbyProps) {
       </button>
 
       <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">1V1</p>
+        <p className="h2h-lobby__eyebrow">{def.title}</p>
         <h1 className="h2h-lobby__title">Create Lobby</h1>
-        <p className="h2h-lobby__subtitle">Choose a display name, then host a private room.</p>
+        <p className="h2h-lobby__subtitle">{def.tagline}</p>
       </header>
 
       <form className="h2h-lobby__form" onSubmit={onSubmit}>

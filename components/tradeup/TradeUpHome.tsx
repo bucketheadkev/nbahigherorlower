@@ -1,8 +1,18 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent } from 'react';
+import { type PointerEvent as ReactPointerEvent, useMemo } from 'react';
+import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
+import {
+  BILLION_GOAL,
+  formatDollarsExact,
+} from '@/lib/tradeup/billionDollar';
 import { hapticLight } from '@/lib/tradeup/haptics';
+import { getBestRosterValue } from '@/lib/tradeup/storage';
+import { ArenaAtmosphere } from './ArenaAtmosphere';
+import { LanguageToggle } from './LanguageToggle';
+import { MoneyRain } from './MoneyRain';
+import { BallionLogo } from './TradeUpLogo';
 import { SoundSettings } from './SoundSettings';
 
 interface TradeUpHomeProps {
@@ -10,14 +20,16 @@ interface TradeUpHomeProps {
   onHeadToHead: () => void;
 }
 
-/**
- * $1B RUN home — minimal sport UI: title + two primary mode buttons.
- */
+/** $1B RUN home — premium sports composition. */
 export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
   const { resume } = useSound();
+  const { t } = useLocale();
+  const bestRun = useMemo(() => getBestRosterValue(), []);
+  const bestIsBillion = bestRun >= BILLION_GOAL;
 
   const press = (fn: () => void) => (e: ReactPointerEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     resume();
     hapticLight();
     fn();
@@ -25,47 +37,99 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
 
   return (
     <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub run-home run-home--tabbed">
-      <div className="run-home__arena" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="run-home__arena-img"
-          src="/images/home-gym-navy.png?v=1"
-          alt=""
-          decoding="async"
-        />
-        <div className="run-home__arena-wash" />
-      </div>
+      <ArenaAtmosphere intensity="hub" />
+      <MoneyRain />
 
       <div className="run-home__ui">
         <header className="run-home__top">
-          <p className="run-home__brand">$1B RUN</p>
-          <SoundSettings variant="gear" />
+          <div className="run-home__brand">
+            <BallionLogo size="sm" priority className="run-home__logo" />
+            <p className="run-home__wordmark" aria-label="$1B Run">
+              <span className="run-home__wordmark-green">$1B</span>
+              <span className="run-home__wordmark-white"> RUN</span>
+            </p>
+          </div>
+          <div className="run-home__toolbar">
+            <LanguageToggle />
+            <SoundSettings variant="gear" />
+          </div>
         </header>
 
+        {/* Space for gym hoop between brand bar and BUILD YOUR FIVE */}
+        <div className="run-home__hoop-gap" aria-hidden />
+
         <div className="run-home__main">
-          <section className="run-home__hero" aria-label="Challenge">
-            <h1 className="run-home__title">BUILD YOUR $1B FIVE</h1>
-            <p className="run-home__subtitle">Draft five players. Reach $1 billion.</p>
+          <section className="run-home__hero" aria-label={t('home.challengeLabel')}>
+            <h1 className="run-home__title">{t('home.heroTitle')}</h1>
+            <p className="run-home__subtitle">{t('home.heroSubtitle')}</p>
           </section>
 
-          <div className="run-home__modes" role="group" aria-label="Game modes">
-            <button
-              type="button"
-              className="run-btn run-btn--primary"
-              onPointerDown={press(onPlay)}
+          <div className="run-home__stage">
+            <div
+              className="run-home__modes run-home__modes--tiles"
+              role="group"
+              aria-label={t('home.modesLabel')}
             >
-              <strong>CLASSIC RUN</strong>
-              <span>Build a five worth $1 billion</span>
-            </button>
+              <article className="home-tile home-tile--classic">
+                <div className="home-tile__frame">
+                  <span className="home-tile__edge" aria-hidden />
+                  <span className="home-tile__accent" aria-hidden />
+                  <strong className="home-tile__title">{t('home.classicTitle')}</strong>
+                  <span className="home-tile__desc">{t('home.classicDesc')}</span>
+                  <span className="home-tile__mark" aria-hidden>
+                    $1B
+                  </span>
+                  <button
+                    type="button"
+                    className="home-tile__play ui-tap"
+                    onPointerDown={press(onPlay)}
+                  >
+                    {t('home.playButton')}
+                  </button>
+                </div>
+              </article>
 
-            <button
-              type="button"
-              className="run-btn run-btn--secondary"
-              onPointerDown={press(onHeadToHead)}
+              <article className="home-tile home-tile--h2h">
+                <div className="home-tile__frame">
+                  <span className="home-tile__edge" aria-hidden />
+                  <span className="home-tile__accent" aria-hidden />
+                  <strong className="home-tile__title">{t('home.h2hTitle')}</strong>
+                  <span className="home-tile__desc">{t('home.h2hDesc')}</span>
+                  <span className="home-tile__mark home-tile__mark--dual" aria-hidden>
+                    <svg
+                      className="home-tile__dual"
+                      viewBox="0 0 64 64"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      {/* Left player */}
+                      <circle cx="22" cy="18" r="9" />
+                      <path d="M6.5 52.5c0-10.2 6.9-16.5 15.5-16.5S37.5 42.3 37.5 52.5V56H6.5v-3.5Z" />
+                      {/* Right player */}
+                      <circle cx="42" cy="18" r="9" />
+                      <path d="M26.5 52.5c0-10.2 6.9-16.5 15.5-16.5S57.5 42.3 57.5 52.5V56H26.5v-3.5Z" />
+                    </svg>
+                  </span>
+                  <button
+                    type="button"
+                    className="home-tile__play ui-tap"
+                    onPointerDown={press(onHeadToHead)}
+                  >
+                    {t('home.playButton')}
+                  </button>
+                </div>
+              </article>
+            </div>
+
+            <div
+              className={`run-home__best${bestIsBillion ? ' is-billion' : ''}`}
+              aria-label={t('home.bestRunLabel')}
             >
-              <strong>1V1</strong>
-              <span>Build a better five than your opponent</span>
-            </button>
+              <span className="run-home__best-label">{t('home.bestRunLabel')}</span>
+              <strong className="run-home__best-value">
+                {bestRun > 0 ? formatDollarsExact(bestRun) : t('home.bestRunEmpty')}
+              </strong>
+            </div>
           </div>
         </div>
       </div>

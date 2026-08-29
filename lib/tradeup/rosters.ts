@@ -190,7 +190,7 @@ export const ROSTER: TradePlayer[] = [
 
   // Philadelphia 76ers
   p('embiid', 'Joel Embiid', 'PHI', 'C', 32, { ppg: 23.8, rpg: 8.2, apg: 4.5, spg: 0.7, bpg: 1.2 }, 90, true, true),
-  p('lebron', 'LeBron James', 'PHI', 'SF', 41, { ppg: 24.4, rpg: 7.8, apg: 8.2, spg: 1.1, bpg: 0.6 }, 95, true, true),
+  p('lebron', 'LeBron James', 'PHI', 'SF', 41, { ppg: 24.4, rpg: 7.8, apg: 8.2, spg: 1.1, bpg: 0.6 }, 99, true, true),
   p('brown', 'Jaylen Brown', 'PHI', 'SF', 29, { ppg: 22.3, rpg: 5.8, apg: 4.5, spg: 1.1, bpg: 0.3 }, 89, true),
   p('maxey', 'Tyrese Maxey', 'PHI', 'PG', 25, { ppg: 26.3, rpg: 3.3, apg: 6.1, spg: 1, bpg: 0.3 }, 84, true),
   p('simons', 'Anfernee Simons', 'PHI', 'SG', 27, { ppg: 19.3, rpg: 2.8, apg: 4.8, spg: 0.8, bpg: 0.2 }, 63, true),

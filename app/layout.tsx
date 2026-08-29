@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono';
 import { FULL_MOTION_BOOT_SCRIPT } from '@/lib/tradeup/motionPreference';
 import './globals.css';
 import './game-ui.css';
+import './oneb-theme.css';
 
 export const metadata: Metadata = {
   title: '$1B RUN',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#031942',
+  themeColor: '#010814',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -37,15 +38,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
-      style={{ background: '#061018' }}
+      style={{ background: '#010814' }}
     >
       <head>
-        <link rel="preload" as="image" href="/images/1b-splash.png?v=2" />
-        <link rel="preload" as="image" href="/images/1b-logo.png?v=2" />
-        <meta name="theme-color" content="#061018" />
+        <link rel="preload" as="image" href="/images/1b-run-app-icon-squircle.png?v=1" />
+        <meta name="theme-color" content="#010814" />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+html,body{background:#010814!important}
+.ballion-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;background:#010814!important;opacity:1!important}
+.ballion-splash__logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+.ballion-splash__mark{width:min(72vw,17.5rem);aspect-ratio:1/1;border-radius:22.37%;overflow:hidden}
+.ballion-splash__logo{width:100%!important;height:100%!important;display:block;object-fit:contain;background:transparent!important;opacity:1!important;transform:none!important;border-radius:0!important;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.run-home{position:relative;overflow:hidden;min-height:100dvh;background:#010814}
+.run-home__ui{position:relative;z-index:2}
+`.replace(/\n/g, ''),
+          }}
+        />
         <script dangerouslySetInnerHTML={{ __html: FULL_MOTION_BOOT_SCRIPT }} />
       </head>
-      <body className="antialiased" style={{ background: '#061018' }}>
+      <body className="antialiased" style={{ background: '#010814' }}>
         {children}
       </body>
     </html>

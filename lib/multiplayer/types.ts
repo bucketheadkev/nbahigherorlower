@@ -1,3 +1,5 @@
+import type { H2HGameMode } from './gameModes';
+
 export type RoomStatus = 'waiting' | 'playing' | 'finished' | 'abandoned';
 
 export interface RoomRow {
@@ -8,6 +10,7 @@ export interface RoomRow {
   created_at: string;
   expires_at: string;
   started_at: string | null;
+  game_mode: H2HGameMode;
 }
 
 export interface RoomPlayerRow {
@@ -36,6 +39,7 @@ export interface RoomActionResult {
   player_number: 1 | 2;
   display_name: string;
   rejoined?: boolean;
+  game_mode?: H2HGameMode;
 }
 
 export interface StartRoomResult {
@@ -66,6 +70,13 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
         : String(error ?? '');
 
   const upper = raw.toUpperCase();
+
+  if (upper.includes('PGRST202') || upper.includes('SCHEMA CACHE')) {
+    return new MultiplayerApiError(
+      'RPC_MISSING',
+      'Server update required. Run the latest 1V1 SQL migration in Supabase.',
+    );
+  }
 
   if (upper.includes('ROOM_INVALID') || upper.includes('INVALID ROOM')) {
     return new MultiplayerApiError('ROOM_INVALID', 'That room code is invalid.');
@@ -123,6 +134,24 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   }
   if (upper.includes('ALREADY_SUBMITTED')) {
     return new MultiplayerApiError('ALREADY_SUBMITTED', 'You already submitted this match.');
+  }
+  if (upper.includes('ALREADY_LOCKED')) {
+    return new MultiplayerApiError('ALREADY_LOCKED', 'You already locked this position.');
+  }
+  if (upper.includes('WRONG_POSITION')) {
+    return new MultiplayerApiError(
+      'WRONG_POSITION',
+      '1V1 draft server update needed. In Supabase → SQL Editor, run supabase/migrations/20260825_h2h_full_roster_draft.sql, then start a new match.',
+    );
+  }
+  if (upper.includes('WRONG_PHASE')) {
+    return new MultiplayerApiError('WRONG_PHASE', 'This matchup is not ready for that action.');
+  }
+  if (upper.includes('INVALID_POSITION') || upper.includes('INVALID_SELECTION')) {
+    return new MultiplayerApiError('INVALID_SELECTION', 'That player pick is not valid for this round.');
+  }
+  if (upper.includes('ROUND_NOT_RESOLVED')) {
+    return new MultiplayerApiError('ROUND_NOT_RESOLVED', 'Wait for the matchup to resolve.');
   }
 
   return new MultiplayerApiError(

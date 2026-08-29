@@ -28,40 +28,38 @@ export function H2HEntryScreen({
   const locked = authLoading || Boolean(authError);
 
   return (
-    <div className="h2h-lobby" aria-label="1V1 entry">
+    <div className="h2h-lobby h2h-lobby--entry" aria-label="1V1 entry">
       <button type="button" className="h2h-lobby__back" onPointerDown={press(onBack, false)}>
         ← Back
       </button>
 
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">1V1</p>
-        <h1 className="h2h-lobby__title">Private Match</h1>
-        <p className="h2h-lobby__subtitle">Create a lobby or join a friend with a room code.</p>
-      </header>
+      <div className="h2h-lobby__entry-center">
+        <header className="h2h-lobby__header">
+          <h1 className="h2h-lobby__title">1v1</h1>
+        </header>
 
-      {authLoading ? <p className="h2h-lobby__status">Signing in…</p> : null}
-      {authError ? <p className="h2h-lobby__error" role="alert">{authError}</p> : null}
+        {authLoading ? <p className="h2h-lobby__status">…</p> : null}
+        {authError ? <p className="h2h-lobby__error" role="alert">{authError}</p> : null}
 
-      <div className="h2h-lobby__actions">
-        <button
-          type="button"
-          className="run-btn run-btn--primary h2h-lobby__mode-btn"
-          disabled={locked}
-          onPointerDown={press(onCreate, locked)}
-        >
-          <strong>CREATE LOBBY</strong>
-          <span>Host a private room and invite a friend</span>
-        </button>
+        <div className="h2h-lobby__actions">
+          <button
+            type="button"
+            className="run-btn run-btn--primary h2h-lobby__mode-btn"
+            disabled={locked}
+            onPointerDown={press(onCreate, locked)}
+          >
+            <strong>Create lobby</strong>
+          </button>
 
-        <button
-          type="button"
-          className="run-btn run-btn--secondary h2h-lobby__mode-btn"
-          disabled={locked}
-          onPointerDown={press(onJoin, locked)}
-        >
-          <strong>JOIN LOBBY</strong>
-          <span>Enter a six-character room code</span>
-        </button>
+          <button
+            type="button"
+            className="run-btn run-btn--secondary h2h-lobby__mode-btn"
+            disabled={locked}
+            onPointerDown={press(onJoin, locked)}
+          >
+            <strong>Join lobby</strong>
+          </button>
+        </div>
       </div>
     </div>
   );
