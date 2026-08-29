@@ -1,32 +1,3 @@
-import { getHeadshotUrl } from '@/lib/tradeup/playerHeadshots';
-
-type CollagePlayer = {
-  id: string;
-  name: string;
-  top: string;
-  left: string;
-  rotate: number;
-  scale: number;
-  opacity: number;
-  blur?: number;
-  z: number;
-};
-
-const TRADING_COLLAGE: CollagePlayer[] = [
-  { id: 'jokic', name: 'Nikola Jokic', top: '6%', left: '2%', rotate: -14, scale: 0.78, opacity: 0.42, blur: 0.5, z: 1 },
-  { id: 'wemby', name: 'Victor Wembanyama', top: '4%', left: '58%', rotate: 10, scale: 0.82, opacity: 0.48, z: 2 },
-  { id: 'anthony_edwards', name: 'Anthony Edwards', top: '18%', left: '72%', rotate: 16, scale: 0.72, opacity: 0.38, blur: 1, z: 1 },
-  { id: 'tatum', name: 'Jayson Tatum', top: '28%', left: '-4%', rotate: -8, scale: 0.88, opacity: 0.52, z: 3 },
-  { id: 'doncic', name: 'Luka Doncic', top: '32%', left: '38%', rotate: -3, scale: 1, opacity: 0.62, z: 4 },
-  { id: 'giannis', name: 'Giannis Antetokounmpo', top: '22%', left: '18%', rotate: 6, scale: 0.9, opacity: 0.5, z: 3 },
-  { id: 'durant', name: 'Kevin Durant', top: '48%', left: '68%', rotate: 12, scale: 0.8, opacity: 0.44, blur: 0.5, z: 2 },
-  { id: 'caruso', name: 'Alex Caruso', top: '52%', left: '8%', rotate: -11, scale: 0.74, opacity: 0.4, z: 2 },
-  { id: 'haliburton', name: 'Tyrese Haliburton', top: '58%', left: '42%', rotate: 5, scale: 0.86, opacity: 0.46, blur: 0.5, z: 2 },
-  { id: 'knueppel', name: 'Kon Knueppel', top: '62%', left: '78%', rotate: -9, scale: 0.7, opacity: 0.36, blur: 1, z: 1 },
-  { id: 'embiid', name: 'Joel Embiid', top: '68%', left: '22%', rotate: -6, scale: 0.76, opacity: 0.4, z: 1 },
-  { id: 'wallace', name: 'Cason Wallace', top: '70%', left: '55%', rotate: 8, scale: 0.72, opacity: 0.38, blur: 1, z: 1 },
-];
-
 function CourtTexture() {
   return (
     <svg className="home-nav-art-court" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice" aria-hidden>
@@ -79,28 +50,6 @@ export function NavCardArtTrading() {
       <CourtTexture />
       <TradeArrows />
       <div className="home-nav-art-glow home-nav-art-glow--trade" aria-hidden />
-      <div className="home-nav-art-players" aria-hidden>
-        {TRADING_COLLAGE.map((player) => {
-          const src = getHeadshotUrl(player.id, player.name);
-          if (!src) return null;
-          return (
-            <div
-              key={player.id}
-              className="home-nav-art-player"
-              style={{
-                top: player.top,
-                left: player.left,
-                zIndex: player.z,
-                opacity: player.opacity,
-                transform: `rotate(${player.rotate}deg) scale(${player.scale})`,
-                filter: player.blur ? `blur(${player.blur}px)` : undefined,
-              }}
-            >
-              <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

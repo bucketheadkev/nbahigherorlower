@@ -28,7 +28,7 @@ export interface TradePlayer {
   hiddenEliteOffer?: boolean;
   /** Backend-only: boosts A-tier trade odds; never shown in UI. */
   hiddenValue?: boolean;
-  /** ESPN CDN headshot URL */
+  /** Optional legacy portrait URL (unused in 1B Run UI). */
   headshotUrl?: string;
 }
 

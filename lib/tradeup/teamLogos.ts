@@ -1,50 +1,8 @@
 /**
- * Team logo URLs — ESPN CDN primary, SportsLogos fallback.
- * ESPN path uses their slug (gs, ny, sa, no, utah) not always our 3-letter id.
+ * Team logo URLs — SportsLogos.net with abbreviation fallback in TeamLogo.
  */
 
-/** Our team id → ESPN logo slug */
-export const ESPN_TEAM_SLUG: Record<string, string> = {
-  ATL: 'atl',
-  BOS: 'bos',
-  BKN: 'bkn',
-  CHA: 'cha',
-  CHI: 'chi',
-  CLE: 'cle',
-  DET: 'det',
-  IND: 'ind',
-  MIA: 'mia',
-  MIL: 'mil',
-  NYK: 'ny',
-  ORL: 'orl',
-  PHI: 'phi',
-  TOR: 'tor',
-  WAS: 'wsh',
-  DAL: 'dal',
-  DEN: 'den',
-  GSW: 'gs',
-  HOU: 'hou',
-  LAC: 'lac',
-  LAL: 'lal',
-  MEM: 'mem',
-  MIN: 'min',
-  NOP: 'no',
-  OKC: 'okc',
-  PHX: 'phx',
-  POR: 'por',
-  SAC: 'sac',
-  SAS: 'sa',
-  UTA: 'utah',
-};
-
-export function getEspnTeamLogoUrl(teamId: string, size: 500 | 100 = 500): string {
-  const slug = ESPN_TEAM_SLUG[teamId] ?? teamId.toLowerCase();
-  // ESPN hosts 500px PNGs reliably; 100 path is not always present
-  void size;
-  return `https://a.espncdn.com/i/teamlogos/nba/500/${slug}.png`;
-}
-
-/** SportsLogos.net thumbs — fallback if ESPN fails */
+/** SportsLogos.net thumbs */
 export const TEAM_LOGO_THUMBS: Record<string, string> = {
   ATL: 'https://content.sportslogos.net/logos/6/220/thumbs/22081902021.gif',
   BKN: 'https://content.sportslogos.net/logos/6/3786/thumbs/378615012025.gif',
@@ -78,9 +36,7 @@ export const TEAM_LOGO_THUMBS: Record<string, string> = {
   WAS: 'https://content.sportslogos.net/logos/6/219/thumbs/washington-wizards-logo-primary-2016-8780-thumb.png',
 };
 
-export const TEAM_LOGO_PANELS: Record<string, string> = Object.fromEntries(
-  Object.keys(ESPN_TEAM_SLUG).map((id) => [id, getEspnTeamLogoUrl(id, 500)]),
-);
+export const TEAM_LOGO_PANELS: Record<string, string> = { ...TEAM_LOGO_THUMBS };
 
 /** @deprecated Use TEAM_LOGO_THUMBS */
 export const TEAM_LOGO_URLS = TEAM_LOGO_THUMBS;
@@ -91,14 +47,10 @@ export function getTeamLogoUrl(
   teamId: string,
   variant: 'thumb' | 'panel' = 'thumb',
 ): string | undefined {
-  // Prefer ESPN CDN for crisp PNGs (primary request)
-  const espn = getEspnTeamLogoUrl(teamId, variant === 'panel' ? 500 : 100);
-  if (espn) return espn;
   const map = variant === 'panel' ? TEAM_LOGO_PANELS : TEAM_LOGO_THUMBS;
   return map[teamId];
 }
 
-/** Fallback URL if ESPN image fails to load */
 export function getTeamLogoFallbackUrl(teamId: string): string | undefined {
   return TEAM_LOGO_THUMBS[teamId];
 }

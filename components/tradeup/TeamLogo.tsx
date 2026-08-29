@@ -15,7 +15,7 @@ interface TeamLogoProps {
 }
 
 /**
- * Team mark — ESPN CDN primary, SportsLogos fallback, then abbreviation.
+ * Team mark — SportsLogos fallback, then abbreviation.
  */
 export function TeamLogo({ teamId, abbreviation, size = 'default' }: TeamLogoProps) {
   const colors = getTeamColors(teamId);

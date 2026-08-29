@@ -1,5 +1,4 @@
 import type { Position, PlayerStats, TradePlayer } from './types';
-import { getHeadshotUrl } from './playerHeadshots';
 import { isHiddenEliteOfferId } from './hiddenEliteOffer';
 import { isHiddenValueId } from './hiddenValue';
 
@@ -23,7 +22,6 @@ function p(
     throw new Error(`Multi-position primaryPosition "${primaryPosition}" for player ${id}`);
   }
 
-  const headshotUrl = getHeadshotUrl(id, name);
   const hiddenEliteOffer = isHiddenEliteOfferId(id);
   const hiddenValue = isHiddenValueId(id);
   return {
@@ -39,7 +37,6 @@ function p(
     isFranchise,
     ...(hiddenEliteOffer ? { hiddenEliteOffer: true } : {}),
     ...(hiddenValue ? { hiddenValue: true } : {}),
-    ...(headshotUrl ? { headshotUrl } : {}),
   };
 }
 

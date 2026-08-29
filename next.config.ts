@@ -36,16 +36,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'a.espn.com',
-        pathname: '/i/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'a.espncdn.com',
-        pathname: '/i/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'content.sportslogos.net',
         pathname: '/logos/**',
       },
