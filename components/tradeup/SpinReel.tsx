@@ -15,25 +15,21 @@ export type SpinStripItem = {
 };
 
 export interface SpinReelProps {
-  /** Predetermined strip; last entry is the landing result. Empty = placeholder. */
   strip: SpinStripItem[];
-  /** Increment to start a CSS spin toward the last strip item. */
   spinId: number;
   itemHeight: number;
   durationMs: number;
   reduceMotion?: boolean;
-  /** Static label when not spinning (idle / held axis). */
   display?: string | null;
   displayStyle?: CSSProperties;
   className?: string;
   onLocked?: () => void;
-  /** Visible rows in the window (odd). Center row is the selection. */
+  /** Visible rows (odd). Default 3 = neighbors above/below center. */
   visibleRows?: number;
 }
 
 /**
- * GPU-only reel: one React update to plant the strip, then CSS transform.
- * Shows neighbors above/below the center selection window for depth.
+ * Compact vertical reel — CSS transform only, no per-frame React updates.
  */
 export const SpinReel = memo(function SpinReel({
   strip,
@@ -53,10 +49,9 @@ export const SpinReel = memo(function SpinReel({
   onLockedRef.current = onLocked;
   const timerRef = useRef(0);
 
-  const rows = Math.max(1, visibleRows | 0);
-  const oddRows = rows % 2 === 1 ? rows : rows + 1;
-  const windowHeight = itemHeight * oddRows;
-  const centerOffset = ((oddRows - 1) / 2) * itemHeight;
+  const rows = visibleRows % 2 === 1 ? visibleRows : visibleRows + 1;
+  const windowHeight = itemHeight * rows;
+  const centerOffset = ((rows - 1) / 2) * itemHeight;
 
   useEffect(() => {
     return () => {
@@ -75,7 +70,6 @@ export const SpinReel = memo(function SpinReel({
       timerRef.current = 0;
     }
 
-    // Land the last strip item in the illuminated center window.
     const targetY = centerOffset - (strip.length - 1) * itemHeight;
 
     const finish = () => {
@@ -132,12 +126,14 @@ export const SpinReel = memo(function SpinReel({
   const showStrip = spinId > 0 && strip.length > 0;
   const fallback = display ?? '—';
   const isEmpty = !showStrip && (fallback === '—' || !display);
+  const isPlaceholder =
+    !showStrip && (fallback === 'TEAM' || fallback === 'ERA' || fallback === '—');
 
   return (
     <div
       className={`spin-reel spin-reel--window${className ? ` ${className}` : ''}${
         showStrip ? ' is-spinning' : ''
-      }${isEmpty ? ' is-empty' : ''}`}
+      }${isEmpty || isPlaceholder ? ' is-empty' : ''}`}
       style={
         {
           height: windowHeight,
@@ -170,7 +166,7 @@ export const SpinReel = memo(function SpinReel({
       ) : (
         <div
           className={`spin-reel__item spin-reel__item--static${
-            isEmpty ? ' is-placeholder' : ''
+            isPlaceholder ? ' is-placeholder' : ''
           }`}
           style={{
             height: itemHeight,
@@ -185,7 +181,6 @@ export const SpinReel = memo(function SpinReel({
   );
 });
 
-/** Build a short predetermined strip ending on `winner`. No blanks. */
 export function buildSpinStrip(
   pool: string[],
   winner: string,

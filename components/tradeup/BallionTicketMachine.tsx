@@ -49,14 +49,14 @@ interface BallionTicketMachineProps {
   onReroll: (kind: TicketRerollKind) => void;
 }
 
-const TEAM_ITEM_H = 72;
-const ERA_ITEM_H = 52;
-/** Strip length scaled with duration so cruise velocity stays the same. */
-const TEAM_STRIP_LEN = 48;
-const ERA_STRIP_LEN = 40;
-/** Team settles first; era continues ~200ms longer. */
-const TEAM_SPIN_MS = 2100;
-const ERA_SPIN_MS = 2300;
+const TEAM_ITEM_H = 56;
+const ERA_ITEM_H = 44;
+/** Shorter strips for ~2.0–2.3s total roll. */
+const TEAM_STRIP_LEN = 36;
+const ERA_STRIP_LEN = 30;
+/** Team settles first; era ~200ms later. Total ≈ 2.1–2.3s. */
+const TEAM_SPIN_MS = 1900;
+const ERA_SPIN_MS = 2100;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
@@ -360,7 +360,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               itemHeight={TEAM_ITEM_H}
               durationMs={teamMs}
               reduceMotion={reduceMotion}
-              display={displayTeam ? teamLabel(displayTeam) : '—'}
+              display={displayTeam ? teamLabel(displayTeam) : 'TEAM'}
               className="spin-reel--team"
               displayStyle={
                 teamFill && teamInk
@@ -383,7 +383,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               itemHeight={ERA_ITEM_H}
               durationMs={eraMs}
               reduceMotion={reduceMotion}
-              display={displayEra ?? '—'}
+              display={displayEra ?? 'ERA'}
               className="spin-reel--era"
               onLocked={spinEra ? onEraLocked : undefined}
             />

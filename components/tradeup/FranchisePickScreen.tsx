@@ -3,7 +3,7 @@
 import { memo, useState, type CSSProperties } from 'react';
 import type { DecadeEra, EraOfferPlayer } from '@/lib/tradeup/billionDollar';
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { hapticMedium, hapticSelection } from '@/lib/tradeup/haptics';
+import { hapticMedium } from '@/lib/tradeup/haptics';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import type { TicketRerollKind } from './BallionTicketMachine';
@@ -15,8 +15,7 @@ interface FranchisePickScreenProps {
   offers: EraOfferPlayer[];
   openPositions: Position[];
   selectedId: string | null;
-  /** Dim non-focused rows while placement animates. */
-  focusId?: string | null;
+  /** True only while confirmed placement animation runs. */
   placing?: boolean;
   selectedName?: string | null;
   canRerollTeam: boolean;
@@ -27,7 +26,7 @@ interface FranchisePickScreenProps {
 }
 
 /**
- * Post-reveal player selection — compact team/era header + player rows.
+ * Player selection — select only; position is chosen on the dock.
  */
 export const FranchisePickScreen = memo(function FranchisePickScreen({
   team,
@@ -35,7 +34,6 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   offers,
   openPositions,
   selectedId,
-  focusId = null,
   placing = false,
   canRerollTeam,
   canRerollEra,
@@ -46,19 +44,14 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   const colors = getTeamColors(team.id);
   const posInk = contrastOnPrimary(colors.primary);
   const [pressedId, setPressedId] = useState<string | null>(null);
-  const activeFocus = focusId ?? selectedId;
 
   return (
     <section
-      className={`franchise-pick${placing ? ' is-placing' : ''}${
-        activeFocus ? ' is-focused' : ''
+      className={`franchise-pick${selectedId ? ' has-selection' : ''}${
+        placing ? ' is-placing' : ''
       }`}
       aria-label="Player selection"
-        style={
-          {
-            ['--pick-team' as string]: colors.primary,
-          } as CSSProperties
-        }
+      style={{ ['--pick-team' as string]: colors.primary } as CSSProperties}
     >
       <BallionScratchTicket
         compact
@@ -102,24 +95,17 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
       <p className="franchise-pick__hint">{hint}</p>
 
       <ul className="franchise-pick__list" aria-label="Available players">
-        {offers.map((player, index) => {
+        {offers.map((player) => {
           const selected = selectedId === player.id;
-          const focused = activeFocus === player.id;
           const canPlay = openPositions.some((pos) => playerFitsSlot(player, pos));
           const pressed = pressedId === player.id;
           return (
-            <li
-              key={player.id}
-              className="franchise-pick__li"
-              style={{ animationDelay: `${Math.min(index, 8) * 22}ms` }}
-            >
+            <li key={player.id}>
               <button
                 type="button"
-                className={`franchise-pick__row${selected || focused ? ' is-selected' : ''}${
-                  focused ? ' is-focus' : ''
-                }${pressed ? ' is-pressed' : ''}${canPlay ? '' : ' is-disabled'}${
-                  activeFocus && !focused ? ' is-dimmed' : ''
-                }`}
+                className={`franchise-pick__row${selected ? ' is-selected' : ''}${
+                  pressed ? ' is-pressed' : ''
+                }${canPlay ? '' : ' is-disabled'}`}
                 data-draft-player-id={player.id}
                 disabled={!canPlay || placing}
                 aria-disabled={!canPlay || placing}
@@ -127,9 +113,11 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                   e.preventDefault();
                   if (!canPlay || placing) return;
                   setPressedId(player.id);
-                  hapticSelection();
                   onSelect(player);
-                  window.setTimeout(() => setPressedId((id) => (id === player.id ? null : id)), 110);
+                  window.setTimeout(
+                    () => setPressedId((id) => (id === player.id ? null : id)),
+                    100,
+                  );
                 }}
               >
                 <span
@@ -157,8 +145,11 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                       : '— AST'}
                   </em>
                 </span>
-                <span className={`franchise-pick__check${selected || focused ? ' is-on' : ''}`} aria-hidden>
-                  {selected || focused ? '✓' : ''}
+                <span
+                  className={`franchise-pick__check${selected ? ' is-on' : ''}`}
+                  aria-hidden
+                >
+                  {selected ? 'SELECTED' : ''}
                 </span>
               </button>
             </li>

@@ -31,7 +31,7 @@ import {
   getWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
-import { hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
+import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
 import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
 import { measureDraftSlam } from '@/lib/tradeup/draftSlamRects';
 import { preloadGameAudio } from '@/lib/tradeup/gameAudio';
@@ -117,17 +117,6 @@ function shortRosterName(name: string): string {
   return last.length > 9 ? `${last.slice(0, 8)}…` : last;
 }
 
-function pickAutoSlot(
-  player: EraOfferPlayer,
-  openPositions: Position[],
-): Position | null {
-  const primary = player.primaryPosition as Position;
-  if (openPositions.includes(primary) && playerFitsSlot(player, primary)) {
-    return primary;
-  }
-  return openPositions.find((pos) => playerFitsSlot(player, pos)) ?? null;
-}
-
 function rosterList(slots: RosterSlots): ValuedPlayer[] {
   return LINEUP_POSITIONS.map((pos) => slots[pos]).filter(
     (p): p is ValuedPlayer => Boolean(p),
@@ -188,9 +177,7 @@ export function BillionTradeEngine({
   const [slamPayload, setSlamPayload] = useState<DraftSlamPayload | null>(null);
   const [slamSlot, setSlamSlot] = useState<Position | null>(null);
   const [justFilledSlot, setJustFilledSlot] = useState<Position | null>(null);
-  const [focusPlayerId, setFocusPlayerId] = useState<string | null>(null);
   const placingRef = useRef(false);
-  const placeDelayRef = useRef(0);
   const pendingAssignRef = useRef<{
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
@@ -238,7 +225,6 @@ export function BillionTradeEngine({
     return () => {
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
       if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
-      if (placeDelayRef.current) window.clearTimeout(placeDelayRef.current);
     };
   }, [resume]);
   const filled = useMemo(() => rosterList(slots), [slots]);
@@ -524,100 +510,30 @@ export function BillionTradeEngine({
     [finishRun, isOnline, onOnlineComplete, slots],
   );
 
-  const beginOfferPlacement = useCallback(
-    (player: EraOfferPlayer, slot: Position) => {
-      const valued: ValuedPlayer & { era?: DecadeEra } = {
-        ...player,
-        dollarValue: getDollarValueForSlot(player, slot),
-        ...(spunEra ? { era: spunEra } : {}),
-      };
-
-      const colors = getTeamColors(player.teamId);
-      const ink = contrastOnPrimary(colors.primary);
-
-      if (reduceMotion) {
-        hapticSlam();
-        placingRef.current = false;
-        setFocusPlayerId(null);
-        void finishPickPlacement(slot, valued);
-        return;
-      }
-
-      const points = measureDraftSlam(player.id, slot);
-      if (!points) {
-        hapticSlam();
-        placingRef.current = false;
-        setFocusPlayerId(null);
-        void finishPickPlacement(slot, valued);
-        return;
-      }
-
-      pendingAssignRef.current = { slot, valued };
-      schedulePlayerSlotSound(400);
-      setSlamSlot(slot);
-      setSlamPayload({
-        id: `${player.id}-${slot}-${Date.now()}`,
-        from: points.from,
-        to: points.to,
-        initials: playerInitials(player.name),
-        primary: colors.primary,
-        ink,
-        name: player.name,
-        positionLabel: player.primaryPosition,
-        valueLabel: formatDollarsExact(valued.dollarValue),
-      });
-    },
-    [finishPickPlacement, reduceMotion, spunEra],
-  );
-
   const handleSelectOffer = useCallback(
     (player: EraOfferPlayer) => {
       if (phase !== 'draft' || !readyToDraft || evalStartedRef.current) return;
       if (placingRef.current || slamPayload) return;
       resume();
+      hapticSelection();
       setMovingFrom(null);
-
-      const slot = pickAutoSlot(player, openPositions);
-      if (!slot) {
-        playReject();
-        setStatus(
-          `${player.name} has no open matching circle (${formatEligiblePositions(player)}).`,
-        );
-        return;
+      const nextId = selectedOfferId === player.id ? null : player.id;
+      setSelectedOfferId(nextId);
+      if (nextId) {
+        const alts = formatEligiblePositions(player);
+        setStatus(`SELECTED — choose a position for ${player.name} (${alts}).`);
+      } else {
+        setStatus('Tap a player, then choose PG · SG · SF · PF · C below.');
       }
-
-      placingRef.current = true;
-      setSelectedOfferId(player.id);
-      setFocusPlayerId(player.id);
-      setStatus(`Placing ${player.name} at ${POSITION_LABELS[slot]}…`);
-
-      if (placeDelayRef.current) window.clearTimeout(placeDelayRef.current);
-
-      if (reduceMotion) {
-        beginOfferPlacement(player, slot);
-        return;
-      }
-
-      // Focus beat (~150ms) then fly (~450ms) — total ~650–750ms.
-      placeDelayRef.current = window.setTimeout(() => {
-        beginOfferPlacement(player, slot);
-      }, 160);
     },
-    [
-      beginOfferPlacement,
-      openPositions,
-      phase,
-      playReject,
-      readyToDraft,
-      reduceMotion,
-      resume,
-      slamPayload,
-    ],
+    [phase, readyToDraft, resume, selectedOfferId, slamPayload],
   );
 
   const handleSlotClick = useCallback(
     (slot: Position) => {
-      if (phase !== 'draft' || evalStartedRef.current || slamPayload || placingRef.current) return;
+      if (phase !== 'draft' || evalStartedRef.current || slamPayload || placingRef.current) {
+        return;
+      }
       resume();
       hapticTap();
 
@@ -670,7 +586,7 @@ export function BillionTradeEngine({
         }
         if (selectedOffer) {
           setStatus(
-            `${movingPlayer.name} moved to ${POSITION_LABELS[slot]}. Now place ${selectedOffer.name}.`,
+            `${movingPlayer.name} moved to ${POSITION_LABELS[slot]}. Now choose a position for ${selectedOffer.name}.`,
           );
         } else {
           setStatus(`${movingPlayer.name} moved to ${POSITION_LABELS[slot]}.`);
@@ -705,9 +621,8 @@ export function BillionTradeEngine({
         }
       }
 
-      // Manual slot tap while an offer is selected (fallback / alternate slot).
       if (!selectedOffer) {
-        setStatus('Select a player from the list.');
+        setStatus('Select a player first, then choose a position.');
         return;
       }
 
@@ -725,17 +640,52 @@ export function BillionTradeEngine({
         return;
       }
 
+      const valued: ValuedPlayer & { era?: DecadeEra } = {
+        ...selectedOffer,
+        dollarValue: getDollarValueForSlot(selectedOffer, slot),
+        ...(spunEra ? { era: spunEra } : {}),
+      };
+
+      const colors = getTeamColors(selectedOffer.teamId);
+      const ink = contrastOnPrimary(colors.primary);
+
       placingRef.current = true;
-      setFocusPlayerId(selectedOffer.id);
-      beginOfferPlacement(selectedOffer, slot);
+
+      if (reduceMotion) {
+        hapticSlam();
+        placingRef.current = false;
+        void finishPickPlacement(slot, valued);
+        return;
+      }
+
+      const points = measureDraftSlam(selectedOffer.id, slot);
+      if (!points) {
+        hapticSlam();
+        placingRef.current = false;
+        void finishPickPlacement(slot, valued);
+        return;
+      }
+
+      pendingAssignRef.current = { slot, valued };
+      schedulePlayerSlotSound(400);
+      setSlamSlot(slot);
+      setSlamPayload({
+        id: `${selectedOffer.id}-${slot}-${Date.now()}`,
+        from: points.from,
+        to: points.to,
+        initials: playerInitials(selectedOffer.name),
+        primary: colors.primary,
+        ink,
+      });
     },
     [
-      beginOfferPlacement,
+      finishPickPlacement,
       movingFrom,
       movingPlayer,
       onPickMove,
       phase,
       playReject,
+      reduceMotion,
       resume,
       selectedOffer,
       slamPayload,
@@ -755,7 +705,6 @@ export function BillionTradeEngine({
 
   const handleSlamComplete = useCallback(() => {
     placingRef.current = false;
-    setFocusPlayerId(null);
     setSlamPayload(null);
     setSlamSlot(null);
   }, []);
@@ -830,10 +779,6 @@ export function BillionTradeEngine({
 
       {showDraft ? (
         <div className="billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth">
-          <div className="billion-draft-spine" aria-hidden>
-            <div className="billion-draft-spine__court" />
-            <div className="billion-draft-spine__pulse" />
-          </div>
           <main className="billion-main billion-main--draft">
             {isOnline ? (
               <div
@@ -882,16 +827,15 @@ export function BillionTradeEngine({
                   offers={availableOffers}
                   openPositions={openPositions}
                   selectedId={selectedOfferId}
-                  focusId={focusPlayerId}
-                  placing={Boolean(slamPayload) || Boolean(focusPlayerId)}
+                  placing={Boolean(slamPayload)}
                   canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
                   canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
                   hint={
-                    focusPlayerId
-                      ? 'Locking into your five…'
+                    selectedOffer
+                      ? `CHOOSE A POSITION for ${selectedOffer.name}`
                       : movingPlayer
                         ? `Moving ${movingPlayer.name} — tap an open eligible circle.`
-                        : 'Tap a player to add them to your five.'
+                        : 'Tap a player, then choose PG · SG · SF · PF · C below.'
                   }
                   onSelect={handleSelectOffer}
                   onReroll={handleTicketReroll}
@@ -903,10 +847,15 @@ export function BillionTradeEngine({
 
           <aside
             className={`billion-court is-docked is-slots-only${
-              selectedOffer || movingFrom || focusPlayerId ? ' is-assigning' : ''
-            }`}
+              selectedOffer || movingFrom ? ' is-assigning' : ''
+            }${selectedOffer ? ' is-choose-pos' : ''}`}
             aria-label="Your five"
           >
+            {selectedOffer ? (
+              <p className="billion-court-dock__prompt" role="status">
+                CHOOSE A POSITION
+              </p>
+            ) : null}
             <div className="billion-court-dock" aria-label="Your five dock">
               <div className="billion-court-dock__guide" aria-hidden />
               {LINEUP_POSITIONS.map((slot) => {
@@ -939,11 +888,11 @@ export function BillionTradeEngine({
                     className={`billion-court-dock__item${
                       player ? ' is-filled' : ''
                     }${canDrop ? ' is-target' : ''}${
-                      isMovingSource ? ' is-moving' : ''
-                    }${isSlamTarget ? ' is-slam-target' : ''}${
-                      isJustFilled ? ' is-just-filled' : ''
-                    }`}
-                    disabled={evalStartedRef.current}
+                      player ? ' is-occupied' : ''
+                    }${isMovingSource ? ' is-moving' : ''}${
+                      isSlamTarget ? ' is-slam-target' : ''
+                    }${isJustFilled ? ' is-just-filled' : ''}`}
+                    disabled={evalStartedRef.current || Boolean(slamPayload)}
                     onPointerDown={(e) => {
                       e.preventDefault();
                       handleSlotClick(slot);
@@ -962,7 +911,6 @@ export function BillionTradeEngine({
                               backgroundColor: teamAccent,
                               color: contrastOnPrimary(teamAccent),
                               borderColor: teamAccent,
-                              boxShadow: `0 0 0 1px rgba(255,255,255,0.12) inset, 0 0 14px color-mix(in srgb, ${teamAccent} 35%, transparent), 0 6px 14px rgba(0,0,0,0.35)`,
                             }
                           : undefined
                       }
