@@ -49,10 +49,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 html,body{background:#010814!important}
-.oneb-intro{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:transparent;pointer-events:auto;touch-action:none}
-.oneb-intro__veil{position:absolute;inset:0;background:#010814}
-.oneb-intro__studio{opacity:0}
-.oneb-intro__logo-stage{opacity:0;position:absolute;left:50%;top:50%;width:min(72vw,17.5rem);aspect-ratio:1/1;transform:translate3d(-50%,-50%,0)}
+.oneb-intro{position:fixed;inset:0;z-index:200;width:100%;height:100dvh;overflow:hidden;background:transparent;pointer-events:auto;touch-action:none}
+.oneb-intro__veil{position:absolute;inset:0;background:#010814;z-index:0}
+.oneb-intro__stage{position:absolute;inset:0;z-index:2;display:grid;place-items:center;place-content:center}
+.oneb-intro__studio,.oneb-intro__logo-stage{grid-area:1/1;justify-self:center;align-self:center;margin:0;transform-origin:center center}
+.oneb-intro__studio{opacity:0;filter:blur(10px);transform:scale(0.97);text-align:center}
+.oneb-intro__logo-stage{opacity:0;filter:blur(14px);transform:scale(0.82);width:min(72vw,17.5rem);aspect-ratio:1/1}
 .oneb-intro__logo{width:100%;height:100%;display:block;object-fit:contain;background:transparent;-webkit-touch-callout:none;user-select:none}
 .ballion-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;background:#010814!important;opacity:1!important}
 .ballion-splash__logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
