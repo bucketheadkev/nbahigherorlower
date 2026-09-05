@@ -45,6 +45,9 @@ const DevPerfOverlay = dynamic(
 
 type Screen = 'hub' | 'engine' | 'h2h' | 'perf';
 
+/** Survives Strict Mode remounts — intro plays once per page load. */
+let splashDoneThisLoad = false;
+
 /** App shell — Classic + Head-to-Head with hub tabs. */
 export function TradeUpApp() {
   const reduceMotion = useGameReducedMotion();
@@ -53,7 +56,8 @@ export function TradeUpApp() {
   const [engineKey, setEngineKey] = useState(0);
   const [h2hKey, setH2hKey] = useState(0);
   const [showPerf, setShowPerf] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => !splashDoneThisLoad);
+  const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
 
@@ -77,7 +81,13 @@ export function TradeUpApp() {
       mod.unlockGameAudio();
     });
 
+    // Mark shell ready after first paint so the logo can hold if needed.
+    const readyId = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setAppReady(true));
+    });
+
     return () => {
+      window.cancelAnimationFrame(readyId);
       if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
         try {
           cancelIdleCallback(idle as number);
@@ -109,6 +119,7 @@ export function TradeUpApp() {
   }, []);
 
   const handleSplashDone = useCallback(() => {
+    splashDoneThisLoad = true;
     setShowSplash(false);
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
@@ -117,11 +128,15 @@ export function TradeUpApp() {
     });
   }, []);
 
-  // Never leave LAN / slow-hydrate devices stuck on the splash shell
+  // Never leave LAN / slow-hydrate devices stuck on the intro overlay
   useEffect(() => {
-    const failsafe = window.setTimeout(() => setShowSplash(false), 5000);
+    if (!showSplash) return;
+    const failsafe = window.setTimeout(() => {
+      splashDoneThisLoad = true;
+      setShowSplash(false);
+    }, 8000);
     return () => window.clearTimeout(failsafe);
-  }, []);
+  }, [showSplash]);
 
   const handleHubChange = useCallback((tab: HubTab) => {
     setHubTab(tab);
@@ -133,9 +148,7 @@ export function TradeUpApp() {
 
   return (
     <LocaleProvider>
-      {showSplash ? (
-        <BallionSplash onDone={handleSplashDone} reduceMotion={reduceMotion} />
-      ) : screen === 'engine' ? (
+      {screen === 'engine' ? (
         <BillionTradeEngine
           key={engineKey}
           onExit={handleExit}
@@ -150,13 +163,22 @@ export function TradeUpApp() {
         />
       ) : screen === 'perf' ? (
         <PerformanceTestApp key={engineKey} onExit={handleExit} />
-      ) : hubTab === 'challenges' ? (
+      ) : hubTab === 'challenges' && !showSplash ? (
         <ChallengesScreen />
-      ) : hubTab === 'runs' ? (
+      ) : hubTab === 'runs' && !showSplash ? (
         <MyRunsScreen key={runsKey} />
       ) : (
+        /* Home mounts under the intro so the logo fades into the real screen. */
         <TradeUpHome onPlay={handlePlay} onHeadToHead={handleHeadToHead} />
       )}
+
+      {showSplash ? (
+        <BallionSplash
+          onDone={handleSplashDone}
+          reduceMotion={reduceMotion}
+          appReady={appReady}
+        />
+      ) : null}
 
       {showTabs ? (
         <MobileBottomNav active={hubTab} onChange={handleHubChange} />

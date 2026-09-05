@@ -1,0 +1,197 @@
+/**
+ * 1v1 multiplayer flow — tablet layout only.
+ *
+ * Root cause: .h2h-lobby / .h2h-modes cap at 28rem with no tablet override, so iPad
+ * shows a centered phone column and background that does not fill the screen.
+ *
+ * Fix mirrors Classic (full-viewport shell + centered content column) and
+ * run-home-ipad-portrait.css (81.82vw / 42.65rem content band).
+ *
+ * iPhone layouts are unchanged — rules apply only inside the media queries below.
+ */
+
+@media
+  (min-width: 820px) and (max-width: 850px) and (min-height: 1080px) and (max-height: 1140px) and (orientation: portrait),
+  (min-width: 1024px) and (max-width: 1366px) {
+  .h2h-lobby,
+  .h2h-modes {
+    --h2h-ui-max: min(81.82vw, 42.65rem);
+    max-width: none;
+    width: 100%;
+    align-items: center;
+    padding-left: max(1.2rem, env(safe-area-inset-left));
+    padding-right: max(1.2rem, env(safe-area-inset-right));
+  }
+
+  /* Center lobby/mode content in a wider column; background stays full-bleed on root. */
+  .h2h-lobby > *,
+  .h2h-modes > * {
+    width: 100%;
+    max-width: var(--h2h-ui-max);
+  }
+
+  .h2h-lobby__back,
+  .h2h-modes__back {
+    align-self: center;
+  }
+
+  /* Nested trade/pass UI inside Classic shell — not a full-screen lobby. */
+  .tradeup-shell .h2h-lobby {
+    max-width: var(--h2h-ui-max);
+    width: 100%;
+    margin-inline: auto;
+    min-height: unset;
+    padding: 0;
+    gap: 0.85rem;
+    align-items: stretch;
+    background: transparent !important;
+  }
+
+  .tradeup-shell .h2h-lobby > * {
+    max-width: none;
+  }
+
+  /* —— Entry / create / join / lobby —— */
+  .h2h-lobby--entry .h2h-lobby__entry-center {
+    max-width: var(--h2h-ui-max);
+    width: 100%;
+  }
+
+  .h2h-lobby__title,
+  .h2h-modes__title {
+    font-size: clamp(1.75rem, 4.5vw, 2.2rem);
+  }
+
+  .h2h-lobby__subtitle,
+  .h2h-modes__subtitle {
+    font-size: clamp(0.95rem, 2.2vw, 1.08rem);
+    max-width: 32rem;
+    margin-inline: auto;
+  }
+
+  .h2h-lobby__code {
+    font-size: clamp(2.85rem, 8vw, 3.75rem);
+  }
+
+  .h2h-lobby__mode-btn {
+    min-height: 5.35rem;
+    padding: 1.1rem 1.3rem !important;
+  }
+
+  .h2h-lobby__mode-btn strong {
+    font-size: 1.08rem;
+  }
+
+  .h2h-lobby__mode-btn span {
+    font-size: 0.9rem;
+  }
+
+  .h2h-lobby__submit,
+  .h2h-modes__join {
+    min-height: 3.65rem;
+    font-size: 1rem;
+  }
+
+  .h2h-lobby__input {
+    min-height: 3.25rem;
+    font-size: 1.05rem;
+  }
+
+  .h2h-lobby__slot {
+    padding: 1rem 1.05rem;
+  }
+
+  .h2h-lobby__slot-name {
+    font-size: 1.08rem;
+  }
+
+  .h2h-lobby__chip-btn {
+    min-height: 2.85rem;
+    padding: 0.65rem 1.05rem;
+    font-size: 0.95rem;
+  }
+
+  /* —— Mode select —— */
+  .h2h-modes__grid {
+    gap: 0.95rem;
+  }
+
+  .h2h-modes__grid--solo {
+    max-width: min(81.82vw, 22rem);
+  }
+
+  .h2h-mode-card {
+    border-radius: 1.35rem;
+    padding: 0.95rem 0.7rem 0.85rem;
+  }
+
+  /* —— Reveal / comparisons / reactions —— */
+  .h2h-reveal__body,
+  .h2h-reveal__footer,
+  .h2h-pos-transition {
+    max-width: var(--h2h-ui-max);
+    width: 100%;
+  }
+
+  .h2h-reveal__card {
+    min-height: 5.35rem;
+    padding: 0.7rem 0.55rem 0.75rem;
+  }
+
+  .h2h-reveal__card-name {
+    font-size: clamp(1.12rem, 3.8vw, 1.55rem);
+  }
+
+  .h2h-reveal__winner {
+    font-size: clamp(1.25rem, 4vw, 1.65rem);
+  }
+
+  .h2h-reveal__match {
+    gap: 1.35rem;
+  }
+
+  .h2h-pos-transition__pos {
+    font-size: clamp(2.75rem, 8vw, 3.65rem);
+  }
+
+  .h2h-pos-transition__label {
+    font-size: clamp(1.08rem, 3vw, 1.38rem);
+  }
+
+  .h2h-emoji__btn {
+    width: 2.85rem;
+    height: 2.85rem;
+    font-size: 1.45rem;
+  }
+
+  /* —— Final results —— */
+  .h2h-final__title {
+    font-size: clamp(1.55rem, 4.2vw, 2rem);
+  }
+
+  .h2h-final__boards {
+    gap: 0.65rem;
+  }
+
+  .h2h-final__board {
+    padding: 0.6rem 0.5rem 0.7rem;
+  }
+
+  .h2h-final__total {
+    font-size: 1.38rem;
+  }
+
+  .h2h-results__grid {
+    max-width: var(--h2h-ui-max);
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .h2h-results__card {
+    padding: 1.05rem 1.15rem;
+  }
+
+  .h2h-match-banner-error {
+    max-width: min(var(--h2h-ui-max), 92vw);
+  }
+}

@@ -24922,7 +24922,9 @@ body:has(.oneb-home),
 html:has(.run-home),
 body:has(.run-home),
 html:has(.ballion-splash),
-body:has(.ballion-splash) {
+body:has(.ballion-splash),
+html:has(.oneb-intro),
+body:has(.oneb-intro) {
   background: var(--background) !important;
 }
 
