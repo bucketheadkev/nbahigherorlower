@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
 
 /**
@@ -9,39 +9,36 @@ import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
  * in `app/oneb-theme.css` — keep both in sync when tuning.
  */
 export const INTRO_TIMING = {
-  /** Stage 1 — studio credit fade in */
-  studioInMs: 650,
-  /** Stage 1 — hold at full opacity */
-  studioHoldMs: 850,
-  /** Stage 1 — fade out to black */
-  studioOutMs: 500,
-  /** Brief black beat before logo */
-  blackBeatMs: 150,
-  /** Stage 2 — logo reveal + scale */
-  logoInMs: 900,
-  /** Stage 2 — hold at full visibility (minimum; extends if app not ready) */
-  logoHoldMs: 500,
-  /** Fade intro overlay away to reveal home */
-  revealHomeMs: 500,
-  /** Absolute failsafe — always finish by this time */
+  /** Studio credit — soft drift / fade in */
+  studioInMs: 720,
+  /** Brief hold at full clarity */
+  studioHoldMs: 560,
+  /** Studio fade-out (overlaps logo reveal) */
+  studioOutMs: 680,
+  /** Logo animation starts this many ms after handoff begins */
+  logoOverlapMs: 260,
+  /** Logo scale-up + settle + sweep */
+  logoInMs: 980,
+  /** Hold before home crossfade (extends if app not ready) */
+  logoHoldMs: 420,
+  /** Crossfade into home / morph toward header logo */
+  revealHomeMs: 580,
   failsafeMs: 7000,
-  /** Reduced-motion total duration (fade-only) */
   reducedTotalMs: 900,
 } as const;
 
 export const INTRO_EASING = {
-  /** CSS timing-function for cinematic ease-out reveals */
-  reveal: 'cubic-bezier(0.22, 1, 0.36, 1)',
-  /** CSS timing-function for soft fade-outs */
+  /** Soft cinematic ease-out (no bounce) */
+  reveal: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  /** Controlled settle — tiny overshoot, not springy */
+  settle: 'cubic-bezier(0.22, 1.12, 0.28, 1)',
   soften: 'cubic-bezier(0.4, 0, 0.2, 1)',
 } as const;
 
 type IntroPhase =
   | 'studio-in'
   | 'studio-hold'
-  | 'studio-out'
-  | 'black'
-  | 'logo-in'
+  | 'handoff'
   | 'logo-hold'
   | 'reveal'
   | 'done';
@@ -49,16 +46,48 @@ type IntroPhase =
 interface BallionSplashProps {
   onDone: () => void;
   reduceMotion?: boolean;
-  /** True when the app shell has finished its first-ready work. */
   appReady?: boolean;
 }
 
 /** Module guard — survives React Strict Mode remounts within one page load. */
 let introFinishedThisLoad = false;
 
+function applyLogoMorph(
+  root: HTMLDivElement | null,
+  stage: HTMLDivElement | null,
+) {
+  if (!root || !stage) return;
+
+  const target = document.querySelector('.run-home__logo') as HTMLElement | null;
+  if (!target) {
+    root.style.removeProperty('--intro-dx');
+    root.style.removeProperty('--intro-dy');
+    root.style.removeProperty('--intro-s');
+    root.classList.remove('oneb-intro--morph');
+    return;
+  }
+
+  const sr = stage.getBoundingClientRect();
+  const tr = target.getBoundingClientRect();
+  if (sr.width < 8 || tr.width < 8) {
+    root.classList.remove('oneb-intro--morph');
+    return;
+  }
+
+  const dx = tr.left + tr.width / 2 - (sr.left + sr.width / 2);
+  const dy = tr.top + tr.height / 2 - (sr.top + sr.height / 2);
+  const scale = tr.width / sr.width;
+
+  root.style.setProperty('--intro-dx', `${dx}px`);
+  root.style.setProperty('--intro-dy', `${dy}px`);
+  root.style.setProperty('--intro-s', String(Math.max(0.08, Math.min(scale, 1))));
+  root.classList.add('oneb-intro--morph');
+}
+
 /**
  * Premium cinematic intro — KovA Studios credit → 1B Run logo → home.
  * Overlay only; home is rendered underneath by TradeUpApp.
+ * Animations use transform + opacity only (60fps-friendly).
  */
 export function BallionSplash({
   onDone,
@@ -66,13 +95,14 @@ export function BallionSplash({
   appReady = true,
 }: BallionSplashProps) {
   const [phase, setPhase] = useState<IntroPhase>(
-    reduceMotion ? 'logo-in' : 'studio-in',
+    reduceMotion ? 'handoff' : 'studio-in',
   );
   const onDoneRef = useRef(onDone);
   const finishedRef = useRef(introFinishedThisLoad);
   const appReadyRef = useRef(appReady);
-  const revealArmedRef = useRef(false);
   const timersRef = useRef<number[]>([]);
+  const logoStageRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     onDoneRef.current = onDone;
@@ -116,9 +146,10 @@ export function BallionSplash({
     schedule(finish, INTRO_TIMING.failsafeMs);
 
     if (reduceMotion) {
-      setPhase('logo-in');
+      setPhase('handoff');
       schedule(() => setPhase('logo-hold'), 280);
       schedule(() => {
+        applyLogoMorph(rootRef.current, logoStageRef.current);
         setPhase('reveal');
         schedule(finish, 420);
       }, Math.max(0, INTRO_TIMING.reducedTotalMs - 420));
@@ -126,48 +157,22 @@ export function BallionSplash({
     }
 
     const t = INTRO_TIMING;
-    const marks: Array<{ at: number; phase: IntroPhase }> = [
-      { at: t.studioInMs, phase: 'studio-hold' },
-      { at: t.studioInMs + t.studioHoldMs, phase: 'studio-out' },
-      {
-        at: t.studioInMs + t.studioHoldMs + t.studioOutMs,
-        phase: 'black',
-      },
-      {
-        at: t.studioInMs + t.studioHoldMs + t.studioOutMs + t.blackBeatMs,
-        phase: 'logo-in',
-      },
-      {
-        at:
-          t.studioInMs +
-          t.studioHoldMs +
-          t.studioOutMs +
-          t.blackBeatMs +
-          t.logoInMs,
-        phase: 'logo-hold',
-      },
-    ];
+    const handoffAt = t.studioInMs + t.studioHoldMs;
+    const logoHoldAt = handoffAt + t.logoOverlapMs + t.logoInMs;
+    const armRevealAt = logoHoldAt + t.logoHoldMs;
 
-    for (const mark of marks) {
-      schedule(() => setPhase(mark.phase), mark.at);
-    }
-
-    const armRevealAt =
-      t.studioInMs +
-      t.studioHoldMs +
-      t.studioOutMs +
-      t.blackBeatMs +
-      t.logoInMs +
-      t.logoHoldMs;
+    schedule(() => setPhase('studio-hold'), t.studioInMs);
+    schedule(() => setPhase('handoff'), handoffAt);
+    schedule(() => setPhase('logo-hold'), logoHoldAt);
 
     schedule(() => {
-      revealArmedRef.current = true;
       const tryReveal = () => {
         if (finishedRef.current) return;
         if (!appReadyRef.current) {
           schedule(tryReveal, 100);
           return;
         }
+        applyLogoMorph(rootRef.current, logoStageRef.current);
         setPhase('reveal');
         schedule(finish, t.revealHomeMs);
       };
@@ -177,22 +182,24 @@ export function BallionSplash({
     return clearTimers;
   }, [reduceMotion]);
 
-  // If hold already armed and app becomes ready while polling, the schedule handles it.
-  useEffect(() => {
-    if (!appReady || !revealArmedRef.current || finishedRef.current) return;
-    if (phase !== 'logo-hold') return;
-    // Polling loop in the main effect will pick this up on next tick.
-  }, [appReady, phase]);
-
   if (phase === 'done') return null;
 
   const showStudio =
-    phase === 'studio-in' || phase === 'studio-hold' || phase === 'studio-out';
+    phase === 'studio-in' || phase === 'studio-hold' || phase === 'handoff';
   const showLogo =
-    phase === 'logo-in' || phase === 'logo-hold' || phase === 'reveal';
+    phase === 'handoff' || phase === 'logo-hold' || phase === 'reveal';
+
+  const introStyle = {
+    '--oneb-intro-studio-in': `${INTRO_TIMING.studioInMs}ms`,
+    '--oneb-intro-studio-out': `${INTRO_TIMING.studioOutMs}ms`,
+    '--oneb-intro-logo-delay': `${INTRO_TIMING.logoOverlapMs}ms`,
+    '--oneb-intro-logo-in': `${INTRO_TIMING.logoInMs}ms`,
+    '--oneb-intro-reveal': `${INTRO_TIMING.revealHomeMs}ms`,
+  } as CSSProperties;
 
   return (
     <div
+      ref={rootRef}
       className={[
         'oneb-intro',
         `oneb-intro--${phase}`,
@@ -200,6 +207,7 @@ export function BallionSplash({
       ]
         .filter(Boolean)
         .join(' ')}
+      style={introStyle}
       role="presentation"
       aria-hidden="true"
     >
@@ -207,13 +215,19 @@ export function BallionSplash({
 
       {showStudio ? (
         <div className="oneb-intro__studio">
-          <p className="oneb-intro__studio-name">KovA STUDIOS</p>
-          <p className="oneb-intro__studio-presents">PRESENTS</p>
+          <div className="oneb-intro__studio-soft" aria-hidden>
+            <p className="oneb-intro__studio-name">KovA STUDIOS</p>
+            <p className="oneb-intro__studio-presents">PRESENTS</p>
+          </div>
+          <div className="oneb-intro__studio-sharp">
+            <p className="oneb-intro__studio-name">KovA STUDIOS</p>
+            <p className="oneb-intro__studio-presents">PRESENTS</p>
+          </div>
         </div>
       ) : null}
 
       {showLogo ? (
-        <div className="oneb-intro__logo-stage">
+        <div ref={logoStageRef} className="oneb-intro__logo-stage">
           <div className="oneb-intro__logo-glow" aria-hidden />
           <div className="oneb-intro__logo-mark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -228,6 +242,7 @@ export function BallionSplash({
               draggable={false}
               onContextMenu={(event) => event.preventDefault()}
             />
+            <span className="oneb-intro__logo-sweep" aria-hidden />
           </div>
         </div>
       ) : null}
