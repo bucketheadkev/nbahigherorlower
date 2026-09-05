@@ -27,11 +27,13 @@ export interface SpinReelProps {
   displayStyle?: CSSProperties;
   className?: string;
   onLocked?: () => void;
+  /** Visible rows in the window (odd). Center row is the selection. */
+  visibleRows?: number;
 }
 
 /**
  * GPU-only reel: one React update to plant the strip, then CSS transform.
- * No per-frame setState.
+ * Shows neighbors above/below the center selection window for depth.
  */
 export const SpinReel = memo(function SpinReel({
   strip,
@@ -43,13 +45,18 @@ export const SpinReel = memo(function SpinReel({
   displayStyle,
   className = '',
   onLocked,
+  visibleRows = 3,
 }: SpinReelProps) {
   const stripRef = useRef<HTMLDivElement | null>(null);
   const lockedRef = useRef(false);
   const onLockedRef = useRef(onLocked);
   onLockedRef.current = onLocked;
-  const spinIdRef = useRef(spinId);
   const timerRef = useRef(0);
+
+  const rows = Math.max(1, visibleRows | 0);
+  const oddRows = rows % 2 === 1 ? rows : rows + 1;
+  const windowHeight = itemHeight * oddRows;
+  const centerOffset = ((oddRows - 1) / 2) * itemHeight;
 
   useEffect(() => {
     return () => {
@@ -63,13 +70,13 @@ export const SpinReel = memo(function SpinReel({
     if (spinId <= 0 || strip.length < 2) return;
 
     lockedRef.current = false;
-    spinIdRef.current = spinId;
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = 0;
     }
 
-    const targetY = -((strip.length - 1) * itemHeight);
+    // Land the last strip item in the illuminated center window.
+    const targetY = centerOffset - (strip.length - 1) * itemHeight;
 
     const finish = () => {
       if (lockedRef.current) return;
@@ -88,13 +95,12 @@ export const SpinReel = memo(function SpinReel({
       return;
     }
 
-    // Fast cruise for most of the duration, then a short hard stop.
     el.style.willChange = 'transform';
     el.style.transition = 'none';
     el.style.animation = 'none';
-    el.style.transform = 'translate3d(0, 0, 0)';
+    el.style.transform = `translate3d(0, ${centerOffset}px, 0)`;
+    el.style.setProperty('--reel-from', `${centerOffset}px`);
     el.style.setProperty('--reel-to', `${targetY}px`);
-    // Force style flush so the animation always starts from 0.
     void el.offsetHeight;
 
     let raf2 = 0;
@@ -104,7 +110,6 @@ export const SpinReel = memo(function SpinReel({
       });
     });
 
-    // Failsafe if animationend is missed (tab background, etc.)
     timerRef.current = window.setTimeout(finish, durationMs + 40);
 
     const onEnd = (e: AnimationEvent) => {
@@ -122,7 +127,7 @@ export const SpinReel = memo(function SpinReel({
         timerRef.current = 0;
       }
     };
-  }, [spinId, strip, itemHeight, durationMs, reduceMotion]);
+  }, [spinId, strip, itemHeight, durationMs, reduceMotion, centerOffset]);
 
   const showStrip = spinId > 0 && strip.length > 0;
   const fallback = display ?? '—';
@@ -130,12 +135,21 @@ export const SpinReel = memo(function SpinReel({
 
   return (
     <div
-      className={`spin-reel${className ? ` ${className}` : ''}${
+      className={`spin-reel spin-reel--window${className ? ` ${className}` : ''}${
         showStrip ? ' is-spinning' : ''
       }${isEmpty ? ' is-empty' : ''}`}
-      style={{ height: itemHeight }}
+      style={
+        {
+          height: windowHeight,
+          ['--reel-item-h' as string]: `${itemHeight}px`,
+        } as CSSProperties
+      }
       aria-live="polite"
     >
+      <div className="spin-reel__fade spin-reel__fade--top" aria-hidden />
+      <div className="spin-reel__fade spin-reel__fade--bot" aria-hidden />
+      <div className="spin-reel__center-line" aria-hidden />
+
       {showStrip ? (
         <div ref={stripRef} className="spin-reel__strip">
           {strip.map((item, i) => (
@@ -158,7 +172,11 @@ export const SpinReel = memo(function SpinReel({
           className={`spin-reel__item spin-reel__item--static${
             isEmpty ? ' is-placeholder' : ''
           }`}
-          style={{ height: itemHeight, ...displayStyle }}
+          style={{
+            height: itemHeight,
+            marginTop: centerOffset,
+            ...displayStyle,
+          }}
         >
           {fallback}
         </div>

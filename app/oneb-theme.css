@@ -2642,6 +2642,386 @@
   }
 }
 
+
+/* —— Classic Run polish: reels, dock, pick fly, composition —— */
+.spin-reel--window {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  isolation: isolate;
+}
+
+.spin-reel__fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  pointer-events: none;
+  height: 34%;
+}
+
+.spin-reel__fade--top {
+  top: 0;
+  background: linear-gradient(180deg, rgba(8, 14, 22, 0.92) 0%, transparent 100%);
+}
+
+.spin-reel__fade--bot {
+  bottom: 0;
+  background: linear-gradient(0deg, rgba(8, 14, 22, 0.92) 0%, transparent 100%);
+}
+
+.spin-reel__center-line {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 50%;
+  z-index: 4;
+  height: var(--reel-item-h, 72px);
+  margin-top: calc(var(--reel-item-h, 72px) / -2);
+  border-radius: 10px;
+  border: 1px solid rgba(77, 163, 255, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 18px rgba(26, 125, 255, 0.12);
+  pointer-events: none;
+}
+
+.spin-reel.is-spinning .spin-reel__center-line {
+  border-color: rgba(77, 163, 255, 0.42);
+}
+
+.ter__panel--team {
+  min-height: 10.5rem;
+}
+
+.ter__panel--era {
+  min-height: 8.25rem;
+}
+
+.ter__panel--team.is-filled {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--team-accent, #1a7dff) 35%, transparent),
+    0 0 22px color-mix(in srgb, var(--team-accent, #1a7dff) 22%, transparent) !important;
+}
+
+.ter__roll {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(26, 125, 255, 0.28),
+    0 0 16px rgba(26, 125, 255, 0.16),
+    0 8px 18px rgba(0, 0, 0, 0.28) !important;
+  transition: transform 0.12s cubic-bezier(0.22, 1.2, 0.36, 1), filter 0.12s ease, box-shadow 0.2s ease !important;
+}
+
+.ter__roll:active {
+  transform: scale(0.97) !important;
+}
+
+.ter__roll-label {
+  position: relative;
+  z-index: 1;
+}
+
+.ter__roll-sweep {
+  position: absolute;
+  inset: -20% -40%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ter__roll:active .ter__roll-sweep,
+.ter__roll--placeholder.is-rolling .ter__roll-sweep {
+  animation: ter-roll-sweep 0.55s ease forwards;
+}
+
+.ter__roll--placeholder.is-rolling {
+  opacity: 0.85 !important;
+  letter-spacing: 0.18em;
+}
+
+@keyframes ter-roll-sweep {
+  from { opacity: 0; transform: translate3d(-40%, 0, 0); }
+  30% { opacity: 1; }
+  to { opacity: 0; transform: translate3d(40%, 0, 0); }
+}
+
+.billion-draft-spine {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  bottom: 7.5rem;
+  width: min(70vw, 16rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+}
+
+.billion-draft-spine__court {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(26, 125, 255, 0.35);
+  border-radius: 999px 999px 12px 12px / 28% 28% 8px 8px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(26, 125, 255, 0.2), transparent 42%),
+    linear-gradient(180deg, transparent 46%, rgba(26, 125, 255, 0.12) 50%, transparent 54%);
+}
+
+.billion-draft-spine__court::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 28%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border: 1px solid rgba(26, 125, 255, 0.3);
+  border-radius: 50%;
+}
+
+.billion-draft-spine__pulse {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin: -0.15rem 0 0 -0.15rem;
+  border-radius: 50%;
+  background: rgba(41, 228, 144, 0.55);
+  box-shadow: 0 0 12px rgba(41, 228, 144, 0.35);
+}
+
+.billion-draft-layout--vertical-booth {
+  position: relative;
+}
+
+.billion-court-dock {
+  position: relative;
+  max-width: 24rem !important;
+  gap: 0.28rem !important;
+  padding: 0.15rem 0.1rem 0.2rem !important;
+}
+
+.billion-court-dock__guide {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 38%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(26, 125, 255, 0.28) 18%,
+    rgba(26, 125, 255, 0.28) 82%,
+    transparent
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.billion-court-dock__item {
+  position: relative;
+  z-index: 1;
+  gap: 0.18rem !important;
+  min-width: 0;
+}
+
+.billion-draft-layout--vertical-booth .billion-court-dock__circle {
+  width: 3.15rem !important;
+  height: 3.15rem !important;
+  font-size: 0.78rem !important;
+}
+
+.billion-court-dock__pos {
+  color: rgba(210, 222, 236, 0.78) !important;
+  font-size: 0.62rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.14em !important;
+}
+
+.billion-court-dock__item.is-filled .billion-court-dock__pos {
+  color: rgba(236, 244, 250, 0.95) !important;
+}
+
+.billion-court-dock__name {
+  display: block;
+  max-width: 3.6rem;
+  margin: 0;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(200, 214, 230, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.billion-court-dock__item.is-just-filled .billion-court-dock__circle {
+  animation: draft-slot-land 0.34s cubic-bezier(0.16, 0.9, 0.22, 1) both;
+}
+
+.draft-player-slam {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  will-change: transform, left, top, width, height;
+}
+
+.draft-player-slam__body {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.55rem;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.draft-player-slam:not(.is-card) .draft-player-slam__body {
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.draft-player-slam__pos {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+}
+
+.draft-player-slam__meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.draft-player-slam__name {
+  font-size: clamp(0.72rem, 3.2vw, 0.92rem);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draft-player-slam__val {
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.draft-player-slam__initials,
+.draft-player-slam__disc-label {
+  font-size: clamp(0.72rem, 3.2vw, 0.95rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.draft-player-slam.is-card .draft-player-slam__initials {
+  position: absolute;
+  opacity: 0;
+}
+
+.draft-player-slam__ring {
+  width: 4.6rem;
+  height: 4.6rem;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, transparent 70%);
+}
+
+.franchise-pick {
+  animation: franchise-pick-in 0.28s ease both;
+}
+
+.franchise-pick__li {
+  animation: franchise-row-in 0.28s ease both;
+}
+
+.franchise-pick__row {
+  min-height: 48px;
+  transition:
+    transform 0.12s cubic-bezier(0.22, 1.15, 0.36, 1),
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.franchise-pick__row.is-pressed {
+  transform: scale(0.985);
+}
+
+.franchise-pick__row.is-focus {
+  transform: scale(1.025) translateZ(0);
+  z-index: 2;
+  border-color: color-mix(in srgb, var(--pick-team, #1a7dff) 75%, white);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--pick-team, #1a7dff) 55%, transparent),
+    0 0 18px color-mix(in srgb, var(--pick-team, #1a7dff) 35%, transparent);
+  filter: brightness(1.08);
+}
+
+.franchise-pick.is-focused .franchise-pick__row.is-dimmed {
+  opacity: 0.3;
+  filter: blur(1.2px);
+  pointer-events: none;
+}
+
+.franchise-pick.is-placing {
+  pointer-events: none;
+}
+
+@keyframes franchise-pick-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes franchise-row-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.ter__goal-block {
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(26, 125, 255, 0.14);
+}
+
+.ter__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 /* Ticket logo squares */
 .bst__logo-img,
 .bst.bst--compact .bst__logo-img,

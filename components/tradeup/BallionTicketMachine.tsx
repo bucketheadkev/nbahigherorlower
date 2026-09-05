@@ -49,14 +49,14 @@ interface BallionTicketMachineProps {
   onReroll: (kind: TicketRerollKind) => void;
 }
 
-const TEAM_ITEM_H = 84;
-const ERA_ITEM_H = 56;
+const TEAM_ITEM_H = 72;
+const ERA_ITEM_H = 52;
 /** Strip length scaled with duration so cruise velocity stays the same. */
-const TEAM_STRIP_LEN = 60;
-const ERA_STRIP_LEN = 46;
-/** 0.5s shorter than prior 3.0s / 3.4s timings. */
-const TEAM_SPIN_MS = 2500;
-const ERA_SPIN_MS = 2900;
+const TEAM_STRIP_LEN = 48;
+const ERA_STRIP_LEN = 40;
+/** Team settles first; era continues ~200ms longer. */
+const TEAM_SPIN_MS = 2100;
+const ERA_SPIN_MS = 2300;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
@@ -301,7 +301,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   const onEraLocked = useCallback(() => {
     eraDoneRef.current = true;
-    hapticLight();
+    hapticMedium();
     tryFinish();
   }, [tryFinish]);
 
@@ -400,11 +400,19 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               handleRoll();
             }}
           >
-            {t('game.roll')}
+            <span className="ter__roll-label">{t('game.roll')}</span>
+            <span className="ter__roll-sweep" aria-hidden />
           </button>
         ) : (
-          <div className="ter__roll ter__roll--placeholder" aria-hidden>
-            {t('game.roll')}
+          <div
+            className={`ter__roll ter__roll--placeholder${
+              mode === 'spinning' ? ' is-rolling' : ''
+            }`}
+            aria-hidden
+          >
+            <span className="ter__roll-label">
+              {mode === 'spinning' ? 'ROLLING…' : t('game.roll')}
+            </span>
           </div>
         )}
       </div>

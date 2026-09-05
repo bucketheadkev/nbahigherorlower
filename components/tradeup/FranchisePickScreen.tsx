@@ -1,9 +1,9 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState, type CSSProperties } from 'react';
 import type { DecadeEra, EraOfferPlayer } from '@/lib/tradeup/billionDollar';
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { hapticMedium } from '@/lib/tradeup/haptics';
+import { hapticMedium, hapticSelection } from '@/lib/tradeup/haptics';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import type { TicketRerollKind } from './BallionTicketMachine';
@@ -15,6 +15,9 @@ interface FranchisePickScreenProps {
   offers: EraOfferPlayer[];
   openPositions: Position[];
   selectedId: string | null;
+  /** Dim non-focused rows while placement animates. */
+  focusId?: string | null;
+  placing?: boolean;
   selectedName?: string | null;
   canRerollTeam: boolean;
   canRerollEra: boolean;
@@ -32,6 +35,8 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   offers,
   openPositions,
   selectedId,
+  focusId = null,
+  placing = false,
   canRerollTeam,
   canRerollEra,
   hint,
@@ -40,9 +45,21 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
 }: FranchisePickScreenProps) {
   const colors = getTeamColors(team.id);
   const posInk = contrastOnPrimary(colors.primary);
+  const [pressedId, setPressedId] = useState<string | null>(null);
+  const activeFocus = focusId ?? selectedId;
 
   return (
-    <section className="franchise-pick" aria-label="Player selection">
+    <section
+      className={`franchise-pick${placing ? ' is-placing' : ''}${
+        activeFocus ? ' is-focused' : ''
+      }`}
+      aria-label="Player selection"
+        style={
+          {
+            ['--pick-team' as string]: colors.primary,
+          } as CSSProperties
+        }
+    >
       <BallionScratchTicket
         compact
         teamName={team.fullName.toUpperCase()}
@@ -52,56 +69,67 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
       />
 
       <div className="franchise-pick__rerolls">
-          <button
-            type="button"
-            className="franchise-pick__reroll"
-            disabled={!canRerollTeam}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              if (!canRerollTeam) return;
-              hapticMedium();
-              onReroll('team');
-            }}
-          >
-            <em>{canRerollTeam ? '1 left' : 'Used'}</em>
-            <strong>Reroll Team</strong>
-          </button>
-          <button
-            type="button"
-            className="franchise-pick__reroll"
-            disabled={!canRerollEra}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              if (!canRerollEra) return;
-              hapticMedium();
-              onReroll('era');
-            }}
-          >
-            <em>{canRerollEra ? '1 left' : 'Used'}</em>
-            <strong>Reroll Era</strong>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="franchise-pick__reroll"
+          disabled={!canRerollTeam || placing}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            if (!canRerollTeam || placing) return;
+            hapticMedium();
+            onReroll('team');
+          }}
+        >
+          <em>{canRerollTeam ? '1 left' : 'Used'}</em>
+          <strong>Reroll Team</strong>
+        </button>
+        <button
+          type="button"
+          className="franchise-pick__reroll"
+          disabled={!canRerollEra || placing}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            if (!canRerollEra || placing) return;
+            hapticMedium();
+            onReroll('era');
+          }}
+        >
+          <em>{canRerollEra ? '1 left' : 'Used'}</em>
+          <strong>Reroll Era</strong>
+        </button>
+      </div>
 
       <p className="franchise-pick__hint">{hint}</p>
 
       <ul className="franchise-pick__list" aria-label="Available players">
-        {offers.map((player) => {
+        {offers.map((player, index) => {
           const selected = selectedId === player.id;
+          const focused = activeFocus === player.id;
           const canPlay = openPositions.some((pos) => playerFitsSlot(player, pos));
+          const pressed = pressedId === player.id;
           return (
-            <li key={player.id}>
+            <li
+              key={player.id}
+              className="franchise-pick__li"
+              style={{ animationDelay: `${Math.min(index, 8) * 22}ms` }}
+            >
               <button
                 type="button"
-                className={`franchise-pick__row${selected ? ' is-selected' : ''}${
-                  canPlay ? '' : ' is-disabled'
+                className={`franchise-pick__row${selected || focused ? ' is-selected' : ''}${
+                  focused ? ' is-focus' : ''
+                }${pressed ? ' is-pressed' : ''}${canPlay ? '' : ' is-disabled'}${
+                  activeFocus && !focused ? ' is-dimmed' : ''
                 }`}
                 data-draft-player-id={player.id}
-                disabled={!canPlay}
-                aria-disabled={!canPlay}
+                disabled={!canPlay || placing}
+                aria-disabled={!canPlay || placing}
                 onPointerDown={(e) => {
                   e.preventDefault();
-                  if (!canPlay) return;
+                  if (!canPlay || placing) return;
+                  setPressedId(player.id);
+                  hapticSelection();
                   onSelect(player);
+                  window.setTimeout(() => setPressedId((id) => (id === player.id ? null : id)), 110);
                 }}
               >
                 <span
@@ -129,8 +157,8 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                       : '— AST'}
                   </em>
                 </span>
-                <span className={`franchise-pick__check${selected ? ' is-on' : ''}`} aria-hidden>
-                  {selected ? '✓' : ''}
+                <span className={`franchise-pick__check${selected || focused ? ' is-on' : ''}`} aria-hidden>
+                  {selected || focused ? '✓' : ''}
                 </span>
               </button>
             </li>

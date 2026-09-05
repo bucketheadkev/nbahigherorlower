@@ -22787,15 +22787,15 @@ body:has(.tradeup-shell--home-ballion) {
   border-radius: 10px;
 }
 
-/* Linear high-speed cruise, then ~0.5s semi-sudden lock. */
+/* Linear cruise, then decelerate with a tiny overshoot settle. */
 @keyframes spin-reel-run {
   0% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, var(--reel-from, 0px), 0);
     animation-timing-function: linear;
   }
-  80% {
-    transform: translate3d(0, calc(var(--reel-to) * 0.92), 0);
-    animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1);
+  78% {
+    transform: translate3d(0, calc(var(--reel-to) - 8px), 0);
+    animation-timing-function: cubic-bezier(0.12, 0.82, 0.18, 1);
   }
   100% {
     transform: translate3d(0, var(--reel-to), 0);
