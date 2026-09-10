@@ -174,7 +174,7 @@ export function BillionTradeEngine({
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
   } | null>(null);
-  /** One team reroll + one era reroll for the entire run (offline can earn +1 each via ad). */
+  /** One free team reroll + one free era reroll for the entire run (no ads). */
   const [teamRerolls, setTeamRerolls] = useState(1);
   const [eraRerolls, setEraRerolls] = useState(1);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);

@@ -50,7 +50,7 @@
 - Player offer lists / alternate position UI
 - Value chamber full projection / count-up / grades
 - Leaderboards, challenges, hub tabs
-- Rewarded ads SDK init on Play path
+- (Removed) Rewarded ads — not present in this release
 - LocalStorage progression writes during the loop
 - World rank / personal best calculations
 - Network / analytics

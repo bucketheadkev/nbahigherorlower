@@ -7,10 +7,6 @@ const BEST_ROSTER_VALUE_KEY = 'tradeup_best_roster_value_v1';
 const CREDITS_KEY = 'tradeup_credits';
 const STARTING_TIER_KEY = 'tradeup_starting_tier';
 const STARTING_TIERS_OWNED_KEY = 'tradeup_starting_tiers_owned';
-
-/** TEMP: one-time local dev credit grant — remove before public release. */
-const DEV_CREDITS_MIGRATION_KEY = 'tradeup_dev_credits_50k_v1';
-const DEV_CREDITS_AMOUNT = 50_000;
 const NEGOTIATION_TUTORIAL_KEY = 'tradeup_negotiation_tutorial_seen';
 
 const VALID_STARTING_TIERS: StartingTier[] = ['F', 'D', 'C', 'B'];
@@ -188,20 +184,12 @@ export function saveBestSeasonRecord(candidate: BestSeasonRecord): {
 
 export function getCredits(): number {
   if (typeof window === 'undefined') return 0;
-  applyDevCreditGrant();
   return Number(localStorage.getItem(CREDITS_KEY) ?? 0);
 }
 
-/**
- * TEMP: Grants 50,000 credits once to the local dev profile.
- * Does not reset after spending — marker prevents re-application.
- * Remove before public release.
- */
+/** @deprecated Dev credit grants removed for App Store builds. Kept as no-op for old call sites. */
 export function applyDevCreditGrant(): void {
-  if (typeof window === 'undefined') return;
-  if (localStorage.getItem(DEV_CREDITS_MIGRATION_KEY)) return;
-  saveCredits(DEV_CREDITS_AMOUNT);
-  localStorage.setItem(DEV_CREDITS_MIGRATION_KEY, '1');
+  /* intentionally empty — no automatic credit unlocks in production */
 }
 
 export function spendCredits(amount: number): { success: boolean; balance: number } {

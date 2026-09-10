@@ -7,11 +7,6 @@ import { useH2HInviteLink } from '@/hooks/useH2HInviteLink';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
-import {
-  PERFORMANCE_DEBUG,
-  PERFORMANCE_TEST_BUILD,
-  isPerfDebugEnabled,
-} from '@/lib/tradeup/perf/perfConfig';
 import { LocaleProvider } from '@/hooks/useLocale';
 import { BallionSplash } from './BallionSplash';
 import { ChallengesScreen } from './ChallengesScreen';
@@ -19,14 +14,6 @@ import { MobileBottomNav, type HubTab } from './MobileBottomNav';
 import { MyRunsScreen } from './MyRunsScreen';
 import { TradeUpHome } from './TradeUpHome';
 import { TradeUpLoading } from './TradeUpLoading';
-
-const PerformanceTestApp = dynamic(
-  () =>
-    import('./perf/PerformanceTestApp').then((mod) => ({
-      default: mod.PerformanceTestApp,
-    })),
-  { loading: () => <TradeUpLoading /> },
-);
 
 const BillionTradeEngine = dynamic(
   () => import('./BillionTradeEngine').then((mod) => ({ default: mod.BillionTradeEngine })),
@@ -38,12 +25,7 @@ const HeadToHeadFlow = dynamic(
   { loading: () => <TradeUpLoading /> },
 );
 
-const DevPerfOverlay = dynamic(
-  () => import('./perf/DevPerfOverlay').then((mod) => ({ default: mod.DevPerfOverlay })),
-  { ssr: false },
-);
-
-type Screen = 'hub' | 'engine' | 'h2h' | 'perf';
+type Screen = 'hub' | 'engine' | 'h2h';
 
 /** Survives Strict Mode remounts — intro plays once per page load. */
 let splashDoneThisLoad = false;
@@ -55,7 +37,6 @@ export function TradeUpApp() {
   const [hubTab, setHubTab] = useState<HubTab>('home');
   const [engineKey, setEngineKey] = useState(0);
   const [h2hKey, setH2hKey] = useState(0);
-  const [showPerf, setShowPerf] = useState(false);
   const [showSplash, setShowSplash] = useState(() => !splashDoneThisLoad);
   const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
@@ -69,7 +50,6 @@ export function TradeUpApp() {
 
   useEffect(() => {
     initAdaptiveQuality();
-    setShowPerf(isPerfDebugEnabled());
 
     const idle =
       typeof requestIdleCallback === 'function'
@@ -81,7 +61,6 @@ export function TradeUpApp() {
       mod.unlockGameAudio();
     });
 
-    // Mark shell ready after first paint so the logo can hold if needed.
     const readyId = window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => setAppReady(true));
     });
@@ -102,7 +81,7 @@ export function TradeUpApp() {
 
   const handlePlay = useCallback(() => {
     setEngineKey((k) => k + 1);
-    setScreen(PERFORMANCE_TEST_BUILD ? 'perf' : 'engine');
+    setScreen('engine');
   }, []);
 
   const handleHeadToHead = useCallback(() => {
@@ -128,7 +107,6 @@ export function TradeUpApp() {
     });
   }, []);
 
-  // Never leave LAN / slow-hydrate devices stuck on the intro overlay
   useEffect(() => {
     if (!showSplash) return;
     const failsafe = window.setTimeout(() => {
@@ -161,14 +139,11 @@ export function TradeUpApp() {
           pendingJoinCode={pendingH2HJoinCode}
           onJoinCodeConsumed={() => setPendingH2HJoinCode(null)}
         />
-      ) : screen === 'perf' ? (
-        <PerformanceTestApp key={engineKey} onExit={handleExit} />
       ) : hubTab === 'challenges' && !showSplash ? (
         <ChallengesScreen />
       ) : hubTab === 'runs' && !showSplash ? (
         <MyRunsScreen key={runsKey} />
       ) : (
-        /* Home mounts under the intro so the logo fades into the real screen. */
         <TradeUpHome onPlay={handlePlay} onHeadToHead={handleHeadToHead} />
       )}
 
@@ -183,8 +158,6 @@ export function TradeUpApp() {
       {showTabs ? (
         <MobileBottomNav active={hubTab} onChange={handleHubChange} />
       ) : null}
-
-      {showPerf && PERFORMANCE_DEBUG ? <DevPerfOverlay /> : null}
     </LocaleProvider>
   );
 }

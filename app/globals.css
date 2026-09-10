@@ -17869,57 +17869,6 @@ img,
   outline-offset: 2px;
 }
 
-/* Rewarded ad button */
-.draft-rewarded-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  justify-content: center;
-  margin: 0.35rem 0 0.15rem;
-}
-.rewarded-ad-btn-wrap {
-  flex: 1 1 10rem;
-  max-width: 16rem;
-}
-.rewarded-ad-btn {
-  appearance: none;
-  width: 100%;
-  min-height: 2.75rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
-  color: #0c4a6e;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.1rem;
-  padding: 0.4rem 0.6rem;
-}
-.rewarded-ad-btn.is-busy,
-.rewarded-ad-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.rewarded-ad-btn__kicker {
-  font-size: 0.5rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.75;
-}
-.rewarded-ad-btn__label {
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-.rewarded-ad-btn__msg {
-  margin: 0.25rem 0 0;
-  text-align: center;
-  font-size: 0.65rem;
-  color: rgba(15, 23, 42, 0.55);
-}
-
 /* ============================================================
    Value Chamber — ON PACE / fail / success (no letter grades)
    ============================================================ */
