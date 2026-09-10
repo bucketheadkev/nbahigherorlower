@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, type CSSProperties } from 'react';
+import { memo, useRef } from 'react';
 import type { DecadeEra, EraOfferPlayer } from '@/lib/tradeup/billionDollar';
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
 import { hapticMedium } from '@/lib/tradeup/haptics';
@@ -15,18 +15,20 @@ interface FranchisePickScreenProps {
   offers: EraOfferPlayer[];
   openPositions: Position[];
   selectedId: string | null;
-  /** True only while confirmed placement animation runs. */
-  placing?: boolean;
   selectedName?: string | null;
   canRerollTeam: boolean;
   canRerollEra: boolean;
+  /** Blocks select/reroll during slam, placement, or handoff. */
+  interactionLocked?: boolean;
   hint: string;
   onSelect: (player: EraOfferPlayer) => void;
   onReroll: (kind: TicketRerollKind) => void;
 }
 
+const TAP_SLOP_PX = 12;
+
 /**
- * Player selection — select only; position is chosen on the dock.
+ * Post-reveal player selection — compact team/era header + player rows.
  */
 export const FranchisePickScreen = memo(function FranchisePickScreen({
   team,
@@ -34,24 +36,29 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   offers,
   openPositions,
   selectedId,
-  placing = false,
   canRerollTeam,
   canRerollEra,
+  interactionLocked = false,
   hint,
   onSelect,
   onReroll,
 }: FranchisePickScreenProps) {
   const colors = getTeamColors(team.id);
   const posInk = contrastOnPrimary(colors.primary);
-  const [pressedId, setPressedId] = useState<string | null>(null);
+  const teamRerollOpen = canRerollTeam && !interactionLocked;
+  const eraRerollOpen = canRerollEra && !interactionLocked;
+  const pointerStartRef = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    playerId: string;
+  } | null>(null);
 
   return (
     <section
-      className={`franchise-pick${selectedId ? ' has-selection' : ''}${
-        placing ? ' is-placing' : ''
-      }`}
+      className={`franchise-pick${interactionLocked ? ' is-locked' : ''}`}
       aria-label="Player selection"
-      style={{ ['--pick-team' as string]: colors.primary } as CSSProperties}
+      aria-busy={interactionLocked || undefined}
     >
       <BallionScratchTicket
         compact
@@ -65,10 +72,10 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
         <button
           type="button"
           className="franchise-pick__reroll"
-          disabled={!canRerollTeam || placing}
+          disabled={!teamRerollOpen}
           onPointerDown={(e) => {
             e.preventDefault();
-            if (!canRerollTeam || placing) return;
+            if (!teamRerollOpen) return;
             hapticMedium();
             onReroll('team');
           }}
@@ -79,10 +86,10 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
         <button
           type="button"
           className="franchise-pick__reroll"
-          disabled={!canRerollEra || placing}
+          disabled={!eraRerollOpen}
           onPointerDown={(e) => {
             e.preventDefault();
-            if (!canRerollEra || placing) return;
+            if (!eraRerollOpen) return;
             hapticMedium();
             onReroll('era');
           }}
@@ -97,27 +104,55 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
       <ul className="franchise-pick__list" aria-label="Available players">
         {offers.map((player) => {
           const selected = selectedId === player.id;
-          const canPlay = openPositions.some((pos) => playerFitsSlot(player, pos));
-          const pressed = pressedId === player.id;
+          const canPlay =
+            !interactionLocked &&
+            openPositions.some((pos) => playerFitsSlot(player, pos));
           return (
             <li key={player.id}>
               <button
                 type="button"
                 className={`franchise-pick__row${selected ? ' is-selected' : ''}${
-                  pressed ? ' is-pressed' : ''
-                }${canPlay ? '' : ' is-disabled'}`}
+                  canPlay ? '' : ' is-disabled'
+                }`}
                 data-draft-player-id={player.id}
-                disabled={!canPlay || placing}
-                aria-disabled={!canPlay || placing}
+                disabled={!canPlay}
+                aria-disabled={!canPlay}
                 onPointerDown={(e) => {
-                  e.preventDefault();
-                  if (!canPlay || placing) return;
-                  setPressedId(player.id);
+                  if (!canPlay || interactionLocked) return;
+                  pointerStartRef.current = {
+                    id: e.pointerId,
+                    x: e.clientX,
+                    y: e.clientY,
+                    playerId: player.id,
+                  };
+                }}
+                onPointerMove={(e) => {
+                  const start = pointerStartRef.current;
+                  if (!start || start.id !== e.pointerId) return;
+                  if (
+                    Math.abs(e.clientX - start.x) > TAP_SLOP_PX ||
+                    Math.abs(e.clientY - start.y) > TAP_SLOP_PX
+                  ) {
+                    pointerStartRef.current = null;
+                  }
+                }}
+                onPointerCancel={() => {
+                  pointerStartRef.current = null;
+                }}
+                onPointerUp={(e) => {
+                  const start = pointerStartRef.current;
+                  pointerStartRef.current = null;
+                  if (!canPlay || interactionLocked || !start) return;
+                  if (start.id !== e.pointerId || start.playerId !== player.id) {
+                    return;
+                  }
+                  if (
+                    Math.abs(e.clientX - start.x) > TAP_SLOP_PX ||
+                    Math.abs(e.clientY - start.y) > TAP_SLOP_PX
+                  ) {
+                    return;
+                  }
                   onSelect(player);
-                  window.setTimeout(
-                    () => setPressedId((id) => (id === player.id ? null : id)),
-                    100,
-                  );
                 }}
               >
                 <span
@@ -145,11 +180,8 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                       : '— AST'}
                   </em>
                 </span>
-                <span
-                  className={`franchise-pick__check${selected ? ' is-on' : ''}`}
-                  aria-hidden
-                >
-                  {selected ? 'SELECTED' : ''}
+                <span className={`franchise-pick__check${selected ? ' is-on' : ''}`} aria-hidden>
+                  {selected ? '✓' : ''}
                 </span>
               </button>
             </li>

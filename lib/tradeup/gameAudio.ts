@@ -63,7 +63,8 @@ export type GameSoundEvent =
   | 'slot_place'
   | 'ui_confirm'
   | 'ui_secondary'
-  | 'billion_celebration';
+  | 'billion_celebration'
+  | 'results_celebration';
 
 type SoundId =
   | 'ticket_print'
@@ -71,6 +72,8 @@ type SoundId =
   | 'wheel_spin'
   | 'wheel_stop'
   | 'success_peak'
+  | 'success_soft'
+  | 'results_cheer'
   | 'billion_celebration'
   | 'defeat';
 
@@ -79,6 +82,8 @@ type SoundDef = {
   volume: number;
   debounceMs: number;
   loop?: boolean;
+  /** Hard-stop playback after this many ms (peaceful stingers ≤2s). */
+  maxPlayMs?: number;
 };
 
 export const TICKET_PRINT_SOUND_PATH = '/sounds/ticket-print.mp3';
@@ -94,6 +99,14 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
   wheel_spin: { path: '/sounds/wheel-spin.mp3', volume: 0.2, debounceMs: 0, loop: true },
   wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.36, debounceMs: 140 },
   success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
+  success_soft: { path: '/sounds/success-soft.mp3', volume: 0.4, debounceMs: 400, maxPlayMs: 1800 },
+  /** Soft chime — replaces crowd cheer on value-calc results. */
+  results_cheer: {
+    path: '/sounds/success-soft.mp3',
+    volume: 0.38,
+    debounceMs: 500,
+    maxPlayMs: 1800,
+  },
   billion_celebration: {
     path: '/sounds/success-rich.mp3',
     volume: 0.52,
@@ -106,6 +119,7 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
 const EVENT_TO_SOUND: Partial<Record<GameSoundEvent, SoundId>> = {
   perfect_sweep: 'billion_celebration',
   billion_celebration: 'billion_celebration',
+  results_celebration: 'results_cheer',
   victory: 'success_peak',
   defeat: 'defeat',
 };
@@ -218,6 +232,19 @@ function playSound(id: SoundId, opts?: { force?: boolean }): void {
     result.catch(() => {
       /* autoplay / unlock failures are silent */
     });
+  }
+
+  if (def.maxPlayMs && def.maxPlayMs > 0 && !def.loop) {
+    window.setTimeout(() => {
+      const current = players.get(id);
+      if (!current || current !== el) return;
+      try {
+        current.pause();
+        current.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }, def.maxPlayMs);
   }
 }
 

@@ -15,21 +15,23 @@ export type SpinStripItem = {
 };
 
 export interface SpinReelProps {
+  /** Predetermined strip; last entry is the landing result. Empty = placeholder. */
   strip: SpinStripItem[];
+  /** Increment to start a CSS spin toward the last strip item. */
   spinId: number;
   itemHeight: number;
   durationMs: number;
   reduceMotion?: boolean;
+  /** Static label when not spinning (idle / held axis). */
   display?: string | null;
   displayStyle?: CSSProperties;
   className?: string;
   onLocked?: () => void;
-  /** Visible rows (odd). Default 3 = neighbors above/below center. */
-  visibleRows?: number;
 }
 
 /**
- * Compact vertical reel — CSS transform only, no per-frame React updates.
+ * GPU-only reel: one React update to plant the strip, then CSS transform.
+ * No per-frame setState.
  */
 export const SpinReel = memo(function SpinReel({
   strip,
@@ -41,17 +43,13 @@ export const SpinReel = memo(function SpinReel({
   displayStyle,
   className = '',
   onLocked,
-  visibleRows = 3,
 }: SpinReelProps) {
   const stripRef = useRef<HTMLDivElement | null>(null);
   const lockedRef = useRef(false);
   const onLockedRef = useRef(onLocked);
   onLockedRef.current = onLocked;
+  const spinIdRef = useRef(spinId);
   const timerRef = useRef(0);
-
-  const rows = visibleRows % 2 === 1 ? visibleRows : visibleRows + 1;
-  const windowHeight = itemHeight * rows;
-  const centerOffset = ((rows - 1) / 2) * itemHeight;
 
   useEffect(() => {
     return () => {
@@ -65,12 +63,13 @@ export const SpinReel = memo(function SpinReel({
     if (spinId <= 0 || strip.length < 2) return;
 
     lockedRef.current = false;
+    spinIdRef.current = spinId;
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = 0;
     }
 
-    const targetY = centerOffset - (strip.length - 1) * itemHeight;
+    const targetY = -((strip.length - 1) * itemHeight);
 
     const finish = () => {
       if (lockedRef.current) return;
@@ -89,12 +88,13 @@ export const SpinReel = memo(function SpinReel({
       return;
     }
 
+    // Fast cruise for most of the duration, then a short hard stop.
     el.style.willChange = 'transform';
     el.style.transition = 'none';
     el.style.animation = 'none';
-    el.style.transform = `translate3d(0, ${centerOffset}px, 0)`;
-    el.style.setProperty('--reel-from', `${centerOffset}px`);
+    el.style.transform = 'translate3d(0, 0, 0)';
     el.style.setProperty('--reel-to', `${targetY}px`);
+    // Force style flush so the animation always starts from 0.
     void el.offsetHeight;
 
     let raf2 = 0;
@@ -104,6 +104,7 @@ export const SpinReel = memo(function SpinReel({
       });
     });
 
+    // Failsafe if animationend is missed (tab background, etc.)
     timerRef.current = window.setTimeout(finish, durationMs + 40);
 
     const onEnd = (e: AnimationEvent) => {
@@ -121,31 +122,20 @@ export const SpinReel = memo(function SpinReel({
         timerRef.current = 0;
       }
     };
-  }, [spinId, strip, itemHeight, durationMs, reduceMotion, centerOffset]);
+  }, [spinId, strip, itemHeight, durationMs, reduceMotion]);
 
   const showStrip = spinId > 0 && strip.length > 0;
   const fallback = display ?? '—';
   const isEmpty = !showStrip && (fallback === '—' || !display);
-  const isPlaceholder =
-    !showStrip && (fallback === 'TEAM' || fallback === 'ERA' || fallback === '—');
 
   return (
     <div
-      className={`spin-reel spin-reel--window${className ? ` ${className}` : ''}${
+      className={`spin-reel${className ? ` ${className}` : ''}${
         showStrip ? ' is-spinning' : ''
-      }${isEmpty || isPlaceholder ? ' is-empty' : ''}`}
-      style={
-        {
-          height: windowHeight,
-          ['--reel-item-h' as string]: `${itemHeight}px`,
-        } as CSSProperties
-      }
+      }${isEmpty ? ' is-empty' : ''}`}
+      style={{ height: itemHeight }}
       aria-live="polite"
     >
-      <div className="spin-reel__fade spin-reel__fade--top" aria-hidden />
-      <div className="spin-reel__fade spin-reel__fade--bot" aria-hidden />
-      <div className="spin-reel__center-line" aria-hidden />
-
       {showStrip ? (
         <div ref={stripRef} className="spin-reel__strip">
           {strip.map((item, i) => (
@@ -166,13 +156,9 @@ export const SpinReel = memo(function SpinReel({
       ) : (
         <div
           className={`spin-reel__item spin-reel__item--static${
-            isPlaceholder ? ' is-placeholder' : ''
+            isEmpty ? ' is-placeholder' : ''
           }`}
-          style={{
-            height: itemHeight,
-            marginTop: centerOffset,
-            ...displayStyle,
-          }}
+          style={{ height: itemHeight, ...displayStyle }}
         >
           {fallback}
         </div>
@@ -181,6 +167,7 @@ export const SpinReel = memo(function SpinReel({
   );
 });
 
+/** Build a short predetermined strip ending on `winner`. No blanks. */
 export function buildSpinStrip(
   pool: string[],
   winner: string,

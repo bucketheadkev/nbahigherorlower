@@ -49,14 +49,15 @@ interface BallionTicketMachineProps {
   onReroll: (kind: TicketRerollKind) => void;
 }
 
-const TEAM_ITEM_H = 56;
-const ERA_ITEM_H = 44;
-/** Shorter strips for ~2.0–2.3s total roll. */
-const TEAM_STRIP_LEN = 36;
-const ERA_STRIP_LEN = 30;
-/** Team settles first; era ~200ms later. Total ≈ 2.1–2.3s. */
-const TEAM_SPIN_MS = 1900;
-const ERA_SPIN_MS = 2100;
+const TEAM_ITEM_H = 84;
+/** Match team reel height so ERA text is centered like TEAM. */
+const ERA_ITEM_H = 84;
+/** Strip length scaled with duration so cruise velocity stays the same. */
+const TEAM_STRIP_LEN = 60;
+const ERA_STRIP_LEN = 46;
+/** 0.5s shorter than prior 3.0s / 3.4s timings. */
+const TEAM_SPIN_MS = 2500;
+const ERA_SPIN_MS = 2900;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
@@ -301,7 +302,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   const onEraLocked = useCallback(() => {
     eraDoneRef.current = true;
-    hapticMedium();
+    hapticLight();
     tryFinish();
   }, [tryFinish]);
 
@@ -335,12 +336,20 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       : undefined;
 
   return (
-    <div className={`ter${showGoal ? ' ter--goal' : ''}`} aria-label="Team and era roll">
+    <div
+      className={`ter${showGoal ? ' ter--goal ter--spin-top' : ''}`}
+      aria-label="Team and era roll"
+    >
       {showGoal ? (
         <div className="ter__goal-block">
-          <p className="ter__goal" aria-label="Goal one billion dollars">
-            <span className="ter__goal-label">{t('game.goal')}</span>{' '}
-            <span className="ter__goal-amount">$1,000,000,000</span>
+          <p className="ter__goal-label">{t('game.goal')}</p>
+          <p className="ter__goal-amount" aria-label="Goal one billion dollars">
+            $1,000,000,000
+          </p>
+          <p className="ter__tagline">
+            <span className="ter__tagline-rule" aria-hidden />
+            <span className="ter__tagline-text">{t('game.tagline')}</span>
+            <span className="ter__tagline-rule" aria-hidden />
           </p>
         </div>
       ) : null}
@@ -360,7 +369,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               itemHeight={TEAM_ITEM_H}
               durationMs={teamMs}
               reduceMotion={reduceMotion}
-              display={displayTeam ? teamLabel(displayTeam) : 'TEAM'}
+              display={displayTeam ? teamLabel(displayTeam) : '—'}
               className="spin-reel--team"
               displayStyle={
                 teamFill && teamInk
@@ -383,7 +392,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               itemHeight={ERA_ITEM_H}
               durationMs={eraMs}
               reduceMotion={reduceMotion}
-              display={displayEra ?? 'ERA'}
+              display={displayEra ?? '—'}
               className="spin-reel--era"
               onLocked={spinEra ? onEraLocked : undefined}
             />
@@ -400,19 +409,12 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
               handleRoll();
             }}
           >
+            <span className="ter__roll-sheen" aria-hidden />
             <span className="ter__roll-label">{t('game.roll')}</span>
-            <span className="ter__roll-sweep" aria-hidden />
           </button>
         ) : (
-          <div
-            className={`ter__roll ter__roll--placeholder${
-              mode === 'spinning' ? ' is-rolling' : ''
-            }`}
-            aria-hidden
-          >
-            <span className="ter__roll-label">
-              {mode === 'spinning' ? 'ROLLING…' : t('game.roll')}
-            </span>
+          <div className="ter__roll ter__roll--placeholder" aria-hidden>
+            {t('game.roll')}
           </div>
         )}
       </div>

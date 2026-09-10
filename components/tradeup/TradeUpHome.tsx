@@ -1,6 +1,6 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, useMemo } from 'react';
+import { type PointerEvent as ReactPointerEvent, useEffect, useState } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import {
@@ -24,7 +24,11 @@ interface TradeUpHomeProps {
 export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
   const { resume } = useSound();
   const { t } = useLocale();
-  const bestRun = useMemo(() => getBestRosterValue(), []);
+  // localStorage only on client — avoid SSR/client text hydration mismatch
+  const [bestRun, setBestRun] = useState(0);
+  useEffect(() => {
+    setBestRun(getBestRosterValue());
+  }, []);
   const bestIsBillion = bestRun >= BILLION_GOAL;
 
   const press = (fn: () => void) => (e: ReactPointerEvent) => {

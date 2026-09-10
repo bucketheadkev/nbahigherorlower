@@ -43,6 +43,7 @@ import { BallionTicketMachine } from './BallionTicketMachine';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly';
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ValueRevealMachine } from './ValueRevealMachine';
+import { ClassicRosterReveal } from './ClassicRosterReveal';
 import { HeadToHeadShowdown } from './HeadToHeadShowdown';
 import type { TicketRerollKind } from './BallionTicketMachine';
 import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
@@ -109,14 +110,6 @@ function playerInitials(name: string): string {
   return `${first}${last}`.toUpperCase();
 }
 
-function shortRosterName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0]!.slice(0, 8);
-  const last = parts[parts.length - 1]!;
-  return last.length > 9 ? `${last.slice(0, 8)}…` : last;
-}
-
 function rosterList(slots: RosterSlots): ValuedPlayer[] {
   return LINEUP_POSITIONS.map((pos) => slots[pos]).filter(
     (p): p is ValuedPlayer => Boolean(p),
@@ -162,7 +155,7 @@ export function BillionTradeEngine({
   const oppLabel = (onlineOpponentName ?? 'OPPONENT').trim() || 'OPPONENT';
   const oppProgress = Math.max(0, Math.min(5, Math.round(onlineOpponentProgress)));
   const reduceMotion = getPrefersReducedMotion();
-  const { resume, playReject, playVictory, playDefeat, playUiBack } =
+  const { resume, playReject, playUiBack } =
     useSound();
   const { t } = useLocale();
 
@@ -177,7 +170,6 @@ export function BillionTradeEngine({
   const [slamPayload, setSlamPayload] = useState<DraftSlamPayload | null>(null);
   const [slamSlot, setSlamSlot] = useState<Position | null>(null);
   const [justFilledSlot, setJustFilledSlot] = useState<Position | null>(null);
-  const placingRef = useRef(false);
   const pendingAssignRef = useRef<{
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
@@ -187,6 +179,8 @@ export function BillionTradeEngine({
   const [eraRerolls, setEraRerolls] = useState(1);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);
   const [rerollFrom, setRerollFrom] = useState<SpinPair | null>(null);
+  /** UI mirror of interactionLockRef — disables pick/reroll during commit. */
+  const [pickInteractionLocked, setPickInteractionLocked] = useState(false);
   const [status, setStatus] = useState<string | null>(
     'Tap ROLL to land a team and era.',
   );
@@ -196,6 +190,16 @@ export function BillionTradeEngine({
   const evalStartedRef = useRef(false);
   const teamRerollUsedRef = useRef(false);
   const eraRerollUsedRef = useRef(false);
+  /** Blocks select/reroll/slot commits until placement finishes or table resets. */
+  const interactionLockRef = useRef(false);
+  const lockInteractions = useCallback(() => {
+    interactionLockRef.current = true;
+    setPickInteractionLocked(true);
+  }, []);
+  const unlockInteractions = useCallback(() => {
+    interactionLockRef.current = false;
+    setPickInteractionLocked(false);
+  }, []);
   const fourPlayerTotalBeforeFifthRef = useRef<number | null>(null);
   const resetTimerRef = useRef(0);
   const transitionTimerRef = useRef(0);
@@ -271,6 +275,7 @@ export function BillionTradeEngine({
   }, [phase, resume]);
 
   const handleTicketResult = useCallback((pair: SpinPair) => {
+    unlockInteractions();
     setSpunTeam(pair.team);
     setSpunEra(pair.era);
     setTicketPrinting(false);
@@ -278,21 +283,23 @@ export function BillionTradeEngine({
     setStatus(
       `${pair.team.fullName} · ${pair.era} — pick a player, then tap an open circle.`,
     );
-  }, []);
+  }, [unlockInteractions]);
 
   const handleTicketReroll = useCallback((kind: TicketRerollKind) => {
     if (phase !== 'draft' || ticketPrinting || evalStartedRef.current) return;
-    if (kind === 'team' && teamRerolls <= 0) return;
-    if (kind === 'era' && eraRerolls <= 0) return;
+    if (interactionLockRef.current || slamPayload || pendingAssignRef.current) return;
+    if (kind === 'team') {
+      if (teamRerollUsedRef.current || teamRerolls <= 0) return;
+      teamRerollUsedRef.current = true;
+      setTeamRerolls(0);
+    } else {
+      if (eraRerollUsedRef.current || eraRerolls <= 0) return;
+      eraRerollUsedRef.current = true;
+      setEraRerolls(0);
+    }
     if (!spunTeam || !spunEra) return;
     resume();
-    if (kind === 'team') {
-      setTeamRerolls(0);
-      teamRerollUsedRef.current = true;
-    } else {
-      setEraRerolls(0);
-      eraRerollUsedRef.current = true;
-    }
+    lockInteractions();
     setSelectedOfferId(null);
     setMovingFrom(null);
     setOffers([]);
@@ -303,7 +310,7 @@ export function BillionTradeEngine({
     setTicketPrinting(true);
     setBoothReroll(kind);
     setStatus(kind === 'team' ? 'Rerolling team…' : 'Rerolling era…');
-  }, [phase, ticketPrinting, teamRerolls, eraRerolls, resume, spunTeam, spunEra]);
+  }, [phase, ticketPrinting, teamRerolls, eraRerolls, resume, spunTeam, spunEra, slamPayload, lockInteractions]);
 
   // Load era board AFTER spin completes — never during reel frames.
   useEffect(() => {
@@ -367,6 +374,7 @@ export function BillionTradeEngine({
   }, [offers, openPositions, selectedOfferId]);
 
   const resetTableForNextPick = useCallback(() => {
+    unlockInteractions();
     setSpunTeam(null);
     setSpunEra(null);
     setTicketPrinting(false);
@@ -374,11 +382,12 @@ export function BillionTradeEngine({
     setSelectedOfferId(null);
     setMovingFrom(null);
     // Rerolls are once per run — do not refresh between tickets.
-    setStatus('Tap ROLL for your next team and era.');
-  }, []);
+    setStatus('Tap SPIN for your next team and era.');
+  }, [unlockInteractions]);
 
   const finishPickPlacement = useCallback(
     async (targetSlot: Position, player: ValuedPlayer & { era?: DecadeEra }) => {
+      lockInteractions();
       const priorCount = rosterList(slots).length;
       if (priorCount === 4) {
         fourPlayerTotalBeforeFifthRef.current = rosterList(slots).reduce(
@@ -395,7 +404,7 @@ export function BillionTradeEngine({
       setJustFilledSlot(targetSlot);
       window.setTimeout(() => {
         setJustFilledSlot((current) => (current === targetSlot ? null : current));
-      }, 360);
+      }, !isH2H && !isOnline ? 1250 : 360);
 
       if (isOnline && onPickLock) {
         lockInFlightRef.current = true;
@@ -412,6 +421,7 @@ export function BillionTradeEngine({
         } catch {
           setSlots((prev) => ({ ...prev, [targetSlot]: null }));
           setStatus('Pick failed to sync — tap the circle again.');
+          unlockInteractions();
           return;
         } finally {
           lockInFlightRef.current = false;
@@ -429,8 +439,19 @@ export function BillionTradeEngine({
         setStatus(
           isH2H
             ? 'Lineup complete — value showdown…'
-            : 'Lineup complete — reading values…',
+            : 'Lineup complete — valuing your five…',
         );
+        // Classic: keep pick UI briefly so the 5th lock can settle, then auto-reveal.
+        if (!isH2H && !isOnline) {
+          if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+          resetTimerRef.current = window.setTimeout(() => {
+            setSpunTeam(null);
+            setSpunEra(null);
+            setOffers([]);
+            setPhase('reveal');
+          }, reduceMotion ? 80 : 480);
+          return;
+        }
         setSpunTeam(null);
         setSpunEra(null);
         setOffers([]);
@@ -440,21 +461,32 @@ export function BillionTradeEngine({
 
       setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+      // Classic: return to hub immediately so the seat-in plays on the roster row.
+      const resetMs =
+        !isH2H && !isOnline
+          ? reduceMotion
+            ? 0
+            : 40
+          : reduceMotion
+            ? 40
+            : 220;
       resetTimerRef.current = window.setTimeout(
         () => resetTableForNextPick(),
-        reduceMotion ? 40 : 220,
+        resetMs,
       );
     },
     [
       deferOnlineReveal,
       isH2H,
       isOnline,
+      lockInteractions,
       onPickLock,
       reduceMotion,
       resetTableForNextPick,
       slots,
       spunEra,
       spunTeam,
+      unlockInteractions,
     ],
   );
 
@@ -473,11 +505,10 @@ export function BillionTradeEngine({
         if (!isH2H && !isOnline) {
           saveBillionRun(lineup, value);
         }
-        playVictory();
+        // Result SFX is owned by the reveal UI (results_celebration).
         onWin?.();
         setStatus(`Dynasty complete · ${formatDollarsExact(value)}`);
       } else {
-        playDefeat();
         setStatus(`Board full at ${formatDollarsExact(value)} — short of $1B.`);
       }
 
@@ -493,7 +524,7 @@ export function BillionTradeEngine({
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };
     },
-    [isH2H, isOnline, onWin, playDefeat, playVictory],
+    [isH2H, isOnline, onWin],
   );
 
   const handleRevealComplete = useCallback(
@@ -513,27 +544,28 @@ export function BillionTradeEngine({
   const handleSelectOffer = useCallback(
     (player: EraOfferPlayer) => {
       if (phase !== 'draft' || !readyToDraft || evalStartedRef.current) return;
-      if (placingRef.current || slamPayload) return;
+      if (
+        interactionLockRef.current ||
+        slamPayload ||
+        pendingAssignRef.current ||
+        ticketPrinting
+      ) {
+        return;
+      }
       resume();
       hapticSelection();
       setMovingFrom(null);
-      const nextId = selectedOfferId === player.id ? null : player.id;
-      setSelectedOfferId(nextId);
-      if (nextId) {
-        const alts = formatEligiblePositions(player);
-        setStatus(`SELECTED — choose a position for ${player.name} (${alts}).`);
-      } else {
-        setStatus('Tap a player, then choose PG · SG · SF · PF · C below.');
-      }
+      setSelectedOfferId((id) => (id === player.id ? null : player.id));
+      const alts = formatEligiblePositions(player);
+      setStatus(`Selected ${player.name} (${alts}) — tap an open matching circle below.`);
     },
-    [phase, readyToDraft, resume, selectedOfferId, slamPayload],
+    [phase, readyToDraft, resume, slamPayload, ticketPrinting],
   );
 
   const handleSlotClick = useCallback(
     (slot: Position) => {
-      if (phase !== 'draft' || evalStartedRef.current || slamPayload || placingRef.current) {
-        return;
-      }
+      if (phase !== 'draft' || evalStartedRef.current || slamPayload) return;
+      if (interactionLockRef.current || pendingAssignRef.current) return;
       resume();
       hapticTap();
 
@@ -558,6 +590,7 @@ export function BillionTradeEngine({
           );
           return;
         }
+        lockInteractions();
         const nextSlots: RosterSlots = {
           ...slots,
           [movingFrom]: null,
@@ -584,9 +617,10 @@ export function BillionTradeEngine({
             rawValue,
           );
         }
+        unlockInteractions();
         if (selectedOffer) {
           setStatus(
-            `${movingPlayer.name} moved to ${POSITION_LABELS[slot]}. Now choose a position for ${selectedOffer.name}.`,
+            `${movingPlayer.name} moved to ${POSITION_LABELS[slot]}. Now place ${selectedOffer.name}.`,
           );
         } else {
           setStatus(`${movingPlayer.name} moved to ${POSITION_LABELS[slot]}.`);
@@ -594,8 +628,12 @@ export function BillionTradeEngine({
         return;
       }
 
-      // Tap a placed player to move them.
+      // Tap a placed player to move them (also works while an offer is selected,
+      // so you can free their circle for the highlighted available player).
       if (occupant) {
+        if (!selectedOffer || movingFrom) {
+          /* handled above when movingFrom; when no offer, start a move below */
+        }
         if (!movingFrom) {
           const alts = getEligiblePositions(occupant);
           const hasOpenAlt = alts.some((pos) => pos !== slot && !slots[pos]);
@@ -622,7 +660,7 @@ export function BillionTradeEngine({
       }
 
       if (!selectedOffer) {
-        setStatus('Select a player first, then choose a position.');
+        setStatus('Select a player from the list first.');
         return;
       }
 
@@ -649,11 +687,19 @@ export function BillionTradeEngine({
       const colors = getTeamColors(selectedOffer.teamId);
       const ink = contrastOnPrimary(colors.primary);
 
-      placingRef.current = true;
+      // Lock immediately so fast re-taps cannot select/reroll mid-place.
+      lockInteractions();
+
+      // Classic: skip circle slam / grow — seat gently on the hub roster row.
+      if (!isH2H && !isOnline) {
+        hapticSlam();
+        schedulePlayerSlotSound(0);
+        void finishPickPlacement(slot, valued);
+        return;
+      }
 
       if (reduceMotion) {
         hapticSlam();
-        placingRef.current = false;
         void finishPickPlacement(slot, valued);
         return;
       }
@@ -661,7 +707,6 @@ export function BillionTradeEngine({
       const points = measureDraftSlam(selectedOffer.id, slot);
       if (!points) {
         hapticSlam();
-        placingRef.current = false;
         void finishPickPlacement(slot, valued);
         return;
       }
@@ -680,6 +725,7 @@ export function BillionTradeEngine({
     },
     [
       finishPickPlacement,
+      lockInteractions,
       movingFrom,
       movingPlayer,
       onPickMove,
@@ -692,6 +738,8 @@ export function BillionTradeEngine({
       slots,
       spunEra,
       spunTeam,
+      unlockInteractions,
+      isH2H,
       isOnline,
     ],
   );
@@ -704,7 +752,6 @@ export function BillionTradeEngine({
   }, [finishPickPlacement]);
 
   const handleSlamComplete = useCallback(() => {
-    placingRef.current = false;
     setSlamPayload(null);
     setSlamSlot(null);
   }, []);
@@ -767,18 +814,37 @@ export function BillionTradeEngine({
       ) : null}
 
       {showReveal && !isH2H && !(isOnline && deferOnlineReveal) ? (
-        <ValueRevealMachine
-          roster={rosterInSlotOrder(slots)}
-          reduceMotion={reduceMotion}
-          autoStart
-          onComplete={handleRevealComplete}
-          onExit={onExit}
-          onPlayAgain={isOnline ? onExit : onPlayAgain ?? onExit}
-        />
+        isOnline ? (
+          <ValueRevealMachine
+            roster={rosterInSlotOrder(slots)}
+            reduceMotion={reduceMotion}
+            autoStart
+            onComplete={handleRevealComplete}
+            onExit={onExit}
+            onPlayAgain={onExit}
+          />
+        ) : (
+          <ClassicRosterReveal
+            roster={rosterInSlotOrder(slots)}
+            reduceMotion={reduceMotion}
+            onComplete={handleRevealComplete}
+            onPlayAgain={onPlayAgain ?? onExit}
+          />
+        )
       ) : null}
 
       {showDraft ? (
-        <div className="billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth">
+        <div
+          className={`billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth${
+            !isH2H && !isOnline && !readyToDraft && !lineupLocked
+              ? ' billion-draft-layout--classic-hub'
+              : ''
+          }${
+            !isH2H && !isOnline && readyToDraft && !lineupLocked
+              ? ' billion-draft-layout--classic-pick'
+              : ''
+          }`}
+        >
           <main className="billion-main billion-main--draft">
             {isOnline ? (
               <div
@@ -800,7 +866,9 @@ export function BillionTradeEngine({
                 </p>
               </div>
             ) : !readyToDraft ? (
-              <div className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}>
+              <div
+                className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}
+              >
                 <BallionTicketMachine
                   locked={lockedPair}
                   printing={ticketPrinting}
@@ -827,109 +895,139 @@ export function BillionTradeEngine({
                   offers={availableOffers}
                   openPositions={openPositions}
                   selectedId={selectedOfferId}
-                  placing={Boolean(slamPayload)}
                   canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
                   canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                  interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
                   hint={
                     selectedOffer
-                      ? `CHOOSE A POSITION for ${selectedOffer.name}`
+                      ? `Tap an open ${formatEligiblePositions(selectedOffer)} circle below.`
                       : movingPlayer
                         ? `Moving ${movingPlayer.name} — tap an open eligible circle.`
-                        : 'Tap a player, then choose PG · SG · SF · PF · C below.'
+                        : 'Pick a player, then tap an open circle below.'
                   }
                   onSelect={handleSelectOffer}
                   onReroll={handleTicketReroll}
                 />
-
               </div>
             ) : null}
           </main>
 
-          <aside
-            className={`billion-court is-docked is-slots-only${
-              selectedOffer || movingFrom ? ' is-assigning' : ''
-            }${selectedOffer ? ' is-choose-pos' : ''}`}
-            aria-label="Your five"
-          >
-            {selectedOffer ? (
-              <p className="billion-court-dock__prompt" role="status">
-                CHOOSE A POSITION
-              </p>
-            ) : null}
-            <div className="billion-court-dock" aria-label="Your five dock">
-              <div className="billion-court-dock__guide" aria-hidden />
+          {!readyToDraft && !lineupLocked ? (
+            <aside className="classic-lineup-board" aria-label="Your five">
               {LINEUP_POSITIONS.map((slot) => {
                 const player = slots[slot];
-                const offerCanDrop =
-                  Boolean(selectedOffer) &&
-                  !player &&
-                  !evalStartedRef.current &&
-                  !slamPayload &&
-                  !placingRef.current &&
-                  playerFitsSlot(selectedOffer!, slot);
-                const moveCanDrop =
-                  Boolean(movingPlayer && movingFrom) &&
-                  !player &&
-                  !evalStartedRef.current &&
-                  !slamPayload &&
-                  canMoveToSlot(movingPlayer!, movingFrom!, slot);
-                const canDrop = offerCanDrop || moveCanDrop;
-                const isMovingSource = movingFrom === slot;
-                const isSlamTarget = slamSlot === slot && !player;
-                const isJustFilled = justFilledSlot === slot && Boolean(player);
-                const teamAccent = player
-                  ? getTeamColors(player.teamId).primary
+                const colors = player
+                  ? getTeamColors(player.teamId)
+                  : null;
+                const ink = colors
+                  ? contrastOnPrimary(colors.primary)
                   : undefined;
                 return (
-                  <button
+                  <div
                     key={slot}
-                    type="button"
-                    data-draft-slot={slot}
-                    className={`billion-court-dock__item${
-                      player ? ' is-filled' : ''
-                    }${canDrop ? ' is-target' : ''}${
-                      player ? ' is-occupied' : ''
-                    }${isMovingSource ? ' is-moving' : ''}${
-                      isSlamTarget ? ' is-slam-target' : ''
-                    }${isJustFilled ? ' is-just-filled' : ''}`}
-                    disabled={evalStartedRef.current || Boolean(slamPayload)}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      handleSlotClick(slot);
-                    }}
+                    className={`classic-lineup-row${player ? ' is-filled' : ''}${
+                      justFilledSlot === slot ? ' is-just-filled is-seating-in' : ''
+                    }`}
+                    style={
+                      player && colors
+                        ? {
+                            backgroundColor: colors.primary,
+                            color: ink,
+                            borderColor: colors.primary,
+                          }
+                        : undefined
+                    }
                     aria-label={
                       player
                         ? `${POSITION_LABELS[slot]}: ${player.name}`
                         : `Empty ${POSITION_LABELS[slot]}`
                     }
                   >
-                    <span
-                      className="billion-court-dock__circle"
-                      style={
-                        player && teamAccent
-                          ? {
-                              backgroundColor: teamAccent,
-                              color: contrastOnPrimary(teamAccent),
-                              borderColor: teamAccent,
-                            }
-                          : undefined
-                      }
-                    >
-                      {player ? playerInitials(player.name) : '·'}
+                    <span className="classic-lineup-row__pos">{slot}</span>
+                    <span className="classic-lineup-row__rule" aria-hidden />
+                    <span className="classic-lineup-row__name">
+                      {player ? player.name : '—'}
                     </span>
-                    <span className="billion-court-dock__pos" aria-hidden="true">
-                      {slot}
-                    </span>
-                    {player ? (
-                      <span className="billion-court-dock__name" aria-hidden="true">
-                        {shortRosterName(player.name)}
-                      </span>
-                    ) : null}
-                  </button>
+                  </div>
                 );
               })}
-            </div>
-          </aside>
+            </aside>
+          ) : readyToDraft && !lineupLocked ? (
+            <aside
+              className={`billion-court is-docked is-slots-only${
+                selectedOffer || movingFrom ? ' is-assigning' : ''
+              }`}
+              aria-label="Your five"
+            >
+              <div className="billion-court-dock" aria-label="Your five dock">
+                {LINEUP_POSITIONS.map((slot) => {
+                  const player = slots[slot];
+                  const offerCanDrop =
+                    Boolean(selectedOffer) &&
+                    !player &&
+                    !evalStartedRef.current &&
+                    !slamPayload &&
+                    playerFitsSlot(selectedOffer!, slot);
+                  const moveCanDrop =
+                    Boolean(movingPlayer && movingFrom) &&
+                    !player &&
+                    !evalStartedRef.current &&
+                    !slamPayload &&
+                    canMoveToSlot(movingPlayer!, movingFrom!, slot);
+                  const canDrop = offerCanDrop || moveCanDrop;
+                  const isMovingSource = movingFrom === slot;
+                  const isSlamTarget = slamSlot === slot && !player;
+                  const isJustFilled = justFilledSlot === slot && Boolean(player);
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      data-draft-slot={slot}
+                      className={`billion-court-dock__item${
+                        player ? ' is-filled' : ''
+                      }${canDrop ? ' is-target' : ''}${
+                        isMovingSource ? ' is-moving' : ''
+                      }${isSlamTarget ? ' is-slam-target' : ''}${
+                        isJustFilled ? ' is-just-filled' : ''
+                      }`}
+                      disabled={evalStartedRef.current}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        handleSlotClick(slot);
+                      }}
+                      aria-label={
+                        player
+                          ? `${POSITION_LABELS[slot]}: ${player.name}`
+                          : `Empty ${POSITION_LABELS[slot]}`
+                      }
+                    >
+                      <span
+                        className="billion-court-dock__circle"
+                        style={
+                          player
+                            ? {
+                                backgroundColor: getTeamColors(player.teamId)
+                                  .primary,
+                                color: contrastOnPrimary(
+                                  getTeamColors(player.teamId).primary,
+                                ),
+                                borderColor: getTeamColors(player.teamId)
+                                  .primary,
+                              }
+                            : undefined
+                        }
+                      >
+                        {player ? playerInitials(player.name) : '·'}
+                      </span>
+                      <span className="billion-court-dock__pos" aria-hidden="true">
+                        {slot}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+          ) : null}
         </div>
       ) : null}
       {onlineDraftError ? (

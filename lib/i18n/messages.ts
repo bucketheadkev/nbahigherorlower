@@ -23,6 +23,7 @@ export type MessageKey =
   | 'splash.loading'
   | 'game.home'
   | 'game.goal'
+  | 'game.tagline'
   | 'game.team'
   | 'game.era'
   | 'game.roll'
@@ -107,10 +108,11 @@ const EN: Record<MessageKey, string> = {
   'home.playButton': 'PLAY',
   'splash.loading': 'LOADING',
   'game.home': '← Home',
-  'game.goal': 'GOAL:',
+  'game.goal': 'GOAL',
+  'game.tagline': 'BUILD A LEGENDARY FIVE',
   'game.team': 'TEAM',
   'game.era': 'ERA',
-  'game.roll': 'ROLL',
+  'game.roll': 'SPIN',
   'runs.eyebrow': 'HISTORY',
   'runs.title': 'My Runs',
   'runs.emptyMeta': 'No billion runs yet',
@@ -211,10 +213,11 @@ const ES: Record<MessageKey, string> = {
   'home.playButton': 'JUGAR',
   'splash.loading': 'CARGANDO',
   'game.home': '← Inicio',
-  'game.goal': 'META:',
+  'game.goal': 'META',
+  'game.tagline': 'ARMA UN CINCO LEGENDARIO',
   'game.team': 'EQUIPO',
   'game.era': 'ÉPOCA',
-  'game.roll': 'TIRAR',
+  'game.roll': 'GIRAR',
   'runs.eyebrow': 'HISTORIAL',
   'runs.title': 'Mis Partidas',
   'runs.emptyMeta': 'Aún no hay partidas de mil millones',

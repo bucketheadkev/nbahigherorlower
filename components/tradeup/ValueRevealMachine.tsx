@@ -179,14 +179,14 @@ export function ValueRevealMachine({
     if (!completedRef.current) {
       completedRef.current = true;
       onComplete({ teamValue });
+      // Always celebrate the final combined total with a rewarding stinger.
+      playGameSound('results_celebration');
       if (isBillion) {
-        playGameSound('billion_celebration');
         void hapticHeavy();
         window.setTimeout(() => {
           hapticSuccess();
         }, 420);
       } else {
-        playGameSound('defeat');
         hapticWarning();
       }
     }
@@ -319,7 +319,7 @@ export function ValueRevealMachine({
         }`}
         aria-label="Final roster"
       >
-        {isBillion ? <BillionCelebration /> : null}
+        <BillionCelebration />
         <div className="billion-result-page__card">
           <div ref={shareCardRef} className="billion-result-page__share-shot">
             <p className="billion-result-page__kicker">FINAL ROSTER</p>
@@ -382,7 +382,25 @@ export function ValueRevealMachine({
             }}
             disabled={sharing}
           >
-            {sharing ? 'Preparing…' : 'Share'}
+            <svg
+              className="billion-result-page__share-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+            >
+              <circle cx="18" cy="5" r="3" fill="currentColor" />
+              <circle cx="6" cy="12" r="3" fill="currentColor" />
+              <circle cx="18" cy="19" r="3" fill="currentColor" />
+              <path
+                d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span>{sharing ? 'Preparing…' : 'Share'}</span>
           </button>
           {shareError ? (
             <p className="billion-result-page__share-error" role="alert">

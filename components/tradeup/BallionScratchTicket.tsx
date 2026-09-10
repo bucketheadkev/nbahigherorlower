@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import { BALLION_LOGO_SRC } from './TradeUpLogo';
 import { HeatRevealLayer } from './HeatRevealLayer';
@@ -56,10 +56,19 @@ export const BallionScratchTicket = memo(function BallionScratchTicket({
 
   if (compact) {
     return (
-      <div className="bst bst--compact bst--card is-revealed" aria-label={`${teamName} ${era}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="bst__logo-img" src={BALLION_LOGO_SRC} alt="" draggable={false} />
-        <div className="bst__compact-meta" style={{ background: teamPrimary, color: ink }}>
+      <div
+        className="bst bst--compact bst--card is-revealed"
+        aria-label={`${teamName} ${era}`}
+        style={
+          {
+            ['--bst-team' as string]: teamPrimary,
+            backgroundColor: teamPrimary,
+            color: ink,
+            borderColor: teamPrimary,
+          } as CSSProperties
+        }
+      >
+        <div className="bst__compact-meta" style={{ color: ink }}>
           <p className="bst__team" style={{ color: ink }}>
             {teamName}
           </p>

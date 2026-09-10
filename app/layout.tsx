@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
+import { WebPhoneShell } from '@/components/WebPhoneShell';
 import { FULL_MOTION_BOOT_SCRIPT } from '@/lib/tradeup/motionPreference';
 import './globals.css';
 import './game-ui.css';
 import './oneb-theme.css';
 import './run-home-ipad-portrait.css';
 import './h2h-ipad-portrait.css';
+import './web-phone.css';
 
 export const metadata: Metadata = {
   title: '1B Run',
@@ -68,7 +70,7 @@ html,body{background:#010814!important}
         <script dangerouslySetInnerHTML={{ __html: FULL_MOTION_BOOT_SCRIPT }} />
       </head>
       <body className="antialiased" style={{ background: '#010814' }}>
-        {children}
+        <WebPhoneShell>{children}</WebPhoneShell>
       </body>
     </html>
   );

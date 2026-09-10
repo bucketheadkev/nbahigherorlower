@@ -167,52 +167,85 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
 
   const settingsBody = (
     <>
-      <label className="sound-settings__row">
-        <span>Sound Effects</span>
-        <button
-          type="button"
-          className={`tu-btn tu-btn--secondary sound-settings__switch${muted ? '' : ' is-on'}`}
-          onPointerDown={() => {
-            resume();
-            hapticTap();
-            toggleMute();
-          }}
-        >
-          {muted ? 'Off' : 'On'}
-        </button>
-      </label>
+      <section
+        className="settings-drawer__section settings-drawer__section--feedback"
+        aria-label="Feedback"
+      >
+        <p className="settings-drawer__section-label">Feedback</p>
+        <div className="settings-drawer__card">
+          <label className="sound-settings__row sound-settings__row--toggle">
+            <span className="sound-settings__row-copy">
+              <strong>Sound Effects</strong>
+              <em>Tickets, rolls, and results</em>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!muted}
+              aria-label={muted ? 'Sound effects off' : 'Sound effects on'}
+              className={`sound-settings__toggle-track${muted ? '' : ' is-on'}`}
+              onPointerDown={() => {
+                resume();
+                hapticTap();
+                toggleMute();
+              }}
+            >
+              <span className="sound-settings__toggle-knob" aria-hidden />
+            </button>
+          </label>
 
-      <label className="sound-settings__row">
-        <span>Haptics</span>
-        <button
-          type="button"
-          className={`tu-btn tu-btn--secondary sound-settings__switch${hapticsEnabled ? ' is-on' : ''}`}
-          onPointerDown={() => {
-            resume();
-            hapticTap();
-            toggleHaptics();
-          }}
-        >
-          {hapticsEnabled ? 'On' : 'Off'}
-        </button>
-      </label>
+          <label className="sound-settings__row sound-settings__row--toggle">
+            <span className="sound-settings__row-copy">
+              <strong>Haptics</strong>
+              <em>Tap and lock feedback</em>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hapticsEnabled}
+              aria-label={hapticsEnabled ? 'Haptics on' : 'Haptics off'}
+              className={`sound-settings__toggle-track${hapticsEnabled ? ' is-on' : ''}`}
+              onPointerDown={() => {
+                resume();
+                hapticTap();
+                toggleHaptics();
+              }}
+            >
+              <span className="sound-settings__toggle-knob" aria-hidden />
+            </button>
+          </label>
+        </div>
+      </section>
 
-      <div className="sound-settings__row sound-settings__row--stack">
-        <span>Head-to-Head Name</span>
+      <section
+        className="settings-drawer__section settings-drawer__section--profile"
+        aria-label="Profile"
+      >
+        <p className="settings-drawer__section-label">Profile</p>
         <button
           type="button"
-          className="tu-btn tu-btn--secondary sound-settings__switch"
+          className="sound-settings__nav-link sound-settings__nav-link--profile"
           onPointerDown={openNameModal}
         >
-          {username || 'Set name'}
+          <span className="sound-settings__nav-copy">
+            <em>Head-to-Head Name</em>
+            <strong>{username || 'Set name'}</strong>
+          </span>
+          <span className="sound-settings__nav-chevron" aria-hidden>
+            ›
+          </span>
         </button>
-      </div>
+      </section>
 
-      <div className="sound-settings__guides" role="group" aria-label={guideNav.guidesLabel}>
-        <p className="sound-settings__guides-label">{guideNav.guidesLabel}</p>
+      <section
+        className="settings-drawer__section settings-drawer__section--guides"
+        role="group"
+        aria-label={guideNav.guidesLabel}
+      >
+        <p className="settings-drawer__section-label">{guideNav.guidesLabel}</p>
         <button
           type="button"
-          className="sound-settings__nav-link"
+          className="sound-settings__nav-link sound-settings__nav-link--guide"
           onPointerDown={() => openGuide('how-to-play')}
         >
           <span>{guideNav.howToPlay}</span>
@@ -222,7 +255,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         </button>
         <button
           type="button"
-          className="sound-settings__nav-link"
+          className="sound-settings__nav-link sound-settings__nav-link--guide"
           onPointerDown={() => openGuide('how-values-work')}
         >
           <span>{guideNav.howValues}</span>
@@ -230,13 +263,17 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             ›
           </span>
         </button>
-      </div>
+      </section>
 
-      <div className="sound-settings__guides" role="group" aria-label="Legal">
-        <p className="sound-settings__guides-label">Legal</p>
+      <section
+        className="settings-drawer__section settings-drawer__section--legal"
+        role="group"
+        aria-label="Legal"
+      >
+        <p className="settings-drawer__section-label">Legal</p>
         <button
           type="button"
-          className="sound-settings__nav-link"
+          className="sound-settings__nav-link sound-settings__nav-link--legal"
           onPointerDown={() => openLegalPage('/privacy')}
         >
           <span>Privacy Policy</span>
@@ -246,7 +283,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         </button>
         <button
           type="button"
-          className="sound-settings__nav-link"
+          className="sound-settings__nav-link sound-settings__nav-link--legal"
           onPointerDown={() => openLegalPage('/support')}
         >
           <span>Support</span>
@@ -264,7 +301,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             ›
           </span>
         </button>
-      </div>
+      </section>
     </>
   );
 
@@ -458,7 +495,10 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             />
             <aside className="settings-drawer__panel">
               <header className="settings-drawer__header">
-                <h2>Settings</h2>
+                <div className="settings-drawer__title-block">
+                  <p className="settings-drawer__eyebrow">1B RUN</p>
+                  <h2>Settings</h2>
+                </div>
                 <button
                   type="button"
                   className="settings-drawer__close"

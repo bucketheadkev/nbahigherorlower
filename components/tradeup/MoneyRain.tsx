@@ -15,25 +15,82 @@ type BillSeed = {
 
 const BILL_RATIO = 2.35;
 
-function buildBills(count: number, durationSec: number, burst: boolean): BillSeed[] {
+/** Staggered rain: pieces start across time so the screen fills vertically. */
+export const RESULTS_POUR_STAGGER_MS = 1500;
+export const RESULTS_POUR_FALL_MS = 2400;
+export const RESULTS_POUR_TOTAL_MS = RESULTS_POUR_STAGGER_MS + RESULTS_POUR_FALL_MS;
+
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffledLanePercents(count: number, rand: () => number): number[] {
+  const cols = Math.ceil(Math.sqrt(count * 1.35));
+  const rows = Math.ceil(count / cols);
+  const cells: number[] = [];
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      const x = ((c + 0.5) / cols) * 100;
+      const jitter = (rand() - 0.5) * (100 / cols) * 0.55;
+      cells.push(Math.max(1, Math.min(99, x + jitter)));
+    }
+  }
+  for (let i = cells.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [cells[i], cells[j]] = [cells[j]!, cells[i]!];
+  }
+  return cells.slice(0, count);
+}
+
+function buildBills(count: number, burst: boolean): BillSeed[] {
   const out: BillSeed[] = [];
+  const rand = mulberry32(burst ? 0x51f00d : 0xc0ffee);
+  const lanes = shuffledLanePercents(count, rand);
+  const fallSec = RESULTS_POUR_FALL_MS / 1000;
+  const staggerSec = RESULTS_POUR_STAGGER_MS / 1000;
   for (let i = 0; i < count; i += 1) {
-    const t = (i * 0.6180339887) % 1;
-    const u = (i * 0.3819660113) % 1;
-    const v = (i * 0.7548776662) % 1;
+    const u = rand();
+    const v = rand();
+    const w = rand();
     const depth = i % 3;
-    // Ambient rain stays dim inside the arena; celebration keeps punch.
-    const ambientOpacity =
-      depth === 0 ? 0.42 + u * 0.08 : depth === 1 ? 0.26 + u * 0.08 : 0.13 + u * 0.07;
+    const delay = burst
+      ? (count <= 1 ? 0 : (i / (count - 1)) * staggerSec * (0.85 + u * 0.3))
+      : -((i * 0.41) % 15);
     out.push({
-      left: t * 100,
-      width: burst ? 14 + u * 10 : depth === 0 ? 13 + u * 7 : depth === 1 ? 11 + u * 6 : 9 + u * 5,
-      duration: burst ? durationSec : 10 + v * 11,
-      delay: burst ? u * 0.28 : -((i * 0.41) % 15),
-      drift: (u - 0.5) * (burst ? 48 : 34),
-      spin: (v - 0.5) * (burst ? 60 : 40),
-      sway: (t - 0.5) * (burst ? 22 : 16),
-      opacity: burst ? 0.62 + u * 0.35 : ambientOpacity,
+      left: lanes[i] ?? 50,
+      width: burst
+        ? depth === 0
+          ? 14 + u * 9
+          : depth === 1
+            ? 12 + u * 7
+            : 10 + u * 6
+        : depth === 0
+          ? 13 + u * 7
+          : depth === 1
+            ? 11 + u * 6
+            : 9 + u * 5,
+      duration: burst ? fallSec * (0.92 + v * 0.16) : 10 + v * 11,
+      delay,
+      drift: (u - 0.5) * (burst ? 28 : 34) + (w - 0.5) * (burst ? 12 : 0),
+      spin: (v - 0.5) * (burst ? 48 : 40),
+      sway: (w - 0.5) * (burst ? 14 : 16),
+      opacity: burst
+        ? depth === 0
+          ? 0.78 + u * 0.16
+          : depth === 1
+            ? 0.6 + u * 0.16
+            : 0.42 + u * 0.14
+        : depth === 0
+          ? 0.42 + u * 0.08
+          : depth === 1
+            ? 0.26 + u * 0.08
+            : 0.13 + u * 0.07,
     });
   }
   return out;
@@ -42,17 +99,11 @@ function buildBills(count: number, durationSec: number, burst: boolean): BillSee
 /** Simple $1B green bills with a centered $. */
 export function MoneyRain({
   intense = false,
-  durationMs = 3000,
 }: {
   intense?: boolean;
-  /** Intense mode fall length (default 3s for billion celebration). */
   durationMs?: number;
 }) {
-  const durationSec = Math.max(1, durationMs / 1000);
-  const bills = useMemo(
-    () => buildBills(intense ? 140 : 60, durationSec, intense),
-    [intense, durationSec],
-  );
+  const bills = useMemo(() => buildBills(intense ? 70 : 60, intense), [intense]);
 
   return (
     <div className={`money-rain${intense ? ' money-rain--intense' : ''}`} aria-hidden>

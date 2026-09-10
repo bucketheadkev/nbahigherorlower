@@ -1,39 +1,38 @@
-export interface DraftSlamPoint {
-  x: number;
-  y: number;
-  size: number;
+'use client';
+
+function rectPoint(el: Element): { x: number; y: number; size: number } {
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.left + r.width / 2,
+    y: r.top + r.height / 2,
+    size: Math.max(r.width, r.height),
+  };
 }
 
-/** Measure compact disc flight from list position badge → dock circle. */
+/**
+ * Measure slam flight from a draft-list player row to a court slot face.
+ */
 export function measureDraftSlam(
   playerId: string,
   slot: string,
-): { from: DraftSlamPoint; to: DraftSlamPoint } | null {
+): {
+  from: { x: number; y: number; size: number };
+  to: { x: number; y: number; size: number };
+} | null {
   if (typeof document === 'undefined') return null;
-
-  const row = document.querySelector(
+  const fromEl = document.querySelector(
     `[data-draft-player-id="${CSS.escape(playerId)}"]`,
   );
-  const sourceEl = row?.querySelector('.franchise-pick__pos') ?? row;
-  const targetEl = document.querySelector(
-    `[data-draft-slot="${slot}"] .billion-court-dock__circle`,
-  );
-
-  if (!sourceEl || !targetEl) return null;
-
-  const fromR = sourceEl.getBoundingClientRect();
-  const toR = targetEl.getBoundingClientRect();
-
+  const toEl =
+    document.querySelector(
+      `[data-draft-slot="${CSS.escape(slot)}"] .halfcourt__slot-face`,
+    ) ??
+    document.querySelector(
+      `[data-draft-slot="${CSS.escape(slot)}"] .billion-court-dock__circle`,
+    );
+  if (!fromEl || !toEl) return null;
   return {
-    from: {
-      x: fromR.left + fromR.width / 2,
-      y: fromR.top + fromR.height / 2,
-      size: Math.max(Math.min(fromR.width, fromR.height), 36),
-    },
-    to: {
-      x: toR.left + toR.width / 2,
-      y: toR.top + toR.height / 2,
-      size: Math.max(toR.width, toR.height, 36),
-    },
+    from: rectPoint(fromEl),
+    to: rectPoint(toEl),
   };
 }
