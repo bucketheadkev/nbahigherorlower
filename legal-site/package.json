@@ -2,5 +2,11 @@
   "name": "one-billion-run-legal",
   "private": true,
   "version": "1.0.0",
-  "description": "Public legal pages for 1B Run by KovA Studios"
+  "description": "Public legal pages and 1v1 invite links for 1B Run",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "node scripts/prepare-vercel-output.js"
+  }
 }

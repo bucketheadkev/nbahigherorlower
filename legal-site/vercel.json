@@ -1,3 +1,30 @@
 {
-  "name": "one-billion-run-legal"
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "",
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/privacy/index.html" },
+    { "source": "/support", "destination": "/support/index.html" },
+    { "source": "/join/:code", "destination": "/join/index.html?code=:code" },
+    { "source": "/join", "destination": "/join/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=300" }
+      ]
+    },
+    {
+      "source": "/images/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
 }
