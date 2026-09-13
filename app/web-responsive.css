@@ -324,6 +324,24 @@ html[data-platform='web'] textarea:focus-visible {
     padding-top: max(0.85rem, env(safe-area-inset-top));
   }
 
+  html[data-platform='web'] .classic-val.is-analyzing,
+  html[data-platform='web'] .billion-shell--vault .classic-val.is-analyzing {
+    padding-top: 0;
+  }
+
+  html[data-platform='web'] .classic-val.is-analyzing .classic-val__analyze,
+  html[data-platform='web'] .classic-val.is-analyzing .classic-val__analyze-row {
+    text-align: left;
+  }
+
+  html[data-platform='web'] .classic-val.is-analyzing .classic-val__analyze-pos {
+    font-size: 1.2rem;
+  }
+
+  html[data-platform='web'] .classic-val.is-analyzing .classic-val__analyze-name {
+    font-size: 1.38rem;
+  }
+
   html[data-platform='web'] .classic-val__shot,
   html[data-platform='web'] .classic-val__hero,
   html[data-platform='web'] .classic-val__five,

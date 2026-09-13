@@ -1,6 +1,7 @@
 import type { H2HPosition } from './h2hPenalty';
 import { isH2HGameMode, type H2HGameMode } from './gameModes';
 import { parseModeConfig, type H2HModeConfig } from './modeConfig';
+import { parseShowdownCursor, type ShowdownCursor } from './showdownCursor';
 
 export interface H2HPickSelection {
   name: string;
@@ -37,6 +38,7 @@ export interface H2HMatchState {
   phase: 'selecting' | 'reveal' | 'finished';
   game_mode: H2HGameMode;
   mode_config: H2HModeConfig;
+  showdown: ShowdownCursor;
   mode_seed: string | null;
   p1_user_id: string;
   p2_user_id: string;
@@ -125,6 +127,7 @@ export function parseH2HState(data: unknown): H2HMatchState {
         : 'selecting',
     game_mode: gameMode,
     mode_config: modeConfig,
+    showdown: parseShowdownCursor(cfgRaw?.showdown),
     mode_seed: cfgRaw?.seed != null ? String(cfgRaw.seed) : null,
     p1_user_id: String(row.p1_user_id ?? ''),
     p2_user_id: String(row.p2_user_id ?? ''),

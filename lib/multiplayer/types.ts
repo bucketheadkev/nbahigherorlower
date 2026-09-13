@@ -99,6 +99,12 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   if (upper.includes('NOT_HOST')) {
     return new MultiplayerApiError('NOT_HOST', 'Only the host can start the match.');
   }
+  if (upper.includes('SHOWDOWN_SKIP') || upper.includes('SHOWDOWN_STALE')) {
+    return new MultiplayerApiError(
+      'SHOWDOWN_STALE',
+      'That showdown step is no longer current. Refreshing…',
+    );
+  }
   if (upper.includes('NEED_TWO_PLAYERS')) {
     return new MultiplayerApiError('NEED_TWO_PLAYERS', 'Two players are required to start.');
   }

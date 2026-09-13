@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { H2H_POSITIONS, type H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HRoundPublic } from '@/lib/multiplayer/h2hState';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { setH2HShowdownCursor } from '@/lib/multiplayer/rooms';
+import { type ShowdownCursor } from '@/lib/multiplayer/showdownCursor';
 import { formatDollars } from '@/lib/tradeup/billionDollar';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -31,6 +32,10 @@ interface H2HShowdownSequenceProps {
   p2Name: string;
   myPlayerNumber: 1 | 2;
   isHost: boolean;
+  showdown: ShowdownCursor;
+  onSynced: () => Promise<void>;
+  /** When set, that slot's shown value is doubled so the running total matches the five cards. */
+  bountyPosition?: H2HPosition | null;
   /** Running score from settled rounds (defaults to summed raw values). */
   scoreFormatter?: (rounds: H2HRoundPublic[]) => { p1: number; p2: number };
   formatScore?: (value: number) => string;
@@ -41,18 +46,23 @@ function displayName(name: string) {
   return name.trim().replace(/\s+/g, ' ') || name;
 }
 
-function roundValue(round: H2HRoundPublic, side: 'p1' | 'p2') {
-  if (side === 'p1') {
-    return Math.round(round.p1_raw_value ?? round.p1_adjusted_value ?? 0);
-  }
-  return Math.round(round.p2_raw_value ?? round.p2_adjusted_value ?? 0);
+function roundValue(
+  round: H2HRoundPublic,
+  side: 'p1' | 'p2',
+  bountyPosition: H2HPosition | null = null,
+) {
+  const raw =
+    side === 'p1'
+      ? Math.round(round.p1_raw_value ?? round.p1_adjusted_value ?? 0)
+      : Math.round(round.p2_raw_value ?? round.p2_adjusted_value ?? 0);
+  return bountyPosition && round.position === bountyPosition ? raw * 2 : raw;
 }
 
-function defaultTotals(settled: H2HRoundPublic[]) {
+function defaultTotals(settled: H2HRoundPublic[], bountyPosition: H2HPosition | null) {
   return settled.reduce(
     (acc, r) => ({
-      p1: acc.p1 + roundValue(r, 'p1'),
-      p2: acc.p2 + roundValue(r, 'p2'),
+      p1: acc.p1 + roundValue(r, 'p1', bountyPosition),
+      p2: acc.p2 + roundValue(r, 'p2', bountyPosition),
     }),
     { p1: 0, p2: 0 },
   );
@@ -61,9 +71,10 @@ function defaultTotals(settled: H2HRoundPublic[]) {
 function sideTotals(
   rounds: H2HRoundPublic[],
   iAmP1: boolean,
+  bountyPosition: H2HPosition | null,
   scoreFormatter?: (rounds: H2HRoundPublic[]) => { p1: number; p2: number },
 ) {
-  const raw = scoreFormatter ? scoreFormatter(rounds) : defaultTotals(rounds);
+  const raw = scoreFormatter ? scoreFormatter(rounds) : defaultTotals(rounds, bountyPosition);
   return {
     mine: iAmP1 ? raw.p1 : raw.p2,
     opp: iAmP1 ? raw.p2 : raw.p1,
@@ -95,6 +106,9 @@ export function H2HShowdownSequence({
   p2Name,
   myPlayerNumber,
   isHost,
+  showdown,
+  onSynced,
+  bountyPosition = null,
   scoreFormatter,
   formatScore,
   onComplete,
@@ -109,21 +123,26 @@ export function H2HShowdownSequence({
     [rounds],
   );
 
-  const [started, setStarted] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [started, setStarted] = useState(showdown.started);
+  const [index, setIndex] = useState(showdown.index);
   const [phase, setPhase] = useState<ShowdownPhase>('counting');
   const [leftShown, setLeftShown] = useState(0);
   const [rightShown, setRightShown] = useState(0);
   const [totalMineShown, setTotalMineShown] = useState(0);
   const [totalOppShown, setTotalOppShown] = useState(0);
   const [totalsRising, setTotalsRising] = useState(false);
-  const startedRef = useRef(false);
-  const advancingRef = useRef(false);
-  const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowserClient>['channel']> | null>(
-    null,
-  );
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [overlay, setOverlay] = useState<ShowdownCursor | null>(null);
+  const startedRef = useRef(showdown.started);
+  const pendingRef = useRef(false);
+  const appliedKey = useRef('');
   const onCompleteRef = useRef(onComplete);
+  const onSyncedRef = useRef(onSynced);
   onCompleteRef.current = onComplete;
+  onSyncedRef.current = onSynced;
+
+  const live =
+    overlay && overlay.revision >= showdown.revision ? overlay : showdown;
 
   const round = orderedRounds[index] ?? null;
   const isLast = index >= orderedRounds.length - 1;
@@ -131,24 +150,24 @@ export function H2HShowdownSequence({
   const positionKey = (round?.position as H2HPosition | undefined) ?? '';
   const leftTarget = round
     ? iAmP1
-      ? roundValue(round, 'p1')
-      : roundValue(round, 'p2')
+      ? roundValue(round, 'p1', bountyPosition)
+      : roundValue(round, 'p2', bountyPosition)
     : 0;
   const rightTarget = round
     ? iAmP1
-      ? roundValue(round, 'p2')
-      : roundValue(round, 'p1')
+      ? roundValue(round, 'p2', bountyPosition)
+      : roundValue(round, 'p1', bountyPosition)
     : 0;
 
   // Totals before this position (Center never adds on this screen).
   const priorTotals = useMemo(
-    () => sideTotals(orderedRounds.slice(0, index), iAmP1, scoreFormatter),
-    [iAmP1, index, orderedRounds, scoreFormatter],
+    () => sideTotals(orderedRounds.slice(0, index), iAmP1, bountyPosition, scoreFormatter),
+    [bountyPosition, iAmP1, index, orderedRounds, scoreFormatter],
   );
   const afterTotals = useMemo(() => {
     if (isLast) return priorTotals;
-    return sideTotals(orderedRounds.slice(0, index + 1), iAmP1, scoreFormatter);
-  }, [iAmP1, index, isLast, orderedRounds, priorTotals, scoreFormatter]);
+    return sideTotals(orderedRounds.slice(0, index + 1), iAmP1, bountyPosition, scoreFormatter);
+  }, [bountyPosition, iAmP1, index, isLast, orderedRounds, priorTotals, scoreFormatter]);
 
   // Snap top totals to prior when entering a position.
   useEffect(() => {
@@ -158,14 +177,6 @@ export function H2HShowdownSequence({
     setTotalsRising(false);
   }, [positionKey, priorTotals.mine, priorTotals.opp, started]);
 
-  const beginShowdown = useCallback(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-    setStarted(true);
-    setIndex(0);
-    setPhase('counting');
-  }, []);
-
   useEffect(() => {
     if (orderedRounds.length === 0) {
       onCompleteRef.current();
@@ -173,80 +184,60 @@ export function H2HShowdownSequence({
   }, [orderedRounds.length]);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    const channel = supabase
-      .channel(`h2h_showdown:${roomId}`)
-      .on('broadcast', { event: 'showdown_start' }, ({ payload }) => {
-        const row = payload as { from?: number };
-        if (row.from === myPlayerNumber) return;
-        beginShowdown();
-      })
-      .on('broadcast', { event: 'showdown_step' }, ({ payload }) => {
-        const row = payload as { index?: number; from?: number };
-        if (row.from === myPlayerNumber) return;
-        if (typeof row.index !== 'number') return;
-        advancingRef.current = false;
-        if (row.index >= orderedRounds.length) {
-          onCompleteRef.current();
-          return;
-        }
-        setIndex(Math.min(row.index, Math.max(0, orderedRounds.length - 1)));
-        setPhase('counting');
-      })
-      .on('broadcast', { event: 'showdown_finish' }, ({ payload }) => {
-        const row = payload as { from?: number };
-        if (row.from === myPlayerNumber) return;
-        onCompleteRef.current();
-      })
-      .subscribe();
-    channelRef.current = channel;
-    return () => {
-      void supabase.removeChannel(channel);
-      channelRef.current = null;
-    };
-  }, [beginShowdown, myPlayerNumber, orderedRounds.length, roomId]);
-
-  const handleHostStart = useCallback(() => {
-    if (!isHost || startedRef.current) return;
-    hapticLight();
-    beginShowdown();
-    void channelRef.current?.send({
-      type: 'broadcast',
-      event: 'showdown_start',
-      payload: { from: myPlayerNumber },
-    });
-  }, [beginShowdown, isHost, myPlayerNumber]);
-
-  const advance = useCallback(() => {
-    if (!isHost || advancingRef.current || phase !== 'settled') return;
-    advancingRef.current = true;
-    hapticLight();
-    if (isLast) {
-      void channelRef.current?.send({
-        type: 'broadcast',
-        event: 'showdown_finish',
-        payload: { from: myPlayerNumber },
-      });
+    if (!live.started) return;
+    const key = `${live.revision}:${live.index}:${live.finished}`;
+    if (appliedKey.current === key) return;
+    appliedKey.current = key;
+    startedRef.current = true;
+    setStarted(true);
+    setSyncError(null);
+    if (live.finished) {
       onCompleteRef.current();
       return;
     }
-    const next = index + 1;
+    const next = Math.min(Math.max(0, live.index), Math.max(0, orderedRounds.length - 1));
     setIndex(next);
     setPhase('counting');
-    void channelRef.current?.send({
-      type: 'broadcast',
-      event: 'showdown_step',
-      payload: { index: next, from: myPlayerNumber },
-    });
-    window.setTimeout(() => {
-      advancingRef.current = false;
-    }, 120);
-  }, [index, isHost, isLast, myPlayerNumber, phase]);
+  }, [live.finished, live.index, live.revision, live.started, orderedRounds.length]);
+
+  const commitCursor = useCallback(
+    async (command: { started: boolean; index: number; finished: boolean }) => {
+      if (!isHost || pendingRef.current) return;
+      pendingRef.current = true;
+      setSyncError(null);
+      try {
+        const next = await setH2HShowdownCursor(roomId, command);
+        setOverlay(next);
+        await onSyncedRef.current();
+      } catch (err) {
+        setSyncError(err instanceof Error ? err.message : 'Could not update the showdown.');
+        await onSyncedRef.current().catch(() => undefined);
+      } finally {
+        pendingRef.current = false;
+      }
+    },
+    [isHost, roomId],
+  );
+
+  const handleHostStart = useCallback(() => {
+    if (!isHost || live.started || pendingRef.current) return;
+    hapticLight();
+    void commitCursor({ started: true, index: 0, finished: false });
+  }, [commitCursor, isHost, live.started]);
+
+  const advance = useCallback(() => {
+    if (!isHost || pendingRef.current || phase !== 'settled' || !live.started) return;
+    hapticLight();
+    if (isLast) {
+      void commitCursor({ started: true, index: live.index, finished: true });
+      return;
+    }
+    void commitCursor({ started: true, index: live.index + 1, finished: false });
+  }, [commitCursor, isHost, isLast, live.index, live.started, phase]);
 
   // Dual card count-up — then feed into top totals (except Center).
   useEffect(() => {
     if (!started || !positionKey || phase !== 'counting') return;
-    advancingRef.current = false;
 
     if (reduceMotion) {
       setLeftShown(leftTarget);
@@ -369,6 +360,11 @@ export function H2HShowdownSequence({
               {t('h2h.waitingShowdown')}
             </p>
           )}
+          {syncError ? (
+            <p className="h2h-lobby__status" role="alert">
+              {syncError}
+            </p>
+          ) : null}
         </div>
       </div>
     );
@@ -445,6 +441,7 @@ export function H2HShowdownSequence({
       iWonRound={iWonRound}
       myPlayerNumber={myPlayerNumber}
       isHost={isHost}
+      status={syncError}
       onHostAdvance={advance}
       nextLabel={isLast ? t('h2h.seeResults') : t('h2h.nextPosition')}
       waitingLabel={t('h2h.waitingHostNext')}
@@ -482,6 +479,7 @@ function ShowdownRoundView({
   iWonRound,
   myPlayerNumber,
   isHost,
+  status,
   onHostAdvance,
   nextLabel,
   waitingLabel,
@@ -507,6 +505,7 @@ function ShowdownRoundView({
   iWonRound: boolean;
   myPlayerNumber: 1 | 2;
   isHost: boolean;
+  status?: string | null;
   onHostAdvance: () => void;
   nextLabel: string;
   waitingLabel: string;
@@ -598,6 +597,11 @@ function ShowdownRoundView({
         ) : (
           <div className="h2h-sd__next-spacer" aria-hidden />
         )}
+        {status ? (
+          <p className="h2h-lobby__status" role="alert">
+            {status}
+          </p>
+        ) : null}
 
         <div className="h2h-sd__emoji">
           <H2HEmojiReactions

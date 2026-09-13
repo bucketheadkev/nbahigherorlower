@@ -59,25 +59,59 @@ export function pickSharedBountyPosition(seed: string): H2HPosition {
   return H2H_POSITIONS[hash % H2H_POSITIONS.length]!;
 }
 
+export function displayedRoundValue(
+  round: {
+    position: H2HPosition;
+    p1_raw_value?: number | null;
+    p2_raw_value?: number | null;
+    p1_adjusted_value?: number | null;
+    p2_adjusted_value?: number | null;
+  },
+  side: 'p1' | 'p2',
+  bountyPosition: H2HPosition | null = null,
+  multiplier = 2,
+): number {
+  const raw =
+    side === 'p1'
+      ? Math.round(round.p1_raw_value ?? round.p1_adjusted_value ?? 0)
+      : Math.round(round.p2_raw_value ?? round.p2_adjusted_value ?? 0);
+  const mult = bountyPosition && round.position === bountyPosition ? multiplier : 1;
+  return raw * mult;
+}
+
+/** Sum of the integers shown on the five roster rows. Bounty doubles one slot's shown contribution. */
+export function sumDisplayedRoster(
+  rounds: Array<{
+    position: H2HPosition;
+    p1_raw_value?: number | null;
+    p2_raw_value?: number | null;
+    p1_adjusted_value?: number | null;
+    p2_adjusted_value?: number | null;
+  }>,
+  bountyPosition: H2HPosition | null = null,
+  multiplier = 2,
+): { p1: number; p2: number } {
+  let p1 = 0;
+  let p2 = 0;
+  for (const round of rounds) {
+    p1 += displayedRoundValue(round, 'p1', bountyPosition, multiplier);
+    p2 += displayedRoundValue(round, 'p2', bountyPosition, multiplier);
+  }
+  return { p1, p2 };
+}
+
 export function bountyAdjustedTotal(
   rounds: Array<{
     position: H2HPosition;
+    p1_raw_value?: number | null;
+    p2_raw_value?: number | null;
     p1_adjusted_value?: number | null;
     p2_adjusted_value?: number | null;
   }>,
   bountyPosition: H2HPosition,
   multiplier = 2,
 ): { p1: number; p2: number } {
-  let p1 = 0;
-  let p2 = 0;
-  for (const round of rounds) {
-    const a = Math.round(round.p1_adjusted_value ?? 0);
-    const b = Math.round(round.p2_adjusted_value ?? 0);
-    const mult = round.position === bountyPosition ? multiplier : 1;
-    p1 += a * mult;
-    p2 += b * mult;
-  }
-  return { p1, p2 };
+  return sumDisplayedRoster(rounds, bountyPosition, multiplier);
 }
 
 export function classicModeConfig(): H2HModeConfig {

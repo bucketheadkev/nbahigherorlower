@@ -253,6 +253,42 @@ export function getChallengePersistence(): ChallengePersistence {
   return readPersistence();
 }
 
+export const ACHIEVEMENT_UNLOCKED_EVENT = 'oneb-achievement-unlocked';
+const ACHIEVEMENT_FLASH_KEY = 'oneb_achievement_flash_at';
+
+export function getAchievementSummary(): { completed: number; total: number } {
+  const list = buildChallengeProgressList();
+  return {
+    completed: list.filter((item) => item.complete).length,
+    total: list.length,
+  };
+}
+
+/** Tell any open Achievements control to recount and shimmer once. */
+export function notifyAchievementsUnlocked(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(ACHIEVEMENT_FLASH_KEY, String(Date.now()));
+  } catch {
+    /* private mode */
+  }
+  window.dispatchEvent(new Event(ACHIEVEMENT_UNLOCKED_EVENT));
+}
+
+/** True once if an unlock just happened and the hub button was not on screen. */
+export function consumeAchievementCelebration(maxAgeMs = 12000): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = sessionStorage.getItem(ACHIEVEMENT_FLASH_KEY);
+    if (!raw) return false;
+    sessionStorage.removeItem(ACHIEVEMENT_FLASH_KEY);
+    const at = Number(raw);
+    return Number.isFinite(at) && Date.now() - at <= maxAgeMs;
+  } catch {
+    return false;
+  }
+}
+
 /** Ordered challenge list for the Challenges screen. */
 export function buildChallengeProgressList(): ChallengeProgress[] {
   const pb = getBestRosterValue();

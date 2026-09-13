@@ -16,7 +16,11 @@ import {
   modeDef,
   type H2HGameMode,
 } from '@/lib/multiplayer/gameModes';
-import { bountyAdjustedTotal, resolveBountyPosition } from '@/lib/multiplayer/modeConfig';
+import {
+  displayedRoundValue,
+  resolveBountyPosition,
+  sumDisplayedRoster,
+} from '@/lib/multiplayer/modeConfig';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import { H2HTradeUpMatch } from './H2HTradeUpMatch';
 import { H2HKnockoutMatch } from './H2HKnockoutMatch';
@@ -49,6 +53,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     movePick,
     ackContinue,
     ackRematch,
+    refetch,
   } = useH2HMatch({ roomId, userId });
 
   const [revealDone, setRevealDone] = useState(false);
@@ -123,6 +128,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         rematchBusy={rematchBusy}
         isHost={lobby?.room.host_user_id === userId}
         error={error}
+        onSynced={refetch}
         onLock={(position, selection, rawValue) => lockPick(position, selection, rawValue)}
         onMove={(from, to, selection, rawValue) => movePick(from, to, selection, rawValue)}
         onContinue={() => { if (lobby?.room.host_user_id === userId) void ackContinue(); }}
@@ -135,12 +141,15 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   const isHost = lobby?.room.host_user_id === userId;
   const modeMeta = modeDef(gameMode);
   const bountyPosition: H2HPosition = resolveBountyPosition(state.mode_config, roomId, state.mode_seed);
-  const bountyTotals =
-    gameMode === 'bounty'
-      ? bountyAdjustedTotal(state.resolved_rounds, bountyPosition, 2)
-      : { p1: state.p1_total, p2: state.p2_total };
+  const scoreBounty = gameMode === 'bounty' ? bountyPosition : null;
+  const rosterTotals = sumDisplayedRoster(state.resolved_rounds, scoreBounty, 2);
 
-  if (state.phase === 'finished' && !revealDone && state.resolved_rounds.length > 0) {
+  if (
+    state.phase === 'finished' &&
+    !revealDone &&
+    !state.showdown.finished &&
+    state.resolved_rounds.length > 0
+  ) {
     return (
       <H2HShowdownSequence
         roomId={roomId}
@@ -149,19 +158,17 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         p2Name={p2Name}
         myPlayerNumber={state.my_player_number}
         isHost={isHost}
-        scoreFormatter={
-          gameMode === 'bounty'
-            ? (rounds) => bountyAdjustedTotal(rounds, bountyPosition, 2)
-            : undefined
-        }
+        showdown={state.showdown}
+        onSynced={refetch}
+        bountyPosition={scoreBounty}
         onComplete={() => setRevealDone(true)}
       />
     );
   }
 
   if (state.phase === 'finished') {
-    const scoreP1 = gameMode === 'bounty' ? bountyTotals.p1 : state.p1_total;
-    const scoreP2 = gameMode === 'bounty' ? bountyTotals.p2 : state.p2_total;
+    const scoreP1 = rosterTotals.p1;
+    const scoreP2 = rosterTotals.p2;
     const p1Wins = scoreP1 > scoreP2;
     const p2Wins = scoreP2 > scoreP1;
     const iAmP1 = state.my_player_number === 1;
@@ -180,16 +187,12 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     const myRounds = state.resolved_rounds.map((round) => ({
       position: round.position,
       selection: iAmP1 ? round.p1_selection : round.p2_selection,
-      value: iAmP1
-        ? round.p1_raw_value ?? round.p1_adjusted_value ?? 0
-        : round.p2_raw_value ?? round.p2_adjusted_value ?? 0,
+      value: displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', scoreBounty, 2),
     }));
     const oppRounds = state.resolved_rounds.map((round) => ({
       position: round.position,
       selection: iAmP1 ? round.p2_selection : round.p1_selection,
-      value: iAmP1
-        ? round.p2_raw_value ?? round.p2_adjusted_value ?? 0
-        : round.p1_raw_value ?? round.p1_adjusted_value ?? 0,
+      value: displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', scoreBounty, 2),
     }));
 
     return (

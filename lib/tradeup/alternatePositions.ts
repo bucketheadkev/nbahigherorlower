@@ -231,6 +231,10 @@ function overrideKeyForPlayer(player: TradePlayer): string | null {
   if (nameKey.includes('jaylen brown')) return 'brown';
   if (nameKey.includes('anthony edwards')) return 'edwards';
 
+  // hist_{era}_{team}_{slug} must not inherit a star list from the last token.
+  // "james" / "george" / "paul" / "brown" would otherwise collide across eras.
+  if (id.startsWith('hist_')) return null;
+
   const last = id.split(/[_-]/).pop();
   if (last && POSITION_OVERRIDES[last]) return last;
   return null;

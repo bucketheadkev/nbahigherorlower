@@ -20,6 +20,7 @@ export interface H2HKnockoutMatchProps {
   rematchBusy: boolean;
   isHost: boolean;
   error: string | null;
+  onSynced: () => Promise<void>;
   onLock: (position: H2HPosition, selection: H2HPickSelection, rawValue: number) => Promise<void>;
   onMove: (
     from: H2HPosition,
@@ -40,6 +41,7 @@ export function H2HKnockoutMatch({
   rematchBusy,
   isHost,
   error,
+  onSynced,
   onLock,
   onMove,
   onRematch,
@@ -93,7 +95,7 @@ export function H2HKnockoutMatch({
   const p1Name = myNum === 1 ? myName : opponentName;
   const p2Name = myNum === 2 ? myName : opponentName;
 
-  if (!revealDone) {
+  if (!revealDone && !state.showdown.finished) {
     return (
       <H2HShowdownSequence
         roomId={roomId}
@@ -102,6 +104,8 @@ export function H2HKnockoutMatch({
         p2Name={p2Name}
         myPlayerNumber={myNum}
         isHost={isHost}
+        showdown={state.showdown}
+        onSynced={onSynced}
         scoreFormatter={(rounds) => ({
           p1: rounds.filter((r) => r.matchup_winner === 'p1').length,
           p2: rounds.filter((r) => r.matchup_winner === 'p2').length,

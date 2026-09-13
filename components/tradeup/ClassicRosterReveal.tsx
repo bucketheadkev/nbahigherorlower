@@ -14,6 +14,7 @@ import {
   getDollarValue,
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
+import { resultPhrase } from '@/lib/tradeup/resultPhrase';
 import { playFinalTotalSettleSound, stopFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
 import {
   captureRunShareCard,
@@ -30,12 +31,28 @@ import {
   easeOutCubic,
   scheduleFrame,
 } from '@/lib/tradeup/perf/rafClock';
-import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
+import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
+import type { Position } from '@/lib/tradeup/types';
+import { useLocale } from '@/hooks/useLocale';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { BillionCelebration } from './BillionCelebration';
 
+type SeatedRevealPlayer = ValuedPlayer & { seatedSlot?: Position };
+
+const ES_POSITION_LABELS: Record<Position, string> = {
+  PG: 'Base',
+  SG: 'Escolta',
+  SF: 'Alero',
+  PF: 'Ala-pívot',
+  C: 'Pívot',
+};
+
+function playerInSlot(roster: SeatedRevealPlayer[], slot: Position): SeatedRevealPlayer | undefined {
+  return roster.find((player) => player.seatedSlot === slot);
+}
+
 interface ClassicRosterRevealProps {
-  roster: ValuedPlayer[];
+  roster: SeatedRevealPlayer[];
   reduceMotion?: boolean;
   onComplete: (payload: { teamValue: number }) => void;
   /** Fires the moment the final total finishes counting up. */
@@ -66,14 +83,6 @@ const TRACK_MAX = 1_250_000_000;
 
 function formatCompactMillions(value: number): string {
   return `$${(value / 1_000_000).toFixed(1)}M`;
-}
-
-function resultPhrase(teamValue: number): string {
-  if (teamValue < 750_000_000) return 'MARKET MISS.';
-  if (teamValue < 900_000_000) return 'KEEP BUILDING.';
-  if (teamValue < BILLION_GOAL) return 'SO CLOSE.';
-  if (teamValue < 1_100_000_000) return 'BILLION.';
-  return 'BILLION RUN.';
 }
 
 /** Ease-in-out for a financial processor feel (fast middle, soft ends). */
@@ -124,6 +133,7 @@ export function ClassicRosterReveal({
   onContinue,
   eyebrow = null,
 }: ClassicRosterRevealProps) {
+  const { locale } = useLocale();
   const teamValue = useMemo(
     () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
     [roster],
@@ -131,7 +141,6 @@ export function ClassicRosterReveal({
   const isBillion = teamValue >= BILLION_GOAL;
   const delta = teamValue - BILLION_GOAL;
   const phrase = resultPhrase(teamValue);
-  const trackPct = Math.min(100, Math.max(0, (teamValue / TRACK_MAX) * 100));
   const goalPct = (BILLION_GOAL / TRACK_MAX) * 100;
 
   const [phase, setPhase] = useState<Phase>('enter');
@@ -141,7 +150,6 @@ export function ClassicRosterReveal({
   const [displayTotal, setDisplayTotal] = useState(0);
   const [totalSettling, setTotalSettling] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
-  const [trackReady, setTrackReady] = useState(false);
   const [showPhrase, setShowPhrase] = useState(false);
   const [rosterCount, setRosterCount] = useState(0);
   const [pulseIndex, setPulseIndex] = useState<number | null>(null);
@@ -263,7 +271,6 @@ export function ClassicRosterReveal({
     setDisplayTotal(teamValue);
     displayRef.current = teamValue;
     later(() => setShowCompare(true), reduceMotion ? 20 : 80);
-    later(() => setTrackReady(true), reduceMotion ? 40 : 220);
     later(() => {
       if (isBillion) setCelebrate(true);
       finishRunOnce();
@@ -334,12 +341,16 @@ export function ClassicRosterReveal({
   const showHeroTotal = phase !== 'analyze' && phase !== 'enter';
   const showActions = phase === 'done' && actions !== 'none';
   const showFive = phase === 'roster' || phase === 'done';
+  const liveTrackPct = Math.min(
+    100,
+    Math.max(0, (displayTotal / TRACK_MAX) * 100),
+  );
 
   return (
     <div
       className={`classic-val${entered ? ' is-entered' : ''}${
         isBillion ? ' is-billion' : ''
-      }`}
+      }${phase === 'analyze' ? ' is-analyzing' : ''}`}
       aria-label="Roster valuation"
     >
       {celebrate ? (
@@ -362,6 +373,9 @@ export function ClassicRosterReveal({
             >
               {LINEUP_POSITIONS.map((pos, index) => {
                 const done = index < checkedCount;
+                const player = playerInSlot(roster, pos);
+                const label =
+                  locale === 'es' ? ES_POSITION_LABELS[pos] : POSITION_LABELS[pos];
                 return (
                   <li
                     key={pos}
@@ -369,8 +383,13 @@ export function ClassicRosterReveal({
                       done ? ' is-done' : ''
                     }`}
                   >
-                    <span>{pos}</span>
-                    <em aria-hidden>{done ? '✓' : ''}</em>
+                    <span className="classic-val__analyze-pos">{label}</span>
+                    <span className="classic-val__analyze-dash" aria-hidden>
+                      —
+                    </span>
+                    <strong className="classic-val__analyze-name" aria-hidden={!done}>
+                      {player?.name ?? '—'}
+                    </strong>
                   </li>
                 );
               })}
@@ -388,10 +407,37 @@ export function ClassicRosterReveal({
             </p>
           ) : null}
 
+          {showHeroTotal ? (
+            <p className="classic-val__goal">1B Run</p>
+          ) : null}
+
+          {showHeroTotal ? (
+            <div className="classic-val__track is-live" aria-hidden>
+              <span className="classic-val__track-rail" />
+              <span
+                className="classic-val__track-fill"
+                style={{ width: `${liveTrackPct}%` }}
+              />
+              <span
+                className="classic-val__track-goal"
+                style={{ left: `${goalPct}%` }}
+              />
+              <span
+                className="classic-val__track-run"
+                style={{ left: `${liveTrackPct}%` }}
+              />
+              <span className="classic-val__track-min">$0</span>
+              <span
+                className="classic-val__track-goal-label"
+                style={{ left: `${goalPct}%` }}
+              >
+                $1B
+              </span>
+            </div>
+          ) : null}
+
           {showCompare ? (
             <div className="classic-val__compare is-in">
-              <div className="classic-val__rule" aria-hidden />
-              <p className="classic-val__goal">$1 BILLION</p>
               <p
                 className={`classic-val__delta${
                   isBillion ? ' is-over' : ' is-under'
@@ -403,32 +449,6 @@ export function ClassicRosterReveal({
               <p className="classic-val__delta-label">
                 {isBillion ? 'ABOVE $1 BILLION' : 'TO $1 BILLION'}
               </p>
-            </div>
-          ) : null}
-
-          {showCompare ? (
-            <div
-              className={`classic-val__track${trackReady ? ' is-ready' : ''}`}
-              aria-hidden
-            >
-              <span className="classic-val__track-rail" />
-              <span
-                className="classic-val__track-goal"
-                style={{ left: `${goalPct}%` }}
-              />
-              <span
-                className="classic-val__track-run"
-                style={{
-                  left: trackReady ? `${trackPct}%` : '0%',
-                }}
-              />
-              <span className="classic-val__track-min">$0</span>
-              <span
-                className="classic-val__track-goal-label"
-                style={{ left: `${goalPct}%` }}
-              >
-                $1B
-              </span>
             </div>
           ) : null}
 

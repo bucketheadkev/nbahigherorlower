@@ -2,6 +2,7 @@ import { ensureAnonymousSession } from '@/lib/supabase/auth';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { parseMatchResult, type MatchResultRow } from './match';
 import { parseH2HState, type H2HMatchState, type H2HPickSelection } from './h2hState';
+import { parseShowdownCursor, type ShowdownCursor } from './showdownCursor';
 import type { H2HPosition } from './h2hPenalty';
 import { isH2HGameMode, type H2HGameMode } from './gameModes';
 import {
@@ -275,6 +276,22 @@ export async function initH2HMatch(roomId: string): Promise<void> {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.rpc('init_h2h_match', { room_id: roomId });
   if (error) throw mapRoomRpcError(error);
+}
+
+export async function setH2HShowdownCursor(
+  roomId: string,
+  command: { started: boolean; index: number; finished: boolean },
+): Promise<ShowdownCursor> {
+  await ensureAnonymousSession();
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc('set_h2h_showdown_cursor', {
+    room_id: roomId,
+    started: command.started,
+    step_index: command.index,
+    finished: command.finished,
+  });
+  if (error) throw mapRoomRpcError(error);
+  return parseShowdownCursor(data);
 }
 
 export async function fetchH2HState(roomId: string): Promise<H2HMatchState> {

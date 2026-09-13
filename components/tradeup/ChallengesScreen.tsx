@@ -1,11 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import type { MessageKey } from '@/lib/i18n/messages';
 import { ArenaAtmosphere } from './ArenaAtmosphere';
 import { formatDollars, formatDollarsExact } from '@/lib/tradeup/billionDollar';
-import { buildChallengeProgressList } from '@/lib/tradeup/challenges';
+import {
+  ACHIEVEMENT_UNLOCKED_EVENT,
+  buildChallengeProgressList,
+  type ChallengeProgress,
+} from '@/lib/tradeup/challenges';
 
 function challengeKey(id: string, field: 'title' | 'blurb'): MessageKey {
   return `challenge.${id}.${field}` as MessageKey;
@@ -13,7 +17,14 @@ function challengeKey(id: string, field: 'title' | 'blurb'): MessageKey {
 
 export function ChallengesScreen() {
   const { t } = useLocale();
-  const challenges = useMemo(() => buildChallengeProgressList(), []);
+  const [challenges, setChallenges] = useState<ChallengeProgress[]>(() =>
+    buildChallengeProgressList(),
+  );
+  useEffect(() => {
+    const refresh = () => setChallenges(buildChallengeProgressList());
+    window.addEventListener(ACHIEVEMENT_UNLOCKED_EVENT, refresh);
+    return () => window.removeEventListener(ACHIEVEMENT_UNLOCKED_EVENT, refresh);
+  }, []);
   const doneCount = challenges.filter((c) => c.complete).length;
 
   return (

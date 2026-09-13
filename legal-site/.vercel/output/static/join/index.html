@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>1B Run — 1v1 Invite</title>
+    <meta
+      name="description"
+      content="You've been challenged to a 1v1. Tap to join."
+    />
+    <meta name="theme-color" content="#010814" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1B Run" />
+    <meta property="og:title" content="1B Run — 1v1 Invite" />
+    <meta
+      property="og:description"
+      content="You've been challenged to a 1v1. Tap to join."
+    />
+    <meta
+      property="og:image"
+      content="https://one-billion-run-legal.vercel.app/images/h2h-invite-og.jpg"
+    />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:url"
+      content="https://one-billion-run-legal.vercel.app/join/"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="1B Run — 1v1 Invite" />
+    <meta
+      name="twitter:description"
+      content="You've been challenged to a 1v1. Tap to join."
+    />
+    <meta
+      name="twitter:image"
+      content="https://one-billion-run-legal.vercel.app/images/h2h-invite-og.jpg"
+    />
+
+    <link rel="stylesheet" href="/styles/legal.css" />
+    <link rel="stylesheet" href="/styles/invite.css" />
+  </head>
+  <body class="invite-body">
+    <main class="invite-page">
+      <div class="invite-page__brand">
+        <img
+          class="invite-page__logo"
+          src="/images/1b-run-app-icon-squircle.png"
+          width="112"
+          height="112"
+          alt="1B Run"
+        />
+        <p class="invite-page__wordmark">1B Run</p>
+        <p class="invite-page__kicker">1v1 Challenge</p>
+      </div>
+
+      <section class="invite-page__card" aria-live="polite">
+        <p class="invite-page__lead">You've been challenged to a 1v1.</p>
+        <p class="invite-page__code-label">Room code</p>
+        <p class="invite-page__code" id="invite-code">····</p>
+        <ol class="invite-page__steps">
+          <li>Open the <strong>1B Run</strong> app on your iPhone.</li>
+          <li>Go to <strong>1v1</strong> → <strong>Join Game</strong>.</li>
+          <li>Enter the room code above.</li>
+        </ol>
+        <a class="invite-page__open" id="invite-open" href="pickfive://join/">
+          Open in 1B Run
+        </a>
+        <p class="invite-page__hint">
+          If the app is installed, Universal Links open this room automatically.
+          Otherwise use the room code in Join Game.
+        </p>
+      </section>
+
+      <p class="invite-page__footer">
+        KovA Studios ·
+        <a href="mailto:onebillionrun@gmail.com">onebillionrun@gmail.com</a>
+      </p>
+    </main>
+
+    <script>
+      (function () {
+        var parts = window.location.pathname.split('/').filter(Boolean);
+        var joinIdx = parts.map(function (p) { return p.toLowerCase(); }).indexOf('join');
+        var raw = joinIdx >= 0 && parts[joinIdx + 1] ? parts[joinIdx + 1] : '';
+        var q = new URLSearchParams(window.location.search);
+        if (!raw) raw = q.get('join') || q.get('code') || '';
+        var code = String(raw)
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, '')
+          .replace(/[IO01]/g, '')
+          .slice(0, 4);
+        var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        code = code
+          .split('')
+          .filter(function (ch) { return alphabet.indexOf(ch) !== -1; })
+          .join('')
+          .slice(0, 4);
+
+        var codeEl = document.getElementById('invite-code');
+        var openEl = document.getElementById('invite-open');
+        if (code.length === 4) {
+          if (codeEl) codeEl.textContent = code;
+          if (openEl) openEl.href = 'pickfive://join/' + code;
+          document.title = '1B Run — 1v1 Invite';
+        } else if (codeEl) {
+          codeEl.textContent = '————';
+        }
+      })();
+    </script>
+  </body>
+</html>

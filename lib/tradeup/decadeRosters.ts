@@ -3,7 +3,7 @@
  * Source: data/decades/*.txt → scripts/build-decade-rosters.mjs
  */
 
-import decadeData from './data/decadeRosters.json';
+import decadeData from './data/decadeRosters.json' with { type: 'json' };
 import { TEAMS } from './teams';
 import type { Position, TeamInfo, TradePlayer } from './types';
 

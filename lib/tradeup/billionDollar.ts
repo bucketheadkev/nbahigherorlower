@@ -273,6 +273,12 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2020s|DAL|Anthony Davis': { minDollars: 200_000_000, maxDollars: 200_000_000 },
   '2020s|LAL|Anthony Davis': { minDollars: 200_000_000, maxDollars: 200_000_000 },
   '2020s|DET|Cade Cunningham': { minDollars: 199_000_000, maxDollars: 199_000_000 },
+  '2020s|CHA|LaMelo Ball': { minDollars: 189_000_000, maxDollars: 189_000_000 },
+  '2020s|BOS|Jaylen Brown': { minDollars: 196_000_000, maxDollars: 196_000_000 },
+  '2020s|PHI|Jaylen Brown': { minDollars: 196_000_000, maxDollars: 196_000_000 },
+  '2020s|TOR|Scottie Barnes': { minDollars: 183_000_000, maxDollars: 183_000_000 },
+  '2020s|IND|Pascal Siakam': { minDollars: 181_000_000, maxDollars: 181_000_000 },
+  '2020s|TOR|Pascal Siakam': { minDollars: 181_000_000, maxDollars: 181_000_000 },
   '2020s|PHI|Tyrese Maxey': { minDollars: 194_000_000, maxDollars: 194_000_000 },
   '2020s|LAC|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2020s|SAS|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
@@ -296,6 +302,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2010s|LAL|Anthony Davis': { minDollars: 200_000_000, maxDollars: 200_000_000 },
   '2010s|POR|Damian Lillard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|MIA|Dwyane Wade': { minDollars: 199_000_000, maxDollars: 199_000_000 },
+  '2010s|MIA|Chris Bosh': { minDollars: 193_000_000, maxDollars: 193_000_000 },
   '2010s|LAL|Kobe Bryant': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2010s|BOS|Kyrie Irving': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|PHX|Devin Booker': { minDollars: 199_000_000, maxDollars: 199_000_000 },
@@ -316,6 +323,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2000s|SAS|Tim Duncan': { minDollars: 206_000_000, maxDollars: 206_000_000 },
   '2000s|WAS|Michael Jordan': { minDollars: 190_000_000, maxDollars: 190_000_000 },
   '2000s|TOR|Chris Bosh': { minDollars: 185_000_000, maxDollars: 185_000_000 },
+  '2000s|ORL|J.J. Redick': { minDollars: 110_000_000, maxDollars: 110_000_000 },
   '2000s|CLE|LeBron James': { minDollars: 213_000_000, maxDollars: 213_000_000 },
   '2000s|LAL|Kobe Bryant': { minDollars: 214_000_000, maxDollars: 214_000_000 },
   '2000s|LAL|Shaquille O\'Neal': { minDollars: 208_000_000, maxDollars: 208_000_000 },
@@ -332,7 +340,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
 
   // 1980s — hand-tuned Classic market prices (fixed bands)
   '1980s|CHI|Michael Jordan': { minDollars: 214_000_000, maxDollars: 214_000_000 },
-  '1980s|BOS|Larry Bird': { minDollars: 207_000_000, maxDollars: 207_000_000 },
+  '1980s|BOS|Larry Bird': { minDollars: 213_000_000, maxDollars: 213_000_000 },
 };
 
 /** Every LeBron card — Lakers late-career band; all other stints stay elite ($201M+). */
@@ -357,11 +365,33 @@ function customDollarBand(
   return lebronDollarBand(player);
 }
 
-/** Parse `hist_{era}_{teamId}_{slug}` → override key using the live player name. */
-function decadeDollarOverrideKey(player: TradePlayer): string | null {
+/**
+ * Stable identity for a player/team/era card.
+ * Uses the historical id (era + team) plus the authored name — not the name alone.
+ */
+export function playerVersionKey(player: TradePlayer): string | null {
   const match = /^hist_(\d{4}s)_([A-Z]{2,3})_/.exec(player.id);
   if (!match) return null;
   return `${match[1]}|${match[2]}|${player.name.trim()}`;
+}
+
+/** Parse `hist_{era}_{teamId}_{slug}` → override key using the live player name. */
+function decadeDollarOverrideKey(player: TradePlayer): string | null {
+  return playerVersionKey(player);
+}
+
+/**
+ * Deterministic 0.988–1.012 factor from the player id.
+ * Same version always lands on the same million; different eras do not share a key.
+ */
+export function stablePriceJitter(playerId: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < playerId.length; i += 1) {
+    hash ^= playerId.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const unit = (hash >>> 0) / 0xffffffff;
+  return 0.988 + unit * 0.024;
 }
 
 /** Resolve the pricing pocket for a player (S/GOAT use low/mid/high sub-bands). */
@@ -458,45 +488,51 @@ export function dollarsFromBoxStats(stats: {
 }
 
 /**
- * Roll market price inside the player's dollar pocket (tier or S/GOAT sub-band).
- * Never leaves that pocket's min/max (rounded to clean millions).
+ * Authoritative primary price for a player/team/era version.
+ * Classic and every 1v1 mode must call this — no mode multiplier and no re-roll.
+ * Fixed min=max overrides stay exact. Open bands use a stable id hash, not Math.random.
  */
-export function rollDollarValue(player: TradePlayer): number {
+export function resolveAuthoritativePlayerValue(player: TradePlayer): number {
   const band = resolveDollarBand(player);
-  const eased = bandProgress(player, band);
+  if (band.minDollars === band.maxDollars) {
+    return toCleanMillions(Math.min(MAX_PLAYER_DOLLARS, band.minDollars));
+  }
 
+  const eased = bandProgress(player, band);
   const fromStats = dollarsFromBoxStats(player.stats);
   const span = Math.max(1, band.maxDollars - band.minDollars);
   const statsT = Math.min(1, Math.max(0, (fromStats - band.minDollars) / span));
-  // TV placement dominates when the pocket spans multiple TV steps;
-  // single-TV pockets lean harder on box stats for within-band spread.
   const tvWeight = band.minTv === band.maxTv ? 0.35 : 0.7;
   const t = Math.min(1, Math.max(0, eased * tvWeight + statsT * (1 - tvWeight)));
   const raw = band.minDollars + span * t;
-  const jitter = 0.988 + Math.random() * 0.024;
   const clamped = Math.min(
     band.maxDollars,
-    Math.max(band.minDollars, raw * jitter),
+    Math.max(band.minDollars, raw * stablePriceJitter(player.id)),
   );
   return toCleanMillions(Math.min(MAX_PLAYER_DOLLARS, clamped));
+}
+
+/** @deprecated Name kept for callers — this no longer rolls randomly. */
+export function rollDollarValue(player: TradePlayer): number {
+  return resolveAuthoritativePlayerValue(player);
 }
 
 export function getDollarValue(player: TradePlayer): number {
   const valued = player as ValuedPlayer;
   if (typeof valued.dollarValue === 'number' && Number.isFinite(valued.dollarValue)) {
-    return valued.dollarValue;
+    return toCleanMillions(valued.dollarValue);
   }
-  return rollDollarValue(player);
+  return resolveAuthoritativePlayerValue(player);
 }
 
 /**
- * Market price for a seated slot.
- * Primary position keeps full value; secondary seats print slightly less.
+ * Seated price. Primary slot keeps the shared card price.
+ * Off-primary uses the same 6% haircut in Classic and 1v1, from that card price — not a new roll.
  */
 export function getDollarValueForSlot(player: TradePlayer, slot: Position): number {
-  const base = rollDollarValue(player);
+  const base = resolveAuthoritativePlayerValue(player);
   if (player.primaryPosition === slot) {
-    return Math.min(MAX_PLAYER_DOLLARS, base);
+    return base;
   }
   return toCleanMillions(
     Math.min(MAX_PLAYER_DOLLARS, base * OFF_PRIMARY_SLOT_VALUE_FACTOR),
@@ -504,7 +540,7 @@ export function getDollarValueForSlot(player: TradePlayer, slot: Position): numb
 }
 
 export function sumTeamValue(players: TradePlayer[]): number {
-  return players.reduce((sum, player) => sum + getDollarValue(player), 0);
+  return players.reduce((sum, player) => sum + Math.round(getDollarValue(player)), 0);
 }
 
 export function formatDollars(value: number): string {
@@ -513,7 +549,7 @@ export function formatDollars(value: number): string {
     return `$${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(2)}B`;
   }
   if (value >= 1_000_000) {
-    const millions = value / 1_000_000;
+    const millions = Math.round(value) / 1_000_000;
     return `$${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`;
   }
   return `$${Math.round(value).toLocaleString()}`;
@@ -524,11 +560,7 @@ export function formatDollarsExact(value: number): string {
 }
 
 export function withValue(player: TradePlayer): ValuedPlayer {
-  const existing = player as ValuedPlayer;
-  if (typeof existing.dollarValue === 'number' && Number.isFinite(existing.dollarValue)) {
-    return existing;
-  }
-  return { ...player, dollarValue: rollDollarValue(player) };
+  return { ...player, dollarValue: resolveAuthoritativePlayerValue(player) };
 }
 
 function pickNearTarget(

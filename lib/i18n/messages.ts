@@ -49,6 +49,7 @@ export type MessageKey =
   | 'challenges.intro'
   | 'challenges.done'
   | 'challenges.unlocked'
+  | 'challenges.progress'
   | 'challenge.halfway-home.title'
   | 'challenge.halfway-home.blurb'
   | 'challenge.closing-in.title'
@@ -103,7 +104,7 @@ export type MessageKey =
 const EN: Record<MessageKey, string> = {
   'nav.myRuns': 'My Runs',
   'nav.play': 'Play',
-  'nav.challenges': 'Challenges',
+  'nav.challenges': 'Achievements',
   'nav.main': 'Main',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -144,12 +145,13 @@ const EN: Record<MessageKey, string> = {
   'runs.waiting': 'WAITING',
   'runs.emptyCopy': 'Hit $1,000,000,000 or more to bank a squad here.',
   'challenges.eyebrow': 'SEASON GOALS',
-  'challenges.title': 'Challenges',
+  'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
   'challenges.intro':
     'Hit billion-dollar milestones. Progress tracks your best Classic roster.',
   'challenges.done': 'DONE',
-  'challenges.unlocked': 'Challenge complete',
+  'challenges.unlocked': 'Achievement completed',
+  'challenges.progress': '{done}/{total} complete',
   'challenge.halfway-home.title': 'Halfway Home',
   'challenge.halfway-home.blurb':
     'Finish a Classic run worth $500,000,000 or more.',
@@ -223,7 +225,7 @@ const EN: Record<MessageKey, string> = {
 const ES: Record<MessageKey, string> = {
   'nav.myRuns': 'Mis Partidas',
   'nav.play': 'Jugar',
-  'nav.challenges': 'Retos',
+  'nav.challenges': 'Logros',
   'nav.main': 'Principal',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -266,12 +268,13 @@ const ES: Record<MessageKey, string> = {
   'runs.emptyCopy':
     'Alcanza $1,000,000,000 o más para guardar un quinteto aquí.',
   'challenges.eyebrow': 'METAS DE TEMPORADA',
-  'challenges.title': 'Retos',
+  'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',
   'challenges.intro':
     'Alcanza hitos de mil millones. El progreso sigue tu mejor quinteto Clásico.',
   'challenges.done': 'LISTO',
-  'challenges.unlocked': 'Reto completado',
+  'challenges.unlocked': 'Logro completado',
+  'challenges.progress': '{done}/{total} completados',
   'challenge.halfway-home.title': 'A Medio Camino',
   'challenge.halfway-home.blurb':
     'Termina una partida Clásica de $500,000,000 o más.',

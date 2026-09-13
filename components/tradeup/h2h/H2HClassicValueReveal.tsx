@@ -29,7 +29,7 @@ function rosterForSide(
       side === 'p1'
         ? (round.p1_raw_value ?? round.p1_adjusted_value ?? selection.dollarValue ?? 0)
         : (round.p2_raw_value ?? round.p2_adjusted_value ?? selection.dollarValue ?? 0);
-    return pickSelectionToPlayer(selection, raw);
+    return { ...pickSelectionToPlayer(selection, raw), seatedSlot: pos };
   }).filter((p): p is ValuedPlayer => Boolean(p));
 }
 

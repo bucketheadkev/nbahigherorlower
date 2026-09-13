@@ -22,7 +22,11 @@ import {
 import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import { saveBillionRun } from '@/lib/tradeup/billionRuns';
-import { processClassicRunChallenges } from '@/lib/tradeup/challenges';
+import {
+  getAchievementSummary,
+  notifyAchievementsUnlocked,
+  processClassicRunChallenges,
+} from '@/lib/tradeup/challenges';
 import {
   getBestRosterValue,
   saveBestRosterValue,
@@ -173,7 +177,10 @@ export function BillionTradeEngine({
   const [slamPayload, setSlamPayload] = useState<DraftSlamPayload | null>(null);
   const [slamSlot, setSlamSlot] = useState<Position | null>(null);
   const [justFilledSlot, setJustFilledSlot] = useState<Position | null>(null);
-  const [challengeAlertIds, setChallengeAlertIds] = useState<string[]>([]);
+  const [challengeAlertIds, setChallengeAlertIds] = useState<
+    { id: string; completed: number; total: number }[]
+  >([]);
+  const challengeAlertTimerRef = useRef<number | null>(null);
   const pendingAssignRef = useRef<{
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
@@ -213,6 +220,14 @@ export function BillionTradeEngine({
   const pendingMoveRef = useRef<{ from: Position; to: Position } | null>(null);
   /** Optimistic locks awaiting server confirmation. */
   const pendingLockSlotsRef = useRef<Set<Position>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      if (challengeAlertTimerRef.current != null) {
+        window.clearTimeout(challengeAlertTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOnline) return;
@@ -565,9 +580,31 @@ export function BillionTradeEngine({
         previousBest,
       );
       if (unlocked.length > 0) {
-        // Brief beat after the number lands, then show unlocks.
-        window.setTimeout(() => {
-          setChallengeAlertIds(unlocked);
+        notifyAchievementsUnlocked();
+        if (challengeAlertTimerRef.current != null) {
+          window.clearTimeout(challengeAlertTimerRef.current);
+        }
+        // Brief beat after the number lands, then show unlocks one at a time.
+        const summary = getAchievementSummary();
+        const alreadyShown = summary.completed - unlocked.length;
+        challengeAlertTimerRef.current = window.setTimeout(() => {
+          challengeAlertTimerRef.current = null;
+          setChallengeAlertIds((current) => {
+            const seen = new Set(current.map((item) => item.id));
+            const next = [...current];
+            let step = alreadyShown;
+            for (const id of unlocked) {
+              if (seen.has(id)) continue;
+              seen.add(id);
+              step += 1;
+              next.push({
+                id,
+                completed: step,
+                total: summary.total,
+              });
+            }
+            return next.length === current.length ? current : next;
+          });
         }, 450);
       }
     },
@@ -837,8 +874,10 @@ export function BillionTradeEngine({
 
       {challengeAlertIds[0] ? (
         <ChallengeCompleteToast
-          key={challengeAlertIds[0]}
-          challengeId={challengeAlertIds[0]}
+          key={challengeAlertIds[0].id}
+          challengeId={challengeAlertIds[0].id}
+          completed={challengeAlertIds[0].completed}
+          total={challengeAlertIds[0].total}
           onDismiss={dismissChallengeAlert}
         />
       ) : null}
@@ -887,7 +926,10 @@ export function BillionTradeEngine({
 
       {showReveal && !isH2H && !(isOnline && deferOnlineReveal) ? (
         <ClassicRosterReveal
-          roster={rosterInSlotOrder(slots)}
+          roster={LINEUP_POSITIONS.flatMap((pos) => {
+            const player = slots[pos];
+            return player ? [{ ...player, seatedSlot: pos }] : [];
+          })}
           reduceMotion={reduceMotion}
           onComplete={handleRevealComplete}
           onTotalSettled={handleTotalSettled}
