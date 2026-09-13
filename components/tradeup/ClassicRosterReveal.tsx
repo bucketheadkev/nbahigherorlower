@@ -15,7 +15,11 @@ import {
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
 import { resultPhrase } from '@/lib/tradeup/resultPhrase';
-import { playFinalTotalSettleSound, stopFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
+import {
+  playFinalTotalSettleSound,
+  stopFinalTotalSettleSound,
+  warmFinalTotalSettleSound,
+} from '@/lib/tradeup/gameAudio';
 import {
   captureRunShareCard,
   shareRunResultImage,
@@ -196,6 +200,7 @@ export function ClassicRosterReveal({
   }, [isBillion, later, onComplete, teamValue]);
 
   useEffect(() => {
+    warmFinalTotalSettleSound();
     aliveRef.current = true;
     return () => {
       aliveRef.current = false;

@@ -158,6 +158,12 @@ let wheelSpinBuffer: AudioBuffer | null = null;
 let wheelSpinBufferPromise: Promise<AudioBuffer | null> | null = null;
 let wheelSpinSource: AudioBufferSourceNode | null = null;
 let wheelSpinGain: GainNode | null = null;
+let cashRegisterBuffer: AudioBuffer | null = null;
+let cashRegisterBufferPromise: Promise<AudioBuffer | null> | null = null;
+let cashRegisterSource: AudioBufferSourceNode | null = null;
+let cashRegisterGain: GainNode | null = null;
+let cashRegisterToken = 0;
+let cashRegisterLive = false;
 
 function isNativePlatform(): boolean {
   if (typeof window === 'undefined') return false;
@@ -249,16 +255,134 @@ function canPlay(key: string, debounceMs: number): boolean {
   return true;
 }
 
+function cashRegisterGainValue(): number {
+  return Math.min(1, SOUND_DEFS.cash_register.volume * masterScale());
+}
+
+function stopCashRegisterBufferSource(): void {
+  if (cashRegisterSource) {
+    try {
+      cashRegisterSource.stop();
+    } catch {
+      /* already stopped */
+    }
+    try {
+      cashRegisterSource.disconnect();
+    } catch {
+      /* ignore */
+    }
+    cashRegisterSource = null;
+  }
+  if (cashRegisterGain) {
+    try {
+      cashRegisterGain.disconnect();
+    } catch {
+      /* ignore */
+    }
+    cashRegisterGain = null;
+  }
+}
+
+function ensureCashRegisterBuffer(): Promise<AudioBuffer | null> {
+  if (cashRegisterBuffer) return Promise.resolve(cashRegisterBuffer);
+  if (cashRegisterBufferPromise) return cashRegisterBufferPromise;
+
+  const audio = getCtx();
+  if (!audio) return Promise.resolve(null);
+
+  cashRegisterBufferPromise = (async () => {
+    try {
+      if (audio.state === 'suspended') {
+        try {
+          await audio.resume();
+        } catch {
+          /* decode can still succeed */
+        }
+      }
+      const res = await fetch(CASH_REGISTER_SOUND_PATH);
+      if (!res.ok) return null;
+      const raw = await res.arrayBuffer();
+      const copy = raw.slice(0);
+      const decoded = await audio.decodeAudioData(copy);
+      cashRegisterBuffer = decoded;
+      return decoded;
+    } catch {
+      return null;
+    }
+  })();
+
+  return cashRegisterBufferPromise;
+}
+
+function startCashRegisterBuffer(buf: AudioBuffer): boolean {
+  const audio = getCtx();
+  if (!audio) return false;
+
+  stopCashRegisterBufferSource();
+  const gain = audio.createGain();
+  gain.gain.value = cashRegisterGainValue();
+  gain.connect(audio.destination);
+  cashRegisterGain = gain;
+
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  src.connect(gain);
+  cashRegisterSource = src;
+  try {
+    src.start(0);
+  } catch {
+    stopCashRegisterBufferSource();
+    return false;
+  }
+  src.onended = () => {
+    if (cashRegisterSource === src) stopCashRegisterBufferSource();
+  };
+  return true;
+}
+
 export function unlockGameAudio(): void {
   const audio = getCtx();
   if (!audio) return;
   unlocked = true;
   if (audio.state === 'suspended') void audio.resume();
   void ensureWheelSpinBuffer();
+  void ensureCashRegisterBuffer();
   // Desktop Chrome drops a spin that starts only after an async decode.
   // Warm the element on the first gesture so the roll tap can play immediately.
   if (!isNativePlatform()) ensurePlayer('wheel_spin')?.load();
+  primeCashRegisterElement();
   prepareH2HEmojiAudio();
+}
+
+/** Play/pause during a gesture so a later cha-ching is allowed. */
+function primeCashRegisterElement(): void {
+  const el = ensurePlayer('cash_register');
+  if (!el) return;
+  el.load();
+  const previous = el.volume;
+  el.volume = 0;
+  const primed = el.play();
+  if (!primed || typeof primed.then !== 'function') {
+    el.volume = previous;
+    return;
+  }
+  void primed
+    .then(() => {
+      if (cashRegisterLive) {
+        el.volume = cashRegisterGainValue() || previous;
+        return;
+      }
+      el.pause();
+      try {
+        el.currentTime = 0;
+      } catch {
+        /* seek may fail before metadata */
+      }
+      el.volume = cashRegisterGainValue() || previous;
+    })
+    .catch(() => {
+      el.volume = cashRegisterGainValue() || previous;
+    });
 }
 
 export function syncAudioSettings(): void {
@@ -596,13 +720,69 @@ export function playWheelStopSound(): void {
   playDigitalWheelLock();
 }
 
+/** Decode the cash-register sample before the total finishes counting. */
+export function warmFinalTotalSettleSound(): void {
+  if (typeof window === 'undefined') return;
+  unlockGameAudio();
+  ensurePlayer('cash_register')?.load();
+  void ensureCashRegisterBuffer();
+}
+
 /** Final combined total settle — once per reveal. */
 export function playFinalTotalSettleSound(): void {
-  playSound('cash_register', { force: true });
+  if (typeof window === 'undefined') return;
+  const { sfxMuted } = getAudioSettings();
+  if (sfxMuted) return;
+
+  cashRegisterLive = true;
+  unlockGameAudio();
+  const token = ++cashRegisterToken;
+  stopSound('cash_register');
+  stopCashRegisterBufferSource();
+
+  const playBuffer = (buf: AudioBuffer) => {
+    if (token !== cashRegisterToken) return;
+    const audio = getCtx();
+    if (!audio) return;
+    void audio.resume().then(() => {
+      if (token !== cashRegisterToken) return;
+      startCashRegisterBuffer(buf);
+    }).catch(() => {
+      /* blocked */
+    });
+  };
+
+  const el = ensurePlayer('cash_register');
+  if (el) {
+    el.muted = false;
+    el.loop = false;
+    el.volume = cashRegisterGainValue();
+    try {
+      el.currentTime = 0;
+    } catch {
+      /* seek may fail before metadata */
+    }
+    const started = el.play();
+    if (started && typeof started.then === 'function') {
+      void started.catch(() => {
+        void ensureCashRegisterBuffer().then((buf) => {
+          if (buf) playBuffer(buf);
+        });
+      });
+      return;
+    }
+  }
+
+  void ensureCashRegisterBuffer().then((buf) => {
+    if (buf) playBuffer(buf);
+  });
 }
 
 /** Stop cash-register / results stinger when leaving the reveal screen. */
 export function stopFinalTotalSettleSound(): void {
+  cashRegisterToken += 1;
+  cashRegisterLive = false;
+  stopCashRegisterBufferSource();
   stopSound('cash_register');
   stopSound('results_cheer');
 }
