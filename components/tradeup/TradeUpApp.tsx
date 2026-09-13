@@ -122,7 +122,8 @@ export function TradeUpApp() {
     if (tab === 'runs') setRunsKey((k) => k + 1);
   }, []);
 
-  const showTabs = screen === 'hub' && !showSplash;
+  // Mount hub tab bar under the splash so it crossfades in with home (not after).
+  const showTabs = screen === 'hub';
 
   return (
     <LocaleProvider>
@@ -156,7 +157,12 @@ export function TradeUpApp() {
       ) : null}
 
       {showTabs ? (
-        <MobileBottomNav active={hubTab} onChange={handleHubChange} />
+        <div
+          className={showSplash ? 'oneb-tabbar-host is-under-splash' : 'oneb-tabbar-host'}
+          aria-hidden={showSplash || undefined}
+        >
+          <MobileBottomNav active={hubTab} onChange={handleHubChange} />
+        </div>
       ) : null}
     </LocaleProvider>
   );

@@ -24,9 +24,18 @@ export type MessageKey =
   | 'game.home'
   | 'game.goal'
   | 'game.tagline'
+  | 'game.h2hGoal'
   | 'game.team'
   | 'game.era'
   | 'game.roll'
+  | 'h2h.showdownReady'
+  | 'h2h.startShowdown'
+  | 'h2h.waitingShowdown'
+  | 'h2h.nextPosition'
+  | 'h2h.seeResults'
+  | 'h2h.waitingHostNext'
+  | 'h2h.winsPosition'
+  | 'h2h.tiePosition'
   | 'runs.eyebrow'
   | 'runs.title'
   | 'runs.emptyMeta'
@@ -39,6 +48,11 @@ export type MessageKey =
   | 'challenges.completeLabel'
   | 'challenges.intro'
   | 'challenges.done'
+  | 'challenges.unlocked'
+  | 'challenge.halfway-home.title'
+  | 'challenge.halfway-home.blurb'
+  | 'challenge.closing-in.title'
+  | 'challenge.closing-in.blurb'
   | 'challenge.hit-1b.title'
   | 'challenge.hit-1b.blurb'
   | 'challenge.near-miss-950m.title'
@@ -110,9 +124,18 @@ const EN: Record<MessageKey, string> = {
   'game.home': '← Home',
   'game.goal': 'GOAL',
   'game.tagline': 'BUILD A LEGENDARY FIVE',
+  'game.h2hGoal': 'Draft a better team than {name}',
   'game.team': 'TEAM',
   'game.era': 'ERA',
   'game.roll': 'SPIN',
+  'h2h.showdownReady': 'Lineups Locked',
+  'h2h.startShowdown': 'Start Showdown',
+  'h2h.waitingShowdown': 'Waiting for host to start…',
+  'h2h.nextPosition': 'Next',
+  'h2h.seeResults': 'See Results',
+  'h2h.waitingHostNext': 'Waiting for host…',
+  'h2h.winsPosition': '{name} wins {position}',
+  'h2h.tiePosition': 'Tie — {position}',
   'runs.eyebrow': 'HISTORY',
   'runs.title': 'My Runs',
   'runs.emptyMeta': 'No billion runs yet',
@@ -126,6 +149,13 @@ const EN: Record<MessageKey, string> = {
   'challenges.intro':
     'Hit billion-dollar milestones. Progress tracks your best Classic roster.',
   'challenges.done': 'DONE',
+  'challenges.unlocked': 'Challenge complete',
+  'challenge.halfway-home.title': 'Halfway Home',
+  'challenge.halfway-home.blurb':
+    'Finish a Classic run worth $500,000,000 or more.',
+  'challenge.closing-in.title': 'Closing In',
+  'challenge.closing-in.blurb':
+    'Finish a Classic run worth $750,000,000 or more.',
   'challenge.hit-1b.title': 'Billion Club',
   'challenge.hit-1b.blurb': 'Finish a Classic run worth $1,000,000,000 or more.',
   'challenge.near-miss-950m.title': 'Nine-Figure Push',
@@ -170,7 +200,7 @@ const EN: Record<MessageKey, string> = {
   'challenge.triple-threat.blurb':
     'Draft three players worth at least $210 million in one run.',
   'challenge.top-of-the-market.title': 'Top of the Market',
-  'challenge.top-of-the-market.blurb': 'Draft a player worth $225 million.',
+  'challenge.top-of-the-market.blurb': 'Draft a player worth $220 million.',
   'challenge.clutch-investment.title': 'Clutch Investment',
   'challenge.clutch-investment.blurb':
     'Enter your final selection below $800 million, then cross $1 billion.',
@@ -215,9 +245,18 @@ const ES: Record<MessageKey, string> = {
   'game.home': '← Inicio',
   'game.goal': 'META',
   'game.tagline': 'ARMA UN CINCO LEGENDARIO',
+  'game.h2hGoal': 'Arma un mejor equipo que {name}',
   'game.team': 'EQUIPO',
   'game.era': 'ÉPOCA',
   'game.roll': 'GIRAR',
+  'h2h.showdownReady': 'Quintetos listos',
+  'h2h.startShowdown': 'Empezar el showdown',
+  'h2h.waitingShowdown': 'Esperando a que el anfitrión empiece…',
+  'h2h.nextPosition': 'Siguiente',
+  'h2h.seeResults': 'Ver resultados',
+  'h2h.waitingHostNext': 'Esperando al anfitrión…',
+  'h2h.winsPosition': '{name} gana {position}',
+  'h2h.tiePosition': 'Empate — {position}',
   'runs.eyebrow': 'HISTORIAL',
   'runs.title': 'Mis Partidas',
   'runs.emptyMeta': 'Aún no hay partidas de mil millones',
@@ -232,6 +271,13 @@ const ES: Record<MessageKey, string> = {
   'challenges.intro':
     'Alcanza hitos de mil millones. El progreso sigue tu mejor quinteto Clásico.',
   'challenges.done': 'LISTO',
+  'challenges.unlocked': 'Reto completado',
+  'challenge.halfway-home.title': 'A Medio Camino',
+  'challenge.halfway-home.blurb':
+    'Termina una partida Clásica de $500,000,000 o más.',
+  'challenge.closing-in.title': 'Casi Ahí',
+  'challenge.closing-in.blurb':
+    'Termina una partida Clásica de $750,000,000 o más.',
   'challenge.hit-1b.title': 'Club del Billón',
   'challenge.hit-1b.blurb':
     'Termina una partida Clásica de $1,000,000,000 o más.',
@@ -280,7 +326,7 @@ const ES: Record<MessageKey, string> = {
   'challenge.triple-threat.blurb':
     'Draftea tres jugadores de al menos $210 millones en una partida.',
   'challenge.top-of-the-market.title': 'Cima del Mercado',
-  'challenge.top-of-the-market.blurb': 'Draftea un jugador de $225 millones.',
+  'challenge.top-of-the-market.blurb': 'Draftea un jugador de $220 millones.',
   'challenge.clutch-investment.title': 'Inversión Clutch',
   'challenge.clutch-investment.blurb':
     'Entra a tu última selección por debajo de $800 millones y luego supera $1 mil millones.',

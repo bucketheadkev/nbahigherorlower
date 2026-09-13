@@ -16,7 +16,7 @@ import {
 } from '@/lib/tradeup/billionDollar';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import {
-  playWheelStopSound,
+  WHEEL_SPIN_DURATION_MS,
   startWheelSpinSound,
   stopWheelSpinSound,
 } from '@/lib/tradeup/gameAudio';
@@ -43,6 +43,8 @@ interface BallionTicketMachineProps {
   holdEra?: DecadeEra | null;
   /** Classic mode: show GOAL: $1,000,000,000 above TEAM/ERA. */
   showGoal?: boolean;
+  /** Optional custom goal copy (e.g. 1v1). Overrides $1B amount/tagline when set. */
+  goalCopy?: string | null;
   onAutoRerollConsumed?: () => void;
   onPrint: () => void;
   onResult: (pair: SpinPair) => void;
@@ -55,9 +57,9 @@ const ERA_ITEM_H = 84;
 /** Strip length scaled with duration so cruise velocity stays the same. */
 const TEAM_STRIP_LEN = 60;
 const ERA_STRIP_LEN = 46;
-/** 0.5s shorter than prior 3.0s / 3.4s timings. */
-const TEAM_SPIN_MS = 2500;
-const ERA_SPIN_MS = 2900;
+/** Shared with spin SFX — initial roll and every Team/Era reroll. */
+const TEAM_SPIN_MS = WHEEL_SPIN_DURATION_MS;
+const ERA_SPIN_MS = WHEEL_SPIN_DURATION_MS;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
@@ -164,12 +166,15 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   holdTeam = null,
   holdEra = null,
   showGoal = false,
+  goalCopy = null,
   onAutoRerollConsumed,
   onPrint,
   onResult,
   onReroll: _onReroll,
 }: BallionTicketMachineProps) {
   const { t } = useLocale();
+  const customGoal = Boolean(goalCopy && goalCopy.trim());
+  const showGoalBlock = showGoal || customGoal;
   const allPairs = useMemo(() => listValidSpinPairs(), []);
   const teams = useMemo(() => uniqueTeams(allPairs), [allPairs]);
 
@@ -200,8 +205,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     if (!pair || reportedRef.current) return;
     reportedRef.current = true;
     busyRef.current = false;
-    stopWheelSpinSound();
-    if (!reduceMotion) playWheelStopSound();
+    // Spin sample is rate-fitted to WHEEL_SPIN_DURATION_MS — let it finish with
+    // the reels (no extra lock chime / abrupt cut).
     setMode('landed');
     setResult(pair);
     if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
@@ -229,7 +234,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       setTeamLanded(false);
 
       if (!reduceMotion && (axes.team || axes.era)) {
-        startWheelSpinSound(teamMs + eraMs + 180);
+        // One sample for both axes / one-sided rerolls — always 2940 ms.
+        startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
       }
 
       if (axes.team) {
@@ -337,20 +343,33 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   return (
     <div
-      className={`ter${showGoal ? ' ter--goal ter--spin-top' : ''}`}
+      className={`ter${showGoalBlock ? ' ter--goal ter--spin-top' : ''}${
+        customGoal ? ' ter--h2h-goal' : ''
+      }`}
       aria-label="Team and era roll"
     >
-      {showGoal ? (
+      {showGoalBlock ? (
         <div className="ter__goal-block">
-          <p className="ter__goal-label">{t('game.goal')}</p>
-          <p className="ter__goal-amount" aria-label="Goal one billion dollars">
-            $1,000,000,000
-          </p>
-          <p className="ter__tagline">
-            <span className="ter__tagline-rule" aria-hidden />
-            <span className="ter__tagline-text">{t('game.tagline')}</span>
-            <span className="ter__tagline-rule" aria-hidden />
-          </p>
+          {customGoal ? (
+            <>
+              <p className="ter__goal-label">{t('game.goal')}</p>
+              <p className="ter__goal-h2h" aria-label={goalCopy!}>
+                {goalCopy}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="ter__goal-label">{t('game.goal')}</p>
+              <p className="ter__goal-amount" aria-label="Goal one billion dollars">
+                $1,000,000,000
+              </p>
+              <p className="ter__tagline">
+                <span className="ter__tagline-rule" aria-hidden />
+                <span className="ter__tagline-text">{t('game.tagline')}</span>
+                <span className="ter__tagline-rule" aria-hidden />
+              </p>
+            </>
+          )}
         </div>
       ) : null}
 

@@ -13,7 +13,7 @@ import {
   getDollarValue,
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
-import { playGameSound } from '@/lib/tradeup/gameAudio';
+import { playFinalTotalSettleSound, stopFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
 import {
   captureRunShareCard,
   shareRunResultImage,
@@ -126,6 +126,7 @@ export function ValueRevealMachine({
   useEffect(
     () => () => {
       cancelFrame(countRafRef.current);
+      stopFinalTotalSettleSound();
       hapticCancel();
     },
     [],
@@ -179,8 +180,8 @@ export function ValueRevealMachine({
     if (!completedRef.current) {
       completedRef.current = true;
       onComplete({ teamValue });
-      // Always celebrate the final combined total with a rewarding stinger.
-      playGameSound('results_celebration');
+      // Once — when the final combined total has finished counting / settles.
+      playFinalTotalSettleSound();
       if (isBillion) {
         void hapticHeavy();
         window.setTimeout(() => {
@@ -319,7 +320,7 @@ export function ValueRevealMachine({
         }`}
         aria-label="Final roster"
       >
-        <BillionCelebration />
+        {isBillion ? <BillionCelebration /> : null}
         <div className="billion-result-page__card">
           <div ref={shareCardRef} className="billion-result-page__share-shot">
             <p className="billion-result-page__kicker">FINAL ROSTER</p>

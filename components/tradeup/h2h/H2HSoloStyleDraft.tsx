@@ -34,7 +34,7 @@ export function H2HSoloStyleDraft({
   return (
     <BillionTradeEngine
       challengeMode="online"
-      onlineOpponentName={opponentName.split(/\s+/)[0] ?? opponentName}
+      onlineOpponentName={opponentName.trim() || 'Opponent'}
       onlineOpponentProgress={opponentPickCount}
       syncedPicks={myPicks}
       deferOnlineReveal

@@ -5,8 +5,10 @@ import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
 import { H2H_POSITIONS, type H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import type { H2HMatchState, H2HPickSelection, H2HRoundPublic } from '@/lib/multiplayer/h2hState';
+import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
+import { GameBackground } from '../game/GameBackground';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
-import { H2HRevealSequence } from './H2HRevealSequence';
+import { H2HShowdownSequence } from './H2HShowdownSequence';
 
 export interface H2HKnockoutMatchProps {
   roomId: string;
@@ -35,7 +37,6 @@ export function H2HKnockoutMatch({
   state,
   myName,
   opponentName,
-  lockBusy,
   rematchBusy,
   isHost,
   error,
@@ -49,7 +50,9 @@ export function H2HKnockoutMatch({
   const [revealDone, setRevealDone] = useState(false);
 
   useEffect(() => {
-    if (state.phase !== 'finished') setRevealDone(false);
+    if (state.phase !== 'finished') {
+      setRevealDone(false);
+    }
   }, [state.phase]);
 
   const orderedRounds = H2H_POSITIONS.map((pos) =>
@@ -78,8 +81,11 @@ export function H2HKnockoutMatch({
 
   if (!gameFinished) {
     return (
-      <div className="h2h-lobby">
-        <p className="h2h-lobby__status">Loading results…</p>
+      <div className="h2h-shell h2h-shell--arena">
+        <GameBackground />
+        <div className="h2h-lobby">
+          <p className="h2h-lobby__status">Loading results…</p>
+        </div>
       </div>
     );
   }
@@ -89,7 +95,7 @@ export function H2HKnockoutMatch({
 
   if (!revealDone) {
     return (
-      <H2HRevealSequence
+      <H2HShowdownSequence
         roomId={roomId}
         rounds={state.resolved_rounds}
         p1Name={p1Name}
@@ -112,87 +118,130 @@ export function H2HKnockoutMatch({
   const tie = myWins === oppWins;
 
   return (
-    <div className="h2h-lobby h2h-lobby--results ko-results" aria-label="Knockout final">
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">KNOCKOUT</p>
-        <h1 className="h2h-lobby__title">
-          {tie ? 'TIE' : iWonGame ? 'YOU WIN' : 'OPPONENT WINS'}
-        </h1>
-        <p className="h2h-lobby__subtitle">
-          {myName} {myWins} — {oppWins} {opponentName}
-        </p>
-      </header>
+    <div className="h2h-shell h2h-shell--arena" aria-label="Knockout final">
+      <GameBackground />
+      <div className="h2h-lobby h2h-lobby--results ko-results">
+        <header className="h2h-lobby__header">
+          <p className="h2h-lobby__eyebrow">KNOCKOUT</p>
+          <h1 className="h2h-lobby__title">
+            {tie ? 'TIE' : iWonGame ? 'YOU WIN' : 'OPPONENT WINS'}
+          </h1>
+          <p className="h2h-lobby__subtitle">
+            {myName} {myWins} — {oppWins} {opponentName}
+          </p>
+        </header>
 
-      <div className="ko-results__breakdown">
-        {H2H_POSITIONS.map((pos) => {
-          const r = orderedRounds.find((rd) => rd.position === pos);
-          if (!r) return null;
-          const myVal = myNum === 1 ? r.p1_raw_value : r.p2_raw_value;
-          const oppVal = myNum === 1 ? r.p2_raw_value : r.p1_raw_value;
-          const myPickR = myNum === 1 ? r.p1_selection : r.p2_selection;
-          const oppPickR = myNum === 1 ? r.p2_selection : r.p1_selection;
-          const myWonRound = r.matchup_winner === (myNum === 1 ? 'p1' : 'p2');
-          const tieRound = r.matchup_winner === 'tie';
-          return (
-            <div
-              key={pos}
-              className={`ko-results__row${myWonRound ? ' is-win' : tieRound ? '' : ' is-lose'}`}
-            >
-              <span className="ko-results__pos">{pos}</span>
-              <span className="ko-results__name">{myPickR?.name ?? '—'}</span>
-              <span className="ko-results__val">
-                {myVal != null ? formatDollarsExact(myVal) : '—'}
-              </span>
-              <span
-                className={`ko-results__dot${myWonRound ? ' is-win' : tieRound ? ' is-tie' : ' is-lose'}`}
-              >
-                {myWonRound ? '✓' : tieRound ? '=' : '✕'}
-              </span>
-              <span className="ko-results__val ko-results__val--opp">
-                {oppVal != null ? formatDollarsExact(oppVal) : '—'}
-              </span>
-              <span className="ko-results__name ko-results__name--opp">
-                {oppPickR?.name ?? '—'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+        <div className="h2h-final__boards ko-results__boards">
+          <KoBoard
+            label="You"
+            rounds={orderedRounds}
+            myNum={myNum}
+            side="me"
+          />
+          <KoBoard
+            label={opponentName.split(/\s+/)[0] ?? 'Opp'}
+            rounds={orderedRounds}
+            myNum={myNum}
+            side="opp"
+          />
+        </div>
 
-      {error ? (
-        <p className="h2h-lobby__error" role="alert">
-          {error}
-        </p>
-      ) : null}
+        <div className="h2h-final__verdict">
+          <p className="h2h-final__margin">
+            {tie
+              ? 'Even on positions'
+              : iWonGame
+                ? `by ${myWins - oppWins} position${myWins - oppWins === 1 ? '' : 's'}`
+                : `by ${oppWins - myWins} position${oppWins - myWins === 1 ? '' : 's'}`}
+          </p>
+        </div>
 
-      {isHost ? (
+        {error ? (
+          <p className="h2h-lobby__error" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        {isHost ? (
+          <button
+            type="button"
+            className="run-btn run-btn--primary h2h-lobby__submit"
+            disabled={rematchBusy}
+            onPointerDown={(e: ReactPointerEvent) => {
+              e.preventDefault();
+              hapticLight();
+              void onRematch();
+            }}
+          >
+            <strong>{rematchBusy ? 'STARTING…' : 'RUN IT BACK'}</strong>
+          </button>
+        ) : (
+          <p className="h2h-lobby__waiting h2h-lobby__waiting--ready">Waiting for host…</p>
+        )}
+
         <button
           type="button"
-          className="run-btn run-btn--primary h2h-lobby__submit"
-          disabled={rematchBusy}
+          className="run-btn run-btn--secondary h2h-lobby__submit"
           onPointerDown={(e: ReactPointerEvent) => {
             e.preventDefault();
             hapticLight();
-            void onRematch();
+            void onExit();
           }}
         >
-          <strong>{rematchBusy ? 'STARTING…' : 'RUN IT BACK'}</strong>
+          <strong>BACK TO 1V1</strong>
         </button>
-      ) : (
-        <p className="h2h-lobby__waiting h2h-lobby__waiting--ready">Waiting for host…</p>
-      )}
+      </div>
+    </div>
+  );
+}
 
-      <button
-        type="button"
-        className="run-btn run-btn--secondary h2h-lobby__submit"
-        onPointerDown={(e: ReactPointerEvent) => {
-          e.preventDefault();
-          hapticLight();
-          void onExit();
-        }}
-      >
-        <strong>BACK TO 1V1</strong>
-      </button>
+function KoBoard({
+  label,
+  rounds,
+  myNum,
+  side,
+}: {
+  label: string;
+  rounds: H2HRoundPublic[];
+  myNum: 1 | 2;
+  side: 'me' | 'opp';
+}) {
+  return (
+    <div className="h2h-final__board">
+      <p className="h2h-final__board-label">{label}</p>
+      <ul className="h2h-final__list">
+        {H2H_POSITIONS.map((pos) => {
+          const r = rounds.find((rd) => rd.position === pos);
+          if (!r) return null;
+          const pick =
+            side === 'me'
+              ? myNum === 1
+                ? r.p1_selection
+                : r.p2_selection
+              : myNum === 1
+                ? r.p2_selection
+                : r.p1_selection;
+          const val =
+            side === 'me'
+              ? myNum === 1
+                ? r.p1_raw_value
+                : r.p2_raw_value
+              : myNum === 1
+                ? r.p2_raw_value
+                : r.p1_raw_value;
+          const colors = pick ? getTeamColors(pick.teamId) : { primary: '#10202b' };
+          const ink = contrastOnPrimary(colors.primary);
+          return (
+            <li key={pos} style={{ background: colors.primary, color: ink }}>
+              <span style={{ color: ink, opacity: 0.78 }}>{pos}</span>
+              <strong style={{ color: ink }}>{pick?.name ?? '—'}</strong>
+              <em style={{ color: ink }}>
+                {val != null ? formatDollarsExact(val) : '—'}
+              </em>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

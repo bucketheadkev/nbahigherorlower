@@ -99,14 +99,23 @@ function buildBills(count: number, burst: boolean): BillSeed[] {
 /** Simple $1B green bills with a centered $. */
 export function MoneyRain({
   intense = false,
+  mega = false,
 }: {
   intense?: boolean;
+  /** Extra-dense pour (1v1 win celebration). */
+  mega?: boolean;
   durationMs?: number;
 }) {
-  const bills = useMemo(() => buildBills(intense ? 70 : 60, intense), [intense]);
+  const count = mega ? 140 : intense ? 70 : 60;
+  const bills = useMemo(() => buildBills(count, intense || mega), [count, intense, mega]);
 
   return (
-    <div className={`money-rain${intense ? ' money-rain--intense' : ''}`} aria-hidden>
+    <div
+      className={`money-rain${intense || mega ? ' money-rain--intense' : ''}${
+        mega ? ' money-rain--mega' : ''
+      }`}
+      aria-hidden
+    >
       {bills.map((bill, i) => (
         <span
           key={i}
@@ -118,8 +127,8 @@ export function MoneyRain({
               height: `${bill.width / BILL_RATIO}px`,
               animationDuration: `${bill.duration}s`,
               animationDelay: `${bill.delay}s`,
-              animationIterationCount: intense ? 1 : undefined,
-              animationFillMode: intense ? 'forwards' : undefined,
+              animationIterationCount: intense || mega ? 1 : undefined,
+              animationFillMode: intense || mega ? 'forwards' : undefined,
               ['--bill-drift' as string]: `${bill.drift}px`,
               ['--bill-sway' as string]: `${bill.sway}deg`,
               ['--bill-spin' as string]: `${bill.spin}deg`,

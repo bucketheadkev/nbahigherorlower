@@ -54,30 +54,30 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
 const HOW_VALUES_EN: GuidePageContent = {
   kicker: 'ECONOMY',
   title: 'How Values Work',
-  intro:
-    'Every player sits on a tier ladder (F → GOAT). Higher tier = higher dollar price on your run.',
+  intro: 'Every player has a tier from F to GOAT. Higher tier means a higher dollar value.',
   sections: [
     {
-      heading: 'What sets the price',
+      heading: 'How price is set',
       body: [
-        'Tier reflects how valuable that player was in their era — production and star power, not random luck. The same name can price differently across decades. Primary position keeps full value; playing off-position costs about 6% less.',
+        'Price follows how good that player was in their era — not luck. The same player can be worth different amounts in different decades.',
+        'Full value in their main position. About 6% less if you seat them elsewhere.',
       ],
     },
     {
-      heading: 'Your total',
+      heading: 'Your team total',
       body: [
-        'When your five locks, each card’s market price is revealed and summed. Stack enough A, S, and GOAT talent to push past a billion.',
+        'When your five are locked, each player’s price is revealed and added up. Reach $1 billion to complete the run.',
       ],
     },
   ],
   tiers: [
-    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Deep bench' },
+    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Bench' },
     { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotation' },
-    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Solid starters' },
-    { tier: 'B', label: 'B', range: '$65M – $110M', blurb: 'Quality starters' },
-    { tier: 'A', label: 'A', range: '$112M – $165M', blurb: 'Stars' },
-    { tier: 'S', label: 'S', range: '$180M – $200M', blurb: 'Superstars' },
-    { tier: 'GOAT', label: 'GOAT', range: '$200M – $225M', blurb: 'All-time peaks' },
+    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Starter' },
+    { tier: 'B', label: 'B', range: '$65M – $110M', blurb: 'Strong starter' },
+    { tier: 'A', label: 'A', range: '$112M – $165M', blurb: 'Star' },
+    { tier: 'S', label: 'S', range: '$180M – $200M', blurb: 'Superstar' },
+    { tier: 'GOAT', label: 'GOAT', range: '$201M – $220M', blurb: 'All-time peaks' },
   ],
 };
 
@@ -112,30 +112,30 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
 const HOW_VALUES_ES: GuidePageContent = {
   kicker: 'ECONOMÍA',
   title: 'Cómo funcionan los valores',
-  intro:
-    'Cada jugador tiene un tier (F → GOAT). Tier más alto = precio en dólares más alto en tu carrera.',
+  intro: 'Cada jugador tiene un tier de F a GOAT. Más alto = más valor en dólares.',
   sections: [
     {
-      heading: 'Qué fija el precio',
+      heading: 'Cómo se fija el precio',
       body: [
-        'El tier refleja lo valioso que era ese jugador en su era — producción y estrellato, no suerte. El mismo nombre puede valer distinto según la década. Posición primaria = valor completo; fuera de posición ≈ 6% menos.',
+        'El precio sigue lo bueno que era el jugador en su era — no es suerte. El mismo nombre puede valer distinto en otra década.',
+        'Valor completo en su posición principal. Un 6% menos fuera de posición.',
       ],
     },
     {
       heading: 'Tu total',
       body: [
-        'Al cerrar tu cinco, se revela y suma el precio de mercado de cada carta. Apila talento A, S y GOAT para pasar mil millones.',
+        'Al cerrar tu cinco, se revela y suma el precio de cada jugador. Llega a mil millones para completar la carrera.',
       ],
     },
   ],
   tiers: [
-    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Banquillo profundo' },
+    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Banquillo' },
     { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotación' },
-    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Titulares sólidos' },
-    { tier: 'B', label: 'B', range: '$65M – $110M', blurb: 'Buenos titulares' },
-    { tier: 'A', label: 'A', range: '$112M – $165M', blurb: 'Estrellas' },
-    { tier: 'S', label: 'S', range: '$180M – $200M', blurb: 'Superestrellas' },
-    { tier: 'GOAT', label: 'GOAT', range: '$200M – $225M', blurb: 'Picos históricos' },
+    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Titular' },
+    { tier: 'B', label: 'B', range: '$65M – $110M', blurb: 'Titular fuerte' },
+    { tier: 'A', label: 'A', range: '$112M – $165M', blurb: 'Estrella' },
+    { tier: 'S', label: 'S', range: '$180M – $200M', blurb: 'Superestrella' },
+    { tier: 'GOAT', label: 'GOAT', range: '$201M – $220M', blurb: 'Picos históricos' },
   ],
 };
 

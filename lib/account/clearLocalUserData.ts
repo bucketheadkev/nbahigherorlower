@@ -71,4 +71,12 @@ export function clearLocalUserData(): void {
   } catch {
     /* ignore */
   }
+
+  try {
+    window.dispatchEvent(new Event('oneb:userdata-cleared'));
+  } catch {
+    /* ignore */
+  }
 }
+
+export const USER_DATA_CLEARED_EVENT = 'oneb:userdata-cleared';

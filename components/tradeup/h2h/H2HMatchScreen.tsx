@@ -4,13 +4,13 @@ import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useS
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { useH2HMatch } from '@/hooks/useH2HMatch';
-import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
+import { formatDollars } from '@/lib/tradeup/billionDollar';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import {
   playH2HDefeatSound,
-  playH2HVictorySound,
   prepareH2HEmojiAudio,
 } from '@/lib/tradeup/h2hEmojiSound';
+import { playFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
 import {
   isH2HGameMode,
   modeDef,
@@ -21,8 +21,10 @@ import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import { H2HTradeUpMatch } from './H2HTradeUpMatch';
 import { H2HKnockoutMatch } from './H2HKnockoutMatch';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
-import { H2HRevealSequence } from './H2HRevealSequence';
-import { MoneyRain } from '../MoneyRain';
+import { H2HShowdownSequence } from './H2HShowdownSequence';
+import { H2HEmojiReactions, H2H_FINAL_EMOJIS } from './H2HEmojiReactions';
+import { MoneyRain, RESULTS_POUR_TOTAL_MS } from '../MoneyRain';
+import { GameBackground } from '../game/GameBackground';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
 
@@ -52,7 +54,9 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   const [revealDone, setRevealDone] = useState(false);
 
   useEffect(() => {
-    if (state?.phase !== 'finished') setRevealDone(false);
+    if (state?.phase !== 'finished') {
+      setRevealDone(false);
+    }
   }, [state?.phase]);
 
   const p1Name = state?.my_player_number === 1 ? myName : opponentName;
@@ -138,7 +142,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
 
   if (state.phase === 'finished' && !revealDone && state.resolved_rounds.length > 0) {
     return (
-      <H2HRevealSequence
+      <H2HShowdownSequence
         roomId={roomId}
         rounds={state.resolved_rounds}
         p1Name={p1Name}
@@ -170,7 +174,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     const headline = myWins
       ? 'You win'
       : oppWins
-        ? `${oppNameFinal.split(/\s+/)[0] ?? oppNameFinal} wins`
+        ? `${oppNameFinal} wins`
         : 'Tie';
 
     const myRounds = state.resolved_rounds.map((round) => ({
@@ -189,65 +193,95 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     }));
 
     return (
-      <H2HFinalScreen myWins={myWins} oppWins={oppWins}>
-      <div className="h2h-lobby h2h-lobby--results h2h-final" aria-label="Final results">
-        <header className="h2h-final__head">
-          <h1 className={`h2h-final__title${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
-            {headline}
-          </h1>
-        </header>
-
-        <div className="h2h-final__boards">
-          <FinalBoard
-            label="You"
-            name={myNameFinal}
-            total={myScore}
-            rounds={myRounds}
-            winner={myWins}
-          />
-          <FinalBoard
-            label={oppNameFinal.split(/\s+/)[0] ?? 'Opp'}
-            name={oppNameFinal}
-            total={oppScore}
-            rounds={oppRounds}
-            winner={oppWins}
-          />
-        </div>
-        {error ? (
-          <p className="h2h-lobby__error" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {isHost ? (
-          <button
-            type="button"
-            className="run-btn run-btn--primary h2h-lobby__submit"
-            disabled={rematchBusy}
-            onPointerDown={(e: ReactPointerEvent) => {
-              e.preventDefault();
-              hapticLight();
-              void ackRematch();
-            }}
+      <H2HFinalScreen
+        myWins={myWins}
+        oppWins={oppWins}
+        roomId={roomId}
+        myPlayerNumber={state.my_player_number}
+      >
+        <div className="h2h-shell h2h-shell--arena">
+          <GameBackground />
+          <div
+            className={`h2h-lobby h2h-lobby--results h2h-final${
+              myWins ? ' is-win' : oppWins ? ' is-loss' : ''
+            }`}
+            aria-label="Final results"
           >
-            <strong>{rematchBusy ? '…' : 'Run it back'}</strong>
-          </button>
-        ) : (
-          <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
-            Waiting…
-          </p>
-        )}
-        <button
-          type="button"
-          className="run-btn run-btn--secondary h2h-lobby__submit"
-          onPointerDown={(e: ReactPointerEvent) => {
-            e.preventDefault();
-            hapticLight();
-            void handleLeave();
-          }}
-        >
-          <strong>Leave</strong>
-        </button>
-      </div>
+            <header className="h2h-final__head">
+              <div className="h2h-final__totals">
+                <div className={`h2h-final__total-pill${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
+                  <span>{myNameFinal}</span>
+                  <strong>{formatDollars(myScore)}</strong>
+                </div>
+                <div className={`h2h-final__total-pill${oppWins ? ' is-win' : myWins ? ' is-loss' : ''}`}>
+                  <span>{oppNameFinal}</span>
+                  <strong>{formatDollars(oppScore)}</strong>
+                </div>
+              </div>
+            </header>
+
+            <div className="h2h-final__boards">
+              <FinalBoard
+                label={myNameFinal}
+                rounds={myRounds}
+                winner={myWins}
+                loser={oppWins}
+              />
+              <FinalBoard
+                label={oppNameFinal}
+                rounds={oppRounds}
+                winner={oppWins}
+                loser={myWins}
+              />
+            </div>
+
+            <div className="h2h-final__verdict">
+              <h1 className={`h2h-final__title${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
+                {headline}
+              </h1>
+              <p className="h2h-final__margin">
+                {myWins || oppWins
+                  ? `by ${formatDollars(Math.abs(myScore - oppScore))}`
+                  : 'Same total'}
+              </p>
+            </div>
+
+            {error ? (
+              <p className="h2h-lobby__error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {isHost ? (
+              <button
+                type="button"
+                className="run-btn run-btn--primary h2h-lobby__submit"
+                disabled={rematchBusy}
+                onPointerDown={(e: ReactPointerEvent) => {
+                  e.preventDefault();
+                  hapticLight();
+                  void ackRematch();
+                }}
+              >
+                <strong>{rematchBusy ? '…' : 'Run it back'}</strong>
+              </button>
+            ) : (
+              <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
+                Waiting…
+              </p>
+            )}
+            <button
+              type="button"
+              className="run-btn run-btn--secondary h2h-lobby__submit"
+              onPointerDown={(e: ReactPointerEvent) => {
+                e.preventDefault();
+                hapticLight();
+                void handleLeave();
+              }}
+            >
+              <strong>Leave</strong>
+            </button>
+          </div>
+        </div>
       </H2HFinalScreen>
     );
   }
@@ -271,46 +305,71 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
 function H2HFinalScreen({
   myWins,
   oppWins,
+  roomId,
+  myPlayerNumber,
   children,
 }: {
   myWins: boolean;
   oppWins: boolean;
+  roomId: string;
+  myPlayerNumber: 1 | 2;
   children: ReactNode;
 }) {
+  const [emojiReady, setEmojiReady] = useState(false);
+
   useEffect(() => {
     prepareH2HEmojiAudio();
-    if (myWins) playH2HVictorySound();
-    else if (oppWins) playH2HDefeatSound();
+    if (myWins) {
+      playFinalTotalSettleSound();
+    } else if (oppWins) {
+      playH2HDefeatSound();
+    }
+    // After money rain / brief win-loss beat, reveal spam-able emojis.
+    const delay = myWins ? RESULTS_POUR_TOTAL_MS + 350 : 900;
+    const t = window.setTimeout(() => setEmojiReady(true), delay);
+    return () => window.clearTimeout(t);
   }, [myWins, oppWins]);
+
   return (
     <>
       {myWins ? (
         <div className="h2h-win-celebration" aria-hidden>
-          <MoneyRain intense durationMs={3000} />
+          <MoneyRain intense mega durationMs={4200} />
         </div>
       ) : null}
       {children}
+      {emojiReady ? (
+        <div className="h2h-final__emoji-dock">
+          <H2HEmojiReactions
+            roomId={roomId}
+            myPlayerNumber={myPlayerNumber}
+            emojis={H2H_FINAL_EMOJIS}
+            channelSuffix="final"
+            enabled
+            className="h2h-emoji--final"
+          />
+        </div>
+      ) : null}
     </>
   );
 }
 
 function FinalBoard({
   label,
-  name,
-  total,
   rounds,
   winner,
+  loser,
 }: {
   label: string;
-  name: string;
-  total: number;
   rounds: Array<{ position: H2HPosition; selection: H2HPickSelection | null | undefined; value: number }>;
   winner: boolean;
+  loser: boolean;
 }) {
   return (
-    <div className={`h2h-final__board${winner ? ' is-winner' : ''}`}>
+    <div
+      className={`h2h-final__board${winner ? ' is-winner' : ''}${loser ? ' is-loser' : ''}`}
+    >
       <p className="h2h-final__board-label">{label}</p>
-      <p className="h2h-final__total">{formatDollarsExact(total)}</p>
       <ul className="h2h-final__list">
         {rounds.map((row) => {
           const colors = row.selection
@@ -324,7 +383,7 @@ function FinalBoard({
             >
               <span style={{ color: ink, opacity: 0.78 }}>{row.position}</span>
               <strong style={{ color: ink }}>{row.selection?.name ?? '—'}</strong>
-              <em style={{ color: ink }}>{formatDollarsExact(row.value)}</em>
+              <em style={{ color: ink }}>{formatDollars(row.value)}</em>
             </li>
           );
         })}

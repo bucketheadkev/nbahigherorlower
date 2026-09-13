@@ -15,6 +15,7 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
   const { locale } = useLocale();
   const nav = GUIDE_NAV[locale] ?? GUIDE_NAV.en;
   const content = getGuideContent(locale, guideId);
+  const isValues = guideId === 'how-values-work';
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -26,7 +27,7 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
 
   return (
     <div
-      className="settings-guide"
+      className={`settings-guide${isValues ? ' settings-guide--values' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label={content.title}
@@ -34,8 +35,11 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
       <header className="settings-guide__header">
         <button
           type="button"
-          className="settings-guide__back"
-          onPointerDown={() => {
+          className="settings-ctrl settings-guide__back"
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
             hapticTap();
             onBack();
           }}
@@ -63,22 +67,41 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
         ))}
 
         {content.tiers ? (
-          <section className="settings-guide__section" aria-label="Tiers">
-            <h2 className="settings-guide__heading">{nav.tierRanges}</h2>
-            <ul className="settings-guide__tiers">
+          <section
+            className="settings-guide__section settings-guide__section--tiers"
+            aria-label={nav.tierRanges}
+          >
+            <div className="settings-guide__ladder-head">
+              <h2 className="settings-guide__heading">{nav.tierRanges}</h2>
+              <p className="settings-guide__ladder-note">
+                {locale === 'es' ? 'De menor a mayor' : 'Low to high'}
+              </p>
+            </div>
+
+            <div className="settings-guide__ladder" role="table" aria-label={nav.tierRanges}>
+              <div className="settings-guide__ladder-cols" aria-hidden>
+                <span>Tier</span>
+                <span>{locale === 'es' ? 'Nivel' : 'Level'}</span>
+                <span>{locale === 'es' ? 'Rango' : 'Range'}</span>
+              </div>
               {content.tiers.map((row) => (
-                <li
+                <div
                   key={row.tier}
-                  className={`settings-guide__tier settings-guide__tier--${row.tier.toLowerCase()}`}
+                  role="row"
+                  className={`settings-guide__ladder-row settings-guide__ladder-row--${row.tier.toLowerCase()}`}
                 >
-                  <span className="settings-guide__tier-badge">{row.tier}</span>
-                  <div className="settings-guide__tier-copy">
-                    <span className="settings-guide__tier-range">{row.range}</span>
-                    <span className="settings-guide__tier-blurb">{row.blurb}</span>
-                  </div>
-                </li>
+                  <span className="settings-guide__ladder-tier" role="cell">
+                    {row.tier}
+                  </span>
+                  <span className="settings-guide__ladder-blurb" role="cell">
+                    {row.blurb}
+                  </span>
+                  <span className="settings-guide__ladder-range" role="cell">
+                    {row.range}
+                  </span>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         ) : null}
 

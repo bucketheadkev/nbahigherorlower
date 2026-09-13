@@ -5,9 +5,9 @@ import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
 
 /**
  * Single coordinated timeline (ms). CSS keyframe % = ms / INTRO_TOTAL_MS.
- * Tune here and keep `animation-duration` on `.oneb-intro--run` in sync.
+ * Tune here and keep `--oneb-intro-ms` / keyframes in oneb-theme.css in sync.
  */
-export const INTRO_TOTAL_MS = 3700;
+export const INTRO_TOTAL_MS = 5000;
 
 export const INTRO_MARKS = {
   atmosphereEnd: 150,
@@ -16,8 +16,12 @@ export const INTRO_MARKS = {
   studioDissolveEnd: 1850,
   logoRevealStart: 1650,
   logoRevealEnd: 2550,
-  logoHoldEnd: 3100,
-  homeRevealEnd: 3700,
+  /** Loading bar appears as soon as KovA is gone. */
+  loadBarStart: 1850,
+  /** Bar reaches full just before home crossfade completes. */
+  loadBarFull: 4700,
+  logoHoldEnd: 4300,
+  homeRevealEnd: 5000,
 } as const;
 
 export const INTRO_EASING = {
@@ -58,7 +62,7 @@ async function preloadIntroAssets(): Promise<void> {
 
 /**
  * Cinematic launch intro — one timeline, center-locked studio credit,
- * continuous transformation into the 1B Run mark, then home crossfade.
+ * continuous transformation into the 1B Run mark + load bar, then home crossfade.
  */
 export function BallionSplash({
   onDone,
@@ -185,7 +189,7 @@ export function BallionSplash({
         <div className="oneb-intro__core-glow" />
       </div>
 
-      {/* Single stage: studio + logo share one grid cell — no translate centering */}
+      {/* Single stage: studio + brand share one grid cell — no translate centering */}
       <div className="oneb-intro__stage">
         <div className="oneb-intro__studio">
           <p className="oneb-intro__studio-name">KovA STUDIOS</p>
@@ -193,25 +197,33 @@ export function BallionSplash({
           <span className="oneb-intro__studio-sheen" aria-hidden />
         </div>
 
-        <div className="oneb-intro__logo-stage">
-          <div className="oneb-intro__logo-pulse" aria-hidden />
-          <div className="oneb-intro__logo-glow" aria-hidden />
-          <div className="oneb-intro__logo-tilt">
-            <div className="oneb-intro__logo-mark">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="oneb-intro__logo"
-                src={BALLION_SPLASH_LOGO_SRC}
-                alt=""
-                width={1024}
-                height={1024}
-                decoding="sync"
-                fetchPriority="high"
-                draggable={false}
-                onContextMenu={(event) => event.preventDefault()}
-              />
-              <span className="oneb-intro__logo-illum" aria-hidden />
-              <span className="oneb-intro__logo-sweep" aria-hidden />
+        <div className="oneb-intro__brand">
+          <div className="oneb-intro__logo-stage">
+            <div className="oneb-intro__logo-pulse" aria-hidden />
+            <div className="oneb-intro__logo-glow" aria-hidden />
+            <div className="oneb-intro__logo-tilt">
+              <div className="oneb-intro__logo-mark">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="oneb-intro__logo"
+                  src={BALLION_SPLASH_LOGO_SRC}
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  decoding="sync"
+                  fetchPriority="high"
+                  draggable={false}
+                  onContextMenu={(event) => event.preventDefault()}
+                />
+                <span className="oneb-intro__logo-illum" aria-hidden />
+                <span className="oneb-intro__logo-sweep" aria-hidden />
+              </div>
+            </div>
+          </div>
+
+          <div className="oneb-intro__load" role="status" aria-label="Loading">
+            <div className="oneb-intro__bar">
+              <span className="oneb-intro__bar-fill" />
             </div>
           </div>
         </div>

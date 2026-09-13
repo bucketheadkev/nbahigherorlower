@@ -42,6 +42,15 @@ export function HeadToHeadFlow({
     if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
       return 'join';
     }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = window.sessionStorage.getItem('oneb:pending-h2h-join');
+        const code = stored ? sanitizeH2HRoomCode(stored) : '';
+        if (isValidH2HRoomCode(code)) return 'join';
+      } catch {
+        /* ignore */
+      }
+    }
     return 'entry';
   });
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -50,6 +59,15 @@ export function HeadToHeadFlow({
   const [inviteJoinCode, setInviteJoinCode] = useState<string | null>(() => {
     if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
       return sanitizeH2HRoomCode(pendingJoinCode);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = window.sessionStorage.getItem('oneb:pending-h2h-join');
+        const code = stored ? sanitizeH2HRoomCode(stored) : '';
+        if (isValidH2HRoomCode(code)) return code;
+      } catch {
+        /* ignore */
+      }
     }
     return null;
   });

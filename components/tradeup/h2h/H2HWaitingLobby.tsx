@@ -10,7 +10,7 @@ import {
 import { slotFor, useRoomLobby } from '@/hooks/useRoomLobby';
 import { clearActiveRoom, writeActiveRoom } from '@/lib/multiplayer/activeRoom';
 import {
-  buildH2HInviteText,
+  buildH2HInviteClipboardText,
   shareH2HInvite,
 } from '@/lib/multiplayer/h2hInvite';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
@@ -133,7 +133,7 @@ export function H2HWaitingLobby({
 
   const handleCopy = useCallback(async () => {
     if (!room?.room_code || leaving) return;
-    const ok = await copyText(buildH2HInviteText(room.room_code));
+    const ok = await copyText(buildH2HInviteClipboardText(room.room_code));
     if (ok) {
       hapticMedium();
       setCopyFlash(true);

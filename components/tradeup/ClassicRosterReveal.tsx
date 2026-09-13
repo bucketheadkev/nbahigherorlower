@@ -14,7 +14,7 @@ import {
   getDollarValue,
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
-import { playGameSound } from '@/lib/tradeup/gameAudio';
+import { playFinalTotalSettleSound, stopFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
 import {
   captureRunShareCard,
   shareRunResultImage,
@@ -38,7 +38,19 @@ interface ClassicRosterRevealProps {
   roster: ValuedPlayer[];
   reduceMotion?: boolean;
   onComplete: (payload: { teamValue: number }) => void;
+  /** Fires the moment the final total finishes counting up. */
+  onTotalSettled?: (payload: { teamValue: number }) => void;
   onPlayAgain: () => void;
+  /**
+   * `solo` — Build Another + Share (Classic Run).
+   * `continue` — single continue CTA for 1v1 after valuation.
+   * `none` — auto-advance shortly after the five land (no buttons).
+   */
+  actions?: 'solo' | 'continue' | 'none';
+  continueLabel?: string;
+  onContinue?: () => void;
+  /** Optional eyebrow above the hero heading (e.g. YOUR FIVE). */
+  eyebrow?: string | null;
 }
 
 type Phase =
@@ -105,7 +117,12 @@ export function ClassicRosterReveal({
   roster,
   reduceMotion = false,
   onComplete,
+  onTotalSettled,
   onPlayAgain,
+  actions = 'solo',
+  continueLabel = 'Continue',
+  onContinue,
+  eyebrow = null,
 }: ClassicRosterRevealProps) {
   const teamValue = useMemo(
     () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
@@ -133,6 +150,7 @@ export function ClassicRosterReveal({
   const [shareError, setShareError] = useState<string | null>(null);
 
   const completedRef = useRef(false);
+  const settleSoundPlayedRef = useRef(false);
   const displayRef = useRef(0);
   const countRafRef = useRef(0);
   const timersRef = useRef<number[]>([]);
@@ -160,7 +178,7 @@ export function ClassicRosterReveal({
     if (completedRef.current) return;
     completedRef.current = true;
     onComplete({ teamValue });
-    playGameSound('results_celebration');
+    // Cash-register SFX fires when the total settles (finalize), not here.
     if (isBillion) {
       void hapticHeavy();
       later(() => hapticSuccess(), 420);
@@ -175,6 +193,7 @@ export function ClassicRosterReveal({
       aliveRef.current = false;
       clearTimers();
       cancelFrame(countRafRef.current);
+      stopFinalTotalSettleSound();
     };
   }, [clearTimers]);
 
@@ -226,11 +245,17 @@ export function ClassicRosterReveal({
         setDisplayTotal(teamValue);
         displayRef.current = teamValue;
         setTotalSettling(true);
+        // Once — the moment the final total finishes counting and settles.
+        if (!settleSoundPlayedRef.current) {
+          settleSoundPlayedRef.current = true;
+          playFinalTotalSettleSound();
+          onTotalSettled?.({ teamValue });
+        }
         later(() => setPhase('reveal'), reduceMotion ? 40 : 220);
       },
       easeInOutCubic,
     );
-  }, [later, phase, reduceMotion, teamValue]);
+  }, [later, onTotalSettled, phase, reduceMotion, teamValue]);
 
   // reveal: compare + track + phrase, then roster
   useEffect(() => {
@@ -268,6 +293,12 @@ export function ClassicRosterReveal({
     later(tick, stepMs);
   }, [later, phase, reduceMotion]);
 
+  // 1v1 embedded: auto-advance after FINAL FIVE lands
+  useEffect(() => {
+    if (phase !== 'done' || actions !== 'none' || !onContinue) return;
+    later(() => onContinue(), reduceMotion ? 80 : 900);
+  }, [actions, later, onContinue, phase, reduceMotion]);
+
   const handleShare = useCallback(async () => {
     if (sharing) return;
     const node = shareCardRef.current;
@@ -301,7 +332,7 @@ export function ClassicRosterReveal({
         : 'FINAL VALUE';
 
   const showHeroTotal = phase !== 'analyze' && phase !== 'enter';
-  const showActions = phase === 'done';
+  const showActions = phase === 'done' && actions !== 'none';
   const showFive = phase === 'roster' || phase === 'done';
 
   return (
@@ -319,6 +350,7 @@ export function ClassicRosterReveal({
 
       <div ref={shareCardRef} className="classic-val__shot">
         <div className="classic-val__hero">
+          {eyebrow ? <p className="classic-val__eyebrow">{eyebrow}</p> : null}
           <p className="classic-val__heading">{heading}</p>
 
           {phase === 'analyze' ? (
@@ -453,7 +485,22 @@ export function ClassicRosterReveal({
         ) : null}
       </div>
 
-      {showActions ? (
+      {showActions && actions === 'continue' ? (
+        <div className="classic-val__actions">
+          <button
+            type="button"
+            className="billion-result-page__again"
+            onPointerDown={() => {
+              hapticTap();
+              onContinue?.();
+            }}
+          >
+            {continueLabel}
+          </button>
+        </div>
+      ) : null}
+
+      {showActions && actions === 'solo' ? (
         <div className="classic-val__actions">
           <button
             type="button"

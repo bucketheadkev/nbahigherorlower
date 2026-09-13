@@ -1,8 +1,20 @@
 import { Capacitor } from '@capacitor/core';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
 
-/** Custom URL scheme registered in iOS Info.plist — opens the native app directly. */
+/** Legacy custom URL scheme — still accepted for older shared links. */
 export const H2H_INVITE_SCHEME = 'pickfive';
+
+/**
+ * Public HTTPS origin for new invitations.
+ * Uses NEXT_PUBLIC_SITE_URL when set; otherwise the live legal/invite site.
+ */
+export const H2H_INVITE_WEB_ORIGIN = (
+  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
+    ? process.env.NEXT_PUBLIC_SITE_URL
+    : 'https://one-billion-run-legal.vercel.app') || 'https://one-billion-run-legal.vercel.app'
+).replace(/\/$/, '');
+
+export const H2H_PENDING_JOIN_STORAGE_KEY = 'oneb:pending-h2h-join';
 
 export type ShareH2HInviteResult =
   | { ok: true; method: 'native' | 'web-share' | 'clipboard' }
@@ -14,30 +26,55 @@ function codeFromRaw(raw: string | null | undefined): string | null {
   return isValidH2HRoomCode(code) ? code : null;
 }
 
-/** Deep link that opens the app and auto-joins (pickfive://join/ABCD). */
+/** Legacy deep link (pickfive://join/ABCD) — kept for older invitations. */
 export function buildH2HInviteDeepLink(code: string): string {
   const safe = sanitizeH2HRoomCode(code);
   return `${H2H_INVITE_SCHEME}://join/${safe}`;
 }
 
-/** Primary tappable link — native deep link only (no public web fallback). */
-export function buildH2HInviteLink(code: string): string {
-  return buildH2HInviteDeepLink(code);
+/** HTTPS invitation URL shared to Messages — powers preview + Universal Links. */
+export function buildH2HInviteWebLink(code: string): string {
+  const safe = sanitizeH2HRoomCode(code);
+  return `${H2H_INVITE_WEB_ORIGIN}/join/${safe}`;
 }
 
+/** Primary tappable link for new shares (HTTPS only). */
+export function buildH2HInviteLink(code: string): string {
+  return buildH2HInviteWebLink(code);
+}
+
+/** Short share body — URL is attached separately via the share API. */
 export function buildH2HInviteText(code: string): string {
   const safe = sanitizeH2HRoomCode(code);
-  const link = buildH2HInviteDeepLink(safe);
-  return [
-    'I challenged you to a 1B Run 1v1!',
-    '',
-    `Room code: ${safe}`,
-    '',
-    'Open 1B Run → 1v1 → Join Game → enter the room code.',
-    Capacitor.isNativePlatform()
-      ? `Or tap to join if you already have the app: ${link}`
-      : 'Install 1B Run on your device, then enter the room code to join.',
-  ].join('\n');
+  return `I challenged you to a 1B Run 1v1!\nRoom code: ${safe}`;
+}
+
+/** Clipboard / fallback body includes the HTTPS URL once. */
+export function buildH2HInviteClipboardText(code: string): string {
+  const safe = sanitizeH2HRoomCode(code);
+  return `${buildH2HInviteText(safe)}\n${buildH2HInviteWebLink(safe)}`;
+}
+
+export function persistPendingH2HJoinCode(code: string): void {
+  if (typeof window === 'undefined') return;
+  const safe = sanitizeH2HRoomCode(code);
+  if (!isValidH2HRoomCode(safe)) return;
+  try {
+    window.sessionStorage.setItem(H2H_PENDING_JOIN_STORAGE_KEY, safe);
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+export function consumePendingH2HJoinCode(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(H2H_PENDING_JOIN_STORAGE_KEY);
+    window.sessionStorage.removeItem(H2H_PENDING_JOIN_STORAGE_KEY);
+    return codeFromRaw(raw);
+  } catch {
+    return null;
+  }
 }
 
 export function parseH2HInviteUrl(raw: string): string | null {
@@ -80,6 +117,13 @@ export function readJoinCodeFromLocation(): string | null {
 
   const fromSearch = codeFromRaw(new URLSearchParams(window.location.search).get('join'));
   if (fromSearch) return fromSearch;
+
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const joinIdx = pathParts.findIndex((s) => s.toLowerCase() === 'join');
+  if (joinIdx >= 0 && pathParts[joinIdx + 1]) {
+    const fromPath = codeFromRaw(pathParts[joinIdx + 1]);
+    if (fromPath) return fromPath;
+  }
 
   const hash = window.location.hash.replace(/^#/, '');
   if (hash.includes('join=') || hash.includes('code=')) {
@@ -137,9 +181,10 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
     return { ok: false, cancelled: false, message: 'Invalid room code.' };
   }
 
-  const deepLink = buildH2HInviteDeepLink(safe);
+  const webLink = buildH2HInviteWebLink(safe);
   const text = buildH2HInviteText(safe);
-  const title = '1B Run — Join my 1v1';
+  const clipboardText = buildH2HInviteClipboardText(safe);
+  const title = '1B Run';
 
   if (Capacitor.isNativePlatform()) {
     try {
@@ -147,7 +192,7 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
       await Share.share({
         title,
         text,
-        url: deepLink,
+        url: webLink,
         dialogTitle: 'Invite a friend',
       });
       return { ok: true, method: 'native' };
@@ -155,7 +200,7 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
       if (isShareCancelled(err)) {
         return { ok: false, cancelled: true, message: 'Share cancelled' };
       }
-      const copied = await copyInviteText(text);
+      const copied = await copyInviteText(clipboardText);
       if (copied) return { ok: true, method: 'clipboard' };
       return { ok: false, cancelled: false, message: shareErrorMessage(err) };
     }
@@ -163,7 +208,7 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
 
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     try {
-      await navigator.share({ title, text });
+      await navigator.share({ title, text, url: webLink });
       return { ok: true, method: 'web-share' };
     } catch (err) {
       if (isShareCancelled(err)) {
@@ -172,7 +217,7 @@ export async function shareH2HInvite(code: string): Promise<ShareH2HInviteResult
     }
   }
 
-  const copied = await copyInviteText(text);
+  const copied = await copyInviteText(clipboardText);
   if (copied) return { ok: true, method: 'clipboard' };
   return { ok: false, cancelled: false, message: 'Could not copy invite link.' };
 }

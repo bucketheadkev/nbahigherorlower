@@ -149,6 +149,19 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
       rawValue: number,
     ) => {
       setError(null);
+      // Optimistic local seat update so UI never waits on the network round-trip.
+      setState((prev) => {
+        if (!prev?.my_picks) return prev;
+        const withoutFrom = prev.my_picks.filter((pick) => pick.position !== fromPosition);
+        const withoutDest = withoutFrom.filter((pick) => pick.position !== toPosition);
+        return {
+          ...prev,
+          my_picks: [
+            ...withoutDest,
+            { position: toPosition, selection, raw_value: rawValue },
+          ],
+        };
+      });
       try {
         await moveH2HPick(roomId, fromPosition, toPosition, selection, rawValue);
       } catch (err) {
@@ -159,6 +172,11 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
               ? err.message
               : 'Could not move pick.';
         setError(message);
+        try {
+          await refetch();
+        } catch {
+          /* ignore */
+        }
         throw err;
       }
       try {

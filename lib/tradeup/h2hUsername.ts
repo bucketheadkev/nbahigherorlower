@@ -5,7 +5,7 @@
 const H2H_USERNAME_KEY = 'ballion_h2h_username_v1';
 
 export const H2H_USERNAME_MIN = 2;
-export const H2H_USERNAME_MAX = 16;
+export const H2H_USERNAME_MAX = 24;
 
 export function sanitizeH2HUsername(raw: string): string {
   return raw.trim().replace(/\s+/g, ' ').slice(0, H2H_USERNAME_MAX);

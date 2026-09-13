@@ -3,10 +3,13 @@ export function buildShareText(streak: number): string {
 }
 
 export function getSiteUrl(): string {
-  if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
   }
-  return process.env.NEXT_PUBLIC_SITE_URL || '';
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'https://one-billion-run-legal.vercel.app';
 }
 
 export function buildShareUrl(streak: number): string {

@@ -44,7 +44,7 @@ function evaluate(snapshot) {
   if (teamValue >= BILLION && new Set(teams).size >= 5) mark('league-tour', true);
   if (values.filter((v) => v >= 215_000_000).length >= 2) mark('double-trouble', true);
   if (values.filter((v) => v >= 210_000_000).length >= 3) mark('triple-threat', true);
-  if (values.some((v) => v === MAX_PLAYER)) mark('top-of-the-market', true);
+  if (values.some((v) => v >= 220_000_000)) mark('top-of-the-market', true);
   if (
     snapshot.fourPlayerTotalBeforeFifth != null &&
     snapshot.fourPlayerTotalBeforeFifth < 800_000_000 &&
@@ -83,7 +83,7 @@ assert('elite-company max theoretical 1.125B', evaluate({ teamValue: 1_125_000_0
 assert('double-trouble without 1B', evaluate({ teamValue: 900_000_000, players: five([215e6, 215e6, 150e6, 150e6, 150e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: null }).includes('double-trouble'));
 assert('triple-threat without 1B', evaluate({ teamValue: 850_000_000, players: five([210e6, 210e6, 210e6, 110e6, 110e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: null }).includes('triple-threat'));
 
-assert('top-of-market exact 225M', evaluate({ teamValue: 900_000_000, players: five([MAX_PLAYER, 180e6, 180e6, 180e6, 180e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: null }).includes('top-of-the-market'));
+assert('top-of-market at 220M', evaluate({ teamValue: 900_000_000, players: five([220_000_000, 180e6, 180e6, 180e6, 180e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: null }).includes('top-of-the-market'));
 
 assert('clutch investment', evaluate({ teamValue: BILLION, players: five([150e6, 150e6, 150e6, 150e6, 400e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: 600_000_000 }).includes('clutch-investment'));
 assert('clutch fails if four-player already 800M+', !evaluate({ teamValue: BILLION, players: five([200e6, 200e6, 200e6, 200e6, 200e6]), teamRerollUsed: false, eraRerollUsed: false, fourPlayerTotalBeforeFifth: 800_000_000 }).includes('clutch-investment'));

@@ -20,14 +20,21 @@ interface Particle {
 
 interface H2HEmojiReactionsProps {
   roomId: string;
-  position: H2HPosition;
   myPlayerNumber: 1 | 2;
   enabled: boolean;
+  /** Position-based set (ignored when `emojis` is provided). */
+  position?: H2HPosition;
+  /** Fixed emoji set (e.g. results screen). */
+  emojis?: readonly string[];
+  /** Channel namespace suffix so results don't clash with round reactions. */
+  channelSuffix?: string;
+  className?: string;
 }
 
 const BURST_COUNT = 3;
 const BURST_LIFE_MS = 5200;
 const TAP_COOLDOWN_MS = 110;
+const FINAL_EMOJIS = ['🐐', '🔥', '💰'] as const;
 
 function spawnParticles(emoji: string): Particle[] {
   return Array.from({ length: BURST_COUNT }, (_, i) => ({
@@ -44,10 +51,17 @@ function spawnParticles(emoji: string): Particle[] {
 export function H2HEmojiReactions({
   roomId,
   position,
+  emojis: emojisProp,
+  channelSuffix = '',
   myPlayerNumber,
   enabled,
+  className,
 }: H2HEmojiReactionsProps) {
-  const emojis = useMemo(() => emojiSetForPosition(position).slice(0, 3), [position]);
+  const emojis = useMemo(() => {
+    if (emojisProp && emojisProp.length > 0) return emojisProp.slice(0, 3);
+    if (position) return emojiSetForPosition(position).slice(0, 3);
+    return [...FINAL_EMOJIS];
+  }, [emojisProp, position]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [mounted, setMounted] = useState(false);
   const lastTapRef = useRef(0);
@@ -72,7 +86,7 @@ export function H2HEmojiReactions({
     if (!enabled || !roomId) return;
     const supabase = getSupabaseBrowserClient();
     const channel = supabase
-      .channel(`h2h_emoji:${roomId}`)
+      .channel(`h2h_emoji:${roomId}${channelSuffix ? `:${channelSuffix}` : ''}`)
       .on('broadcast', { event: 'emoji_burst' }, ({ payload }) => {
         const row = payload as { emoji?: string; from?: number };
         if (!row.emoji || row.from === myPlayerNumber) return;
@@ -84,7 +98,7 @@ export function H2HEmojiReactions({
       void supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [addBurst, enabled, myPlayerNumber, roomId]);
+  }, [addBurst, channelSuffix, enabled, myPlayerNumber, roomId]);
 
   const handleTap = (emoji: string) => {
     if (!enabled) return;
@@ -102,8 +116,6 @@ export function H2HEmojiReactions({
   };
 
   if (!enabled) return null;
-
-  const emojiButtons = emojis;
 
   const floatLayer =
     mounted && particles.length > 0
@@ -133,12 +145,12 @@ export function H2HEmojiReactions({
       : null;
 
   return (
-    <div className="h2h-emoji" aria-label="Reactions">
+    <div className={`h2h-emoji${className ? ` ${className}` : ''}`} aria-label="Reactions">
       {floatLayer}
       <div className="h2h-emoji__dock">
-        {emojiButtons.map((emoji) => (
+        {emojis.map((emoji) => (
           <button
-            key={`${position}-${emoji}`}
+            key={`${position ?? 'final'}-${emoji}`}
             type="button"
             className="h2h-emoji__btn"
             aria-label={`React ${emoji}`}
@@ -154,3 +166,5 @@ export function H2HEmojiReactions({
     </div>
   );
 }
+
+export const H2H_FINAL_EMOJIS = FINAL_EMOJIS;

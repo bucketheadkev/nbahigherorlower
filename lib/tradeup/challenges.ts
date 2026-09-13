@@ -184,7 +184,7 @@ function evaluateRunChallenges(snapshot: ClassicRunSnapshot): string[] {
     tryMark('triple-threat', true);
   }
 
-  if (values.some((v) => v === MAX_PLAYER_DOLLARS)) {
+  if (values.some((v) => v >= 220_000_000)) {
     tryMark('top-of-the-market', true);
   }
 
@@ -203,27 +203,50 @@ function evaluateRunChallenges(snapshot: ClassicRunSnapshot): string[] {
   return newlyCompleted;
 }
 
-/**
- * Evaluate and persist challenge progress after a finished Classic Run.
- * Call only for solo billion mode (not H2H / online).
- */
-export function processClassicRunChallenges(snapshot: ClassicRunSnapshot): void {
+export function processClassicRunChallenges(
+  snapshot: ClassicRunSnapshot,
+  _previousBest = 0,
+): string[] {
   const state = readPersistence();
+  const previouslyDone = new Set(state.completedIds);
   const teamValue = Math.round(snapshot.teamValue);
+  const newlyCompleted: string[] = [];
+
+  const unlock = (id: string) => {
+    if (REMOVED_CHALLENGE_IDS.has(id)) return;
+    if (previouslyDone.has(id) || newlyCompleted.includes(id)) return;
+    newlyCompleted.push(id);
+    markCompleted(state, id);
+  };
+
+  // Money milestones — first time this run crosses the bar.
+  const moneyMilestones: Array<[string, number]> = [
+    ['halfway-home', 500_000_000],
+    ['closing-in', 750_000_000],
+    ['near-miss-950m', 950_000_000],
+    ['hit-1b', BILLION_GOAL],
+    ['hit-1-05b', 1_050_000_000],
+  ];
+  for (const [id, goal] of moneyMilestones) {
+    // Unlock + toast the first time this run qualifies and it isn't persisted yet
+    // (covers newly added challenges even if personal best was already above the bar).
+    if (teamValue >= goal) unlock(id);
+  }
 
   for (const id of evaluateRunChallenges(snapshot)) {
-    markCompleted(state, id);
+    unlock(id);
   }
 
   if (teamValue >= BILLION_GOAL) {
     state.billionStreak += 1;
-    if (state.billionStreak >= 2) markCompleted(state, 'back-to-back-billions');
-    if (state.billionStreak >= 3) markCompleted(state, 'three-peat');
+    if (state.billionStreak >= 2) unlock('back-to-back-billions');
+    if (state.billionStreak >= 3) unlock('three-peat');
   } else {
     state.billionStreak = 0;
   }
 
   writePersistence(state);
+  return newlyCompleted;
 }
 
 export function getChallengePersistence(): ChallengePersistence {
@@ -255,18 +278,32 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
 
   return [
     {
-      id: 'hit-1b',
-      progress: Math.min(pb, BILLION_GOAL),
-      goal: BILLION_GOAL,
+      id: 'halfway-home',
+      progress: Math.min(pb, 500_000_000),
+      goal: 500_000_000,
       kind: 'money',
-      complete: pb >= BILLION_GOAL,
+      complete: pb >= 500_000_000 || isDone('halfway-home'),
+    },
+    {
+      id: 'closing-in',
+      progress: Math.min(pb, 750_000_000),
+      goal: 750_000_000,
+      kind: 'money',
+      complete: pb >= 750_000_000 || isDone('closing-in'),
     },
     {
       id: 'near-miss-950m',
       progress: Math.min(pb, 950_000_000),
       goal: 950_000_000,
       kind: 'money',
-      complete: pb >= 950_000_000,
+      complete: pb >= 950_000_000 || isDone('near-miss-950m'),
+    },
+    {
+      id: 'hit-1b',
+      progress: Math.min(pb, BILLION_GOAL),
+      goal: BILLION_GOAL,
+      kind: 'money',
+      complete: pb >= BILLION_GOAL || isDone('hit-1b'),
     },
     flag('no-second-chances'),
     flag('all-in'),
@@ -278,7 +315,7 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
       progress: Math.min(pb, 1_050_000_000),
       goal: 1_050_000_000,
       kind: 'money',
-      complete: pb >= 1_050_000_000,
+      complete: pb >= 1_050_000_000 || isDone('hit-1-05b'),
     },
     flag('billion-and-beyond'),
     flag('elite-company'),
