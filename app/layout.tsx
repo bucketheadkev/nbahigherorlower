@@ -9,6 +9,7 @@ import './oneb-theme.css';
 import './run-home-ipad-portrait.css';
 import './h2h-ipad-portrait.css';
 import './web-phone.css';
+import './web-responsive.css';
 
 export const metadata: Metadata = {
   title: '1B Run',
@@ -69,6 +70,11 @@ html,body{background:#010814!important}
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: FULL_MOTION_BOOT_SCRIPT }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var cap=window.Capacitor;if(cap&&cap.isNativePlatform&&cap.isNativePlatform()){document.documentElement.dataset.platform='native';return;}if(!cap){document.documentElement.dataset.platform='web';}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="antialiased" style={{ background: '#010814' }}>
         <WebPhoneShell>{children}</WebPhoneShell>

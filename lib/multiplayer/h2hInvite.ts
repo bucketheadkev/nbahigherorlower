@@ -1,18 +1,22 @@
 import { Capacitor } from '@capacitor/core';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
+import { getSiteUrl } from '@/lib/share';
 
 /** Legacy custom URL scheme — still accepted for older shared links. */
 export const H2H_INVITE_SCHEME = 'pickfive';
 
 /**
  * Public HTTPS origin for new invitations.
- * Uses NEXT_PUBLIC_SITE_URL when set; otherwise the live legal/invite site.
+ * Resolved at share time via getSiteUrl() so production can set
+ * NEXT_PUBLIC_SITE_URL=https://1brun.com without hardcoding it into
+ * local development or the native app.
  */
-export const H2H_INVITE_WEB_ORIGIN = (
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
-    ? process.env.NEXT_PUBLIC_SITE_URL
-    : 'https://one-billion-run-legal.vercel.app') || 'https://one-billion-run-legal.vercel.app'
-).replace(/\/$/, '');
+export function getH2HInviteWebOrigin(): string {
+  return getSiteUrl();
+}
+
+/** @deprecated Prefer getH2HInviteWebOrigin() so the origin is not baked at import. */
+export const H2H_INVITE_WEB_ORIGIN = getSiteUrl();
 
 export const H2H_PENDING_JOIN_STORAGE_KEY = 'oneb:pending-h2h-join';
 
@@ -35,7 +39,7 @@ export function buildH2HInviteDeepLink(code: string): string {
 /** HTTPS invitation URL shared to Messages — powers preview + Universal Links. */
 export function buildH2HInviteWebLink(code: string): string {
   const safe = sanitizeH2HRoomCode(code);
-  return `${H2H_INVITE_WEB_ORIGIN}/join/${safe}`;
+  return `${getH2HInviteWebOrigin()}/join/${safe}`;
 }
 
 /** Primary tappable link for new shares (HTTPS only). */

@@ -159,6 +159,20 @@ let wheelSpinBufferPromise: Promise<AudioBuffer | null> | null = null;
 let wheelSpinSource: AudioBufferSourceNode | null = null;
 let wheelSpinGain: GainNode | null = null;
 
+function isNativePlatform(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const cap = (
+      window as Window & {
+        Capacitor?: { isNativePlatform?: () => boolean };
+      }
+    ).Capacitor;
+    return Boolean(cap?.isNativePlatform?.());
+  } catch {
+    return false;
+  }
+}
+
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!ctx) {
@@ -241,6 +255,9 @@ export function unlockGameAudio(): void {
   unlocked = true;
   if (audio.state === 'suspended') void audio.resume();
   void ensureWheelSpinBuffer();
+  // Desktop Chrome drops a spin that starts only after an async decode.
+  // Warm the element on the first gesture so the roll tap can play immediately.
+  if (!isNativePlatform()) ensurePlayer('wheel_spin')?.load();
   prepareH2HEmojiAudio();
 }
 
@@ -360,6 +377,60 @@ function clearWheelSpinStopTimer(): void {
 }
 
 /**
+ * Desktop browsers ignore the iOS-only GainNode path and often drop a spin
+ * that starts after an async decode. Play the same file from the click,
+ * at a natural rate so it still sounds like a spin.
+ */
+function startDesktopWheelSpin(targetMs: number): void {
+  const el = ensurePlayer('wheel_spin');
+  if (!el) return;
+
+  const fit = () => {
+    const naturalSec =
+      Number.isFinite(el.duration) && el.duration > 0.05 ? el.duration : 0;
+    if (!naturalSec) {
+      el.playbackRate = 1;
+      return;
+    }
+    const fitted = naturalSec / (targetMs / 1000);
+    // Extreme rate-fitting chipmunks or drags the sample so it no longer
+    // sounds like a spin. Only nudge rate when the file already matches the reel.
+    el.playbackRate = fitted >= 0.85 && fitted <= 1.2 ? fitted : 1;
+  };
+
+  el.loop = false;
+  el.muted = false;
+  el.volume = wheelSpinGainValue();
+  if (el.readyState >= 1) fit();
+  else el.addEventListener('loadedmetadata', fit, { once: true });
+  try {
+    el.currentTime = 0;
+  } catch {
+    /* seek may fail before metadata */
+  }
+
+  const result = el.play();
+  if (result && typeof result.catch === 'function') {
+    result.catch(() => {
+      el.load();
+      void el.play().catch(() => {
+        /* autoplay blocked */
+      });
+    });
+  }
+
+  clearWheelSpinStopTimer();
+  wheelSpinStopTimer = window.setTimeout(() => {
+    stopSound('wheel_spin');
+    try {
+      el.playbackRate = 1;
+    } catch {
+      /* ignore */
+    }
+  }, targetMs + 80);
+}
+
+/**
  * Play the bundled wheel-spin sample once, rate-fitted so it ends with the reel
  * (default 2940 ms). Stops any prior spin before starting — no overlap.
  * Uses Web Audio buffer playback so gain is audible on iOS.
@@ -375,6 +446,10 @@ export function startWheelSpinSound(
   stopWheelSpinSound();
 
   const targetMs = Math.max(80, expectedDurationMs);
+  if (!isNativePlatform()) {
+    startDesktopWheelSpin(targetMs);
+    return;
+  }
   const token = ++wheelSpinToken;
 
   const startHtmlFallback = () => {

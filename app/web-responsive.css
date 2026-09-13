@@ -1,0 +1,435 @@
+/*
+ * Website-only layout. Native iOS never sets data-platform="web",
+ * so these rules cannot change the App Store binary's presentation.
+ *
+ * Phone widths stay on the iPhone layout. Wide windows use the same
+ * stacked column, only slightly wider — never a stretched desktop canvas.
+ */
+
+html[data-platform='web'] {
+  --web-gutter: clamp(1rem, 3.2vw, 2.75rem);
+  --web-canvas: 1520px;
+  --web-section: clamp(0.85rem, 1.8vw, 1.35rem);
+  --web-gap: clamp(0.7rem, 1.4vw, 1.15rem);
+  overflow-x: clip;
+  background: #010814;
+}
+
+html[data-platform='web'] body {
+  overflow-x: clip;
+  max-width: 100%;
+  background: #010814;
+}
+
+html[data-platform='web'] input,
+html[data-platform='web'] textarea,
+html[data-platform='web'] select {
+  font-size: 16px;
+}
+
+html[data-platform='web'] button:focus-visible,
+html[data-platform='web'] a:focus-visible,
+html[data-platform='web'] input:focus-visible,
+html[data-platform='web'] textarea:focus-visible {
+  outline: 2px solid rgba(41, 228, 144, 0.9);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-platform='web'] .home-tile:hover .home-tile__play,
+  html[data-platform='web'] .run-btn:hover,
+  html[data-platform='web'] .tu-btn--primary:hover:not(:disabled),
+  html[data-platform='web'] .h2h-lobby__chip-btn:hover:not([aria-disabled='true']) {
+    filter: brightness(1.06);
+  }
+}
+
+/* —— Mobile web: keep the iPhone composition, fit Safari chrome —— */
+@media (max-width: 767px) {
+  html[data-platform='web'] .run-home,
+  html[data-platform='web'] .oneb-hub,
+  html[data-platform='web'] .billion-shell,
+  html[data-platform='web'] .h2h-lobby,
+  html[data-platform='web'] .legal-page {
+    min-height: 100dvh;
+  }
+
+  html[data-platform='web'] .run-home__ui {
+    max-width: min(27rem, 100%);
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  html[data-platform='web'] .home-tile,
+  html[data-platform='web'] .run-btn,
+  html[data-platform='web'] .tu-back,
+  html[data-platform='web'] .oneb-tabbar__item,
+  html[data-platform='web'] .h2h-lobby__chip-btn {
+    min-height: 2.75rem;
+  }
+
+  html[data-platform='web'] .run-home__modes--tiles,
+  html[data-platform='web'] .classic-lineup-board,
+  html[data-platform='web'] .billion-booth-stage,
+  html[data-platform='web'] .classic-val {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 359px) {
+  html[data-platform='web'] .run-home__ui {
+    padding-left: max(0.7rem, env(safe-area-inset-left));
+    padding-right: max(0.7rem, env(safe-area-inset-right));
+  }
+
+  html[data-platform='web'] .run-home__modes--tiles {
+    gap: 0.55rem;
+    max-width: 100%;
+  }
+
+  html[data-platform='web'] .home-tile {
+    min-height: 13.5rem;
+  }
+
+  html[data-platform='web'] .run-home__title {
+    font-size: 1.55rem;
+  }
+}
+
+/*
+ * Wide web only (>=768). Phone CSS and native iOS are untouched.
+ * Do not scale, zoom, or translate the column — that rasterizes text on Windows.
+ * Stack like the phone: spinner on top, five slots under it, circles under the slots.
+ */
+@media (min-width: 768px) {
+  /* Same type stack as the phone. Do not substitute a web font. */
+  html[data-platform='web'] body,
+  html[data-platform='web'] .run-home,
+  html[data-platform='web'] .oneb-hub,
+  html[data-platform='web'] .billion-shell,
+  html[data-platform='web'] .h2h-shell,
+  html[data-platform='web'] .h2h-lobby,
+  html[data-platform='web'] .h2h-modes,
+  html[data-platform='web'] .classic-val,
+  html[data-platform='web'] .oneb-tabbar {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[data-platform='web'] .run-home__title,
+  html[data-platform='web'] .home-tile__title,
+  html[data-platform='web'] .run-home__wordmark {
+    font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+  }
+
+  html[data-platform='web'] .run-home__best,
+  html[data-platform='web'] .run-home__best-label,
+  html[data-platform='web'] .run-home__best-value {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Helvetica Neue", sans-serif;
+  }
+
+  html[data-platform='web'] .run-home__ui,
+  html[data-platform='web'] .oneb-hub {
+    width: min(100%, 32rem) !important;
+    max-width: 32rem !important;
+    margin-inline: auto !important;
+    min-height: 100dvh;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Game and 1v1 shells fill the window. Content stays centered inside. */
+  html[data-platform='web'] .tradeup-shell--game,
+  html[data-platform='web'] .billion-shell,
+  html[data-platform='web'] .h2h-shell,
+  html[data-platform='web'] .h2h-frame,
+  html[data-platform='web'] .lineup-game-frame {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: none;
+    background-color: #03143a;
+  }
+
+  html[data-platform='web'] .run-home__ui {
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      1rem
+      calc(9.25rem + env(safe-area-inset-bottom));
+  }
+
+  html[data-platform='web'] .run-home__subtitle {
+    max-width: 20rem;
+    font-size: 0.84rem;
+  }
+
+  html[data-platform='web'] .run-home__modes--tiles {
+    max-width: 22.5rem;
+    gap: 0.95rem;
+  }
+
+  html[data-platform='web'] .home-tile {
+    contain: none;
+    isolation: auto;
+    transform: none;
+    min-height: 0;
+    max-height: 16.5rem;
+    aspect-ratio: 0.72 / 1;
+  }
+
+  html[data-platform='web'] .home-tile__play {
+    min-width: 4.6rem;
+    min-height: 2rem;
+    max-height: 2.2rem;
+    padding: 0.35rem 0.85rem;
+  }
+
+  html[data-platform='web'] .run-btn,
+  html[data-platform='web'] .tu-btn--primary,
+  html[data-platform='web'] .h2h-lobby__submit,
+  html[data-platform='web'] .ter__roll {
+    min-height: 2.7rem;
+    max-height: 3.15rem;
+    height: auto;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.92rem;
+    width: 100%;
+    max-width: 22.5rem;
+    margin-inline: auto;
+  }
+
+  html[data-platform='web'] .run-home__best {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(3.55rem + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    width: min(16.5rem, calc(100% - 2rem));
+    max-width: 16.5rem;
+    margin-inline: auto;
+    z-index: 65;
+  }
+
+  html[data-platform='web'] .oneb-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    box-sizing: border-box;
+    padding-left: clamp(2rem, 14vw, 12rem);
+    padding-right: clamp(2rem, 14vw, 12rem);
+    min-height: calc(3.35rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  html[data-platform='web'] .oneb-tabbar__item {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 6.5rem;
+  }
+
+  html[data-platform='web'] .billion-draft-layout--classic-hub,
+  html[data-platform='web'] .billion-draft-layout--vertical-booth,
+  html[data-platform='web'] .billion-main--draft,
+  html[data-platform='web'] .billion-booth-stage,
+  html[data-platform='web'] .billion-pick-stage,
+  html[data-platform='web'] .game-board__top {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    width: 100% !important;
+    max-width: 30rem !important;
+    margin-inline: auto !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+  }
+
+  html[data-platform='web'] .billion-top--spin,
+  html[data-platform='web'] .h2h-main,
+  html[data-platform='web'] .game-board {
+    width: 100% !important;
+    max-width: 30rem !important;
+    margin-inline: auto !important;
+    overflow: visible !important;
+  }
+
+  html[data-platform='web'] .billion-main--draft,
+  html[data-platform='web'] .billion-booth-stage {
+    order: 1;
+  }
+
+  html[data-platform='web'] .classic-lineup-board {
+    order: 2;
+    width: 100%;
+    max-width: 30rem;
+    margin: 0.4rem auto 0;
+    gap: 0.45rem;
+  }
+
+  html[data-platform='web'] .classic-lineup-row {
+    height: 3.55rem;
+    min-height: 3.55rem;
+    max-height: none;
+  }
+
+  html[data-platform='web'] .classic-lineup-row__name {
+    font-size: 1.02rem;
+  }
+
+  html[data-platform='web'] .billion-court.is-slots-only,
+  html[data-platform='web'] .billion-court-dock {
+    order: 3;
+    width: 100% !important;
+    max-width: 28rem !important;
+    margin: 0.45rem auto 0 !important;
+  }
+
+  html[data-platform='web'] .billion-draft-layout--vertical-booth .billion-court-dock__circle,
+  html[data-platform='web'] .billion-court-dock__circle {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  html[data-platform='web'] .spin-reel--team .spin-reel__item {
+    font-size: 1rem;
+  }
+
+  html[data-platform='web'] .spin-reel--era .spin-reel__item {
+    font-size: 1.75rem;
+  }
+
+  html[data-platform='web'] .classic-val,
+  html[data-platform='web'] .billion-shell--vault .classic-val {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    grid-template-columns: none !important;
+    transform: none !important;
+    filter: none !important;
+    padding-top: max(0.85rem, env(safe-area-inset-top));
+  }
+
+  html[data-platform='web'] .classic-val__shot,
+  html[data-platform='web'] .classic-val__hero,
+  html[data-platform='web'] .classic-val__five,
+  html[data-platform='web'] .classic-val__actions {
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  html[data-platform='web'] .classic-val__actions {
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  html[data-platform='web'] .classic-val__five-row.is-in {
+    transform: none;
+  }
+
+  html[data-platform='web'] .legal-page__body,
+  html[data-platform='web'] .legal-page__header {
+    width: min(32rem, calc(100% - 2rem));
+    max-width: 32rem;
+    margin-inline: auto;
+  }
+
+  /*
+   * 1v1: paint the same navy field edge to edge so the sides match the column.
+   * Controls stay in a centered stack; the background is what extends.
+   */
+  html[data-platform='web'] .h2h-shell,
+  html[data-platform='web'] .h2h-shell--arena,
+  html[data-platform='web'] .h2h-frame,
+  html[data-platform='web'] .h2h-lobby,
+  html[data-platform='web'] .h2h-modes,
+  html[data-platform='web'] .tradeup-shell .h2h-lobby {
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    align-items: center;
+    background-color: #03143a;
+  }
+
+  html[data-platform='web'] .h2h-shell--arena > .game-bg,
+  html[data-platform='web'] .h2h-shell .game-bg,
+  html[data-platform='web'] .billion-shell .game-bg {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+  }
+
+  html[data-platform='web'] .h2h-lobby::before,
+  html[data-platform='web'] .h2h-modes::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 92% 70% at 50% 18%, rgba(7, 42, 112, 0.72), transparent 58%),
+      radial-gradient(ellipse 80% 55% at 50% 0%, rgba(41, 228, 144, 0.08), transparent 46%),
+      linear-gradient(180deg, #03143a 0%, #020d28 46%, #010814 100%);
+  }
+
+  html[data-platform='web'] .h2h-shell--arena .h2h-lobby::before {
+    content: none;
+  }
+
+  html[data-platform='web'] .h2h-lobby,
+  html[data-platform='web'] .h2h-modes {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+  }
+
+  html[data-platform='web'] .h2h-shell--arena > .h2h-lobby {
+    background: transparent !important;
+  }
+
+  html[data-platform='web'] .h2h-lobby > *,
+  html[data-platform='web'] .h2h-modes > *,
+  html[data-platform='web'] .h2h-reveal__body,
+  html[data-platform='web'] .h2h-results__grid {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 34rem);
+    max-width: 34rem;
+    margin-inline: auto;
+  }
+
+  html[data-platform='web'] .h2h-lobby__mode-btn,
+  html[data-platform='web'] .h2h-lobby__submit,
+  html[data-platform='web'] .h2h-modes__join {
+    min-height: 2.7rem;
+    max-height: none;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.92rem;
+  }
+
+  html[data-platform='web'] .h2h-reveal__card {
+    min-height: 4.6rem;
+    padding: 0.55rem 0.45rem 0.6rem;
+  }
+}
