@@ -16,21 +16,23 @@ interface H2HClassicValueRevealProps {
   onComplete: () => void;
 }
 
+type SeatedH2HPlayer = ValuedPlayer & { seatedSlot: H2HPosition };
+
 function rosterForSide(
   rounds: H2HRoundPublic[],
   side: 'p1' | 'p2',
-): ValuedPlayer[] {
-  return H2H_POSITIONS.map((pos: H2HPosition) => {
+): SeatedH2HPlayer[] {
+  return H2H_POSITIONS.flatMap((pos) => {
     const round = rounds.find((r) => r.position === pos);
-    if (!round) return null;
+    if (!round) return [];
     const selection = side === 'p1' ? round.p1_selection : round.p2_selection;
-    if (!selection) return null;
+    if (!selection) return [];
     const raw =
       side === 'p1'
         ? (round.p1_raw_value ?? round.p1_adjusted_value ?? selection.dollarValue ?? 0)
         : (round.p2_raw_value ?? round.p2_adjusted_value ?? selection.dollarValue ?? 0);
-    return { ...pickSelectionToPlayer(selection, raw), seatedSlot: pos };
-  }).filter((p): p is ValuedPlayer => Boolean(p));
+    return [{ ...pickSelectionToPlayer(selection, raw), seatedSlot: pos }];
+  });
 }
 
 /**
