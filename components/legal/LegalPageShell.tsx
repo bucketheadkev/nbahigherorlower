@@ -2,7 +2,6 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Capacitor } from '@capacitor/core';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
 interface LegalPageShellProps {
@@ -14,7 +13,7 @@ interface LegalPageShellProps {
 /** Scrollable public legal/support page shell — navy theme, native back when in app. */
 export function LegalPageShell({ kicker, title, children }: LegalPageShellProps) {
   const router = useRouter();
-  const showBack = Capacitor.isNativePlatform();
+  const showBack = true;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -27,25 +26,29 @@ export function LegalPageShell({ kicker, title, children }: LegalPageShellProps)
   return (
     <div className="legal-page">
       <header className="legal-page__header">
-        {showBack ? (
-          <button
-            type="button"
-            className="legal-page__back"
-            onPointerDown={() => {
-              hapticTap();
-              router.push('/');
-            }}
-          >
-            ← Back
-          </button>
-        ) : null}
-        <div className="legal-page__titles">
-          {kicker ? <p className="legal-page__kicker">{kicker}</p> : null}
-          <h1 className="legal-page__title">{title}</h1>
+        <div className="legal-page__column">
+          {showBack ? (
+            <button
+              type="button"
+              className="legal-page__back"
+              onPointerDown={() => {
+                hapticTap();
+                router.push('/');
+              }}
+            >
+              ← Back
+            </button>
+          ) : null}
+          <div className="legal-page__titles">
+            {kicker ? <p className="legal-page__kicker">{kicker}</p> : null}
+            <h1 className="legal-page__title">{title}</h1>
+          </div>
         </div>
       </header>
 
-      <main className="legal-page__scroll">{children}</main>
+      <main className="legal-page__scroll">
+        <div className="legal-page__column">{children}</div>
+      </main>
       <div className="legal-page__scroll-pad" aria-hidden />
     </div>
   );

@@ -106,7 +106,7 @@ export const PRIVACY_POLICY = {
 };
 
 export const SUPPORT_CONTENT = {
-  title: '1B Run Support',
+  title: 'Player Support',
   paragraphs: [
     'Need help with 1B Run, multiplayer, or your data? Contact KovA Studios at:',
     'onebillionrun@gmail.com',

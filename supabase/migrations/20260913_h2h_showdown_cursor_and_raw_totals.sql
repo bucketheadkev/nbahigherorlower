@@ -147,3 +147,7 @@ $$;
 REVOKE ALL ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, boolean) FROM anon;
 GRANT EXECUTE ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, boolean) TO authenticated;
+
+-- PostgREST keeps serving the old schema until this runs. Without it,
+-- the host start call returns PGRST202 and both players stay on the gate.
+NOTIFY pgrst, 'reload schema';

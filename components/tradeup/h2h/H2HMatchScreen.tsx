@@ -10,7 +10,6 @@ import {
   playH2HDefeatSound,
   prepareH2HEmojiAudio,
 } from '@/lib/tradeup/h2hEmojiSound';
-import { playFinalTotalSettleSound } from '@/lib/tradeup/gameAudio';
 import {
   isH2HGameMode,
   modeDef,
@@ -322,9 +321,7 @@ function H2HFinalScreen({
 
   useEffect(() => {
     prepareH2HEmojiAudio();
-    if (myWins) {
-      playFinalTotalSettleSound();
-    } else if (oppWins) {
+    if (oppWins) {
       playH2HDefeatSound();
     }
     // After money rain / brief win-loss beat, reveal spam-able emojis.

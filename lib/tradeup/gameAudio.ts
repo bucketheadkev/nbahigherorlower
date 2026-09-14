@@ -163,7 +163,6 @@ let cashRegisterBufferPromise: Promise<AudioBuffer | null> | null = null;
 let cashRegisterSource: AudioBufferSourceNode | null = null;
 let cashRegisterGain: GainNode | null = null;
 let cashRegisterToken = 0;
-let cashRegisterLive = false;
 
 function isNativePlatform(): boolean {
   if (typeof window === 'undefined') return false;
@@ -350,39 +349,7 @@ export function unlockGameAudio(): void {
   // Desktop Chrome drops a spin that starts only after an async decode.
   // Warm the element on the first gesture so the roll tap can play immediately.
   if (!isNativePlatform()) ensurePlayer('wheel_spin')?.load();
-  primeCashRegisterElement();
   prepareH2HEmojiAudio();
-}
-
-/** Play/pause during a gesture so a later cha-ching is allowed. */
-function primeCashRegisterElement(): void {
-  const el = ensurePlayer('cash_register');
-  if (!el) return;
-  el.load();
-  const previous = el.volume;
-  el.volume = 0;
-  const primed = el.play();
-  if (!primed || typeof primed.then !== 'function') {
-    el.volume = previous;
-    return;
-  }
-  void primed
-    .then(() => {
-      if (cashRegisterLive) {
-        el.volume = cashRegisterGainValue() || previous;
-        return;
-      }
-      el.pause();
-      try {
-        el.currentTime = 0;
-      } catch {
-        /* seek may fail before metadata */
-      }
-      el.volume = cashRegisterGainValue() || previous;
-    })
-    .catch(() => {
-      el.volume = cashRegisterGainValue() || previous;
-    });
 }
 
 export function syncAudioSettings(): void {
@@ -734,7 +701,11 @@ export function playFinalTotalSettleSound(): void {
   const { sfxMuted } = getAudioSettings();
   if (sfxMuted) return;
 
-  cashRegisterLive = true;
+  const existing = ensurePlayer('cash_register');
+  if (cashRegisterSource || (existing && !existing.paused && existing.currentTime > 0.05)) {
+    return;
+  }
+
   unlockGameAudio();
   const token = ++cashRegisterToken;
   stopSound('cash_register');
@@ -781,7 +752,6 @@ export function playFinalTotalSettleSound(): void {
 /** Stop cash-register / results stinger when leaving the reveal screen. */
 export function stopFinalTotalSettleSound(): void {
   cashRegisterToken += 1;
-  cashRegisterLive = false;
   stopCashRegisterBufferSource();
   stopSound('cash_register');
   stopSound('results_cheer');

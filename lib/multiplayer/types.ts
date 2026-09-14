@@ -74,7 +74,7 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   if (upper.includes('PGRST202') || upper.includes('SCHEMA CACHE')) {
     return new MultiplayerApiError(
       'RPC_MISSING',
-      'Server update required. Run the latest 1V1 SQL migration in Supabase.',
+      'Server update required. In the Supabase SQL editor, run supabase/migrations/20260913_h2h_showdown_cursor_and_raw_totals.sql, then start the showdown again.',
     );
   }
 

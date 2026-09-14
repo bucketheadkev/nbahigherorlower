@@ -365,11 +365,11 @@ html[data-platform='web'] textarea:focus-visible {
     transform: none;
   }
 
-  html[data-platform='web'] .legal-page__body,
-  html[data-platform='web'] .legal-page__header {
-    width: min(32rem, calc(100% - 2rem));
-    max-width: 32rem;
+  html[data-platform='web'] .legal-page__column {
+    width: min(40rem, calc(100% - 2.3rem));
+    max-width: 40rem;
     margin-inline: auto;
+    padding-inline: 0;
   }
 
   /*

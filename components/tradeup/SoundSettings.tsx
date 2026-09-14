@@ -355,7 +355,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             className="settings-ctrl settings-mini-link"
             onPointerDown={press(() => openLegalPage('/support'))}
           >
-            Support
+            Player Support
           </button>
         </div>
         <button
