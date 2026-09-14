@@ -211,6 +211,12 @@ assert.equal(finish.ok, true);
 if (!finish.ok) throw new Error('finish');
 const after = nextShowdownCursor(finish.cursor, { started: true, index: 2, finished: false });
 assert.equal(after.ok, false);
+const rematchStart = nextShowdownCursor(finish.cursor, { started: true, index: 0, finished: false });
+assert.equal(rematchStart.ok, true);
+if (!rematchStart.ok) throw new Error('rematch start');
+assert.equal(rematchStart.cursor.finished, false);
+assert.equal(rematchStart.cursor.index, 0);
+assert.equal(rematchStart.cursor.revision, finish.cursor.revision + 1);
 
 const gervin70 = card({
   id: 'hist_1970s_SAS_george_gervin',

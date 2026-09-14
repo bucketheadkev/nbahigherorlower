@@ -377,11 +377,14 @@ function startCashRegisterBuffer(buf: AudioBuffer): boolean {
   return true;
 }
 
-/** Any tap unlocks the context so a spin that starts in the next effect can play. */
+/** Resume audio on a tap without decoding samples — that hitch was delaying navigation. */
 export function installPhoneAudioUnlock(): () => void {
   if (typeof document === 'undefined') return () => {};
   const onPointerDown = () => {
-    unlockGameAudio();
+    const audio = getCtx();
+    if (!audio) return;
+    unlocked = true;
+    if (audio.state === 'suspended') void audio.resume();
   };
   document.addEventListener('pointerdown', onPointerDown, true);
   return () => document.removeEventListener('pointerdown', onPointerDown, true);

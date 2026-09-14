@@ -31,8 +31,12 @@ export function LegalPageShell({ kicker, title, children }: LegalPageShellProps)
             <button
               type="button"
               className="legal-page__back"
-              onPointerDown={() => {
+              onPointerDown={(event) => {
+                event.preventDefault();
                 hapticTap();
+                router.push('/');
+              }}
+              onClick={() => {
                 router.push('/');
               }}
             >

@@ -102,7 +102,7 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
   if (upper.includes('SHOWDOWN_SKIP') || upper.includes('SHOWDOWN_STALE')) {
     return new MultiplayerApiError(
       'SHOWDOWN_STALE',
-      'That showdown step is no longer current. Refreshing…',
+      'That showdown step is no longer current. In the Supabase SQL editor, run supabase/migrations/20260914_h2h_rematch_showdown_reset.sql, then start the showdown again.',
     );
   }
   if (upper.includes('NEED_TWO_PLAYERS')) {

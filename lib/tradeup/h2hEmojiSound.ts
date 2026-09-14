@@ -32,6 +32,8 @@ const VICTORY_SRC = '/audio/h2h/victory.mp3';
 const DEFEAT_SRC = '/audio/h2h/defeat.mp3';
 
 const cache = new Map<string, HTMLAudioElement>();
+const buffers = new Map<string, AudioBuffer>();
+const bufferJobs = new Map<string, Promise<AudioBuffer | null>>();
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -57,6 +59,78 @@ function getCtx(): AudioContext | null {
   }
   if (master) master.gain.value = sfxScale();
   return ctx;
+}
+
+const REACTION_SRCS = [...Object.values(EMOJI_SRC), VICTORY_SRC, DEFEAT_SRC];
+
+function ensureSampleBuffer(src: string): Promise<AudioBuffer | null> {
+  const ready = buffers.get(src);
+  if (ready) return Promise.resolve(ready);
+  const pending = bufferJobs.get(src);
+  if (pending) return pending;
+
+  const audio = getCtx();
+  if (!audio) return Promise.resolve(null);
+
+  const job = (async () => {
+    try {
+      const res = await fetch(src);
+      if (!res.ok) return null;
+      const raw = await res.arrayBuffer();
+      const decoded = await audio.decodeAudioData(raw.slice(0));
+      buffers.set(src, decoded);
+      return decoded;
+    } catch {
+      return null;
+    }
+  })();
+  bufferJobs.set(src, job);
+  return job;
+}
+
+/** Decode emoji and result samples ahead of the tap so they are not late or noisy. */
+export function warmH2HReactionSounds(): void {
+  prepareH2HEmojiAudio();
+  for (const src of REACTION_SRCS) void ensureSampleBuffer(src);
+}
+
+function gestureIsActive(): boolean {
+  try {
+    return navigator.userActivation?.isActive === true;
+  } catch {
+    return false;
+  }
+}
+
+function playBufferNow(
+  buf: AudioBuffer,
+  volumeScale: number,
+  maxSec?: number,
+): boolean {
+  const audio = getCtx();
+  if (!audio || audio.state !== 'running' || !master) return false;
+  const gain = audio.createGain();
+  gain.gain.value = Math.min(1, Math.max(0, volumeScale));
+  gain.connect(master);
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  src.connect(gain);
+  try {
+    src.start(0);
+  } catch {
+    try { gain.disconnect(); } catch { /* ignore */ }
+    return false;
+  }
+  const stopAt = Math.min(buf.duration, maxSec ?? buf.duration);
+  try {
+    src.stop(audio.currentTime + Math.max(0.05, stopAt));
+  } catch {
+    /* already scheduled */
+  }
+  src.onended = () => {
+    try { gain.disconnect(); } catch { /* ignore */ }
+  };
+  return true;
 }
 
 /** Resume emoji synth during a user gesture (iOS requires this before delayed SFX). */
@@ -89,32 +163,75 @@ function scheduleTrophyChime(startAt: number, scale: number, noteGain = TROPHY_E
   });
 }
 
+function playWarmedElement(src: string, volumeScale: number, maxSec?: number): boolean {
+  let el = cache.get(src);
+  if (!el) {
+    el = new Audio(src);
+    el.preload = 'auto';
+    cache.set(src, el);
+  }
+  if (!el.paused) {
+    try {
+      el.pause();
+    } catch {
+      /* ignore */
+    }
+  }
+  if (el.readyState >= 1) {
+    try {
+      el.currentTime = 0;
+    } catch {
+      /* not seekable yet */
+    }
+  }
+  el.volume = Math.min(1, Math.max(0, volumeScale));
+  const result = el.play();
+  if (maxSec != null && maxSec > 0) {
+    window.setTimeout(() => {
+      if (cache.get(src) !== el) return;
+      try {
+        el.pause();
+      } catch {
+        /* ignore */
+      }
+    }, maxSec * 1000);
+  }
+  if (result && typeof result.catch === 'function') {
+    result.catch(() => {
+      /* blocked outside a tap */
+    });
+  }
+  return true;
+}
+
+/**
+ * Play a decoded buffer when the context is already running so iPhone doesn't
+ * re-download a clone (that was the 1–2s late, scratchy emoji tap).
+ */
 function playSample(src: string, volumeScale: number, maxSec?: number): void {
   if (typeof window === 'undefined' || volumeScale <= 0) return;
-  let audio = cache.get(src);
-  if (!audio) {
-    audio = new Audio(src);
-    audio.preload = 'auto';
-    cache.set(src, audio);
+  prepareH2HEmojiAudio();
+  const audio = getCtx();
+  const ready = buffers.get(src);
+  if (ready && audio?.state === 'running' && playBufferNow(ready, volumeScale, maxSec)) {
+    return;
   }
-  const node = audio.cloneNode(true) as HTMLAudioElement;
-  node.volume = volumeScale;
-  let stopTimer: number | undefined;
-  if (maxSec != null && maxSec > 0) {
-    stopTimer = window.setTimeout(() => {
-      node.pause();
-      node.currentTime = 0;
-    }, maxSec * 1000);
-    node.addEventListener(
-      'ended',
-      () => {
-        if (stopTimer != null) window.clearTimeout(stopTimer);
-      },
-      { once: true },
-    );
-  }
-  void node.play().catch(() => {
-    if (stopTimer != null) window.clearTimeout(stopTimer);
+
+  const gesture = gestureIsActive();
+  if (gesture) playWarmedElement(src, volumeScale, maxSec);
+
+  void ensureSampleBuffer(src).then(async (buf) => {
+    if (!buf || gesture) return;
+    const ctxNow = getCtx();
+    if (!ctxNow) return;
+    if (ctxNow.state === 'suspended') {
+      try {
+        await ctxNow.resume();
+      } catch {
+        return;
+      }
+    }
+    if (ctxNow.state === 'running') playBufferNow(buf, volumeScale, maxSec);
   });
 }
 

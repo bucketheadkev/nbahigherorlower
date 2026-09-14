@@ -43,6 +43,7 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
             hapticTap();
             onBack();
           }}
+          onClick={onBack}
         >
           ← {nav.back}
         </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
@@ -104,14 +104,17 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     setDeleteConfirmOpen(false);
   };
 
+  const deleteLock = useRef(false);
   const confirmDelete = () => {
-    if (deleteBusy) return;
+    if (deleteBusy || deleteLock.current) return;
+    deleteLock.current = true;
     setDeleteBusy(true);
     setDeleteError(null);
     void (async () => {
       const result = await deleteUserData();
       setDeleteBusy(false);
       if (result.ok === false) {
+        deleteLock.current = false;
         setDeleteError(result.message);
         return;
       }
@@ -464,6 +467,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
             disabled={deleteBusy}
             onPointerDown={press(confirmDelete, { skipWhen: () => deleteBusy })}
+            onClick={confirmDelete}
           >
             {deleteBusy ? 'Deleting…' : 'Delete Permanently'}
           </button>

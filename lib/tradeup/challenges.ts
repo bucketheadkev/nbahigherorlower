@@ -30,6 +30,8 @@ export interface ClassicRunSnapshot {
 interface ChallengePersistence {
   completedIds: string[];
   billionStreak: number;
+  h2hWins: number;
+  countedH2HRooms: string[];
 }
 
 export type ChallengeKind = 'money' | 'count';
@@ -43,7 +45,7 @@ export interface ChallengeProgress {
 }
 
 function emptyPersistence(): ChallengePersistence {
-  return { completedIds: [], billionStreak: 0 };
+  return { completedIds: [], billionStreak: 0, h2hWins: 0, countedH2HRooms: [] };
 }
 
 function readPersistence(): ChallengePersistence {
@@ -62,7 +64,14 @@ function readPersistence(): ChallengePersistence {
       typeof parsed.billionStreak === 'number' && parsed.billionStreak >= 0
         ? Math.floor(parsed.billionStreak)
         : 0;
-    return { completedIds: [...new Set(completedIds)], billionStreak };
+    const h2hWins =
+      typeof parsed.h2hWins === 'number' && parsed.h2hWins >= 0
+        ? Math.floor(parsed.h2hWins)
+        : 0;
+    const countedH2HRooms = Array.isArray(parsed.countedH2HRooms)
+      ? parsed.countedH2HRooms.filter((id): id is string => typeof id === 'string' && id.length > 0).slice(-40)
+      : [];
+    return { completedIds: [...new Set(completedIds)], billionStreak, h2hWins, countedH2HRooms };
   } catch {
     return emptyPersistence();
   }
@@ -75,6 +84,8 @@ function writePersistence(state: ChallengePersistence): void {
     JSON.stringify({
       completedIds: [...new Set(state.completedIds)],
       billionStreak: Math.max(0, Math.floor(state.billionStreak)),
+      h2hWins: Math.max(0, Math.floor(state.h2hWins)),
+      countedH2HRooms: state.countedH2HRooms.slice(-40),
     }),
   );
 }
@@ -249,6 +260,50 @@ export function processClassicRunChallenges(
   return newlyCompleted;
 }
 
+export interface H2HMatchSnapshot {
+  roomId: string;
+  won: boolean;
+  myScore: number;
+  rounds: Array<{ mine: number; opp: number; iWon: boolean }>;
+}
+
+/** 1v1 result achievements. Same storage as Classic so the toast and list stay in sync. */
+export function processH2HMatchChallenges(snapshot: H2HMatchSnapshot): string[] {
+  const state = readPersistence();
+  const previouslyDone = new Set(state.completedIds);
+  const newlyCompleted: string[] = [];
+
+  const unlock = (id: string) => {
+    if (previouslyDone.has(id) || newlyCompleted.includes(id)) return;
+    newlyCompleted.push(id);
+    markCompleted(state, id);
+  };
+
+  const myScore = Math.round(snapshot.myScore);
+  const roomId = snapshot.roomId.trim();
+  const alreadyCounted = roomId.length > 0 && state.countedH2HRooms.includes(roomId);
+  if (snapshot.won && !alreadyCounted) {
+    unlock('h2h-first-win');
+    state.h2hWins += 1;
+    if (roomId) state.countedH2HRooms = [...state.countedH2HRooms, roomId].slice(-40);
+    if (state.h2hWins >= 3) unlock('h2h-three-wins');
+  }
+  if (myScore >= BILLION_GOAL) unlock('h2h-billion');
+  if (snapshot.rounds.length >= 5 && snapshot.rounds.every((round) => round.iWon)) {
+    unlock('h2h-clean-sweep');
+  }
+  if (
+    snapshot.rounds.some(
+      (round) => round.iWon && Math.round(round.mine - round.opp) >= 75_000_000,
+    )
+  ) {
+    unlock('h2h-statement');
+  }
+
+  writePersistence(state);
+  return newlyCompleted;
+}
+
 export function getChallengePersistence(): ChallengePersistence {
   return readPersistence();
 }
@@ -366,6 +421,17 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
     flag('perfect-range'),
     streak('back-to-back-billions', 2),
     streak('three-peat', 3),
+    flag('h2h-first-win'),
+    flag('h2h-billion'),
+    flag('h2h-clean-sweep'),
+    flag('h2h-statement'),
+    {
+      id: 'h2h-three-wins',
+      progress: isDone('h2h-three-wins') ? 3 : Math.min(persisted.h2hWins, 3),
+      goal: 3,
+      kind: 'count',
+      complete: isDone('h2h-three-wins'),
+    },
     {
       id: 'five-runs-1-1b',
       progress: Math.min(runStats.runsAtLeast1_1b, 5),

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { H2H_POSITIONS, type H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HRoundPublic } from '@/lib/multiplayer/h2hState';
 import { setH2HShowdownCursor } from '@/lib/multiplayer/rooms';
-import { type ShowdownCursor } from '@/lib/multiplayer/showdownCursor';
+import { nextShowdownCursor, type ShowdownCursor } from '@/lib/multiplayer/showdownCursor';
+import { MultiplayerApiError } from '@/lib/multiplayer/types';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { formatDollars } from '@/lib/tradeup/billionDollar';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -13,13 +15,15 @@ import {
   animateProgress,
   easeOutCubic,
 } from '@/lib/tradeup/perf/rafClock';
-import { playH2HRoundWinSound, prepareH2HEmojiAudio } from '@/lib/tradeup/h2hEmojiSound';
+import { playH2HRoundWinSound, prepareH2HEmojiAudio, warmH2HReactionSounds } from '@/lib/tradeup/h2hEmojiSound';
 import { hapticLight, hapticSuccess } from '@/lib/tradeup/haptics';
 import { useLocale } from '@/hooks/useLocale';
 import { GameBackground } from '../game/GameBackground';
 import { H2HEmojiReactions } from './H2HEmojiReactions';
 
-const COUNT_MS = 2200;
+const COUNT_MS = 2400;
+/** $0 fades in for this long, then both cards count up together. */
+const VALUE_REVEAL_MS = 750;
 const FEED_FLOAT_MS = 780;
 const TOTAL_RISE_MS = 1400;
 
@@ -128,6 +132,7 @@ export function H2HShowdownSequence({
   const [phase, setPhase] = useState<ShowdownPhase>('counting');
   const [leftShown, setLeftShown] = useState(0);
   const [rightShown, setRightShown] = useState(0);
+  const [valuesVisible, setValuesVisible] = useState(false);
   const [totalMineShown, setTotalMineShown] = useState(0);
   const [totalOppShown, setTotalOppShown] = useState(0);
   const [totalsRising, setTotalsRising] = useState(false);
@@ -135,6 +140,8 @@ export function H2HShowdownSequence({
   const [overlay, setOverlay] = useState<ShowdownCursor | null>(null);
   const startedRef = useRef(showdown.started);
   const pendingRef = useRef(false);
+  const localCursorRef = useRef(false);
+  const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowserClient>['channel']> | null>(null);
   const appliedKey = useRef('');
   const onCompleteRef = useRef(onComplete);
   const onSyncedRef = useRef(onSynced);
@@ -178,6 +185,10 @@ export function H2HShowdownSequence({
   }, [positionKey, priorTotals.mine, priorTotals.opp, started]);
 
   useEffect(() => {
+    warmH2HReactionSounds();
+  }, []);
+
+  useEffect(() => {
     if (orderedRounds.length === 0) {
       onCompleteRef.current();
     }
@@ -200,23 +211,68 @@ export function H2HShowdownSequence({
     setPhase('counting');
   }, [live.finished, live.index, live.revision, live.started, orderedRounds.length]);
 
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    const channel = supabase
+      .channel(`h2h_showdown_local:${roomId}`)
+      .on('broadcast', { event: 'cursor' }, ({ payload }) => {
+        const row = payload as ShowdownCursor;
+        if (!row || typeof row.revision !== 'number') return;
+        setOverlay({
+          started: Boolean(row.started),
+          index: Math.max(0, Math.min(4, Math.round(row.index))),
+          finished: Boolean(row.finished),
+          revision: row.revision,
+        });
+      })
+      .subscribe();
+    channelRef.current = channel;
+    return () => {
+      void supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [roomId]);
+
   const commitCursor = useCallback(
     async (command: { started: boolean; index: number; finished: boolean }) => {
       if (!isHost || pendingRef.current) return;
       pendingRef.current = true;
       setSyncError(null);
+      const publishLocal = () => {
+        const current = overlay && overlay.revision >= showdown.revision ? overlay : showdown;
+        const stepped = nextShowdownCursor(current, command);
+        if (!stepped.ok) return false;
+        localCursorRef.current = true;
+        setOverlay(stepped.cursor);
+        void channelRef.current?.send({
+          type: 'broadcast',
+          event: 'cursor',
+          payload: stepped.cursor,
+        });
+        return true;
+      };
       try {
+        if (localCursorRef.current) {
+          if (!publishLocal()) setSyncError('Could not update the showdown.');
+          return;
+        }
         const next = await setH2HShowdownCursor(roomId, command);
         setOverlay(next);
         await onSyncedRef.current();
       } catch (err) {
+        const stale =
+          err instanceof MultiplayerApiError && err.code === 'SHOWDOWN_STALE';
+        const freshStart = command.started && command.index === 0 && !command.finished;
+        if ((stale && freshStart) || localCursorRef.current) {
+          if (publishLocal()) return;
+        }
         setSyncError(err instanceof Error ? err.message : 'Could not update the showdown.');
         await onSyncedRef.current().catch(() => undefined);
       } finally {
         pendingRef.current = false;
       }
     },
-    [isHost, roomId],
+    [isHost, overlay, roomId, showdown],
   );
 
   const handleHostStart = useCallback(() => {
@@ -248,27 +304,36 @@ export function H2HShowdownSequence({
 
     setLeftShown(0);
     setRightShown(0);
+    setValuesVisible(false);
     let lastLeft = 0;
     let lastRight = 0;
     const signal = { cancelled: false };
-
-    void animateProgress(COUNT_MS, easeOutCubic, (e) => {
-      const nextLeft = Math.round(leftTarget * e);
-      const nextRight = Math.round(rightTarget * e);
-      lastLeft = Math.max(lastLeft, nextLeft);
-      lastRight = Math.max(lastRight, nextRight);
-      setLeftShown(lastLeft);
-      setRightShown(lastRight);
-    }, signal).then(() => {
-      if (signal.cancelled) return;
-      setLeftShown(leftTarget);
-      setRightShown(rightTarget);
-      // Center: no feed / no top-total update until See Results.
-      setPhase(isLast ? 'settled' : 'feeding');
+    const revealFrame = window.requestAnimationFrame(() => {
+      if (!signal.cancelled) setValuesVisible(true);
     });
+
+    const countTimer = window.setTimeout(() => {
+      if (signal.cancelled) return;
+      void animateProgress(COUNT_MS, easeOutCubic, (e) => {
+        const nextLeft = Math.round(leftTarget * e);
+        const nextRight = Math.round(rightTarget * e);
+        lastLeft = Math.max(lastLeft, nextLeft);
+        lastRight = Math.max(lastRight, nextRight);
+        setLeftShown(lastLeft);
+        setRightShown(lastRight);
+      }, signal).then(() => {
+        if (signal.cancelled) return;
+        setLeftShown(leftTarget);
+        setRightShown(rightTarget);
+        // Center: no feed / no top-total update until See Results.
+        setPhase(isLast ? 'settled' : 'feeding');
+      });
+    }, VALUE_REVEAL_MS);
 
     return () => {
       signal.cancelled = true;
+      window.cancelAnimationFrame(revealFrame);
+      window.clearTimeout(countTimer);
     };
   }, [isLast, leftTarget, phase, positionKey, reduceMotion, rightTarget, started]);
 
@@ -427,12 +492,21 @@ export function H2HShowdownSequence({
       oppName={oppName}
       myTotal={myTotalLabel}
       oppTotal={oppTotalLabel}
+      leader={(() => {
+        // Corner totals lag the cards until the feed. Use whichever is further ahead
+        // so the username flips as soon as the lead changes, and does not snap back.
+        const mineSoFar = Math.max(totalMineShown, priorTotals.mine + leftShown);
+        const oppSoFar = Math.max(totalOppShown, priorTotals.opp + rightShown);
+        if (mineSoFar === oppSoFar) return null;
+        return mineSoFar > oppSoFar ? 'you' : 'opp';
+      })()}
       leftSel={leftSel}
       rightSel={rightSel}
       leftShown={leftShown}
       rightShown={rightShown}
       leftTarget={leftTarget}
       rightTarget={rightTarget}
+      valuesVisible={valuesVisible || cardsSettled}
       settled={cardsSettled}
       feeding={showFeed}
       canAdvance={canAdvance}
@@ -465,12 +539,14 @@ function ShowdownRoundView({
   oppName,
   myTotal,
   oppTotal,
+  leader,
   leftSel,
   rightSel,
   leftShown,
   rightShown,
   leftTarget,
   rightTarget,
+  valuesVisible,
   settled,
   feeding,
   canAdvance,
@@ -491,12 +567,14 @@ function ShowdownRoundView({
   oppName: string;
   myTotal: string;
   oppTotal: string;
+  leader: 'you' | 'opp' | null;
   leftSel: H2HRoundPublic['p1_selection'];
   rightSel: H2HRoundPublic['p2_selection'];
   leftShown: number;
   rightShown: number;
   leftTarget: number;
   rightTarget: number;
+  valuesVisible: boolean;
   settled: boolean;
   feeding: boolean;
   canAdvance: boolean;
@@ -532,11 +610,11 @@ function ShowdownRoundView({
       <div className="h2h-lobby h2h-lobby--showdown">
         <header className="h2h-sd__totals" aria-live="polite">
           <div className={`h2h-sd__total h2h-sd__total--you${feeding ? ' is-feeding' : ''}`}>
-            <span>{myName}</span>
+            <span className={leader === 'you' ? 'is-ahead' : undefined}>{myName}</span>
             <strong>{myTotal}</strong>
           </div>
           <div className={`h2h-sd__total h2h-sd__total--opp${feeding ? ' is-feeding' : ''}`}>
-            <span>{oppName}</span>
+            <span className={leader === 'opp' ? 'is-ahead' : undefined}>{oppName}</span>
             <strong>{oppTotal}</strong>
           </div>
         </header>
@@ -552,7 +630,7 @@ function ShowdownRoundView({
             target={leftTarget}
             settled={settled}
             feeding={feeding}
-            highlight={settled && winnerSide === 'left'}
+            valuesVisible={valuesVisible}
             dimmed={settled && winnerSide === 'right'}
           />
           <ShowdownCard
@@ -563,7 +641,7 @@ function ShowdownRoundView({
             target={rightTarget}
             settled={settled}
             feeding={feeding}
-            highlight={settled && winnerSide === 'right'}
+            valuesVisible={valuesVisible}
             dimmed={settled && winnerSide === 'left'}
           />
         </div>
@@ -625,7 +703,7 @@ function ShowdownCard({
   target,
   settled,
   feeding,
-  highlight,
+  valuesVisible,
   dimmed,
 }: {
   side: 'left' | 'right';
@@ -635,7 +713,7 @@ function ShowdownCard({
   target: number;
   settled: boolean;
   feeding: boolean;
-  highlight: boolean;
+  valuesVisible: boolean;
   dimmed: boolean;
 }) {
   const colors = selection ? getTeamColors(selection.teamId) : { primary: '#10202b' };
@@ -644,8 +722,10 @@ function ShowdownCard({
   return (
     <div
       className={`h2h-sd__card-wrap h2h-sd__card-wrap--${side}${you ? ' is-you' : ''}${
-        highlight ? ' is-gold' : ''
-      }${dimmed ? ' is-dimmed' : ''}${feeding ? ' is-feeding' : ''}`}
+        dimmed ? ' is-dimmed' : ''
+      }${feeding ? ' is-feeding' : ''}${
+        valuesVisible ? ' is-value-on' : ''
+      }`}
     >
       {feeding ? (
         <span className="h2h-sd__feed" aria-hidden>

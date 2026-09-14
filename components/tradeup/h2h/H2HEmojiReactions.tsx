@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { emojiSetForPosition } from '@/lib/tradeup/h2hEmojiSets';
-import { playEmojiTapSound } from '@/lib/tradeup/h2hEmojiSound';
+import { playEmojiTapSound, warmH2HReactionSounds } from '@/lib/tradeup/h2hEmojiSound';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 
@@ -71,6 +71,7 @@ export function H2HEmojiReactions({
 
   useEffect(() => {
     setMounted(true);
+    warmH2HReactionSounds();
   }, []);
 
   const addBurst = useCallback((emoji: string) => {

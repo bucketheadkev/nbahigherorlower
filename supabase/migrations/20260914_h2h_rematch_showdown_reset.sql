@@ -1,25 +1,50 @@
--- Persist the host showdown cursor and stop matchup penalties from
--- making stored totals differ from the five displayed player values.
--- Apply in the Supabase SQL editor before testing 1v1 showdown. Do not deploy from CI yet.
+-- Rematch was leaving mode_config.showdown.finished = true, so the next
+-- match skipped the position-by-position showdown and jumped to results.
+-- Run this in the Supabase SQL editor if 20260913 was already applied.
 
--- The 20260828 numeric overload did not replace the original bigint function,
--- so lock/resolve still subtracted 37.5% of the gap.
-CREATE OR REPLACE FUNCTION public.calculate_head_to_head_penalty(
-  winner_value bigint,
-  loser_value bigint
-)
-RETURNS bigint
+CREATE OR REPLACE FUNCTION public._mp_reset_h2h_match(p_room_id uuid)
+RETURNS void
 LANGUAGE plpgsql
-IMMUTABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  RETURN 0;
+  DELETE FROM public.h2h_picks pk WHERE pk.room_id = p_room_id;
+
+  UPDATE public.h2h_rounds rd
+  SET
+    matchup_resolved = false,
+    matchup_winner = NULL,
+    p1_raw_value = NULL,
+    p2_raw_value = NULL,
+    p1_adjusted_value = NULL,
+    p2_adjusted_value = NULL,
+    p1_total = NULL,
+    p2_total = NULL,
+    p1_selection = NULL,
+    p2_selection = NULL,
+    resolved_at = NULL
+  WHERE rd.room_id = p_room_id;
+
+  UPDATE public.h2h_matches m
+  SET
+    current_position = 'PG',
+    phase = 'selecting',
+    p1_total = 0,
+    p2_total = 0,
+    p1_continue = false,
+    p2_continue = false,
+    p1_rematch = false,
+    p2_rematch = false,
+    mode_config = coalesce(m.mode_config, '{}'::jsonb) - 'showdown',
+    updated_at = now()
+  WHERE m.room_id = p_room_id;
+
+  UPDATE public.rooms r
+  SET status = 'playing'
+  WHERE r.id = p_room_id;
 END;
 $$;
-
-DROP FUNCTION IF EXISTS public.calculate_head_to_head_penalty(numeric, numeric);
 
 CREATE OR REPLACE FUNCTION public.set_h2h_showdown_cursor(
   room_id uuid,
@@ -94,8 +119,6 @@ BEGIN
     );
   END IF;
 
-  -- Rematch leaves the previous finished cursor in mode_config. A fresh
-  -- start replaces it so the next match can play position by position.
   IF cur_finished AND started AND step_index = 0 AND NOT finished THEN
     cur_started := false;
     cur_finished := false;
@@ -153,6 +176,4 @@ REVOKE ALL ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, bo
 REVOKE ALL ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, boolean) FROM anon;
 GRANT EXECUTE ON FUNCTION public.set_h2h_showdown_cursor(uuid, boolean, integer, boolean) TO authenticated;
 
--- PostgREST keeps serving the old schema until this runs. Without it,
--- the host start call returns PGRST202 and both players stay on the gate.
 NOTIFY pgrst, 'reload schema';

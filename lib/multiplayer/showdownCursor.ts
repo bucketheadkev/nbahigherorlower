@@ -51,11 +51,17 @@ export function nextShowdownCursor(
     return { ok: true, cursor: current };
   }
 
-  if (current.finished) {
+  // A finished cursor is leftover after rematch until the host starts again.
+  // A fresh start (index 0, not finished) replaces it. Any other step is stale.
+  if (current.finished && !(command.started && index === 0 && !command.finished)) {
     return { ok: false, error: 'SHOWDOWN_STALE' };
   }
 
-  const starting = !current.started && command.started && index === 0 && !command.finished;
+  const starting =
+    (!current.started || current.finished) &&
+    command.started &&
+    index === 0 &&
+    !command.finished;
   const stepping =
     current.started &&
     command.started &&

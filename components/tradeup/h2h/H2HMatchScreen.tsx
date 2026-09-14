@@ -1,15 +1,25 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { useH2HMatch } from '@/hooks/useH2HMatch';
+import { IDLE_SHOWDOWN } from '@/lib/multiplayer/showdownCursor';
 import { formatDollars } from '@/lib/tradeup/billionDollar';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import {
   playH2HDefeatSound,
+  playH2HVictorySound,
   prepareH2HEmojiAudio,
+  warmH2HReactionSounds,
 } from '@/lib/tradeup/h2hEmojiSound';
+import {
+  getAchievementSummary,
+  notifyAchievementsUnlocked,
+  processH2HMatchChallenges,
+} from '@/lib/tradeup/challenges';
+import { ChallengeCompleteToast } from '../ChallengeCompleteToast';
 import {
   isH2HGameMode,
   modeDef,
@@ -29,7 +39,7 @@ import { H2HEmojiReactions, H2H_FINAL_EMOJIS } from './H2HEmojiReactions';
 import { MoneyRain, RESULTS_POUR_TOTAL_MS } from '../MoneyRain';
 import { GameBackground } from '../game/GameBackground';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
-import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
+import type { H2HPickSelection, H2HRoundPublic } from '@/lib/multiplayer/h2hState';
 
 interface H2HMatchScreenProps {
   roomId: string;
@@ -56,12 +66,18 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   } = useH2HMatch({ roomId, userId });
 
   const [revealDone, setRevealDone] = useState(false);
+  /** Previous match left showdown.finished set. Ignore it until this match starts one. */
+  const [staleShowdown, setStaleShowdown] = useState(false);
 
   useEffect(() => {
-    if (state?.phase !== 'finished') {
+    if (!state) return;
+    if (state.phase !== 'finished') {
       setRevealDone(false);
+      if (state.showdown.finished) setStaleShowdown(true);
+    } else if (!state.showdown.finished) {
+      setStaleShowdown(false);
     }
-  }, [state?.phase]);
+  }, [state]);
 
   const p1Name = state?.my_player_number === 1 ? myName : opponentName;
   const p2Name = state?.my_player_number === 2 ? myName : opponentName;
@@ -142,11 +158,13 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   const bountyPosition: H2HPosition = resolveBountyPosition(state.mode_config, roomId, state.mode_seed);
   const scoreBounty = gameMode === 'bounty' ? bountyPosition : null;
   const rosterTotals = sumDisplayedRoster(state.resolved_rounds, scoreBounty, 2);
+  const showdown =
+    staleShowdown && state.showdown.finished ? IDLE_SHOWDOWN : state.showdown;
 
   if (
     state.phase === 'finished' &&
     !revealDone &&
-    !state.showdown.finished &&
+    !showdown.finished &&
     state.resolved_rounds.length > 0
   ) {
     return (
@@ -157,7 +175,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         p2Name={p2Name}
         myPlayerNumber={state.my_player_number}
         isHost={isHost}
-        showdown={state.showdown}
+        showdown={showdown}
         onSynced={refetch}
         bountyPosition={scoreBounty}
         onComplete={() => setRevealDone(true)}
@@ -200,6 +218,10 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         oppWins={oppWins}
         roomId={roomId}
         myPlayerNumber={state.my_player_number}
+        myScore={myScore}
+        iAmP1={iAmP1}
+        rounds={state.resolved_rounds}
+        bountyPosition={scoreBounty}
       >
         <div className="h2h-shell h2h-shell--arena">
           <GameBackground />
@@ -309,29 +331,91 @@ function H2HFinalScreen({
   oppWins,
   roomId,
   myPlayerNumber,
+  myScore,
+  iAmP1,
+  rounds,
+  bountyPosition,
   children,
 }: {
   myWins: boolean;
   oppWins: boolean;
   roomId: string;
   myPlayerNumber: 1 | 2;
+  myScore: number;
+  iAmP1: boolean;
+  rounds: H2HRoundPublic[];
+  bountyPosition: H2HPosition | null;
   children: ReactNode;
 }) {
   const [emojiReady, setEmojiReady] = useState(false);
+  const [toastReady, setToastReady] = useState(false);
+  const [achievementQueue, setAchievementQueue] = useState<
+    Array<{ id: string; completed: number; total: number }>
+  >([]);
+  const settledKey = useRef('');
 
   useEffect(() => {
+    const key = `${roomId}:${myWins ? 'w' : oppWins ? 'l' : 't'}`;
+    if (settledKey.current === key) return;
+    settledKey.current = key;
+
+    warmH2HReactionSounds();
     prepareH2HEmojiAudio();
-    if (oppWins) {
-      playH2HDefeatSound();
+    if (myWins) playH2HVictorySound();
+    else if (oppWins) playH2HDefeatSound();
+
+    const unlocked = processH2HMatchChallenges({
+      roomId,
+      won: myWins,
+      myScore,
+      rounds: rounds.map((round) => {
+        const mine = displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', bountyPosition, 2);
+        const opp = displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', bountyPosition, 2);
+        const iWon =
+          (iAmP1 && round.matchup_winner === 'p1') ||
+          (!iAmP1 && round.matchup_winner === 'p2');
+        return { mine, opp, iWon };
+      }),
+    });
+    if (unlocked.length > 0) {
+      notifyAchievementsUnlocked();
+      const summary = getAchievementSummary();
+      const alreadyShown = summary.completed - unlocked.length;
+      setAchievementQueue(
+        unlocked.map((id, index) => ({
+          id,
+          completed: alreadyShown + index + 1,
+          total: summary.total,
+        })),
+      );
     }
-    // After money rain / brief win-loss beat, reveal spam-able emojis.
+  }, [bountyPosition, iAmP1, myScore, myWins, oppWins, roomId, rounds]);
+
+  useEffect(() => {
+    setToastReady(true);
+  }, []);
+
+  useEffect(() => {
     const delay = myWins ? RESULTS_POUR_TOTAL_MS + 350 : 900;
     const t = window.setTimeout(() => setEmojiReady(true), delay);
     return () => window.clearTimeout(t);
-  }, [myWins, oppWins]);
+  }, [myWins]);
+
+  const activeAchievement = achievementQueue[0] ?? null;
 
   return (
     <>
+      {activeAchievement && toastReady
+        ? createPortal(
+            <ChallengeCompleteToast
+              challengeId={activeAchievement.id}
+              completed={activeAchievement.completed}
+              total={activeAchievement.total}
+              onDismiss={() => setAchievementQueue((queue) => queue.slice(1))}
+            />,
+            document.body,
+          )
+        : null}
       {myWins ? (
         <div className="h2h-win-celebration" aria-hidden>
           <MoneyRain intense mega durationMs={4200} />

@@ -399,6 +399,37 @@ function syncOverlay(sw: HTMLInputElement, host: HTMLElement): void {
   sw.style.pointerEvents = blocked ? 'none' : 'auto';
 }
 
+/** Full-screen dismiss layers must not get a covering switch — it paints over the dialog. */
+function isScrimHost(host: HTMLElement): boolean {
+  if (host.classList.contains('settings-name-modal__scrim')) return true;
+  if (/\bscrim\b/i.test(host.className)) return true;
+  const style = getComputedStyle(host);
+  if (style.position !== 'fixed' && style.position !== 'absolute') return false;
+  const rect = host.getBoundingClientRect();
+  return rect.width > window.innerWidth * 0.9 && rect.height > window.innerHeight * 0.7;
+}
+
+function forwardPress(host: HTMLElement, source: Event, type: 'pointerdown' | 'click'): void {
+  if (type === 'click') {
+    host.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return;
+  }
+  const pe = source instanceof PointerEvent ? source : null;
+  host.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerId: pe?.pointerId ?? 1,
+      pointerType: pe?.pointerType ?? 'touch',
+      clientX: pe?.clientX ?? 0,
+      clientY: pe?.clientY ?? 0,
+      button: pe?.button ?? 0,
+      buttons: pe?.buttons ?? 1,
+      isPrimary: pe?.isPrimary ?? true,
+    }),
+  );
+}
+
 /**
  * iPhone Safari cannot vibrate from script. A direct tap on a native switch
  * still ticks (including after iOS 26.5). Cover each control so the finger
@@ -415,10 +446,13 @@ export function installWebHapticTargets(): () => void {
   const attach = (host: HTMLElement) => {
     if (host.querySelector(`:scope > [${WEB_HAPTIC_ATTR}]`)) return;
     if (host.closest(`[${WEB_HAPTIC_ATTR}]`)) return;
+    if (isScrimHost(host)) return;
     const pos = getComputedStyle(host).position;
     if (pos !== 'absolute' && pos !== 'relative' && pos !== 'fixed' && pos !== 'sticky') {
       host.style.position = 'relative';
     }
+    // Keep the switch's z-index inside the button so it cannot cover a dialog on top.
+    host.style.isolation = 'isolate';
 
     const sw = document.createElement('input');
     sw.type = 'checkbox';
@@ -447,22 +481,18 @@ export function installWebHapticTargets(): () => void {
     sw.addEventListener(
       'pointerdown',
       (event) => {
-        if (!hapticsAllowed()) return;
-        // Button handlers call preventDefault to kill ghost clicks. That also
-        // cancels the switch toggle, which is the only iPhone haptic.
-        event.preventDefault = () => {};
+        // Stop here so the button's preventDefault cannot cancel the switch
+        // tick, then run the button in this same tap — don't wait for click.
+        event.stopPropagation();
+        const parent = sw.parentElement;
+        if (parent) forwardPress(parent, event, 'pointerdown');
       },
       true,
     );
-    let forwarding = false;
     sw.addEventListener('click', (event) => {
-      if (forwarding) return;
       event.stopPropagation();
       const parent = sw.parentElement;
-      if (!parent) return;
-      forwarding = true;
-      parent.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      forwarding = false;
+      if (parent) forwardPress(parent, event, 'click');
     });
 
     host.appendChild(sw);

@@ -99,7 +99,17 @@ export type MessageKey =
   | 'challenge.five-runs-1-1b.title'
   | 'challenge.five-runs-1-1b.blurb'
   | 'challenge.ten-billion-runs.title'
-  | 'challenge.ten-billion-runs.blurb';
+  | 'challenge.ten-billion-runs.blurb'
+  | 'challenge.h2h-first-win.title'
+  | 'challenge.h2h-first-win.blurb'
+  | 'challenge.h2h-billion.title'
+  | 'challenge.h2h-billion.blurb'
+  | 'challenge.h2h-clean-sweep.title'
+  | 'challenge.h2h-clean-sweep.blurb'
+  | 'challenge.h2h-statement.title'
+  | 'challenge.h2h-statement.blurb'
+  | 'challenge.h2h-three-wins.title'
+  | 'challenge.h2h-three-wins.blurb';
 
 const EN: Record<MessageKey, string> = {
   'nav.myRuns': 'My Runs',
@@ -115,7 +125,7 @@ const EN: Record<MessageKey, string> = {
   'home.classicTitle': 'CLASSIC RUN',
   'home.classicDesc': 'Solo draft · Reach $1,000,000,000',
   'home.h2hTitle': '1V1',
-  'home.h2hDesc': "Private lobby · Beat your opponent's five",
+  'home.h2hDesc': "Beat your friend's team value.",
   'home.modesLabel': 'Game modes',
   'home.challengeLabel': 'Challenge',
   'home.bestRunLabel': 'My Best Run',
@@ -148,7 +158,7 @@ const EN: Record<MessageKey, string> = {
   'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
   'challenges.intro':
-    'Hit billion-dollar milestones. Progress tracks your best Classic roster.',
+    'Classic and 1v1 milestones. Progress stays on this device.',
   'challenges.done': 'DONE',
   'challenges.unlocked': 'Achievement completed',
   'challenges.progress': '{done}/{total} complete',
@@ -220,6 +230,16 @@ const EN: Record<MessageKey, string> = {
   'challenge.ten-billion-runs.title': 'Dynasty Vault',
   'challenge.ten-billion-runs.blurb':
     'Save 10 separate billion-dollar squads in My Runs.',
+  'challenge.h2h-first-win.title': 'Got the Win',
+  'challenge.h2h-first-win.blurb': 'Beat an opponent in 1v1.',
+  'challenge.h2h-billion.title': 'Billion Dollar Battle',
+  'challenge.h2h-billion.blurb': 'Finish a 1v1 with a team worth $1 billion.',
+  'challenge.h2h-clean-sweep.title': 'Clean Sweep',
+  'challenge.h2h-clean-sweep.blurb': 'Win all five positions in one 1v1.',
+  'challenge.h2h-statement.title': 'Statement Win',
+  'challenge.h2h-statement.blurb': 'Win a 1v1 position by $75 million or more.',
+  'challenge.h2h-three-wins.title': 'Hat Trick',
+  'challenge.h2h-three-wins.blurb': 'Beat opponents in 3 separate 1v1 matches.',
 };
 
 const ES: Record<MessageKey, string> = {
@@ -237,7 +257,7 @@ const ES: Record<MessageKey, string> = {
   'home.classicTitle': 'PARTIDA CLÁSICA',
   'home.classicDesc': 'Draft en solitario · Alcanza $1,000,000,000',
   'home.h2hTitle': '1V1',
-  'home.h2hDesc': 'Sala privada · Vence el quinteto de tu rival',
+  'home.h2hDesc': 'Vence el valor del equipo de tu amigo.',
   'home.modesLabel': 'Modos de juego',
   'home.challengeLabel': 'Desafío',
   'home.bestRunLabel': 'Mi mejor partida',
@@ -271,7 +291,7 @@ const ES: Record<MessageKey, string> = {
   'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',
   'challenges.intro':
-    'Alcanza hitos de mil millones. El progreso sigue tu mejor quinteto Clásico.',
+    'Hitos de Clásico y 1v1. El progreso se queda en este dispositivo.',
   'challenges.done': 'LISTO',
   'challenges.unlocked': 'Logro completado',
   'challenges.progress': '{done}/{total} completados',
@@ -348,6 +368,16 @@ const ES: Record<MessageKey, string> = {
   'challenge.ten-billion-runs.title': 'Bóveda Dinástica',
   'challenge.ten-billion-runs.blurb':
     'Guarda 10 quintetos distintos de mil millones en Mis Partidas.',
+  'challenge.h2h-first-win.title': 'Primera Victoria',
+  'challenge.h2h-first-win.blurb': 'Vence a un rival en 1v1.',
+  'challenge.h2h-billion.title': 'Batalla de Mil Millones',
+  'challenge.h2h-billion.blurb': 'Termina un 1v1 con un equipo de $1 mil millones.',
+  'challenge.h2h-clean-sweep.title': 'Barrida',
+  'challenge.h2h-clean-sweep.blurb': 'Gana las cinco posiciones en un 1v1.',
+  'challenge.h2h-statement.title': 'Golpe Contundente',
+  'challenge.h2h-statement.blurb': 'Gana una posición de 1v1 por $75 millones o más.',
+  'challenge.h2h-three-wins.title': 'Hat Trick',
+  'challenge.h2h-three-wins.blurb': 'Vence a rivales en 3 partidos 1v1 distintos.',
 };
 
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = {

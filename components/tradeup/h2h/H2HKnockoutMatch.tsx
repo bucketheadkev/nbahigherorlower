@@ -8,6 +8,7 @@ import type { H2HMatchState, H2HPickSelection, H2HRoundPublic } from '@/lib/mult
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import { GameBackground } from '../game/GameBackground';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
+import { IDLE_SHOWDOWN } from '@/lib/multiplayer/showdownCursor';
 import { H2HShowdownSequence } from './H2HShowdownSequence';
 
 export interface H2HKnockoutMatchProps {
@@ -50,12 +51,16 @@ export function H2HKnockoutMatch({
   const myNum = state.my_player_number;
   const myPicks = state.my_picks ?? [];
   const [revealDone, setRevealDone] = useState(false);
+  const [staleShowdown, setStaleShowdown] = useState(false);
 
   useEffect(() => {
     if (state.phase !== 'finished') {
       setRevealDone(false);
+      if (state.showdown.finished) setStaleShowdown(true);
+    } else if (!state.showdown.finished) {
+      setStaleShowdown(false);
     }
-  }, [state.phase]);
+  }, [state.phase, state.showdown.finished]);
 
   const orderedRounds = H2H_POSITIONS.map((pos) =>
     state.resolved_rounds.find((r) => r.position === pos),
@@ -95,7 +100,9 @@ export function H2HKnockoutMatch({
   const p1Name = myNum === 1 ? myName : opponentName;
   const p2Name = myNum === 2 ? myName : opponentName;
 
-  if (!revealDone && !state.showdown.finished) {
+  const showdown = staleShowdown && state.showdown.finished ? IDLE_SHOWDOWN : state.showdown;
+
+  if (!revealDone && !showdown.finished) {
     return (
       <H2HShowdownSequence
         roomId={roomId}
@@ -104,7 +111,7 @@ export function H2HKnockoutMatch({
         p2Name={p2Name}
         myPlayerNumber={myNum}
         isHost={isHost}
-        showdown={state.showdown}
+        showdown={showdown}
         onSynced={onSynced}
         scoreFormatter={(rounds) => ({
           p1: rounds.filter((r) => r.matchup_winner === 'p1').length,
