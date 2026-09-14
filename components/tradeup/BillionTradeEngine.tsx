@@ -39,7 +39,7 @@ import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
 import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
 import { measureDraftSlam } from '@/lib/tradeup/draftSlamRects';
-import { preloadGameAudio } from '@/lib/tradeup/gameAudio';
+import { preloadGameAudio, startWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { useSound } from '@/hooks/useSound';
 import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -348,6 +348,8 @@ export function BillionTradeEngine({
     }
     if (!spunTeam || !spunEra) return;
     resume();
+    // Start in this tap. The reel begins in an effect, after iPhone drops HTML play().
+    if (!reduceMotion) startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     lockInteractions();
     setSelectedOfferId(null);
     setMovingFrom(null);
@@ -359,7 +361,7 @@ export function BillionTradeEngine({
     setTicketPrinting(true);
     setBoothReroll(kind);
     setStatus(kind === 'team' ? 'Rerolling team…' : 'Rerolling era…');
-  }, [phase, ticketPrinting, teamRerolls, eraRerolls, resume, spunTeam, spunEra, slamPayload, lockInteractions]);
+  }, [phase, ticketPrinting, teamRerolls, eraRerolls, reduceMotion, resume, spunTeam, spunEra, slamPayload, lockInteractions]);
 
   // Load era board AFTER spin completes — never during reel frames.
   useEffect(() => {

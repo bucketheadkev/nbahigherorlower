@@ -153,6 +153,8 @@ const lastPlayed = new Map<string, number>();
 let preloaded = false;
 let wheelSpinToken = 0;
 let wheelSpinStopTimer = 0;
+/** Set when a spin sample actually starts, so a follow-up effect doesn't cut it. */
+let wheelSpinArmedAt = 0;
 /** Decoded wheel sample — GainNode volume works on iOS (unlike element.volume). */
 let wheelSpinBuffer: AudioBuffer | null = null;
 let wheelSpinBufferPromise: Promise<AudioBuffer | null> | null = null;
@@ -164,18 +166,54 @@ let cashRegisterSource: AudioBufferSourceNode | null = null;
 let cashRegisterGain: GainNode | null = null;
 let cashRegisterToken = 0;
 
-function isNativePlatform(): boolean {
-  if (typeof window === 'undefined') return false;
+/** Phone browsers block HTMLAudioElement.play() once the tap's task has ended. */
+function isPhoneBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+  return navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua);
+}
+
+/** True only while this call is still inside the tap that unlocked audio. */
+function isUserGesture(): boolean {
   try {
-    const cap = (
-      window as Window & {
-        Capacitor?: { isNativePlatform?: () => boolean };
-      }
-    ).Capacitor;
-    return Boolean(cap?.isNativePlatform?.());
+    return navigator.userActivation?.isActive === true;
   } catch {
     return false;
   }
+}
+
+let graphPrimed = false;
+
+/**
+ * iOS drops HTMLAudioElement.play() that starts after a tap's task ends
+ * (reroll begins in useEffect). A running AudioContext can start a decoded
+ * buffer without a new gesture — prime it during the tap, without playing a sample.
+ */
+function primeAudioContext(audio: AudioContext): void {
+  if (audio.state === 'suspended') void audio.resume();
+  if (graphPrimed || audio.state !== 'running') return;
+  graphPrimed = true;
+  try {
+    const gain = audio.createGain();
+    gain.gain.value = 0;
+    const osc = audio.createOscillator();
+    osc.frequency.value = 1;
+    osc.connect(gain);
+    gain.connect(audio.destination);
+    const t = audio.currentTime;
+    osc.start(t);
+    osc.stop(t + 0.02);
+  } catch {
+    /* ignore */
+  }
+}
+
+function fitSpinRate(naturalSec: number, targetMs: number): number {
+  if (!Number.isFinite(naturalSec) || naturalSec <= 0.05) return 1;
+  const fitted = naturalSec / (targetMs / 1000);
+  // Extreme rates chipmunk or drop the start on iPhone Safari.
+  return fitted >= 0.85 && fitted <= 1.2 ? fitted : 1;
 }
 
 function getCtx(): AudioContext | null {
@@ -339,16 +377,26 @@ function startCashRegisterBuffer(buf: AudioBuffer): boolean {
   return true;
 }
 
+/** Any tap unlocks the context so a spin that starts in the next effect can play. */
+export function installPhoneAudioUnlock(): () => void {
+  if (typeof document === 'undefined') return () => {};
+  const onPointerDown = () => {
+    unlockGameAudio();
+  };
+  document.addEventListener('pointerdown', onPointerDown, true);
+  return () => document.removeEventListener('pointerdown', onPointerDown, true);
+}
+
 export function unlockGameAudio(): void {
   const audio = getCtx();
   if (!audio) return;
   unlocked = true;
-  if (audio.state === 'suspended') void audio.resume();
+  primeAudioContext(audio);
   void ensureWheelSpinBuffer();
   void ensureCashRegisterBuffer();
-  // Desktop Chrome drops a spin that starts only after an async decode.
-  // Warm the element on the first gesture so the roll tap can play immediately.
-  if (!isNativePlatform()) ensurePlayer('wheel_spin')?.load();
+  // Do not call element.load() here. Every spin used to reload the sample
+  // immediately before play(), which aborts the tap on iPhone Safari so the
+  // spin is silent or starts late. Preload warms the file once.
   prepareH2HEmojiAudio();
 }
 
@@ -403,16 +451,19 @@ function playSound(id: SoundId, opts?: { force?: boolean }): void {
   el.muted = false;
   el.loop = Boolean(def.loop);
   el.volume = Math.min(1, def.volume * masterScale());
-  try {
-    el.currentTime = 0;
-  } catch {
-    /* seek may fail before metadata */
+  // Seeking before metadata resets the element and delays the start on mobile Safari.
+  if (el.readyState >= 1) {
+    try {
+      el.currentTime = 0;
+    } catch {
+      /* seek may fail before metadata */
+    }
   }
 
   const result = el.play();
   if (result && typeof result.then === 'function') {
     result.catch(() => {
-      /* autoplay / unlock failures are silent */
+      /* autoplay / unlock failures are silent — never reload, that aborts the tap */
     });
   }
 
@@ -447,17 +498,17 @@ export function preloadGameAudio(): void {
   unlockGameAudio();
   (Object.keys(SOUND_DEFS) as SoundId[]).forEach((id) => {
     const el = ensurePlayer(id);
-    el?.load();
+    // Reloading an element that already has data aborts a play that is about to start.
+    if (el && el.readyState === 0) el.load();
   });
   preloaded = true;
 }
 
 export function preloadTicketPrintSound(): void {
-  ensurePlayer('ticket_print')?.load();
-  ensurePlayer('ticket_release')?.load();
-  ensurePlayer('wheel_spin')?.load();
-  ensurePlayer('wheel_stop')?.load();
-  ensurePlayer('cash_register')?.load();
+  for (const id of ['ticket_print', 'ticket_release', 'wheel_spin', 'wheel_stop', 'cash_register'] as const) {
+    const el = ensurePlayer(id);
+    if (el && el.readyState === 0) el.load();
+  }
 }
 
 function clearWheelSpinStopTimer(): void {
@@ -467,51 +518,85 @@ function clearWheelSpinStopTimer(): void {
   }
 }
 
+function wheelSpinIsLive(): boolean {
+  if (wheelSpinSource) return true;
+  const el = players.get('wheel_spin');
+  return Boolean(el && !el.paused);
+}
+
 /**
- * Desktop browsers ignore the iOS-only GainNode path and often drop a spin
- * that starts after an async decode. Play the same file from the click,
- * at a natural rate so it still sounds like a spin.
+ * Start a decoded spin immediately. Must not wait on resume() — that promise
+ * resolves after the tap, and iPhone Safari then drops the start.
  */
-function startDesktopWheelSpin(targetMs: number): void {
+function startWheelSpinBufferNow(buf: AudioBuffer, targetMs: number, token: number): boolean {
+  const audio = getCtx();
+  if (!audio || audio.state !== 'running') return false;
+
+  stopWheelSpinBufferSource();
+  const gain = audio.createGain();
+  gain.gain.value = wheelSpinGainValue();
+  gain.connect(audio.destination);
+  wheelSpinGain = gain;
+
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = fitSpinRate(buf.duration, targetMs);
+  src.connect(gain);
+  wheelSpinSource = src;
+  try {
+    src.start(0);
+  } catch {
+    stopWheelSpinBufferSource();
+    return false;
+  }
+
+  clearWheelSpinStopTimer();
+  wheelSpinStopTimer = window.setTimeout(() => {
+    if (token !== wheelSpinToken) return;
+    stopWheelSpinBufferSource();
+  }, targetMs + 80);
+  src.onended = () => {
+    if (wheelSpinSource === src) stopWheelSpinBufferSource();
+  };
+  return true;
+}
+
+/**
+ * HTML fallback for the same tap. Never calls load() — that aborts play() on
+ * mobile Safari and the retry happens after the gesture is gone.
+ */
+function startElementWheelSpin(targetMs: number, token: number): void {
   const el = ensurePlayer('wheel_spin');
   if (!el) return;
-
-  const fit = () => {
-    const naturalSec =
-      Number.isFinite(el.duration) && el.duration > 0.05 ? el.duration : 0;
-    if (!naturalSec) {
-      el.playbackRate = 1;
-      return;
-    }
-    const fitted = naturalSec / (targetMs / 1000);
-    // Extreme rate-fitting chipmunks or drags the sample so it no longer
-    // sounds like a spin. Only nudge rate when the file already matches the reel.
-    el.playbackRate = fitted >= 0.85 && fitted <= 1.2 ? fitted : 1;
-  };
 
   el.loop = false;
   el.muted = false;
   el.volume = wheelSpinGainValue();
-  if (el.readyState >= 1) fit();
-  else el.addEventListener('loadedmetadata', fit, { once: true });
-  try {
-    el.currentTime = 0;
-  } catch {
-    /* seek may fail before metadata */
+  const applyRate = () => {
+    el.playbackRate = fitSpinRate(el.duration, targetMs);
+  };
+  if (el.readyState >= 1) {
+    applyRate();
+    try {
+      el.currentTime = 0;
+    } catch {
+      /* seek may fail before metadata */
+    }
+  } else {
+    el.addEventListener('loadedmetadata', applyRate, { once: true });
   }
 
   const result = el.play();
   if (result && typeof result.catch === 'function') {
     result.catch(() => {
-      el.load();
-      void el.play().catch(() => {
-        /* autoplay blocked */
-      });
+      if (token !== wheelSpinToken || !wheelSpinBuffer) return;
+      startWheelSpinBufferNow(wheelSpinBuffer, targetMs, token);
     });
   }
 
   clearWheelSpinStopTimer();
   wheelSpinStopTimer = window.setTimeout(() => {
+    if (token !== wheelSpinToken) return;
     stopSound('wheel_spin');
     try {
       el.playbackRate = 1;
@@ -524,7 +609,9 @@ function startDesktopWheelSpin(targetMs: number): void {
 /**
  * Play the bundled wheel-spin sample once, rate-fitted so it ends with the reel
  * (default 2940 ms). Stops any prior spin before starting — no overlap.
- * Uses Web Audio buffer playback so gain is audible on iOS.
+ * Phone browsers play a decoded buffer when the context is already running so
+ * volume works and rerolls that start after the tap still sound. Otherwise the
+ * element plays in the same gesture, without reloading the file.
  */
 export function startWheelSpinSound(
   expectedDurationMs: number = WHEEL_SPIN_DURATION_MS,
@@ -533,109 +620,32 @@ export function startWheelSpinSound(
   const { sfxMuted } = getAudioSettings();
   if (sfxMuted) return;
 
+  // Reroll arms this in the tap, then the reel effect calls it again. Don't
+  // stop the sample that just started — the second call is outside the gesture.
+  if (performance.now() - wheelSpinArmedAt < 700 && wheelSpinIsLive()) return;
+
   unlockGameAudio();
+  void ensureWheelSpinBuffer();
   stopWheelSpinSound();
 
+  const token = wheelSpinToken;
   const targetMs = Math.max(80, expectedDurationMs);
-  if (!isNativePlatform()) {
-    startDesktopWheelSpin(targetMs);
-    return;
+  const audio = getCtx();
+  const gesture = isUserGesture();
+
+  if (wheelSpinBuffer && audio?.state === 'running') {
+    if (startWheelSpinBufferNow(wheelSpinBuffer, targetMs, token)) {
+      wheelSpinArmedAt = performance.now();
+      return;
+    }
   }
-  const token = ++wheelSpinToken;
 
-  const startHtmlFallback = () => {
-    if (token !== wheelSpinToken) return;
-    const el = ensurePlayer('wheel_spin');
-    if (!el) return;
+  // HTML play outside a tap is blocked on iPhone and can abort a sample that
+  // already started. Desktop still plays the element from the click.
+  if (isPhoneBrowser() && !gesture) return;
 
-    const naturalSec = Number.isFinite(el.duration) && el.duration > 0.05 ? el.duration : null;
-    el.playbackRate = naturalSec
-      ? Math.min(2.5, Math.max(0.45, naturalSec / (targetMs / 1000)))
-      : 1;
-    el.loop = false;
-    el.muted = false;
-    el.volume = wheelSpinGainValue();
-    try {
-      el.currentTime = 0;
-    } catch {
-      /* seek may fail before metadata */
-    }
-    const result = el.play();
-    if (result && typeof result.then === 'function') {
-      result.catch(() => {
-        /* autoplay / unlock failures are silent */
-      });
-    }
-    clearWheelSpinStopTimer();
-    wheelSpinStopTimer = window.setTimeout(() => {
-      if (token !== wheelSpinToken) return;
-      stopSound('wheel_spin');
-      try {
-        el.playbackRate = 1;
-      } catch {
-        /* ignore */
-      }
-    }, targetMs + 80);
-  };
-
-  const startFromBuffer = (buf: AudioBuffer) => {
-    if (token !== wheelSpinToken) return;
-    const audio = getCtx();
-    if (!audio) {
-      startHtmlFallback();
-      return;
-    }
-
-    void audio.resume().then(() => {
-      if (token !== wheelSpinToken) return;
-
-      stopWheelSpinBufferSource();
-      stopSound('wheel_spin');
-
-      const gain = audio.createGain();
-      gain.gain.value = wheelSpinGainValue();
-      gain.connect(audio.destination);
-      wheelSpinGain = gain;
-
-      const src = audio.createBufferSource();
-      src.buffer = buf;
-      const naturalSec = buf.duration > 0.05 ? buf.duration : null;
-      src.playbackRate.value = naturalSec
-        ? Math.min(2.5, Math.max(0.45, naturalSec / (targetMs / 1000)))
-        : 1;
-      src.connect(gain);
-      wheelSpinSource = src;
-
-      try {
-        src.start(0);
-      } catch {
-        stopWheelSpinBufferSource();
-        startHtmlFallback();
-        return;
-      }
-
-      clearWheelSpinStopTimer();
-      wheelSpinStopTimer = window.setTimeout(() => {
-        if (token !== wheelSpinToken) return;
-        stopWheelSpinBufferSource();
-      }, targetMs + 80);
-
-      src.onended = () => {
-        if (wheelSpinSource === src) {
-          stopWheelSpinBufferSource();
-        }
-      };
-    });
-  };
-
-  void ensureWheelSpinBuffer().then((buf) => {
-    if (token !== wheelSpinToken) return;
-    if (buf) {
-      startFromBuffer(buf);
-      return;
-    }
-    startHtmlFallback();
-  });
+  startElementWheelSpin(targetMs, token);
+  wheelSpinArmedAt = performance.now();
 }
 
 /** Stop team/era spin audio (leave screen / new spin / unmount). */
@@ -691,7 +701,8 @@ export function playWheelStopSound(): void {
 export function warmFinalTotalSettleSound(): void {
   if (typeof window === 'undefined') return;
   unlockGameAudio();
-  ensurePlayer('cash_register')?.load();
+  const el = ensurePlayer('cash_register');
+  if (el && el.readyState === 0) el.load();
   void ensureCashRegisterBuffer();
 }
 
@@ -711,11 +722,20 @@ export function playFinalTotalSettleSound(): void {
   stopSound('cash_register');
   stopCashRegisterBufferSource();
 
+  const audio = getCtx();
+  if (cashRegisterBuffer && audio?.state === 'running') {
+    if (startCashRegisterBuffer(cashRegisterBuffer)) return;
+  }
+
   const playBuffer = (buf: AudioBuffer) => {
     if (token !== cashRegisterToken) return;
-    const audio = getCtx();
-    if (!audio) return;
-    void audio.resume().then(() => {
+    const ctxNow = getCtx();
+    if (!ctxNow) return;
+    if (ctxNow.state === 'running') {
+      startCashRegisterBuffer(buf);
+      return;
+    }
+    void ctxNow.resume().then(() => {
       if (token !== cashRegisterToken) return;
       startCashRegisterBuffer(buf);
     }).catch(() => {
@@ -728,10 +748,12 @@ export function playFinalTotalSettleSound(): void {
     el.muted = false;
     el.loop = false;
     el.volume = cashRegisterGainValue();
-    try {
-      el.currentTime = 0;
-    } catch {
-      /* seek may fail before metadata */
+    if (el.readyState >= 1) {
+      try {
+        el.currentTime = 0;
+      } catch {
+        /* seek may fail before metadata */
+      }
     }
     const started = el.play();
     if (started && typeof started.then === 'function') {

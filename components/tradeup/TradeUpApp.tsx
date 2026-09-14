@@ -75,9 +75,18 @@ export function TradeUpApp() {
         ? requestIdleCallback(() => warmSpinPairIndex(), { timeout: 1200 })
         : window.setTimeout(() => warmSpinPairIndex(), 200);
 
+    let removeAudioUnlock = () => {};
+    let removeWebHaptics = () => {};
+    let bootCancelled = false;
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
       mod.unlockGameAudio();
+      if (bootCancelled) return;
+      removeAudioUnlock = mod.installPhoneAudioUnlock();
+    });
+    void import('@/lib/tradeup/haptics').then((mod) => {
+      if (bootCancelled) return;
+      removeWebHaptics = mod.installWebHapticTargets();
     });
 
     const readyId = window.requestAnimationFrame(() => {
@@ -85,6 +94,9 @@ export function TradeUpApp() {
     });
 
     return () => {
+      bootCancelled = true;
+      removeWebHaptics();
+      removeAudioUnlock();
       window.cancelAnimationFrame(readyId);
       if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
         try {

@@ -69,4 +69,5 @@ export function setMusicVolume(volume: number): void {
 export function setHapticsEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(HAPTICS_KEY, enabled ? '1' : '0');
+  window.dispatchEvent(new Event('oneb-haptics-change'));
 }

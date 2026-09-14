@@ -27,6 +27,7 @@ import type { Position } from '@/lib/tradeup/types';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
+import { startWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { BallionTicketMachine, type TicketRerollKind } from '../BallionTicketMachine';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from '../DraftPlayerSlamFly';
 import { FranchisePickScreen } from '../FranchisePickScreen';
@@ -254,6 +255,7 @@ export function H2HPositionPicker({
       if (kind === 'team' && teamRerolls <= 0) return;
       if (kind === 'era' && eraRerolls <= 0) return;
       resume();
+      if (!reduceMotion) startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
       if (kind === 'team') setTeamRerolls(0);
       else setEraRerolls(0);
       setSelectedId(null);
@@ -265,7 +267,7 @@ export function H2HPositionPicker({
       setBoothReroll(kind);
       setStatus(kind === 'team' ? 'Rerolling team…' : 'Rerolling era…');
     },
-    [eraRerolls, lockingSlot, resume, spunEra, spunTeam, teamRerolls, ticketPrinting],
+    [eraRerolls, lockingSlot, reduceMotion, resume, spunEra, spunTeam, teamRerolls, ticketPrinting],
   );
 
   const handleSelect = useCallback(
