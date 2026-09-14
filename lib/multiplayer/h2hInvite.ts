@@ -1,22 +1,37 @@
 import { Capacitor } from '@capacitor/core';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
-import { getSiteUrl } from '@/lib/share';
 
 /** Legacy custom URL scheme — still accepted for older shared links. */
 export const H2H_INVITE_SCHEME = 'pickfive';
 
+/** Shared invitations always use the production site, not the legal-page host. */
+export const H2H_INVITE_PRODUCTION_ORIGIN = 'https://1brun.com';
+
+const LEGACY_INVITE_HOST = 'one-billion-run-legal.vercel.app';
+
 /**
- * Public HTTPS origin for new invitations.
- * Resolved at share time via getSiteUrl() so production can set
- * NEXT_PUBLIC_SITE_URL=https://1brun.com without hardcoding it into
- * local development or the native app.
+ * Origin for /join/CODE links.
+ * Defaults to https://1brun.com even on localhost and in the native webview,
+ * so Copy Link and Invite do not emit the old legal-site domain.
+ * NEXT_PUBLIC_SITE_URL can override that only when it is a different https origin.
  */
 export function getH2HInviteWebOrigin(): string {
-  return getSiteUrl();
+  const configured =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '')
+      : '';
+  if (
+    configured &&
+    configured.startsWith('https://') &&
+    !configured.includes(LEGACY_INVITE_HOST)
+  ) {
+    return configured;
+  }
+  return H2H_INVITE_PRODUCTION_ORIGIN;
 }
 
 /** @deprecated Prefer getH2HInviteWebOrigin() so the origin is not baked at import. */
-export const H2H_INVITE_WEB_ORIGIN = getSiteUrl();
+export const H2H_INVITE_WEB_ORIGIN = H2H_INVITE_PRODUCTION_ORIGIN;
 
 export const H2H_PENDING_JOIN_STORAGE_KEY = 'oneb:pending-h2h-join';
 
@@ -114,6 +129,18 @@ export function parseH2HInviteUrl(raw: string): string | null {
 
   const bare = trimmed.toUpperCase();
   return codeFromRaw(bare);
+}
+
+/** /join or /join/not-a-code — null when the path is not an invite. */
+export function readInvalidInviteReason(): string | null {
+  if (typeof window === 'undefined') return null;
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const joinIdx = parts.findIndex((s) => s.toLowerCase() === 'join');
+  if (joinIdx < 0) return null;
+  const raw = parts[joinIdx + 1];
+  if (!raw) return 'This invite link is missing a room code.';
+  if (!codeFromRaw(raw)) return 'This invite link is not valid.';
+  return null;
 }
 
 export function readJoinCodeFromLocation(): string | null {

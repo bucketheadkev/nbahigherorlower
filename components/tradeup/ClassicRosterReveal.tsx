@@ -40,7 +40,6 @@ import type { Position } from '@/lib/tradeup/types';
 import { useLocale } from '@/hooks/useLocale';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { BillionCelebration } from './BillionCelebration';
-import { formatMillionLabel, ValueFlipCard } from './ValueFlipCard';
 
 type SeatedRevealPlayer = ValuedPlayer & { seatedSlot?: Position };
 
@@ -85,6 +84,10 @@ type Phase =
 
 /** Visual track ceiling — sits above typical max roster (~$1.125B). */
 const TRACK_MAX = 1_250_000_000;
+
+function formatCompactMillions(value: number): string {
+  return `$${(value / 1_000_000).toFixed(1)}M`;
+}
 
 /** Ease-in-out for a financial processor feel (fast middle, soft ends). */
 function easeInOutCubic(t: number): number {
@@ -478,30 +481,27 @@ export function ClassicRosterReveal({
                 const accent = getTeamColors(player.teamId).primary;
                 const ink = contrastOnPrimary(accent);
                 return (
-                  <li key={pos} className="classic-val__five-item">
-                    <ValueFlipCard
-                      className={`classic-val__five-row is-in${
-                        pulseIndex === index ? ' is-pulse' : ''
-                      }`}
-                      style={
-                        {
-                          ['--row-accent' as string]: accent,
-                          ['--row-ink' as string]: ink,
-                          backgroundColor: accent,
-                          color: ink,
-                        } as CSSProperties
-                      }
-                      ariaLabel={`${pos}: ${player.name}`}
-                      valueLabel={formatMillionLabel(value)}
-                      front={
-                        <>
-                          <span className="classic-val__five-pos">{pos}</span>
-                          <strong className="classic-val__five-name">
-                            {player.name}
-                          </strong>
-                        </>
-                      }
-                    />
+                  <li
+                    key={pos}
+                    className={`classic-val__five-row is-in${
+                      pulseIndex === index ? ' is-pulse' : ''
+                    }`}
+                    style={
+                      {
+                        ['--row-accent' as string]: accent,
+                        ['--row-ink' as string]: ink,
+                        backgroundColor: accent,
+                        color: ink,
+                      } as CSSProperties
+                    }
+                  >
+                    <span className="classic-val__five-pos">{pos}</span>
+                    <strong className="classic-val__five-name">
+                      {player.name}
+                    </strong>
+                    <em className="classic-val__five-value">
+                      {formatCompactMillions(value)}
+                    </em>
                   </li>
                 );
               })}

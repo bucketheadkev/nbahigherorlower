@@ -257,6 +257,7 @@ export function H2HPositionPicker({
       if (kind === 'team') setTeamRerolls(0);
       else setEraRerolls(0);
       setSelectedId(null);
+      setOffers([]);
       setRerollFrom({ team: spunTeam, era: spunEra });
       if (kind === 'team') setSpunTeam(null);
       else setSpunEra(null);
@@ -610,40 +611,6 @@ export function H2HPositionPicker({
                 Waiting for opponent ({Math.min(5, opponentPickCount)}/5). Tap a placed circle
                 below to move a player.
               </p>
-            </div>
-          ) : rerollFrom && ticketPrinting ? (
-            <div className="billion-pick-stage is-holding-board">
-              <div className="billion-reroll-sheet">
-                <BallionTicketMachine
-                  locked={lockedPair}
-                  printing={ticketPrinting}
-                  canRerollTeam={false}
-                  canRerollEra={false}
-                  reduceMotion={reduceMotion}
-                  autoReroll={boothReroll}
-                  rerollFrom={rerollFrom}
-                  holdTeam={spunTeam ?? rerollFrom.team}
-                  holdEra={spunEra ?? rerollFrom.era}
-                  showGoal={false}
-                  onAutoRerollConsumed={() => setBoothReroll(null)}
-                  onPrint={handlePrint}
-                  onResult={handleResult}
-                  onReroll={handleReroll}
-                />
-              </div>
-              <FranchisePickScreen
-                team={rerollFrom.team}
-                era={rerollFrom.era}
-                offers={availableOffers}
-                openPositions={openPositions}
-                selectedId={null}
-                canRerollTeam={false}
-                canRerollEra={false}
-                interactionLocked
-                hint="Spinning…"
-                onSelect={() => {}}
-                onReroll={handleReroll}
-              />
             </div>
           ) : !readyToDraft ? (
             <div className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}>

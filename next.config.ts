@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
     // Required for static export / Capacitor; fine for local web play too.
     unoptimized: true,
   },
+  async rewrites() {
+    // Capacitor static export cannot rewrite. Native invites use the app link.
+    // On the website, /join/CODE must render the game, not a 404 navy page.
+    if (forCapacitor) return [];
+    return [
+      { source: '/join/:code', destination: '/' },
+      { source: '/join', destination: '/' },
+    ];
+  },
 };
 
 export default nextConfig;

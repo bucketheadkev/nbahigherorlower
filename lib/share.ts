@@ -2,6 +2,10 @@ export function buildShareText(streak: number): string {
   return `I just scored a ${streak} streak on NBA Higher or Lower. Can you beat me? 🏀🔥`;
 }
 
+/**
+ * Non-invite share fallback only. 1v1 invitations do not use this —
+ * they always use https://1brun.com via getH2HInviteWebOrigin().
+ */
 const INVITE_HOST_FALLBACK = 'https://one-billion-run-legal.vercel.app';
 
 function isLocalHost(hostname: string): boolean {
@@ -9,11 +13,11 @@ function isLocalHost(hostname: string): boolean {
 }
 
 /**
- * Public site origin for shares and invitation links.
- * NEXT_PUBLIC_SITE_URL wins (set https://1brun.com for the production website).
- * A deployed browser uses its own origin so local and native builds are not
- * hardcoded to production. Localhost and the Capacitor webview keep the
- * existing invite host so Universal Links and local play stay intact.
+ * Public site origin for non-invite shares.
+ * 1v1 Copy Link and Invite do not use this. They use https://1brun.com.
+ * NEXT_PUBLIC_SITE_URL still wins here when set.
+ * A deployed browser uses its own origin. Localhost and the native webview
+ * fall back to the older legal host for these non-invite shares only.
  */
 export function getSiteUrl(): string {
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL) {

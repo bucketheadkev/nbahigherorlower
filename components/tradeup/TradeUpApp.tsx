@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { useGameReducedMotion } from '@/hooks/useGameReducedMotion';
 import { useH2HInviteLink } from '@/hooks/useH2HInviteLink';
+import { readInvalidInviteReason, readJoinCodeFromLocation } from '@/lib/multiplayer/h2hInvite';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
@@ -41,12 +42,30 @@ export function TradeUpApp() {
   const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
+  const [invalidInvite, setInvalidInvite] = useState<string | null>(null);
 
   useH2HInviteLink((code) => {
     setPendingH2HJoinCode(code);
     setH2hKey((k) => k + 1);
     setScreen('h2h');
+    splashDoneThisLoad = true;
+    setShowSplash(false);
   });
+
+  useEffect(() => {
+    const invalid = readInvalidInviteReason();
+    if (invalid) {
+      setInvalidInvite(invalid);
+      splashDoneThisLoad = true;
+      setShowSplash(false);
+      return;
+    }
+    if (readJoinCodeFromLocation()) {
+      splashDoneThisLoad = true;
+      setShowSplash(false);
+      setScreen('h2h');
+    }
+  }, []);
 
   useEffect(() => {
     initAdaptiveQuality();
@@ -123,11 +142,32 @@ export function TradeUpApp() {
   }, []);
 
   // Mount hub tab bar under the splash so it crossfades in with home (not after).
-  const showTabs = screen === 'hub';
+  const showTabs = screen === 'hub' && !invalidInvite;
 
   return (
     <LocaleProvider>
-      {screen === 'engine' ? (
+      {invalidInvite ? (
+        <div className="h2h-lobby" aria-label="Invite unavailable">
+          <header className="h2h-lobby__header">
+            <p className="h2h-lobby__eyebrow">1V1</p>
+            <h1 className="h2h-lobby__title">Can’t join</h1>
+          </header>
+          <p className="h2h-lobby__status" role="alert">
+            {invalidInvite}
+          </p>
+          <button
+            type="button"
+            className="h2h-lobby__leave"
+            onClick={() => {
+              window.history.replaceState({}, '', '/');
+              setInvalidInvite(null);
+              setScreen('hub');
+            }}
+          >
+            Back to home
+          </button>
+        </div>
+      ) : screen === 'engine' ? (
         <BillionTradeEngine
           key={engineKey}
           onExit={handleExit}

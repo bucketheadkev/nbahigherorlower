@@ -343,7 +343,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   return (
     <div
-      className={`ter${showGoalBlock ? ' ter--goal ter--spin-top' : ''}${
+      className={`ter ter--spin-top${showGoalBlock ? ' ter--goal' : ''}${
         customGoal ? ' ter--h2h-goal' : ''
       }`}
       aria-label="Team and era roll"

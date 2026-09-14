@@ -44,7 +44,6 @@ import { useSound } from '@/hooks/useSound';
 import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
-import { formatMillionLabel, ValueFlipCard } from './ValueFlipCard';
 import { BallionTicketMachine } from './BallionTicketMachine';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly';
 import { FranchisePickScreen } from './FranchisePickScreen';
@@ -352,7 +351,7 @@ export function BillionTradeEngine({
     lockInteractions();
     setSelectedOfferId(null);
     setMovingFrom(null);
-    // Keep the last roster mounted until the next board is ready.
+    setOffers([]);
     setRerollFrom({ team: spunTeam, era: spunEra });
     // Clear only the axis being rerolled — the other stays visible/static.
     if (kind === 'team') setSpunTeam(null);
@@ -861,9 +860,6 @@ export function BillionTradeEngine({
   const showDraft = phase === 'draft';
   const showReveal = phase === 'reveal';
   const lineupLocked = isOnline && deferOnlineReveal && filledCount >= 5;
-  const keepSeatedDock = filledCount > 0 || Boolean(rerollFrom);
-  const showSeatedDock =
-    !lineupLocked && (readyToDraft || (ticketPrinting && keepSeatedDock));
   const playerTeamValue = teamValue;
 
   return (
@@ -944,11 +940,11 @@ export function BillionTradeEngine({
       {showDraft ? (
         <div
           className={`billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth${
-            useClassicDraftChrome && !showSeatedDock && !lineupLocked
+            useClassicDraftChrome && !readyToDraft && !lineupLocked
               ? ' billion-draft-layout--classic-hub'
               : ''
           }${
-            useClassicDraftChrome && showSeatedDock && !lineupLocked
+            useClassicDraftChrome && readyToDraft && !lineupLocked
               ? ' billion-draft-layout--classic-pick'
               : ''
           }`}
@@ -972,42 +968,6 @@ export function BillionTradeEngine({
                 <p className="h2h-rearrange-stage__hint" role="status">
                   Waiting for opponent ({oppProgress}/5)…
                 </p>
-              </div>
-            ) : rerollFrom && ticketPrinting && rerollFrom.team && rerollFrom.era ? (
-              <div className="billion-pick-stage is-holding-board">
-                <div className="billion-reroll-sheet">
-                  <BallionTicketMachine
-                    locked={lockedPair}
-                    printing={ticketPrinting}
-                    canRerollTeam={false}
-                    canRerollEra={false}
-                    reduceMotion={reduceMotion}
-                    selectedPlayerName={null}
-                    autoReroll={boothReroll}
-                    rerollFrom={rerollFrom}
-                    holdTeam={spunTeam ?? rerollFrom.team}
-                    holdEra={spunEra ?? rerollFrom.era}
-                    showGoal={false}
-                    goalCopy={null}
-                    onAutoRerollConsumed={() => setBoothReroll(null)}
-                    onPrint={handleTicketPrint}
-                    onResult={handleTicketResult}
-                    onReroll={handleTicketReroll}
-                  />
-                </div>
-                <FranchisePickScreen
-                  team={rerollFrom.team}
-                  era={rerollFrom.era}
-                  offers={availableOffers}
-                  openPositions={openPositions}
-                  selectedId={null}
-                  canRerollTeam={false}
-                  canRerollEra={false}
-                  interactionLocked
-                  hint="Spinning…"
-                  onSelect={() => {}}
-                  onReroll={handleTicketReroll}
-                />
               </div>
             ) : !readyToDraft ? (
               <div
@@ -1061,7 +1021,7 @@ export function BillionTradeEngine({
             ) : null}
           </main>
 
-          {!showSeatedDock && !lineupLocked && !readyToDraft ? (
+          {!readyToDraft && !lineupLocked ? (
             <aside className="classic-lineup-board" aria-label="Your five">
               {LINEUP_POSITIONS.map((slot) => {
                 const player = slots[slot];
@@ -1071,50 +1031,37 @@ export function BillionTradeEngine({
                 const ink = colors
                   ? contrastOnPrimary(colors.primary)
                   : undefined;
-                  const rowClass = `classic-lineup-row${player ? ' is-filled' : ''}${
-                    justFilledSlot === slot ? ' is-just-filled is-seating-in' : ''
-                  }`;
-                  const rowStyle =
-                    player && colors
-                      ? {
-                          backgroundColor: colors.primary,
-                          color: ink,
-                          borderColor: colors.primary,
-                        }
-                      : undefined;
-                  const front = (
-                    <>
-                      <span className="classic-lineup-row__pos">{slot}</span>
-                      <span className="classic-lineup-row__rule" aria-hidden />
-                      <span className="classic-lineup-row__name">
-                        {player ? player.name : '—'}
-                      </span>
-                    </>
-                  );
-                  if (!player) {
-                    return (
-                      <div
-                        key={slot}
-                        className={rowClass}
-                        aria-label={`Empty ${POSITION_LABELS[slot]}`}
-                      >
-                        {front}
-                      </div>
-                    );
-                  }
-                  return (
-                    <ValueFlipCard
-                      key={slot}
-                      className={rowClass}
-                      style={rowStyle}
-                      ariaLabel={`${POSITION_LABELS[slot]}: ${player.name}`}
-                      valueLabel={formatMillionLabel(getDollarValue(player))}
-                      front={front}
-                    />
-                  );
+                return (
+                  <div
+                    key={slot}
+                    className={`classic-lineup-row${player ? ' is-filled' : ''}${
+                      justFilledSlot === slot ? ' is-just-filled is-seating-in' : ''
+                    }`}
+                    style={
+                      player && colors
+                        ? {
+                            backgroundColor: colors.primary,
+                            color: ink,
+                            borderColor: colors.primary,
+                          }
+                        : undefined
+                    }
+                    aria-label={
+                      player
+                        ? `${POSITION_LABELS[slot]}: ${player.name}`
+                        : `Empty ${POSITION_LABELS[slot]}`
+                    }
+                  >
+                    <span className="classic-lineup-row__pos">{slot}</span>
+                    <span className="classic-lineup-row__rule" aria-hidden />
+                    <span className="classic-lineup-row__name">
+                      {player ? player.name : '—'}
+                    </span>
+                  </div>
+                );
               })}
             </aside>
-          ) : showSeatedDock ? (
+          ) : readyToDraft && !lineupLocked ? (
             <aside
               className={`billion-court is-docked is-slots-only${
                 selectedOffer || movingFrom ? ' is-assigning' : ''

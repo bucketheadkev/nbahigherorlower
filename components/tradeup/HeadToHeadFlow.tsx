@@ -9,7 +9,7 @@ import {
 } from '@/lib/multiplayer/activeRoom';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
 import { joinRoom, fetchRoomLobby } from '@/lib/multiplayer/rooms';
-import { getH2HUsername, isValidH2HUsername, setH2HUsername } from '@/lib/tradeup/h2hUsername';
+import { ensureInviteDisplayName, setH2HUsername } from '@/lib/tradeup/h2hUsername';
 import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
@@ -153,11 +153,7 @@ export function HeadToHeadFlow({
     if (!inviteJoinCode || inviteJoinAttempted.current) return;
     if (auth.status !== 'ready' || restoring) return;
 
-    const savedName = getH2HUsername();
-    if (!savedName || !isValidH2HUsername(savedName)) {
-      setScreen('join');
-      return;
-    }
+    const savedName = ensureInviteDisplayName();
 
     inviteJoinAttempted.current = true;
     setInviteJoinBusy(true);
@@ -173,7 +169,6 @@ export function HeadToHeadFlow({
         const message =
           err instanceof Error ? err.message : 'Could not join from invite link.';
         setInviteJoinError(message);
-        setScreen('join');
       } finally {
         setInviteJoinBusy(false);
       }
@@ -209,6 +204,24 @@ export function HeadToHeadFlow({
   const handlePlaying = useCallback(() => {
     setScreen('match');
   }, []);
+
+  if (inviteJoinCode && auth.status === 'error') {
+    return (
+      <InviteJoinNotice
+        message={auth.message}
+        onBack={onExit}
+      />
+    );
+  }
+
+  if (inviteJoinError) {
+    return (
+      <InviteJoinNotice
+        message={inviteJoinError}
+        onBack={onExit}
+      />
+    );
+  }
 
   if (restoring || auth.status === 'loading' || inviteJoinBusy) {
     return (
@@ -307,5 +320,28 @@ export function HeadToHeadFlow({
       authLoading={false}
       authError={auth.status === 'error' ? auth.message : null}
     />
+  );
+}
+
+function InviteJoinNotice({
+  message,
+  onBack,
+}: {
+  message: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="h2h-lobby" aria-label="Invite unavailable">
+      <header className="h2h-lobby__header">
+        <p className="h2h-lobby__eyebrow">1V1</p>
+        <h1 className="h2h-lobby__title">Can’t join</h1>
+      </header>
+      <p className="h2h-lobby__status" role="alert">
+        {message}
+      </p>
+      <button type="button" className="h2h-lobby__leave" onClick={onBack}>
+        Back to home
+      </button>
+    </div>
   );
 }

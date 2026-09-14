@@ -30,6 +30,15 @@ export function getH2HUsername(): string | null {
   }
 }
 
+/** First-time invite guests need a name so they can land in the lobby without a form. */
+export function ensureInviteDisplayName(): string {
+  const saved = getH2HUsername();
+  if (saved) return saved;
+  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const name = `Guest ${suffix}`.slice(0, 16);
+  return setH2HUsername(name) ?? name;
+}
+
 export function setH2HUsername(raw: string): string | null {
   if (typeof window === 'undefined') return null;
   const name = sanitizeH2HUsername(raw);
