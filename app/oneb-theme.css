@@ -657,6 +657,25 @@
   isolation: isolate;
 }
 
+.oneb-intro.is-exiting {
+  pointer-events: none !important;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* If client JS never hydrates / timeline never starts, drop the veil. */
+.oneb-intro:not(.oneb-intro--run):not(.is-exiting) {
+  animation: oneb-intro-boot-failsafe 0.15s linear 1.2s forwards;
+}
+
+@keyframes oneb-intro-boot-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
 .oneb-intro__veil {
   position: absolute;
   inset: 0;
@@ -2272,17 +2291,19 @@
   overflow: visible !important;
 }
 
-/* Classic hub: goal + TEAM/ERA/SPIN ~35%, lineup rows fill the rest */
+/* Classic hub: compact goal/spinners on top; cards own the bottom majority */
 .billion-draft-layout--classic-hub {
-  --classic-hub-spin-gap: 0.95rem;
+  --classic-hub-spin-gap: 0.55rem;
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
+  height: 100% !important;
 }
 
 .billion-draft-layout--classic-hub .billion-main--draft {
   flex: 0 0 auto !important;
+  max-height: none;
   overflow: visible !important;
   justify-content: flex-start !important;
 }
@@ -2298,11 +2319,17 @@
 }
 
 .billion-draft-layout--classic-hub .ter--spin-top .ter__panel {
-  padding: 0.45rem 0.55rem 0.5rem !important;
+  padding: 0.4rem 0.5rem 0.45rem !important;
 }
 
 .billion-draft-layout--classic-hub .ter--spin-top .ter__goal-block {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.32rem;
+}
+
+.billion-draft-layout--classic-hub .draft-hub-court {
+  flex: 0 0 auto;
+  align-self: center;
+  min-height: 0;
 }
 
 .classic-lineup-board {
@@ -2436,6 +2463,359 @@
   html:not([data-full-motion]) .classic-lineup-row.is-seating-in {
     animation: none;
   }
+}
+
+/* ── Experimental draft hub court roster ───────────────────────────────────
+   Revert: set EXPERIMENTAL_DRAFT_HUB_CARDS = false in BillionTradeEngine.tsx
+   True bird's-eye half-court: PF/C paint · SG/SF/PG outside the 3pt arc.
+*/
+.draft-hub-court {
+  --court-line: rgba(210, 225, 245, 0.42);
+  --court-slot: rgba(80, 230, 170, 0.95);
+  --court-slot-glow: 80, 230, 170;
+  position: relative;
+  flex: 0 0 auto;
+  align-self: center;
+  min-height: 0;
+  /* Near-square — fills width like the reference (not tall/letterboxed) */
+  width: min(22rem, calc(100% - 0.5rem), 52vh, 24rem);
+  max-width: 22rem;
+  margin: 0.4rem auto 0;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  max-height: none;
+  border-radius: 0.55rem;
+  overflow: visible;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+
+.draft-hub-court__floor {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(26, 125, 255, 0.07), transparent 60%),
+    linear-gradient(180deg, #0c1628 0%, #080f1c 55%, #060c16 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--brand-blue-glow), 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.draft-hub-court__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--court-line);
+  stroke-width: 0.85;
+  stroke-linejoin: miter;
+  stroke-linecap: square;
+}
+
+.draft-hub-court__slot {
+  position: absolute;
+  z-index: 2;
+  width: clamp(2.8rem, 12vw, 3.3rem);
+  height: clamp(2.8rem, 12vw, 3.3rem);
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--court-slot);
+  background: rgba(2, 10, 22, 0.35);
+  color: rgba(230, 245, 255, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(var(--court-slot-glow), 0.16),
+    0 0 11px rgba(var(--court-slot-glow), 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  outline: none;
+  overflow: visible;
+}
+
+.draft-hub-court__slot:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.35),
+    0 0 14px rgba(var(--court-slot-glow), 0.4);
+}
+
+/* Blueprint slots — wings clear of 3pt + sidelines */
+.draft-hub-court__slot--pf {
+  left: 39.5%;
+  top: 16.5%;
+}
+.draft-hub-court__slot--c {
+  left: 60.5%;
+  top: 16.5%;
+}
+.draft-hub-court__slot--sg {
+  left: 14.5%;
+  top: 75.5%;
+}
+.draft-hub-court__slot--sf {
+  left: 85.5%;
+  top: 75.5%;
+}
+.draft-hub-court__slot--pg {
+  left: 50.2%;
+  top: 87%;
+}
+
+.draft-hub-court__slot.is-empty {
+  background: rgba(2, 10, 22, 0.28);
+}
+
+.draft-hub-court__slot.is-filled {
+  border-color: color-mix(in srgb, var(--slot-accent, var(--court-slot)) 55%, #fff 10%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--slot-accent, transparent) 35%, transparent),
+    0 0 14px color-mix(in srgb, var(--slot-primary, transparent) 35%, transparent),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.draft-hub-court__slot.is-open {
+  z-index: 5;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.35),
+    0 0 16px color-mix(in srgb, var(--slot-accent, rgba(var(--court-slot-glow), 1)) 45%, transparent),
+    0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.draft-hub-court__slot-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.draft-hub-court__slot-mark {
+  position: relative;
+  z-index: 1;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(0.72rem, 3.2vw, 0.9rem);
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.draft-hub-court__slot.is-empty .draft-hub-court__slot-mark {
+  font-size: clamp(0.68rem, 2.9vw, 0.82rem);
+  letter-spacing: 0.06em;
+  color: rgba(200, 230, 255, 0.55);
+}
+
+.draft-hub-court__slot.is-filled .draft-hub-court__slot-mark {
+  font-size: clamp(0.84rem, 3.5vw, 1.05rem);
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.draft-hub-court__slot.is-seating-in {
+  z-index: 4;
+  animation: draft-hub-court-seat 0.9s cubic-bezier(0.22, 1, 0.32, 1) both;
+}
+
+.draft-hub-court__slot.is-seating-in .draft-hub-court__slot-ring {
+  border-color: color-mix(in srgb, var(--slot-accent, rgba(var(--court-slot-glow), 1)) 65%, #fff);
+  animation: draft-hub-court-ring 0.9s cubic-bezier(0.2, 0.85, 0.25, 1) 0.12s both;
+}
+
+.draft-hub-court__slot.is-seating-in .draft-hub-court__slot-mark {
+  animation: draft-hub-court-mark 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+/* Single soft land — drop in, one settle, done */
+@keyframes draft-hub-court-seat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 0.95rem)) scale(0.88);
+    filter: brightness(1.2);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% + 0.08rem)) scale(1.03);
+    filter: brightness(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes draft-hub-court-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  40% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes draft-hub-court-mark {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.draft-hub-court__pop {
+  position: absolute;
+  z-index: 6;
+  width: max-content;
+  max-width: 7.8rem;
+  padding: 0.4rem 0.5rem 0.44rem;
+  border-radius: 0.45rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 42%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--slot-primary) 88%, #000) 0%,
+      color-mix(in srgb, var(--slot-primary) 62%, #070b12) 100%
+    );
+  color: var(--slot-ink, #f2f6ff);
+  border: 1px solid color-mix(in srgb, var(--slot-accent) 55%, rgba(255, 255, 255, 0.2));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--slot-accent) 25%, transparent),
+    0 0 14px color-mix(in srgb, var(--slot-accent) 28%, transparent),
+    0 10px 22px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-align: center;
+  pointer-events: auto;
+  animation: draft-hub-court-pop 0.22s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+  transform: translate(-50%, -100%);
+}
+
+.draft-hub-court__pop--pf { left: 39.5%; top: calc(16.5% - 0.55rem); }
+.draft-hub-court__pop--c  { left: 60.5%; top: calc(16.5% - 0.55rem); }
+.draft-hub-court__pop--sg { left: 14.5%; top: calc(75.5% - 0.55rem); }
+.draft-hub-court__pop--sf { left: 85.5%; top: calc(75.5% - 0.55rem); }
+.draft-hub-court__pop--pg { left: 50.2%; top: calc(87% - 0.55rem); }
+
+.draft-hub-court__pop-pos,
+.draft-hub-court__pop-first,
+.draft-hub-court__pop-last,
+.draft-hub-court__pop-team,
+.draft-hub-court__pop-era {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-hub-court__pop-pos {
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--slot-accent) 75%, var(--slot-ink) 25%);
+  margin-bottom: 0.12rem;
+}
+
+.draft-hub-court__pop-first {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--slot-ink) 78%, transparent);
+}
+
+.draft-hub-court__pop-last {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--slot-ink);
+  line-height: 1.05;
+  margin-top: 0.02rem;
+}
+
+.draft-hub-court__pop-team {
+  margin-top: 0.28rem;
+  padding-top: 0.22rem;
+  border-top: 1px solid color-mix(in srgb, var(--slot-ink) 22%, transparent);
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--slot-ink) 86%, transparent);
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+.draft-hub-court__pop-era {
+  margin-top: 0.18rem;
+  display: inline-block;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.34rem;
+  border-radius: 0.28rem;
+  background: color-mix(in srgb, var(--slot-accent) 38%, rgba(0, 0, 0, 0.28));
+  color: var(--slot-ink);
+  line-height: 1;
+}
+
+@keyframes draft-hub-court-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% + 0.35rem)) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draft-hub-court__slot.is-seating-in,
+  .draft-hub-court__slot.is-seating-in .draft-hub-court__slot-ring,
+  .draft-hub-court__slot.is-seating-in .draft-hub-court__slot-mark,
+  .draft-hub-court__pop {
+    animation: none;
+  }
+}
+
+html:not([data-full-motion]) .draft-hub-court__slot.is-seating-in,
+html:not([data-full-motion]) .draft-hub-court__slot.is-seating-in .draft-hub-court__slot-ring,
+html:not([data-full-motion]) .draft-hub-court__slot.is-seating-in .draft-hub-court__slot-mark,
+html:not([data-full-motion]) .draft-hub-court__pop {
+  animation: none;
+}
+
+.billion-draft-layout--classic-hub .draft-hub-court {
+  flex: 0 0 auto;
+  align-self: center;
+  min-height: 0;
 }
 
 .ter--spin-top .ter__stage {
@@ -6420,73 +6800,156 @@
   color: rgba(214, 228, 255, 0.78);
 }
 
-.classic-val__analyze {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  width: min(22.5rem, 100%);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.42rem, 1.6vh, 0.72rem);
-  opacity: 1;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.classic-val__analyze.is-exiting {
-  opacity: 0;
-  transform: translate3d(0, -6px, 0);
-}
-
-.classic-val__analyze-row {
-  display: grid;
-  grid-template-columns: minmax(0, max-content) auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: 0.38rem;
-  min-width: 0;
-  text-align: left;
-  color: rgba(214, 228, 255, 0.34);
-  transition: color 0.16s ease;
-}
-
-.classic-val__analyze-row.is-done {
-  color: rgba(232, 238, 255, 0.92);
-}
-
-.classic-val__analyze-pos {
-  font-size: clamp(0.92rem, 3.7vw, 1.16rem);
-  font-weight: 750;
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-  white-space: nowrap;
-}
-
-.classic-val__analyze-dash,
-.classic-val__analyze-name {
-  opacity: 0;
-  transition: opacity 0.16s ease;
-}
-
-.classic-val__analyze-row.is-done .classic-val__analyze-dash,
-.classic-val__analyze-row.is-done .classic-val__analyze-name {
-  opacity: 1;
-}
-
-.classic-val__analyze-dash {
-  font-size: clamp(0.92rem, 3.5vw, 1.1rem);
-  font-weight: 650;
-  color: rgba(214, 228, 255, 0.55);
-}
-
-.classic-val__analyze-name {
-  min-width: 0;
+/* Analyzing Five — court chips siphoned into a valuation core */
+.classic-val__orbit {
+  position: relative;
+  width: min(17.5rem, 78vw);
+  aspect-ratio: 1 / 1;
+  margin: 0.15rem auto 0.35rem;
+  border-radius: 0.55rem;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 42%, rgba(40, 140, 255, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(8, 16, 32, 0.55), rgba(4, 10, 20, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(120, 170, 255, 0.14);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(1.02rem, 4.15vw, 1.32rem);
+  opacity: 1;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.classic-val__orbit.is-exiting {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.classic-val__orbit-core {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(120, 220, 255, 0.95);
+  box-shadow:
+    0 0 0 3px rgba(80, 180, 255, 0.18),
+    0 0 18px rgba(80, 200, 255, 0.55),
+    0 0 36px rgba(40, 140, 255, 0.35);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.classic-val__orbit-scan {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(140, 210, 255, 0.35);
+  box-shadow: 0 0 12px rgba(80, 180, 255, 0.2);
+  z-index: 0;
+  pointer-events: none;
+  animation: classic-val-orbit-scan 1.8s cubic-bezier(0.22, 0.8, 0.3, 1) infinite;
+}
+
+.classic-val__orbit-chip {
+  position: absolute;
+  z-index: 2;
+  width: clamp(2.35rem, 11vw, 2.75rem);
+  height: clamp(2.35rem, 11vw, 2.75rem);
+  margin: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(80, 230, 170, 0.9);
+  background: rgba(6, 14, 28, 0.72);
+  color: rgba(230, 245, 255, 0.9);
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(0.62rem, 2.6vw, 0.76rem);
   font-weight: 850;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: #f7f9ff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 12px rgba(80, 230, 170, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --siphon-x: 0%;
+  --siphon-y: 0%;
+  will-change: transform, opacity, filter;
+}
+
+.classic-val__orbit-chip--pf {
+  left: 39.5%;
+  top: 18%;
+  --siphon-x: 18%;
+  --siphon-y: 38%;
+}
+.classic-val__orbit-chip--c {
+  left: 60.5%;
+  top: 18%;
+  --siphon-x: -18%;
+  --siphon-y: 38%;
+}
+.classic-val__orbit-chip--sg {
+  left: 14.5%;
+  top: 72%;
+  --siphon-x: 55%;
+  --siphon-y: -42%;
+}
+.classic-val__orbit-chip--sf {
+  left: 85.5%;
+  top: 72%;
+  --siphon-x: -55%;
+  --siphon-y: -42%;
+}
+.classic-val__orbit-chip--pg {
+  left: 50%;
+  top: 86%;
+  --siphon-x: 0%;
+  --siphon-y: -68%;
+}
+
+.classic-val__orbit-chip.is-swept {
+  animation: classic-val-orbit-siphon 0.26s cubic-bezier(0.45, 0.05, 0.55, 0.2) forwards;
+  pointer-events: none;
+}
+
+@keyframes classic-val-orbit-siphon {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: brightness(1.35) saturate(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--siphon-x)), calc(-50% + var(--siphon-y)))
+      scale(0.12, 0.22);
+    filter: brightness(1.8) blur(1px);
+  }
+}
+
+@keyframes classic-val-orbit-scan {
+  0% {
+    width: 0.55rem;
+    height: 0.55rem;
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.25;
+  }
+  100% {
+    width: 15rem;
+    height: 15rem;
+    opacity: 0;
+  }
 }
 
 .classic-val__total {
@@ -6816,11 +7279,17 @@
   html:not([data-full-motion]) .classic-val__track-run,
   html:not([data-full-motion]) .classic-val__compare.is-in,
   html:not([data-full-motion]) .classic-val__phrase.is-in,
-  html:not([data-full-motion]) .classic-val__analyze,
+  html:not([data-full-motion]) .classic-val__orbit,
+  html:not([data-full-motion]) .classic-val__orbit-chip.is-swept,
+  html:not([data-full-motion]) .classic-val__orbit-scan,
   html:not([data-full-motion]) .classic-val__total.is-settling,
   html:not([data-full-motion]) .classic-val__five-row.is-in.is-pulse .classic-val__five-value {
     transition: none !important;
     animation: none !important;
+  }
+
+  html:not([data-full-motion]) .classic-val__orbit-chip.is-swept {
+    opacity: 0;
   }
 }
 

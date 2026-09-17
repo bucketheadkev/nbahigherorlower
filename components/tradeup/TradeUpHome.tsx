@@ -46,12 +46,9 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (navLockRef.current) return;
     navLockRef.current = true;
-    e.preventDefault();
-    e.stopPropagation();
     resume();
     hapticLight();
     fn();
-    // Unlock shortly in case navigation is cancelled / remounted on hub.
     window.setTimeout(() => {
       navLockRef.current = false;
     }, 800);
@@ -97,6 +94,7 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
                 className="home-tile home-tile--classic home-tile--action"
                 aria-label={t('home.classicTitle')}
                 onPointerDown={go(onPlay)}
+                onClick={go(onPlay)}
               >
                 <span className="home-tile__frame" aria-hidden>
                   <span className="home-tile__edge" />
@@ -113,6 +111,7 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
                 className="home-tile home-tile--h2h home-tile--action"
                 aria-label={t('home.h2hTitle')}
                 onPointerDown={go(onHeadToHead)}
+                onClick={go(onHeadToHead)}
               >
                 <span className="home-tile__frame" aria-hidden>
                   <span className="home-tile__edge" />

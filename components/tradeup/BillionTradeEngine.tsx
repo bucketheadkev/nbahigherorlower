@@ -60,6 +60,13 @@ import {
   syncedPicksToSlots,
   type SyncedH2HPick,
 } from '@/lib/tradeup/h2hDraftBridge';
+import { DraftHubCards } from './DraftHubCards';
+
+/**
+ * Experimental: replace classic five position rows with half-court roster.
+ * Set to false (or say "revert") to restore the prior board.
+ */
+const EXPERIMENTAL_DRAFT_HUB_CARDS = true;
 
 interface BillionTradeEngineProps {
   onExit: () => void;
@@ -455,7 +462,7 @@ export function BillionTradeEngine({
       setJustFilledSlot(targetSlot);
       window.setTimeout(() => {
         setJustFilledSlot((current) => (current === targetSlot ? null : current));
-      }, useClassicDraftChrome ? 1250 : 360);
+      }, useClassicDraftChrome ? 1000 : 360);
 
       if (isOnline && onPickLock) {
         pendingLockSlotsRef.current.add(targetSlot);
@@ -1024,6 +1031,9 @@ export function BillionTradeEngine({
           </main>
 
           {!readyToDraft && !lineupLocked ? (
+            EXPERIMENTAL_DRAFT_HUB_CARDS ? (
+              <DraftHubCards slots={slots} justFilledSlot={justFilledSlot} />
+            ) : (
             <aside className="classic-lineup-board" aria-label="Your five">
               {LINEUP_POSITIONS.map((slot) => {
                 const player = slots[slot];
@@ -1063,6 +1073,7 @@ export function BillionTradeEngine({
                 );
               })}
             </aside>
+            )
           ) : readyToDraft && !lineupLocked ? (
             <aside
               className={`billion-court is-docked is-slots-only${

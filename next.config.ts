@@ -6,7 +6,11 @@ const nextConfig: NextConfig = {
   // Static export only when building for the native Capacitor shell.
   ...(forCapacitor ? { output: 'export' as const } : {}),
   // Allow phone/other devices on the same Wi-Fi to load dev assets (/_next/*).
+  // Also allow 127.0.0.1 — Next treats it as cross-origin vs localhost.
   allowedDevOrigins: [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
     '192.168.1.197',
     '192.168.1.197:3000',
     '192.168.1.232',

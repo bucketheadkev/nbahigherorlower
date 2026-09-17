@@ -35,21 +35,12 @@ import {
   easeOutCubic,
   scheduleFrame,
 } from '@/lib/tradeup/perf/rafClock';
-import { LINEUP_POSITIONS, POSITION_LABELS } from '@/lib/tradeup/startingLineup';
+import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
 import type { Position } from '@/lib/tradeup/types';
-import { useLocale } from '@/hooks/useLocale';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { BillionCelebration } from './BillionCelebration';
 
 type SeatedRevealPlayer = ValuedPlayer & { seatedSlot?: Position };
-
-const ES_POSITION_LABELS: Record<Position, string> = {
-  PG: 'Base',
-  SG: 'Escolta',
-  SF: 'Alero',
-  PF: 'Ala-pívot',
-  C: 'Pívot',
-};
 
 function playerInSlot(roster: SeatedRevealPlayer[], slot: Position): SeatedRevealPlayer | undefined {
   return roster.find((player) => player.seatedSlot === slot);
@@ -82,8 +73,8 @@ type Phase =
   | 'roster'
   | 'done';
 
-/** Visual track ceiling — sits above typical max roster (~$1.125B). */
-const TRACK_MAX = 1_250_000_000;
+/** Visual track ceiling — $1B sits near 95% so overages still have a little room. */
+const TRACK_MAX = Math.round(BILLION_GOAL / 0.95);
 
 function formatCompactMillions(value: number): string {
   return `$${(value / 1_000_000).toFixed(1)}M`;
@@ -137,7 +128,6 @@ export function ClassicRosterReveal({
   onContinue,
   eyebrow = null,
 }: ClassicRosterRevealProps) {
-  const { locale } = useLocale();
   const teamValue = useMemo(
     () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
     [roster],
@@ -370,35 +360,46 @@ export function ClassicRosterReveal({
           <p className="classic-val__heading">{heading}</p>
 
           {phase === 'analyze' ? (
-            <ul
-              className={`classic-val__analyze${
+            <div
+              className={`classic-val__orbit${
                 analyzeExiting ? ' is-exiting' : ''
               }`}
               aria-label="Analyzing positions"
             >
+              <span className="classic-val__orbit-core" aria-hidden="true" />
+              <span className="classic-val__orbit-scan" aria-hidden="true" />
               {LINEUP_POSITIONS.map((pos, index) => {
-                const done = index < checkedCount;
                 const player = playerInSlot(roster, pos);
-                const label =
-                  locale === 'es' ? ES_POSITION_LABELS[pos] : POSITION_LABELS[pos];
+                const colors = player ? getTeamColors(player.teamId) : null;
+                const ink = colors
+                  ? contrastOnPrimary(colors.primary)
+                  : undefined;
+                const swept = index < checkedCount;
                 return (
-                  <li
+                  <span
                     key={pos}
-                    className={`classic-val__analyze-row${
-                      done ? ' is-done' : ''
+                    className={`classic-val__orbit-chip classic-val__orbit-chip--${pos.toLowerCase()}${
+                      swept ? ' is-swept' : ''
                     }`}
+                    style={
+                      colors
+                        ? ({
+                            '--orbit-primary': colors.primary,
+                            '--orbit-accent': colors.accent,
+                            '--orbit-ink': ink,
+                            backgroundColor: colors.primary,
+                            color: ink,
+                            borderColor: colors.accent,
+                          } as CSSProperties)
+                        : undefined
+                    }
+                    aria-hidden={swept || undefined}
                   >
-                    <span className="classic-val__analyze-pos">{label}</span>
-                    <span className="classic-val__analyze-dash" aria-hidden>
-                      —
-                    </span>
-                    <strong className="classic-val__analyze-name" aria-hidden={!done}>
-                      {player?.name ?? '—'}
-                    </strong>
-                  </li>
+                    {pos}
+                  </span>
                 );
               })}
-            </ul>
+            </div>
           ) : null}
 
           {showHeroTotal ? (

@@ -70,6 +70,7 @@ html[data-platform='web'] textarea:focus-visible {
 
   html[data-platform='web'] .run-home__modes--tiles,
   html[data-platform='web'] .classic-lineup-board,
+  html[data-platform='web'] .draft-hub-court,
   html[data-platform='web'] .billion-booth-stage,
   html[data-platform='web'] .classic-val {
     max-width: 100%;
@@ -272,12 +273,17 @@ html[data-platform='web'] textarea:focus-visible {
     order: 1;
   }
 
-  html[data-platform='web'] .classic-lineup-board {
+  html[data-platform='web'] .classic-lineup-board,
+  html[data-platform='web'] .draft-hub-court {
     order: 2;
     width: 100%;
-    max-width: 30rem;
-    margin: 0.4rem auto 0;
-    gap: 0.45rem;
+    max-width: 26rem;
+    margin: 0.45rem auto 0;
+  }
+
+  html[data-platform='web'] .draft-hub-court {
+    width: min(23rem, 100%, 54vh);
+    max-width: 23rem;
   }
 
   html[data-platform='web'] .classic-lineup-row {

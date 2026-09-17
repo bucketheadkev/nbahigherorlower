@@ -39,6 +39,8 @@ export function TradeUpApp() {
   const [engineKey, setEngineKey] = useState(0);
   const [h2hKey, setH2hKey] = useState(0);
   const [showSplash, setShowSplash] = useState(() => !splashDoneThisLoad);
+  /** Avoid SSR navy z-200 veil — splash mounts only after client hydrate. */
+  const [splashMounted, setSplashMounted] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
@@ -139,13 +141,18 @@ export function TradeUpApp() {
   }, []);
 
   useEffect(() => {
-    if (!showSplash) return;
+    setSplashMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showSplash || !splashMounted) return;
+    // Parent nuclear failsafe — never leave home trapped under the intro veil.
     const failsafe = window.setTimeout(() => {
       splashDoneThisLoad = true;
       setShowSplash(false);
-    }, 8000);
+    }, 3500);
     return () => window.clearTimeout(failsafe);
-  }, [showSplash]);
+  }, [showSplash, splashMounted]);
 
   const handleHubChange = useCallback((tab: HubTab) => {
     setHubTab(tab);
@@ -200,7 +207,7 @@ export function TradeUpApp() {
         <TradeUpHome onPlay={handlePlay} onHeadToHead={handleHeadToHead} />
       )}
 
-      {showSplash ? (
+      {showSplash && splashMounted ? (
         <BallionSplash
           onDone={handleSplashDone}
           reduceMotion={reduceMotion}

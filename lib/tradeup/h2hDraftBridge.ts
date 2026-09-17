@@ -14,9 +14,13 @@ export type SyncedH2HPick = {
 export function pickSelectionToPlayer(
   selection: H2HPickSelection,
   rawValue: number,
-): ValuedPlayer {
+): ValuedPlayer & { era?: DecadeEra } {
   const primary = (selection.primarySlot ?? selection.position) as Position;
   const dollarValue = selection.baseDollarValue ?? rawValue;
+  const era =
+    typeof selection.era === 'string' && /^\d{4}s$/.test(selection.era)
+      ? (selection.era as DecadeEra)
+      : undefined;
   return {
     id: selection.playerId,
     name: selection.name,
@@ -28,6 +32,7 @@ export function pickSelectionToPlayer(
     tradeValue: dollarValue,
     isStarter: true,
     dollarValue,
+    ...(era ? { era } : {}),
   };
 }
 

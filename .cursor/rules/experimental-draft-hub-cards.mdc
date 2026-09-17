@@ -1,0 +1,16 @@
+---
+description: Experimental draft hub court roster — how to revert to classic five rows
+alwaysApply: true
+---
+
+# Experimental draft hub court
+
+When the user says **revert** (locker/cards/court experiment context), restore the classic Goal $1B hub five-position rows.
+
+## How to revert
+
+1. In `components/tradeup/BillionTradeEngine.tsx`, set `EXPERIMENTAL_DRAFT_HUB_CARDS = false`.
+2. That restores the previous `classic-lineup-board` UI (still behind the flag).
+3. Optionally remove `components/tradeup/DraftHubCards.tsx` and `.draft-hub-court*` CSS if cleaning up.
+
+Do **not** commit/push/deploy unless asked.
