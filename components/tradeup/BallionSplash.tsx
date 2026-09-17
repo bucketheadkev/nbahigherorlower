@@ -64,7 +64,7 @@ function armModuleFailsafe(finish: () => void, ms: number) {
 }
 
 async function preloadIntroAssets(): Promise<void> {
-  const withTimeout = (promise: Promise<void>, ms: number) =>
+  const withTimeout = <T,>(promise: Promise<T>, ms: number) =>
     Promise.race([
       promise,
       new Promise<void>((resolve) => {
