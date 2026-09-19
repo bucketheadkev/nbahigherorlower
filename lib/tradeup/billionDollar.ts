@@ -315,7 +315,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2010s|PHX|Devin Booker': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|CLE|Kyrie Irving': { minDollars: 206_000_000, maxDollars: 206_000_000 },
   '2010s|NOP|Chris Paul': { minDollars: 197_000_000, maxDollars: 197_000_000 },
-  '2010s|MIL|Giannis Antetokounmpo': { minDollars: 200_000_000, maxDollars: 200_000_000 },
+  '2010s|MIL|Giannis Antetokounmpo': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2010s|HOU|Chris Paul': { minDollars: 189_000_000, maxDollars: 189_000_000 },
   '2010s|LAC|Chris Paul': { minDollars: 189_000_000, maxDollars: 189_000_000 },
   '2010s|DAL|Dirk Nowitzki': { minDollars: 198_000_000, maxDollars: 198_000_000 },
