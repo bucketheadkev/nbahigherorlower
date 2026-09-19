@@ -308,7 +308,7 @@ Justise Winslow | SF | 10.0 PPG | 5.0 RPG | 3.0 APG
 ========================================================================
 MILWAUKEE BUCKS
 ========================================================================
-Giannis Antetokounmpo | PF | 20.1 PPG | 8.9 RPG | 4.3 APG
+Giannis Antetokounmpo | PF | 27.7 PPG | 12.5 RPG | 5.9 APG | 1.5 BPG
 Khris Middleton | SF | 16.9 PPG | 4.8 RPG | 3.8 APG
 Eric Bledsoe | PG | 17.0 PPG | 4.6 RPG | 5.2 APG
 Brook Lopez | C | 18.8 PPG | 8.6 RPG | 1.8 APG
