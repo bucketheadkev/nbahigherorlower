@@ -104,6 +104,36 @@ export async function fetchClassicLeaderboardTop(limit = 100): Promise<{
   }
 }
 
+/** Public verified lineup for one username (View Team). */
+export async function fetchClassicLeaderboardTeam(username: string): Promise<{
+  ok: true;
+  lineup: LeaderboardSeatInput[];
+  verifiedBest: number;
+} | { ok: false; message: string }> {
+  const name = username.trim();
+  if (!name) return { ok: false, message: 'Missing username.' };
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase.rpc('get_classic_leaderboard_team', {
+      p_username: name,
+    });
+    if (error) {
+      logLeaderboardError('team fetch failed', error, { username: name });
+      return { ok: false, message: 'Could not load this team.' };
+    }
+    const row = Array.isArray(data) && data.length > 0 ? (data[0] as Record<string, unknown>) : null;
+    if (!row) return { ok: false, message: 'Team not found.' };
+    return {
+      ok: true,
+      lineup: parseLineup(row.lineup),
+      verifiedBest: Math.max(0, Math.round(Number(row.verified_best) || 0)),
+    };
+  } catch (err) {
+    console.error('[leaderboard] team fetch error', err);
+    return { ok: false, message: 'Could not load this team.' };
+  }
+}
+
 /** Current permanent user's World rank, or null if guest / no verified PB. */
 export async function fetchMyClassicLeaderboardRank(): Promise<{
   ok: true;

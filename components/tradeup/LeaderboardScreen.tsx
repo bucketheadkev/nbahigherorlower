@@ -5,6 +5,7 @@ import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useLocale } from '@/hooks/useLocale';
 import {
   fetchClassicLeaderboardTop,
+  fetchClassicLeaderboardTeam,
   fetchMyClassicLeaderboardRank,
   type LeaderboardRow,
   type MyLeaderboardStanding,
@@ -50,10 +51,14 @@ function formatPlayerValue(value: number): string {
 function LeaderboardTeamView({
   entry,
   players,
+  loading,
+  error,
   onBack,
 }: {
   entry: LeaderboardRow;
   players: LeaderboardTeamPlayer[];
+  loading: boolean;
+  error: string | null;
   onBack: () => void;
 }) {
   const { t } = useLocale();
@@ -75,11 +80,17 @@ function LeaderboardTeamView({
       </header>
 
       <main className="oneb-hub__scroll">
-        {players.length === 0 ? (
+        {loading ? (
+          <p className="leaderboard-world__status">{t('leaderboard.loading')}</p>
+        ) : null}
+
+        {!loading && (error || players.length === 0) ? (
           <div className="leaderboard-world__empty">
-            <p className="run-empty__copy">{t('leaderboard.teamEmpty')}</p>
+            <p className="run-empty__copy">{error ?? t('leaderboard.teamEmpty')}</p>
           </div>
-        ) : (
+        ) : null}
+
+        {!loading && players.length > 0 ? (
           <ul className="run-ledger leaderboard-team-ledger">
             <li className="run-ledger__card is-best is-open">
               <div className="run-ledger__summary leaderboard-team__summary" aria-hidden>
@@ -126,7 +137,7 @@ function LeaderboardTeamView({
               </ul>
             </li>
           </ul>
-        )}
+        ) : null}
       </main>
     </div>
   );
@@ -164,10 +175,7 @@ function BoardRow({
         <button
           type="button"
           className="leaderboard-card__view"
-          onClick={() => {
-            hapticLight();
-            onViewTeam(entry);
-          }}
+          onClick={() => onViewTeam(entry)}
         >
           {t('leaderboard.viewTeam')}
         </button>
@@ -187,6 +195,8 @@ export function LeaderboardScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
   const [viewing, setViewing] = useState<LeaderboardRow | null>(null);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
 
   const isPermanent = accountState.status === 'permanent';
   const isGuestLike =
@@ -239,6 +249,35 @@ export function LeaderboardScreen() {
     [viewing],
   );
 
+  const openTeam = useCallback(async (entry: LeaderboardRow) => {
+    hapticLight();
+    setTeamError(null);
+
+    if (entry.lineup.length >= 5) {
+      setViewing(entry);
+      return;
+    }
+
+    setTeamLoading(true);
+    setViewing(entry);
+    const result = await fetchClassicLeaderboardTeam(entry.username);
+    setTeamLoading(false);
+
+    if (result.ok === false) {
+      setTeamError(result.message);
+      return;
+    }
+    if (result.lineup.length < 5) {
+      setTeamError(t('leaderboard.teamEmpty'));
+      return;
+    }
+    setViewing({
+      ...entry,
+      lineup: result.lineup,
+      verifiedBest: result.verifiedBest || entry.verifiedBest,
+    });
+  }, [t]);
+
   const openAccount = (view: AccountSheetView = 'menu') => {
     setSheetView(view);
     setSheetOpen(true);
@@ -249,7 +288,13 @@ export function LeaderboardScreen() {
       <LeaderboardTeamView
         entry={viewing}
         players={viewingPlayers}
-        onBack={() => setViewing(null)}
+        loading={teamLoading}
+        error={teamError}
+        onBack={() => {
+          setViewing(null);
+          setTeamError(null);
+          setTeamLoading(false);
+        }}
       />
     );
   }
@@ -260,11 +305,7 @@ export function LeaderboardScreen() {
       <header className="oneb-hub__header">
         <p className="oneb-hub__eyebrow">{t('leaderboard.eyebrow')}</p>
         <h1 className="oneb-hub__title">{t('leaderboard.title')}</h1>
-        <p className="oneb-hub__meta">
-          <span className="oneb-hub__meta-accent">{t('leaderboard.world')}</span>
-          {' · '}
-          {t('leaderboard.metaTop')}
-        </p>
+        <p className="oneb-hub__meta">{t('leaderboard.metaTop')}</p>
       </header>
 
       <main className="oneb-hub__scroll leaderboard-world">
@@ -300,7 +341,9 @@ export function LeaderboardScreen() {
                   entry.rank === mine.rank &&
                   entry.username === mine.username
                 }
-                onViewTeam={setViewing}
+                onViewTeam={(entry) => {
+                  void openTeam(entry);
+                }}
               />
             ))}
           </ul>
@@ -313,7 +356,9 @@ export function LeaderboardScreen() {
               <BoardRow
                 entry={{ ...mine, rank: mine.rank }}
                 isYou
-                onViewTeam={setViewing}
+                onViewTeam={(entry) => {
+                  void openTeam(entry);
+                }}
               />
             </ul>
           </>
