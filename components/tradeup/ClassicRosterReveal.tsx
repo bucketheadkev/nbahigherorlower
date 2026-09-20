@@ -11,7 +11,7 @@ import {
 import {
   BILLION_GOAL,
   formatDollarsExact,
-  getDollarValue,
+  getDollarValueForSlot,
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
 import { resultPhrase } from '@/lib/tradeup/resultPhrase';
@@ -141,7 +141,11 @@ export function ClassicRosterReveal({
   fromCourtBeam = false,
 }: ClassicRosterRevealProps) {
   const teamValue = useMemo(
-    () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
+    () =>
+      roster.reduce((sum, p) => {
+        const slot = p.seatedSlot ?? p.primaryPosition;
+        return sum + getDollarValueForSlot(p, slot);
+      }, 0),
     [roster],
   );
   const isBillion = teamValue >= BILLION_GOAL;
@@ -503,7 +507,10 @@ export function ClassicRosterReveal({
                     />
                   );
                 }
-                const value = getDollarValue(player);
+                const value = getDollarValueForSlot(
+                  player,
+                  player.seatedSlot ?? player.primaryPosition,
+                );
                 const accent = getTeamColors(player.teamId).primary;
                 const ink = contrastOnPrimary(accent);
                 return (

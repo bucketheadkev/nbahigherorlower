@@ -572,12 +572,23 @@ export function BillionTradeEngine({
 
   const finishRun = useCallback(
     (nextSlots: RosterSlots, value: number) => {
-      const lineup = rosterInSlotOrder(nextSlots);
-      const { best, isNewBest } = saveBestRosterValue(value);
+      // Always re-price from the seated slot so moved players match server verification.
+      const lineup = LINEUP_POSITIONS.map((pos) => {
+        const player = nextSlots[pos];
+        if (!player) return null;
+        return {
+          ...player,
+          dollarValue: getDollarValueForSlot(player, pos),
+        };
+      }).filter((p): p is ValuedPlayer => Boolean(p));
+      const seatTotal = lineup.reduce((sum, player) => sum + player.dollarValue, 0);
+      const total = seatTotal > 0 ? seatTotal : value;
+
+      const { best, isNewBest } = saveBestRosterValue(total);
       setPersonalBest(best);
       setIsNewPersonalBest(isNewBest);
 
-      const rank = getWorldRank(value);
+      const rank = getWorldRank(total);
       setWorldRank(rank);
       saveBestWorldRank(rank);
 
@@ -590,15 +601,15 @@ export function BillionTradeEngine({
         });
       }
 
-      if (value >= BILLION_GOAL) {
+      if (total >= BILLION_GOAL) {
         if (!isH2H && !isOnline) {
-          saveBillionRun(lineup, value);
+          saveBillionRun(lineup, total);
         }
         // Result SFX is owned by the reveal UI (results_celebration).
         onWin?.();
-        setStatus(`Dynasty complete · ${formatDollarsExact(value)}`);
+        setStatus(`Dynasty complete · ${formatDollarsExact(total)}`);
       } else {
-        setStatus(`Board full at ${formatDollarsExact(value)} — short of $1B.`);
+        setStatus(`Board full at ${formatDollarsExact(total)} — short of $1B.`);
       }
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };
@@ -727,10 +738,14 @@ export function BillionTradeEngine({
           return;
         }
         lockInteractions();
+        const reseated: ValuedPlayer = {
+          ...movingPlayer,
+          dollarValue: getDollarValueForSlot(movingPlayer, slot),
+        };
         const nextSlots: RosterSlots = {
           ...slots,
           [movingFrom]: null,
-          [slot]: movingPlayer,
+          [slot]: reseated,
         };
         setSlots(nextSlots);
         const moveFrom = movingFrom;
@@ -739,7 +754,7 @@ export function BillionTradeEngine({
         if (isOnline && onPickMove && syncedSlotSetRef.current.has(moveFrom)) {
           const era = (spunEra ?? '2020s') as DecadeEra;
           const { selection, rawValue } = playerToH2HPick(
-            movingPlayer,
+            reseated,
             slot,
             era,
             spunTeam,

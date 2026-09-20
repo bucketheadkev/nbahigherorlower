@@ -8,12 +8,14 @@ import { isAnonymousUser } from '@/lib/account/userKind';
 import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
 import type { ValuedPlayer } from '@/lib/tradeup/billionDollar';
 import type { Position } from '@/lib/tradeup/types';
+import type { LeaderboardSeatInput } from '@/lib/account/leaderboardTeamResolve';
 
 export interface LeaderboardRow {
   rank: number;
   username: string;
   verifiedBest: number;
   achievedAt: string | null;
+  lineup: LeaderboardSeatInput[];
 }
 
 export interface MyLeaderboardStanding extends LeaderboardRow {}
@@ -26,6 +28,30 @@ export interface SubmitLineupResult {
 }
 
 type LineupSeat = { player_id: string; slot: Position };
+
+function parseLineup(raw: unknown): LeaderboardSeatInput[] {
+  if (!Array.isArray(raw)) return [];
+  const seats: LeaderboardSeatInput[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    const playerId = typeof row.player_id === 'string' ? row.player_id : '';
+    const slot = typeof row.slot === 'string' ? row.slot : '';
+    if (!playerId || !slot) continue;
+    seats.push({ player_id: playerId, slot });
+  }
+  return seats;
+}
+
+function mapLeaderboardRow(row: Record<string, unknown>): LeaderboardRow {
+  return {
+    rank: Number(row.rank) || 0,
+    username: typeof row.username === 'string' ? row.username : '—',
+    verifiedBest: Math.max(0, Math.round(Number(row.verified_best) || 0)),
+    achievedAt: typeof row.achieved_at === 'string' ? row.achieved_at : null,
+    lineup: parseLineup(row.lineup),
+  };
+}
 
 function toLineupPayload(lineup: ValuedPlayer[]): LineupSeat[] | null {
   if (lineup.length < 5) return null;
@@ -54,7 +80,7 @@ function logLeaderboardError(
   console.error(parts.join(' | '), extra ?? '');
 }
 
-/** Top N public World entries (username + verified PB only). */
+/** Top N public World entries (username + verified PB + lineup seats). */
 export async function fetchClassicLeaderboardTop(limit = 100): Promise<{
   ok: true;
   rows: LeaderboardRow[];
@@ -68,15 +94,9 @@ export async function fetchClassicLeaderboardTop(limit = 100): Promise<{
       logLeaderboardError('top fetch failed', error);
       return { ok: false, message: 'Could not load the leaderboard.' };
     }
-    const rows: LeaderboardRow[] = (Array.isArray(data) ? data : []).map((row) => {
-      const r = row as Record<string, unknown>;
-      return {
-        rank: Number(r.rank) || 0,
-        username: typeof r.username === 'string' ? r.username : '—',
-        verifiedBest: Math.max(0, Math.round(Number(r.verified_best) || 0)),
-        achievedAt: typeof r.achieved_at === 'string' ? r.achieved_at : null,
-      };
-    });
+    const rows: LeaderboardRow[] = (Array.isArray(data) ? data : []).map((row) =>
+      mapLeaderboardRow(row as Record<string, unknown>),
+    );
     return { ok: true, rows };
   } catch (err) {
     console.error('[leaderboard] top fetch error', err);
@@ -103,15 +123,7 @@ export async function fetchMyClassicLeaderboardRank(): Promise<{
     }
     const row = Array.isArray(data) && data.length > 0 ? (data[0] as Record<string, unknown>) : null;
     if (!row) return { ok: true, standing: null };
-    return {
-      ok: true,
-      standing: {
-        rank: Number(row.rank) || 0,
-        username: typeof row.username === 'string' ? row.username : '—',
-        verifiedBest: Math.max(0, Math.round(Number(row.verified_best) || 0)),
-        achievedAt: typeof row.achieved_at === 'string' ? row.achieved_at : null,
-      },
-    };
+    return { ok: true, standing: mapLeaderboardRow(row) };
   } catch (err) {
     console.error('[leaderboard] my rank error', err);
     return { ok: false, message: 'Could not load your rank.' };
@@ -143,7 +155,6 @@ export async function submitVerifiedClassicLineup(
       return { ok: false, skipped: true };
     }
 
-    // Loud diagnostic if seat-price seed was never applied (submit would fail as unknown_player).
     const probeId = seats[0]!.player_id;
     const { data: probe, error: probeError } = await supabase
       .from('classic_player_seat_values')

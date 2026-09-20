@@ -14320,6 +14320,30 @@ html:not([data-full-motion]) .billion-value-block__amount.is-popping {
   line-height: 1.3;
 }
 
+.leaderboard-card__view {
+  appearance: none;
+  margin-top: 0.35rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  background: rgba(14, 165, 233, 0.12);
+  color: #bae6fd;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.leaderboard-card__view:hover,
+.leaderboard-card__view:active {
+  border-color: rgba(77, 187, 255, 0.45);
+  background: rgba(0, 71, 200, 0.28);
+  color: #e0f2fe;
+}
+
 .leaderboard-card__value {
   font-size: 0.82rem;
   font-weight: 800;
@@ -14331,6 +14355,36 @@ html:not([data-full-motion]) .billion-value-block__amount.is-popping {
 
 .leaderboard-card--you-offboard {
   margin-top: 0.75rem;
+}
+
+.leaderboard-team__back {
+  appearance: none;
+  align-self: flex-start;
+  margin: 0 0 0.55rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(186, 230, 253, 0.9);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.leaderboard-team__summary {
+  pointer-events: none;
+}
+
+.leaderboard-team-ledger .run-ledger__players {
+  padding: 0.55rem 0.65rem 0.7rem;
+  gap: 0.4rem;
+}
+
+.leaderboard-team__player.run-ledger__player-row {
+  border-radius: 1rem;
+  min-height: 2.55rem;
+  padding: 0.48rem 0.7rem;
 }
 
 .leaderboard-world {

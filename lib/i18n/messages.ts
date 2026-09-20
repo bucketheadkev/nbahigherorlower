@@ -71,6 +71,11 @@ export type MessageKey =
   | 'leaderboard.noVerified'
   | 'leaderboard.guestHint'
   | 'leaderboard.guestCta'
+  | 'leaderboard.viewTeam'
+  | 'leaderboard.back'
+  | 'leaderboard.teamEyebrow'
+  | 'leaderboard.teamEmpty'
+  | 'leaderboard.verifiedLineup'
   | 'challenge.halfway-home.title'
   | 'challenge.halfway-home.blurb'
   | 'challenge.closing-in.title'
@@ -209,6 +214,11 @@ const EN: Record<MessageKey, string> = {
   'leaderboard.guestHint':
     'Create an account to save a verified score and compete on the World board.',
   'leaderboard.guestCta': 'Create account',
+  'leaderboard.viewTeam': 'View team',
+  'leaderboard.back': '← Back',
+  'leaderboard.teamEyebrow': 'VERIFIED LINEUP',
+  'leaderboard.teamEmpty': 'Lineup details are not available for this score yet.',
+  'leaderboard.verifiedLineup': 'Verified Classic five',
   'challenge.halfway-home.title': 'Halfway Home',
   'challenge.halfway-home.blurb':
     'Finish a Classic run worth $500,000,000 or more.',
@@ -368,6 +378,11 @@ const ES: Record<MessageKey, string> = {
   'leaderboard.guestHint':
     'Crea una cuenta para guardar una puntuación verificada y competir en el tablero mundial.',
   'leaderboard.guestCta': 'Crear cuenta',
+  'leaderboard.viewTeam': 'Ver equipo',
+  'leaderboard.back': '← Atrás',
+  'leaderboard.teamEyebrow': 'QUINTETO VERIFICADO',
+  'leaderboard.teamEmpty': 'Los detalles de este quinteto aún no están disponibles.',
+  'leaderboard.verifiedLineup': 'Quinteto Clásico verificado',
   'challenge.halfway-home.title': 'A Medio Camino',
   'challenge.halfway-home.blurb':
     'Termina una partida Clásica de $500,000,000 o más.',
