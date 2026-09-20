@@ -12,6 +12,8 @@ export interface DraftSlamPayload {
   initials: string;
   primary: string;
   ink: string;
+  /** Smooth court placement — no spin, bounce, or flash. */
+  premium?: boolean;
 }
 
 interface DraftPlayerSlamFlyProps {
@@ -21,12 +23,15 @@ interface DraftPlayerSlamFlyProps {
 }
 
 /**
- * Flies a team-colored player disc from the pick list into a dock circle.
+ * Flies a team-colored player disc into a roster seat.
+ * `premium` = controlled 3D-UI flight (~280ms land, ~600ms done).
  */
 export function DraftPlayerSlamFly({ payload, onImpact, onComplete }: DraftPlayerSlamFlyProps) {
   const [mounted, setMounted] = useState(false);
+  const [landed, setLanded] = useState(false);
   const onImpactRef = useRef(onImpact);
   const onCompleteRef = useRef(onComplete);
+  const premiumImpactFiredRef = useRef(false);
   onImpactRef.current = onImpact;
   onCompleteRef.current = onComplete;
 
@@ -35,26 +40,94 @@ export function DraftPlayerSlamFly({ payload, onImpact, onComplete }: DraftPlaye
   }, []);
 
   useEffect(() => {
-    if (!payload) return;
+    if (!payload) {
+      setLanded(false);
+      premiumImpactFiredRef.current = false;
+      return;
+    }
 
+    const premium = Boolean(payload.premium);
+    setLanded(false);
+    premiumImpactFiredRef.current = false;
     void hapticMedium();
-    const impactAt = window.setTimeout(() => {
-      void hapticHeavy();
-      onImpactRef.current();
-    }, 400);
+
+    // Non-premium keeps timed impact; premium fires impact from onAnimationComplete.
+    const impactAt = premium
+      ? 0
+      : window.setTimeout(() => {
+          void hapticHeavy();
+          onImpactRef.current();
+        }, 400);
     const doneAt = window.setTimeout(() => {
       onCompleteRef.current();
-    }, 560);
+    }, premium ? 600 : 560);
 
     return () => {
-      window.clearTimeout(impactAt);
+      if (impactAt) window.clearTimeout(impactAt);
       window.clearTimeout(doneAt);
     };
   }, [payload?.id]);
 
   if (!mounted || !payload || typeof document === 'undefined') return null;
+  // Premium disc is gone on impact — seat fill is the only chip visible.
+  if (landed && payload.premium) return null;
 
-  const { from, to, initials, primary, ink } = payload;
+  const { from, to, initials, primary, ink, premium } = payload;
+
+  if (premium) {
+    const endSize = to.size;
+    return createPortal(
+      <motion.div
+        key={payload.id}
+        className="draft-player-slam draft-player-slam--premium"
+        aria-hidden
+        initial={{
+          left: from.x,
+          top: from.y,
+          width: from.size,
+          height: from.size,
+          x: '-50%',
+          y: '-50%',
+          opacity: 0.96,
+          scale: 1,
+        }}
+        animate={{
+          left: to.x,
+          top: to.y,
+          width: endSize,
+          height: endSize,
+          opacity: 1,
+          scale: 1,
+        }}
+        transition={{
+          duration: 0.28,
+          ease: [0.22, 0.61, 0.36, 1],
+        }}
+        onAnimationComplete={() => {
+          if (premiumImpactFiredRef.current) return;
+          premiumImpactFiredRef.current = true;
+          setLanded(true);
+          void hapticHeavy();
+          onImpactRef.current();
+        }}
+        style={{ position: 'fixed', zIndex: 9999, pointerEvents: 'none' }}
+      >
+        <span
+          className="draft-player-slam__disc"
+          style={{
+            backgroundColor: primary,
+            color: ink,
+            borderColor: primary,
+            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          {initials}
+        </span>
+      </motion.div>,
+      document.body,
+    );
+  }
+
   const lift = Math.min(96, Math.max(48, Math.abs(from.y - to.y) * 0.28));
   const mid = {
     x: (from.x + to.x) / 2,

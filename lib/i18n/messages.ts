@@ -4,6 +4,7 @@ export type MessageKey =
   | 'nav.myRuns'
   | 'nav.play'
   | 'nav.challenges'
+  | 'nav.leaderboard'
   | 'nav.main'
   | 'lang.switchToEn'
   | 'lang.switchToEs'
@@ -43,6 +44,7 @@ export type MessageKey =
   | 'runs.metaMany'
   | 'runs.waiting'
   | 'runs.emptyCopy'
+  | 'runs.bestBadge'
   | 'challenges.eyebrow'
   | 'challenges.title'
   | 'challenges.completeLabel'
@@ -50,6 +52,25 @@ export type MessageKey =
   | 'challenges.done'
   | 'challenges.unlocked'
   | 'challenges.progress'
+  | 'challenges.filterLabel'
+  | 'challenges.filterIncomplete'
+  | 'challenges.filterComplete'
+  | 'challenges.emptyIncomplete'
+  | 'challenges.emptyComplete'
+  | 'leaderboard.eyebrow'
+  | 'leaderboard.title'
+  | 'leaderboard.world'
+  | 'leaderboard.metaTop'
+  | 'leaderboard.loading'
+  | 'leaderboard.error'
+  | 'leaderboard.retry'
+  | 'leaderboard.emptyKicker'
+  | 'leaderboard.emptyCopy'
+  | 'leaderboard.you'
+  | 'leaderboard.yourRank'
+  | 'leaderboard.noVerified'
+  | 'leaderboard.guestHint'
+  | 'leaderboard.guestCta'
   | 'challenge.halfway-home.title'
   | 'challenge.halfway-home.blurb'
   | 'challenge.closing-in.title'
@@ -115,6 +136,7 @@ const EN: Record<MessageKey, string> = {
   'nav.myRuns': 'My Runs',
   'nav.play': 'Play',
   'nav.challenges': 'Achievements',
+  'nav.leaderboard': 'Leaderboard',
   'nav.main': 'Main',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -154,6 +176,7 @@ const EN: Record<MessageKey, string> = {
   'runs.metaMany': '{count} billion+ squads',
   'runs.waiting': 'WAITING',
   'runs.emptyCopy': 'Hit $1,000,000,000 or more to bank a squad here.',
+  'runs.bestBadge': 'Best',
   'challenges.eyebrow': 'SEASON GOALS',
   'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
@@ -162,6 +185,30 @@ const EN: Record<MessageKey, string> = {
   'challenges.done': 'DONE',
   'challenges.unlocked': 'Achievement completed',
   'challenges.progress': '{done}/{total} complete',
+  'challenges.filterLabel': 'Challenge filter',
+  'challenges.filterIncomplete': 'Locked',
+  'challenges.filterComplete': 'Completed',
+  'challenges.emptyIncomplete':
+    'Every challenge is unlocked. Flip to Completed to review them.',
+  'challenges.emptyComplete':
+    'No completed challenges yet. Keep grinding the Locked list.',
+  'leaderboard.eyebrow': 'GLOBAL',
+  'leaderboard.title': 'Leaderboard',
+  'leaderboard.world': 'World',
+  'leaderboard.metaTop': 'Top 100 Classic',
+  'leaderboard.loading': 'Loading World board…',
+  'leaderboard.error': 'Could not load the leaderboard.',
+  'leaderboard.retry': 'Try again',
+  'leaderboard.emptyKicker': 'OPEN BOARD',
+  'leaderboard.emptyCopy':
+    'No verified Classic scores yet. Finish a run to claim the first spot.',
+  'leaderboard.you': 'You',
+  'leaderboard.yourRank': 'Your World rank',
+  'leaderboard.noVerified':
+    'Finish a Classic run while signed in to earn a verified World rank.',
+  'leaderboard.guestHint':
+    'Create an account to save a verified score and compete on the World board.',
+  'leaderboard.guestCta': 'Create account',
   'challenge.halfway-home.title': 'Halfway Home',
   'challenge.halfway-home.blurb':
     'Finish a Classic run worth $500,000,000 or more.',
@@ -246,6 +293,7 @@ const ES: Record<MessageKey, string> = {
   'nav.myRuns': 'Mis Partidas',
   'nav.play': 'Jugar',
   'nav.challenges': 'Logros',
+  'nav.leaderboard': 'Clasificación',
   'nav.main': 'Principal',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -287,6 +335,7 @@ const ES: Record<MessageKey, string> = {
   'runs.waiting': 'ESPERANDO',
   'runs.emptyCopy':
     'Alcanza $1,000,000,000 o más para guardar un quinteto aquí.',
+  'runs.bestBadge': 'Mejor',
   'challenges.eyebrow': 'METAS DE TEMPORADA',
   'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',
@@ -295,6 +344,30 @@ const ES: Record<MessageKey, string> = {
   'challenges.done': 'LISTO',
   'challenges.unlocked': 'Logro completado',
   'challenges.progress': '{done}/{total} completados',
+  'challenges.filterLabel': 'Filtro de logros',
+  'challenges.filterIncomplete': 'Bloqueados',
+  'challenges.filterComplete': 'Completados',
+  'challenges.emptyIncomplete':
+    'Todos los logros están desbloqueados. Cambia a Completados para revisarlos.',
+  'challenges.emptyComplete':
+    'Aún no hay logros completados. Sigue con la lista de Bloqueados.',
+  'leaderboard.eyebrow': 'GLOBAL',
+  'leaderboard.title': 'Clasificación',
+  'leaderboard.world': 'Mundo',
+  'leaderboard.metaTop': 'Top 100 Clásico',
+  'leaderboard.loading': 'Cargando el tablero mundial…',
+  'leaderboard.error': 'No se pudo cargar la clasificación.',
+  'leaderboard.retry': 'Reintentar',
+  'leaderboard.emptyKicker': 'TABLERO ABIERTO',
+  'leaderboard.emptyCopy':
+    'Aún no hay puntuaciones Clásicas verificadas. Termina una partida para reclamar el primer puesto.',
+  'leaderboard.you': 'Tú',
+  'leaderboard.yourRank': 'Tu puesto mundial',
+  'leaderboard.noVerified':
+    'Termina una partida Clásica con la sesión iniciada para ganar un puesto mundial verificado.',
+  'leaderboard.guestHint':
+    'Crea una cuenta para guardar una puntuación verificada y competir en el tablero mundial.',
+  'leaderboard.guestCta': 'Crear cuenta',
   'challenge.halfway-home.title': 'A Medio Camino',
   'challenge.halfway-home.blurb':
     'Termina una partida Clásica de $500,000,000 o más.',

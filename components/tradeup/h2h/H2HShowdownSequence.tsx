@@ -140,7 +140,6 @@ export function H2HShowdownSequence({
   const [overlay, setOverlay] = useState<ShowdownCursor | null>(null);
   const startedRef = useRef(showdown.started);
   const pendingRef = useRef(false);
-  const localCursorRef = useRef(false);
   const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowserClient>['channel']> | null>(null);
   const appliedKey = useRef('');
   const onCompleteRef = useRef(onComplete);
@@ -238,33 +237,58 @@ export function H2HShowdownSequence({
       if (!isHost || pendingRef.current) return;
       pendingRef.current = true;
       setSyncError(null);
-      const publishLocal = () => {
+
+      const publishLocal = (revisionBump = true) => {
         const current = overlay && overlay.revision >= showdown.revision ? overlay : showdown;
         const stepped = nextShowdownCursor(current, command);
-        if (!stepped.ok) return false;
-        localCursorRef.current = true;
-        setOverlay(stepped.cursor);
+        if (!stepped.ok) return null;
+        const cursor = revisionBump
+          ? stepped.cursor
+          : { ...stepped.cursor, revision: Math.max(stepped.cursor.revision, current.revision + 1) };
+        setOverlay(cursor);
         void channelRef.current?.send({
           type: 'broadcast',
           event: 'cursor',
-          payload: stepped.cursor,
+          payload: cursor,
         });
-        return true;
+        return cursor;
       };
+
+      // Optimistic broadcast so the guest never waits solely on RPC latency.
+      publishLocal();
+
       try {
-        if (localCursorRef.current) {
-          if (!publishLocal()) setSyncError('Could not update the showdown.');
-          return;
-        }
         const next = await setH2HShowdownCursor(roomId, command);
         setOverlay(next);
+        void channelRef.current?.send({
+          type: 'broadcast',
+          event: 'cursor',
+          payload: next,
+        });
         await onSyncedRef.current();
       } catch (err) {
         const stale =
           err instanceof MultiplayerApiError && err.code === 'SHOWDOWN_STALE';
         const freshStart = command.started && command.index === 0 && !command.finished;
-        if ((stale && freshStart) || localCursorRef.current) {
-          if (publishLocal()) return;
+        // One retry — never permanently abandon the server cursor.
+        try {
+          await new Promise((r) => window.setTimeout(r, 350));
+          const next = await setH2HShowdownCursor(roomId, command);
+          setOverlay(next);
+          void channelRef.current?.send({
+            type: 'broadcast',
+            event: 'cursor',
+            payload: next,
+          });
+          await onSyncedRef.current();
+          return;
+        } catch {
+          /* fall through */
+        }
+        if (stale && freshStart) {
+          publishLocal();
+          await onSyncedRef.current().catch(() => undefined);
+          return;
         }
         setSyncError(err instanceof Error ? err.message : 'Could not update the showdown.');
         await onSyncedRef.current().catch(() => undefined);

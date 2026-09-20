@@ -1,13 +1,9 @@
 'use client';
 
-import {
-  type FormEvent,
-  type PointerEvent as ReactPointerEvent,
-  useState,
-} from 'react';
+import { type FormEvent, useState } from 'react';
 import { createRoom } from '@/lib/multiplayer/rooms';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
-import { modeDef, type H2HGameMode } from '@/lib/multiplayer/gameModes';
+import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
 import {
   getH2HUsername,
   isValidH2HUsername,
@@ -15,6 +11,7 @@ import {
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
+import { H2HLobbyShell } from './H2HLobbyChrome';
 
 interface H2HCreateLobbyProps {
   gameMode: H2HGameMode;
@@ -26,10 +23,8 @@ export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyPr
   const [displayName, setDisplayName] = useState(() => getH2HUsername() ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const def = modeDef(gameMode);
 
-  const pressBack = (e: ReactPointerEvent) => {
-    e.preventDefault();
+  const handleBack = () => {
     if (busy) return;
     hapticLight();
     onBack();
@@ -64,16 +59,19 @@ export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyPr
     }
   };
 
-  return (
-    <div className="h2h-lobby" aria-label="Create lobby">
-      <button type="button" className="h2h-lobby__back" disabled={busy} onPointerDown={pressBack}>
-        ← Back
-      </button>
+  const nameOk = sanitizeH2HUsername(displayName).length >= 2;
 
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">{def.title}</p>
-        <h1 className="h2h-lobby__title">Create Lobby</h1>
-        <p className="h2h-lobby__subtitle">{def.tagline}</p>
+  return (
+    <H2HLobbyShell
+      className="h2h-lobby--form"
+      ariaLabel="Create lobby"
+      onBack={handleBack}
+      backDisabled={busy}
+    >
+      <header className="h2h-lobby__titles">
+        <p className="h2h-lobby__kicker">CREATE LOBBY</p>
+        <h1 className="h2h-lobby__title">Your name</h1>
+        <p className="h2h-lobby__tagline">What your opponent will see.</p>
       </header>
 
       <form className="h2h-lobby__form" onSubmit={onSubmit}>
@@ -88,8 +86,9 @@ export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyPr
             maxLength={16}
             value={displayName}
             disabled={busy}
+            autoFocus
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Enter a name"
           />
         </label>
 
@@ -101,12 +100,12 @@ export function H2HCreateLobby({ gameMode, onCreated, onBack }: H2HCreateLobbyPr
 
         <button
           type="submit"
-          className="run-btn run-btn--primary h2h-lobby__submit ui-tap"
-          disabled={busy || !sanitizeH2HUsername(displayName)}
+          className="h2h-lobby__primary ui-tap"
+          disabled={busy || !nameOk}
         >
-          <strong>{busy ? 'CREATING…' : 'CREATE LOBBY'}</strong>
+          {busy ? 'Creating…' : 'Create lobby'}
         </button>
       </form>
-    </div>
+    </H2HLobbyShell>
   );
 }

@@ -24,7 +24,13 @@ export function getH2HUsername(): string | null {
     const raw = localStorage.getItem(H2H_USERNAME_KEY);
     if (!raw) return null;
     const name = sanitizeH2HUsername(raw);
-    return isValidH2HUsername(name) ? name : null;
+    if (!isValidH2HUsername(name)) return null;
+    // Retired sample placeholder — never treat as a real display name.
+    if (/^clutch\s*kev$/i.test(name)) {
+      localStorage.removeItem(H2H_USERNAME_KEY);
+      return null;
+    }
+    return name;
   } catch {
     return null;
   }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
@@ -11,8 +10,9 @@ import {
   isValidH2HUsername,
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
-import { SettingsGuidePage } from './SettingsGuidePage';
 import { deleteUserData } from '@/lib/account/deleteUserData';
+import { SettingsGuidePage } from './SettingsGuidePage';
+import { SettingsLegalPage, type LegalPageId } from './SettingsLegalPage';
 
 interface SoundSettingsProps {
   /** Compact gear on redesigned home; text toggle elsewhere. */
@@ -31,7 +31,6 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     toggleHaptics,
     resume,
   } = useSound();
-  const router = useRouter();
   const { locale } = useLocale();
   const guideNav = GUIDE_NAV[locale] ?? GUIDE_NAV.en;
   const [open, setOpen] = useState(false);
@@ -40,6 +39,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   const [draftName, setDraftName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [activeGuide, setActiveGuide] = useState<GuideId | null>(null);
+  const [activeLegal, setActiveLegal] = useState<LegalPageId | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -50,6 +50,10 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     setUsername(getH2HUsername() ?? '');
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (activeLegal) {
+          setActiveLegal(null);
+          return;
+        }
         if (activeGuide) {
           setActiveGuide(null);
           return;
@@ -72,7 +76,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, editingName, activeGuide, deleteConfirmOpen, deleteBusy, deleteSuccessOpen]);
+  }, [open, editingName, activeGuide, activeLegal, deleteConfirmOpen, deleteBusy, deleteSuccessOpen]);
 
   /** Instant press — preventDefault avoids iOS ghost/click delay. */
   const press =
@@ -89,6 +93,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     setEditingName(false);
     setNameError(null);
     setActiveGuide(null);
+    setActiveLegal(null);
     setDeleteConfirmOpen(false);
     setOpen(false);
   };
@@ -123,6 +128,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
       setEditingName(false);
       setNameError(null);
       setActiveGuide(null);
+      setActiveLegal(null);
       setDeleteSuccessOpen(true);
       hapticTap();
     })();
@@ -136,17 +142,17 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   const openGuide = (id: GuideId) => {
     resume();
     hapticTap();
+    setActiveLegal(null);
     setActiveGuide(id);
   };
 
-  const openLegalPage = (path: '/privacy' | '/support') => {
+  const openLegalPage = (id: LegalPageId) => {
     resume();
     hapticTap();
     setEditingName(false);
     setNameError(null);
     setActiveGuide(null);
-    setOpen(false);
-    router.push(path);
+    setActiveLegal(id);
   };
 
   const closeNameModal = () => {
@@ -346,7 +352,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-mini-link"
-            onPointerDown={press(() => openLegalPage('/privacy'))}
+            onPointerDown={press(() => openLegalPage('privacy'))}
           >
             Privacy Policy
           </button>
@@ -356,7 +362,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-mini-link"
-            onPointerDown={press(() => openLegalPage('/support'))}
+            onPointerDown={press(() => openLegalPage('support'))}
           >
             Player Support
           </button>
@@ -400,7 +406,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            placeholder="ClutchKev"
+            placeholder=""
             onChange={(e) => {
               setDraftName(e.target.value);
               setNameError(null);
@@ -579,6 +585,12 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
                 onBack={() => setActiveGuide(null)}
               />
             ) : null}
+            {activeLegal ? (
+              <SettingsLegalPage
+                pageId={activeLegal}
+                onBack={() => setActiveLegal(null)}
+              />
+            ) : null}
           </div>
         ) : null}
         {nameModal}
@@ -618,6 +630,12 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         <SettingsGuidePage
           guideId={activeGuide}
           onBack={() => setActiveGuide(null)}
+        />
+      ) : null}
+      {activeLegal ? (
+        <SettingsLegalPage
+          pageId={activeLegal}
+          onBack={() => setActiveLegal(null)}
         />
       ) : null}
     </div>

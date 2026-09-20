@@ -499,7 +499,7 @@ Marvin Bagley III | PF | 14.9 PPG | 7.6 RPG | 1.0 APG
 ========================================================================
 SAN ANTONIO SPURS
 ========================================================================
-Tim Duncan | PF | 17.2 PPG | 9.4 RPG | 3.0 APG
+Tim Duncan | PF | 15.0 PPG | 9.3 RPG | 2.8 APG | 2.0 BPG
 Kawhi Leonard | SF | 18.7 PPG | 6.8 RPG | 2.6 APG
 Tony Parker | PG | 16.0 PPG | 2.8 RPG | 5.7 APG
 Manu Ginóbili | SG | 14.0 PPG | 3.6 RPG | 4.0 APG

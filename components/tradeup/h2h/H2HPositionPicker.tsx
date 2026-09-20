@@ -27,7 +27,7 @@ import type { Position } from '@/lib/tradeup/types';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { H2HPickSelection } from '@/lib/multiplayer/h2hState';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
-import { startWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
+import { startWheelSpinSound, stopWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { BallionTicketMachine, type TicketRerollKind } from '../BallionTicketMachine';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from '../DraftPlayerSlamFly';
 import { FranchisePickScreen } from '../FranchisePickScreen';
@@ -152,6 +152,12 @@ export function H2HPositionPicker({
   const startMoveMode = useCallback((slot: H2HPosition) => {
     movingFromRef.current = slot;
     setMovingFrom(slot);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopWheelSpinSound();
+    };
   }, []);
 
   useEffect(() => {
@@ -627,6 +633,7 @@ export function H2HPositionPicker({
                 holdTeam={spunTeam ?? rerollFrom?.team ?? null}
                 holdEra={spunEra ?? rerollFrom?.era ?? null}
                 showGoal={false}
+                rollLocked={picksFilled >= 5 || lineupLocked}
                 onAutoRerollConsumed={() => setBoothReroll(null)}
                 onPrint={handlePrint}
                 onResult={handleResult}

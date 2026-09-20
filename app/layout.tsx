@@ -52,11 +52,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 html,body{background:#010814!important}
-.oneb-intro{position:fixed;inset:0;z-index:200;width:100%;height:100dvh;overflow:hidden;background:transparent;pointer-events:auto;touch-action:none}
+.oneb-intro{position:fixed;inset:0;z-index:200;width:100%;height:100dvh;overflow:hidden;background:transparent;pointer-events:none;touch-action:none}
+.oneb-intro.oneb-intro--run:not(.is-exiting){pointer-events:auto}
+.oneb-intro.is-exiting{pointer-events:none!important;opacity:0;visibility:hidden}
 .oneb-intro__veil{position:absolute;inset:0;background:#010814;z-index:0}
 .oneb-intro__stage{position:absolute;inset:0;z-index:2;display:grid;place-items:center;place-content:center}
 .oneb-intro__studio,.oneb-intro__brand{grid-area:1/1;justify-self:center;align-self:center;margin:0;transform-origin:center center}
-.oneb-intro__studio{opacity:0;filter:blur(10px);transform:scale(0.97);text-align:center}
+.oneb-intro__studio{display:none!important}
 .oneb-intro__logo-stage{opacity:0;filter:blur(14px);transform:scale(0.82);width:min(72vw,17.5rem);aspect-ratio:1/1}
 .oneb-intro__load{opacity:0}
 .oneb-intro__logo{width:100%;height:100%;display:block;object-fit:contain;background:transparent;-webkit-touch-callout:none;user-select:none}

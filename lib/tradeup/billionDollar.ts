@@ -280,6 +280,11 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2020s|TOR|Scottie Barnes': { minDollars: 183_000_000, maxDollars: 183_000_000 },
   '2020s|IND|Pascal Siakam': { minDollars: 181_000_000, maxDollars: 181_000_000 },
   '2020s|TOR|Pascal Siakam': { minDollars: 181_000_000, maxDollars: 181_000_000 },
+  '2020s|IND|Tyrese Haliburton': { minDollars: 190_000_000, maxDollars: 190_000_000 },
+  '2020s|PHI|Tyrese Haliburton': { minDollars: 190_000_000, maxDollars: 190_000_000 },
+  '2020s|SAC|Tyrese Haliburton': { minDollars: 190_000_000, maxDollars: 190_000_000 },
+  '2020s|HOU|Alperen Şengün': { minDollars: 189_000_000, maxDollars: 189_000_000 },
+  '2020s|NYK|Karl-Anthony Towns': { minDollars: 192_000_000, maxDollars: 192_000_000 },
   '2020s|PHI|Tyrese Maxey': { minDollars: 194_000_000, maxDollars: 194_000_000 },
   '2020s|LAC|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2020s|SAS|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
@@ -293,6 +298,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2020s|LAL|Luka Dončić': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2020s|DAL|Luka Dončić': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2020s|OKC|Shai Gilgeous-Alexander': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2020s|OKC|Chet Holmgren': { minDollars: 182_000_000, maxDollars: 182_000_000 },
 
   // 2010s — hand-tuned Classic market prices (fixed bands)
   '2010s|CLE|LeBron James': { minDollars: 205_000_000, maxDollars: 205_000_000 },
@@ -320,6 +326,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2010s|LAC|Chris Paul': { minDollars: 189_000_000, maxDollars: 189_000_000 },
   '2010s|DAL|Dirk Nowitzki': { minDollars: 198_000_000, maxDollars: 198_000_000 },
   '2010s|PHX|Steve Nash': { minDollars: 190_000_000, maxDollars: 190_000_000 },
+  '2010s|SAS|Tim Duncan': { minDollars: 200_000_000, maxDollars: 200_000_000 },
 
   // 2000s — hand-tuned Classic market prices (fixed bands)
   '2000s|MIA|Dwyane Wade': { minDollars: 205_000_000, maxDollars: 205_000_000 },
@@ -335,11 +342,15 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2000s|LAL|Kobe Bryant': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2000s|LAL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '2000s|MIA|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2000s|CLE|Shaquille O\'Neal': { minDollars: 208_000_000, maxDollars: 208_000_000 },
+  '2000s|CLE|Shaquille O\'Neal': { minDollars: 178_000_000, maxDollars: 178_000_000 },
   '2000s|PHX|Shaquille O\'Neal': { minDollars: 200_000_000, maxDollars: 200_000_000 },
 
   // 1990s — hand-tuned Classic market prices (fixed bands)
   '1990s|CHI|Michael Jordan': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '1990s|CHI|Scottie Pippen': { minDollars: 199_000_000, maxDollars: 199_000_000 },
+  '1990s|MIA|Alonzo Mourning': { minDollars: 180_000_000, maxDollars: 180_000_000 },
+  '1990s|CHA|Alonzo Mourning': { minDollars: 180_000_000, maxDollars: 180_000_000 },
+  '1990s|LAL|Kobe Bryant': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1990s|LAL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1990s|ORL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1990s|HOU|Hakeem Olajuwon': { minDollars: 203_000_000, maxDollars: 203_000_000 },
@@ -350,6 +361,7 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '1980s|CHI|Michael Jordan': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '1980s|BOS|Larry Bird': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1980s|LAL|Magic Johnson': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '1980s|LAL|Kareem Abdul-Jabbar': { minDollars: 191_000_000, maxDollars: 191_000_000 },
 };
 
 /** Every LeBron card — Lakers late-career band; all other stints stay elite ($201M+). */

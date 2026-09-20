@@ -94,6 +94,25 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
           void refetch();
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        () => {
+          void refetch();
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'room_players',
+          filter: `room_id=eq.${roomId}`,
+        },
+        () => {
+          void refetch();
+        },
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') void refetch();
       });
@@ -106,7 +125,7 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
     window.addEventListener('focus', onVisible);
     const poll = window.setInterval(() => {
       void refetch();
-    }, 2000);
+    }, 1000);
 
     return () => {
       window.clearInterval(poll);

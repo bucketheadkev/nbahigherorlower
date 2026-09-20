@@ -11,19 +11,19 @@ import { slotFor, useRoomLobby } from '@/hooks/useRoomLobby';
 import { clearActiveRoom, writeActiveRoom } from '@/lib/multiplayer/activeRoom';
 import {
   buildH2HInviteWebLink,
+  clearPendingH2HJoinCode,
   shareH2HInvite,
 } from '@/lib/multiplayer/h2hInvite';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
-import { modeDef, type H2HGameMode } from '@/lib/multiplayer/gameModes';
+import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
+import { H2HLobbyShell, H2HLoadingScreen, H2HDisconnectNotice } from './H2HLobbyChrome';
 
 interface H2HWaitingLobbyProps {
   roomId: string;
   userId: string;
   onLeft: () => void;
-  /** Fired when Supabase room.status becomes playing (host + guest). */
   onPlaying: () => void;
-  /** Host-selected mode while lobby row catches up. */
   preferredMode?: H2HGameMode;
 }
 
@@ -57,7 +57,6 @@ export function H2HWaitingLobby({
   userId,
   onLeft,
   onPlaying,
-  preferredMode,
 }: H2HWaitingLobbyProps) {
   const { snapshot, loading, error, setReady, readyBusy, startGame, startBusy } = useRoomLobby({
     roomId,
@@ -67,9 +66,11 @@ export function H2HWaitingLobby({
   const [inviteFlash, setInviteFlash] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [disconnected, setDisconnected] = useState(false);
   const leaveLock = useRef(false);
   const transitioned = useRef(false);
   const autoStartAttempted = useRef(false);
+  const hadOpponentRef = useRef(false);
   const onPlayingRef = useRef(onPlaying);
   onPlayingRef.current = onPlaying;
 
@@ -79,15 +80,28 @@ export function H2HWaitingLobby({
   const p2 = slotFor(players, 2);
   const me = players.find((p) => p.user_id === userId) ?? null;
   const bothReady = Boolean(p1?.is_ready && p2?.is_ready && p1 && p2);
-  const modeLabel = modeDef(
-    (room?.game_mode && room.game_mode !== 'classic'
-      ? room.game_mode
-      : null) ??
-      (preferredMode && preferredMode !== 'classic' ? preferredMode : null) ??
-      room?.game_mode ??
-      preferredMode ??
-      'classic',
-  );
+
+  useEffect(() => {
+    if (players.some((p) => p.user_id !== userId)) {
+      hadOpponentRef.current = true;
+    }
+  }, [players, userId]);
+
+  // Either player leaving should notify whoever remains (host leave abandons;
+  // guest leave removes their row — both paths surface the disconnect notice).
+  useEffect(() => {
+    if (!room || disconnected || leaving) return;
+    const abandoned = room.status === 'abandoned';
+    const opponentLeft =
+      hadOpponentRef.current &&
+      Boolean(me) &&
+      !players.some((p) => p.user_id !== userId) &&
+      (room.status === 'waiting' || room.status === 'playing');
+    if (!abandoned && !opponentLeft) return;
+    clearActiveRoom();
+    clearPendingH2HJoinCode();
+    setDisconnected(true);
+  }, [disconnected, leaving, me, players, room, userId]);
 
   useEffect(() => {
     if (!room?.room_code) return;
@@ -156,7 +170,7 @@ export function H2HWaitingLobby({
       if (result.ok) {
         hapticMedium();
         if (result.method === 'clipboard') {
-          setInviteFlash('Invite link copied');
+          setInviteFlash('Copied');
         } else {
           setInviteFlash(null);
         }
@@ -188,34 +202,56 @@ export function H2HWaitingLobby({
       /* still exit locally */
     } finally {
       clearActiveRoom();
+      clearPendingH2HJoinCode();
       onLeft();
     }
   }, [onLeft, roomId]);
 
+  if (disconnected) {
+    return (
+      <H2HDisconnectNotice
+        onContinue={() => {
+          void leaveRoom(roomId).catch(() => undefined);
+          clearActiveRoom();
+          clearPendingH2HJoinCode();
+          onLeft();
+        }}
+      />
+    );
+  }
+
+  if (loading && !room) {
+    return <H2HLoadingScreen status="Opening lobby…" />;
+  }
+
   const showError = actionError || error;
   const shareDisabled = !room?.room_code || leaving || inviteBusy;
+  const readyDisabled = readyBusy || startBusy || leaving || !p2;
 
   return (
-    <div className="h2h-lobby h2h-lobby--waiting" aria-label="Waiting lobby">
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">{modeLabel.title}</p>
+    <H2HLobbyShell className="h2h-lobby--waiting" ariaLabel="Waiting lobby">
+      <header className="h2h-lobby__titles h2h-lobby__titles--code">
+        <p className="h2h-lobby__kicker">ROOM CODE</p>
         <h1 className="h2h-lobby__code" aria-live="polite">
-          {room?.room_code ?? (loading ? '····' : '————')}
+          {room?.room_code ?? '————'}
         </h1>
       </header>
 
       <div className="h2h-lobby__share-row">
         <button
           type="button"
-          className="h2h-lobby__chip-btn ui-tap"
+          className="h2h-lobby__text-btn ui-tap"
           aria-disabled={shareDisabled}
           onPointerDown={press(() => void handleCopy(), shareDisabled)}
         >
           {copyFlash ? 'Copied' : 'Copy link'}
         </button>
+        <span className="h2h-lobby__share-dot" aria-hidden>
+          ·
+        </span>
         <button
           type="button"
-          className="h2h-lobby__chip-btn h2h-lobby__chip-btn--accent ui-tap"
+          className="h2h-lobby__text-btn ui-tap"
           aria-disabled={shareDisabled}
           onPointerDown={press(() => void handleInvite(), shareDisabled)}
         >
@@ -223,51 +259,41 @@ export function H2HWaitingLobby({
         </button>
       </div>
 
-      <div className="h2h-lobby__slots" aria-live="polite">
-        <PlayerSlot
-          label="Player 1"
-          name={p1?.display_name ?? null}
-          ready={Boolean(p1?.is_ready)}
-          isHost={Boolean(p1 && room && p1.user_id === room.host_user_id)}
-          isYou={Boolean(p1 && p1.user_id === userId)}
-          emptyText="Waiting…"
-        />
-        <PlayerSlot
-          label="Player 2"
-          name={p2?.display_name ?? null}
-          ready={Boolean(p2?.is_ready)}
-          isHost={Boolean(p2 && room && p2.user_id === room.host_user_id)}
-          isYou={Boolean(p2 && p2.user_id === userId)}
-          emptyText="Waiting for opponent…"
-        />
-      </div>
+      <section className="h2h-lobby__players" aria-live="polite">
+        <p className="h2h-lobby__section-label">Players</p>
+        <div className="h2h-lobby__slots">
+          <PlayerSlot
+            name={p1?.display_name ?? null}
+            ready={Boolean(p1?.is_ready)}
+            isHost={Boolean(p1 && room && p1.user_id === room.host_user_id)}
+            isYou={Boolean(p1 && p1.user_id === userId)}
+            emptyText="Open"
+          />
+          <PlayerSlot
+            name={p2?.display_name ?? null}
+            ready={Boolean(p2?.is_ready)}
+            isHost={Boolean(p2 && room && p2.user_id === room.host_user_id)}
+            isYou={Boolean(p2 && p2.user_id === userId)}
+            emptyText="Waiting…"
+          />
+        </div>
+      </section>
 
-      {!p2 ? (
-        <p className="h2h-lobby__waiting">Waiting for opponent…</p>
-      ) : (
-        <p className="h2h-lobby__waiting h2h-lobby__waiting--ready">Opponent joined</p>
-      )}
+      {bothReady && room?.status === 'waiting' ? (
+        <p className="h2h-lobby__hint" aria-live="polite">
+          Starting…
+        </p>
+      ) : null}
 
       {me && room?.status === 'waiting' ? (
         <button
           type="button"
-          className={`run-btn ${me.is_ready ? 'run-btn--secondary' : 'run-btn--primary'} h2h-lobby__submit ui-tap`}
-          disabled={readyBusy || startBusy || leaving || !p2}
-          onPointerDown={press(
-            () => void handleReadyToggle(),
-            readyBusy || startBusy || leaving || !p2,
-          )}
+          className={`h2h-lobby__primary ui-tap${me.is_ready ? ' is-armed' : ''}`}
+          disabled={readyDisabled}
+          onPointerDown={press(() => void handleReadyToggle(), readyDisabled)}
         >
-          <strong>
-            {readyBusy ? '…' : me.is_ready ? 'Unready' : 'Ready'}
-          </strong>
+          {readyBusy ? '…' : me.is_ready ? 'Cancel ready' : 'Ready up'}
         </button>
-      ) : null}
-
-      {bothReady && room?.status === 'waiting' ? (
-        <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" aria-live="polite">
-          Starting match…
-        </p>
       ) : null}
 
       {showError ? (
@@ -282,39 +308,41 @@ export function H2HWaitingLobby({
         disabled={leaving}
         onPointerDown={press(() => void handleLeave(), leaving)}
       >
-        {leaving ? 'Leaving…' : 'Leave Lobby'}
+        {leaving ? 'Leaving…' : 'Leave lobby'}
       </button>
-    </div>
+    </H2HLobbyShell>
   );
 }
 
 function PlayerSlot({
-  label,
   name,
   ready,
   isHost,
   isYou,
   emptyText,
 }: {
-  label: string;
   name: string | null;
   ready: boolean;
   isHost: boolean;
   isYou: boolean;
   emptyText: string;
 }) {
+  const filled = Boolean(name);
   return (
-    <div className={`h2h-lobby__slot${name ? ' is-filled' : ''}${ready ? ' is-ready' : ''}`}>
-      <div className="h2h-lobby__slot-top">
-        <span className="h2h-lobby__slot-label">{label}</span>
-        {isHost ? <span className="h2h-lobby__host-pill">HOST</span> : null}
-        {isYou ? <span className="h2h-lobby__you-pill">YOU</span> : null}
+    <div
+      className={`h2h-lobby__seat${filled ? ' is-filled' : ''}${
+        ready ? ' is-ready' : filled ? ' is-waiting' : ''
+      }`}
+    >
+      <div className="h2h-lobby__seat-meta">
+        {isYou ? <span className="h2h-lobby__seat-tag">You</span> : null}
+        {isHost ? <span className="h2h-lobby__seat-tag">Host</span> : null}
       </div>
-      <p className="h2h-lobby__slot-name">{name ?? emptyText}</p>
-      {name ? (
-        <p className={`h2h-lobby__slot-ready${ready ? ' is-on' : ''}`}>
+      <p className="h2h-lobby__seat-name">{name ?? emptyText}</p>
+      {filled ? (
+        <span className={`h2h-lobby__seat-state${ready ? ' is-on' : ''}`}>
           {ready ? 'Ready' : 'Not ready'}
-        </p>
+        </span>
       ) : null}
     </div>
   );

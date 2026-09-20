@@ -63,6 +63,16 @@ interface ClassicRosterRevealProps {
   onContinue?: () => void;
   /** Optional eyebrow above the hero heading (e.g. YOUR FIVE). */
   eyebrow?: string | null;
+  /**
+   * Skip the ANALYZING FIVE orbit (already played on the draft hub court).
+   * Starts at FINALIZING VALUE.
+   */
+  skipAnalyze?: boolean;
+  /**
+   * Continue the court collapse beam into the valuation track
+   * (physically connected handoff — no fade between screens).
+   */
+  fromCourtBeam?: boolean;
 }
 
 type Phase =
@@ -127,6 +137,8 @@ export function ClassicRosterReveal({
   continueLabel = 'Continue',
   onContinue,
   eyebrow = null,
+  skipAnalyze = false,
+  fromCourtBeam = false,
 }: ClassicRosterRevealProps) {
   const teamValue = useMemo(
     () => roster.reduce((sum, p) => sum + getDollarValue(p), 0),
@@ -137,8 +149,10 @@ export function ClassicRosterReveal({
   const phrase = resultPhrase(teamValue);
   const goalPct = (BILLION_GOAL / TRACK_MAX) * 100;
 
-  const [phase, setPhase] = useState<Phase>('enter');
-  const [entered, setEntered] = useState(false);
+  const [phase, setPhase] = useState<Phase>(
+    skipAnalyze ? 'finalize' : 'enter',
+  );
+  const [entered, setEntered] = useState(skipAnalyze);
   const [analyzeExiting, setAnalyzeExiting] = useState(false);
   const [checkedCount, setCheckedCount] = useState(0);
   const [displayTotal, setDisplayTotal] = useState(0);
@@ -200,16 +214,16 @@ export function ClassicRosterReveal({
     };
   }, [clearTimers]);
 
-  // enter → analyze
+  // enter → analyze (skipped when analyze already ran on the draft court)
   useEffect(() => {
-    if (phase !== 'enter') return;
+    if (skipAnalyze || phase !== 'enter') return;
     later(() => setEntered(true), 16);
     later(() => setPhase('analyze'), reduceMotion ? 40 : 200);
-  }, [later, phase, reduceMotion]);
+  }, [later, phase, reduceMotion, skipAnalyze]);
 
   // analyze PG→C, then fade group out
   useEffect(() => {
-    if (phase !== 'analyze') return;
+    if (skipAnalyze || phase !== 'analyze') return;
     const stepMs = reduceMotion ? 30 : 180;
     let i = 0;
     const tick = () => {
@@ -225,7 +239,7 @@ export function ClassicRosterReveal({
       }
     };
     later(tick, stepMs);
-  }, [later, phase, reduceMotion]);
+  }, [later, phase, reduceMotion, skipAnalyze]);
 
   // finalize count → settle → reveal
   useEffect(() => {
@@ -234,31 +248,42 @@ export function ClassicRosterReveal({
     displayRef.current = 0;
     setDisplayTotal(0);
     setTotalSettling(false);
-    const countMs = reduceMotion ? 80 : 900;
-    countRafRef.current = animateNumber(
-      0,
-      teamValue,
-      countMs,
-      (v) => {
-        displayRef.current = v;
-        setDisplayTotal(v);
-      },
-      () => {
-        if (!aliveRef.current) return;
-        setDisplayTotal(teamValue);
-        displayRef.current = teamValue;
-        setTotalSettling(true);
-        // Once — the moment the final total finishes counting and settles.
-        if (!settleSoundPlayedRef.current) {
-          settleSoundPlayedRef.current = true;
-          playFinalTotalSettleSound();
-          onTotalSettled?.({ teamValue });
-        }
-        later(() => setPhase('reveal'), reduceMotion ? 40 : 220);
-      },
-      easeInOutCubic,
-    );
-  }, [later, onTotalSettled, phase, reduceMotion, teamValue]);
+
+    const startCount = () => {
+      if (!aliveRef.current) return;
+      const countMs = reduceMotion ? 80 : 900;
+      countRafRef.current = animateNumber(
+        0,
+        teamValue,
+        countMs,
+        (v) => {
+          displayRef.current = v;
+          setDisplayTotal(v);
+        },
+        () => {
+          if (!aliveRef.current) return;
+          setDisplayTotal(teamValue);
+          displayRef.current = teamValue;
+          setTotalSettling(true);
+          // Once — the moment the final total finishes counting and settles.
+          if (!settleSoundPlayedRef.current) {
+            settleSoundPlayedRef.current = true;
+            playFinalTotalSettleSound();
+            onTotalSettled?.({ teamValue });
+          }
+          later(() => setPhase('reveal'), reduceMotion ? 40 : 220);
+        },
+        easeInOutCubic,
+      );
+    };
+
+    // Let the court-beam morph into the track before the count begins.
+    if (fromCourtBeam && !reduceMotion) {
+      later(startCount, 140);
+    } else {
+      startCount();
+    }
+  }, [fromCourtBeam, later, onTotalSettled, phase, reduceMotion, teamValue]);
 
   // reveal: compare + track + phrase, then roster
   useEffect(() => {
@@ -345,7 +370,9 @@ export function ClassicRosterReveal({
     <div
       className={`classic-val${entered ? ' is-entered' : ''}${
         isBillion ? ' is-billion' : ''
-      }${phase === 'analyze' ? ' is-analyzing' : ''}`}
+      }${phase === 'analyze' ? ' is-analyzing' : ''}${
+        fromCourtBeam ? ' is-from-beam' : ''
+      }`}
       aria-label="Roster valuation"
     >
       {celebrate ? (
@@ -366,8 +393,6 @@ export function ClassicRosterReveal({
               }`}
               aria-label="Analyzing positions"
             >
-              <span className="classic-val__orbit-core" aria-hidden="true" />
-              <span className="classic-val__orbit-scan" aria-hidden="true" />
               {LINEUP_POSITIONS.map((pos, index) => {
                 const player = playerInSlot(roster, pos);
                 const colors = player ? getTeamColors(player.teamId) : null;

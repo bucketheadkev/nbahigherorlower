@@ -27,7 +27,7 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
 
   return (
     <div
-      className={`settings-guide${isValues ? ' settings-guide--values' : ''}`}
+      className={`settings-guide${isValues ? ' settings-guide--values' : ' settings-guide--play'}`}
       role="dialog"
       aria-modal="true"
       aria-label={content.title}
@@ -50,55 +50,111 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
         <div className="settings-guide__titles">
           <p className="settings-guide__kicker">{content.kicker}</p>
           <h1 className="settings-guide__title">{content.title}</h1>
+          <p className="settings-guide__tagline">{content.tagline}</p>
         </div>
       </header>
 
       <div className="settings-guide__scroll">
-        <p className="settings-guide__intro">{content.intro}</p>
-
-        {content.sections.map((section) => (
-          <section key={section.heading} className="settings-guide__section">
-            <h2 className="settings-guide__heading">{section.heading}</h2>
-            {section.body.map((paragraph) => (
-              <p key={paragraph.slice(0, 48)} className="settings-guide__body">
-                {paragraph}
-              </p>
-            ))}
+        {content.steps ? (
+          <section className="sg-block" aria-label={nav.stepsLabel}>
+            <p className="sg-block__label">{nav.stepsLabel}</p>
+            <ol className="sg-steps">
+              {content.steps.map((step, i) => (
+                <li key={step.n} className="sg-step">
+                  <span className="sg-step__index" aria-hidden>
+                    {step.n}
+                  </span>
+                  <div className="sg-step__copy">
+                    <strong className="sg-step__title">{step.title}</strong>
+                    <span className="sg-step__line">{step.line}</span>
+                  </div>
+                  {i < content.steps!.length - 1 ? (
+                    <span className="sg-step__rail" aria-hidden />
+                  ) : null}
+                </li>
+              ))}
+            </ol>
           </section>
-        ))}
+        ) : null}
+
+        {content.modes ? (
+          <section className="sg-block" aria-label={nav.modesLabel}>
+            <p className="sg-block__label">{nav.modesLabel}</p>
+            <div className="sg-modes">
+              {content.modes.map((mode) => (
+                <article key={mode.title} className="sg-mode">
+                  <span className="sg-mode__mark" aria-hidden>
+                    {mode.mark}
+                  </span>
+                  <strong className="sg-mode__title">{mode.title}</strong>
+                  <span className="sg-mode__line">{mode.line}</span>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {content.tips ? (
+          <section className="sg-block" aria-label={nav.tipsLabel}>
+            <p className="sg-block__label">{nav.tipsLabel}</p>
+            <ul className="sg-tips">
+              {content.tips.map((tip) => (
+                <li key={tip} className="sg-tip">
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {content.pricing ? (
+          <section className="sg-block" aria-label={nav.factsLabel}>
+            <p className="sg-block__label">{nav.factsLabel}</p>
+            <p className="sg-pricing">{content.pricing}</p>
+          </section>
+        ) : null}
+
+        {content.facts ? (
+          <section className="sg-block" aria-label={nav.factsLabel}>
+            <p className="sg-block__label">{nav.factsLabel}</p>
+            <div className="sg-facts">
+              {content.facts.map((fact, i) => (
+                <article key={fact.title} className="sg-fact">
+                  <span className="sg-fact__num" aria-hidden>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="sg-fact__copy">
+                    <strong className="sg-fact__title">{fact.title}</strong>
+                    <span className="sg-fact__line">{fact.line}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {content.tiers ? (
-          <section
-            className="settings-guide__section settings-guide__section--tiers"
-            aria-label={nav.tierRanges}
-          >
-            <div className="settings-guide__ladder-head">
-              <h2 className="settings-guide__heading">{nav.tierRanges}</h2>
-              <p className="settings-guide__ladder-note">
-                {locale === 'es' ? 'De menor a mayor' : 'Low to high'}
-              </p>
+          <section className="sg-block sg-block--tiers" aria-label={nav.tierRanges}>
+            <div className="sg-tiers-head">
+              <p className="sg-block__label">{nav.tierRanges}</p>
+              <span className="sg-tiers-note">
+                {locale === 'es' ? 'De menor a mayor' : 'Low → high'}
+              </span>
             </div>
-
-            <div className="settings-guide__ladder" role="table" aria-label={nav.tierRanges}>
-              <div className="settings-guide__ladder-cols" aria-hidden>
-                <span>Tier</span>
-                <span>{locale === 'es' ? 'Nivel' : 'Level'}</span>
-                <span>{locale === 'es' ? 'Rango' : 'Range'}</span>
-              </div>
+            <div className="sg-ladder" role="list">
               {content.tiers.map((row) => (
                 <div
                   key={row.tier}
-                  role="row"
-                  className={`settings-guide__ladder-row settings-guide__ladder-row--${row.tier.toLowerCase()}`}
+                  role="listitem"
+                  className={`sg-ladder__row sg-ladder__row--${row.tier.toLowerCase()}`}
                 >
-                  <span className="settings-guide__ladder-tier" role="cell">
-                    {row.tier}
+                  <span className="sg-ladder__badge">{row.tier}</span>
+                  <span className="sg-ladder__meta">
+                    <span className="sg-ladder__blurb">{row.blurb}</span>
+                    <span className="sg-ladder__range">{row.range}</span>
                   </span>
-                  <span className="settings-guide__ladder-blurb" role="cell">
-                    {row.blurb}
-                  </span>
-                  <span className="settings-guide__ladder-range" role="cell">
-                    {row.range}
+                  <span className="sg-ladder__bar" aria-hidden>
+                    <span className="sg-ladder__fill" />
                   </span>
                 </div>
               ))}

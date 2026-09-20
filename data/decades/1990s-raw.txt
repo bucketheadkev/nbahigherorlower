@@ -245,7 +245,7 @@ LOS ANGELES LAKERS
 ========================================================================
 
 Shaquille O'Neal | C | 27.2 PPG | 11.8 RPG | 2.7 APG
-Kobe Bryant | SG | 19.9 PPG | 5.3 RPG | 3.8 APG
+Kobe Bryant | SG | 19.9 PPG | 5.3 RPG | 3.8 APG | 1.0 BPG
 Eddie Jones | SG | 17.0 PPG | 4.0 RPG | 3.0 APG
 Nick Van Exel | PG | 16.9 PPG | 3.3 RPG | 7.3 APG
 Cedric Ceballos | SF | 19.0 PPG | 6.0 RPG | 2.0 APG

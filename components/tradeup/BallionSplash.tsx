@@ -7,21 +7,16 @@ import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
  * Single coordinated timeline (ms). CSS keyframe % = ms / INTRO_TOTAL_MS.
  * Tune here and keep `--oneb-intro-ms` / keyframes in oneb-theme.css in sync.
  */
-export const INTRO_TOTAL_MS = 5000;
+export const INTRO_TOTAL_MS = 3400;
 
 export const INTRO_MARKS = {
-  atmosphereEnd: 150,
-  studioRevealEnd: 900,
-  studioHoldEnd: 1350,
-  studioDissolveEnd: 1850,
-  logoRevealStart: 1650,
-  logoRevealEnd: 2550,
-  /** Loading bar appears as soon as KovA is gone. */
-  loadBarStart: 1850,
-  /** Bar reaches full just before home crossfade completes. */
-  loadBarFull: 4700,
-  logoHoldEnd: 4300,
-  homeRevealEnd: 5000,
+  atmosphereEnd: 100,
+  logoRevealStart: 0,
+  logoRevealEnd: 620,
+  loadBarStart: 180,
+  loadBarFull: 3000,
+  logoHoldEnd: 2800,
+  homeRevealEnd: 3400,
 } as const;
 
 export const INTRO_EASING = {
@@ -38,6 +33,17 @@ interface BallionSplashProps {
 
 /** Survives Strict Mode remounts within one page load. */
 let introFinishedThisLoad = false;
+
+/** Parent shell reads this so HMR can't re-show a finished intro. */
+export function hasIntroFinishedThisLoad(): boolean {
+  return introFinishedThisLoad;
+}
+
+/** Hard refresh / ?replaySplash=1 — allow the intro to run again this load. */
+export function resetIntroFinishedThisLoad(): void {
+  introFinishedThisLoad = false;
+  clearModuleFailsafe();
+}
 
 /**
  * Module-level hard stop — must NOT live in a ref cleared by effect cleanup,
@@ -95,8 +101,7 @@ async function preloadIntroAssets(): Promise<void> {
 }
 
 /**
- * Cinematic launch intro — one timeline, center-locked studio credit,
- * continuous transformation into the 1B Run mark + load bar, then home crossfade.
+ * Launch intro — 1B Run logo + load bar → home.
  */
 export function BallionSplash({
   onDone,
@@ -121,9 +126,17 @@ export function BallionSplash({
     appReadyRef.current = appReady;
   }, [appReady]);
 
-  // Guarantee --run before paint even if HMR remounts mid-boot.
+  // Sync parent before paint when HMR remounts after a finished intro —
+  // otherwise showSplash stays true with a null splash and dead pointer-events.
   useLayoutEffect(() => {
-    if (introFinishedThisLoad) return;
+    if (introFinishedThisLoad || finishedRef.current) {
+      finishedRef.current = true;
+      introFinishedThisLoad = true;
+      setExiting(true);
+      setDone(true);
+      onDoneRef.current();
+      return;
+    }
     setBoot(false);
     setRun(true);
   }, []);
@@ -160,21 +173,22 @@ export function BallionSplash({
       return clearTimers;
     }
 
-    // Nuclear: never leave z-index 200 longer than ~3.5s even if timers are cleared.
-    armModuleFailsafe(finish, reduceMotion ? 1600 : 3500);
+    const duration = reduceMotion ? 720 : INTRO_TOTAL_MS;
+    // Nuclear: survive Strict Mode timer clears — must outlast the full intro.
+    armModuleFailsafe(finish, duration + 1000);
 
     setBoot(false);
     setRun(true);
     void preloadIntroAssets();
 
-    const duration = reduceMotion ? 720 : INTRO_TOTAL_MS;
     schedule(() => {
       if (finishedRef.current) return;
       // Don't block exit on appReady — stuck ready flag caused blank navy.
       finish();
     }, duration);
 
-    schedule(finish, Math.min(duration + 800, 3200));
+    // Secondary only — never cut the cinematic short of INTRO_TOTAL_MS.
+    schedule(finish, duration + 800);
 
     return () => {
       clearTimers();
@@ -207,14 +221,7 @@ export function BallionSplash({
         <div className="oneb-intro__core-glow" />
       </div>
 
-      {/* Single stage: studio + brand share one grid cell — no translate centering */}
       <div className="oneb-intro__stage">
-        <div className="oneb-intro__studio">
-          <p className="oneb-intro__studio-name">KovA STUDIOS</p>
-          <p className="oneb-intro__studio-presents">PRESENTS</p>
-          <span className="oneb-intro__studio-sheen" aria-hidden />
-        </div>
-
         <div className="oneb-intro__brand">
           <div className="oneb-intro__logo-stage">
             <div className="oneb-intro__logo-pulse" aria-hidden />
@@ -241,8 +248,12 @@ export function BallionSplash({
 
           <div className="oneb-intro__load" role="status" aria-label="Loading">
             <div className="oneb-intro__bar">
-              <span className="oneb-intro__bar-fill" />
+              <span className="oneb-intro__bar-track" aria-hidden />
+              <span className="oneb-intro__bar-fill">
+                <span className="oneb-intro__bar-sheen" aria-hidden />
+              </span>
             </div>
+            <p className="oneb-intro__load-label">Loading</p>
           </div>
         </div>
       </div>

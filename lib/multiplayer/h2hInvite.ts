@@ -85,6 +85,16 @@ export function persistPendingH2HJoinCode(code: string): void {
   }
 }
 
+/** Drop any sticky invite code so abandoned lobbies cannot block re-entry. */
+export function clearPendingH2HJoinCode(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(H2H_PENDING_JOIN_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function consumePendingH2HJoinCode(): string | null {
   if (typeof window === 'undefined') return null;
   try {

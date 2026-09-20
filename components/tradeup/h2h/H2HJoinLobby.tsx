@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  type FormEvent,
-  type PointerEvent as ReactPointerEvent,
-  useEffect,
-  useState,
-} from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { joinRoom } from '@/lib/multiplayer/rooms';
 import {
   H2H_ROOM_CODE_LENGTH,
@@ -20,13 +15,12 @@ import {
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
+import { H2HLobbyShell } from './H2HLobbyChrome';
 
 interface H2HJoinLobbyProps {
   onJoined: (roomId: string, roomCode: string) => void;
   onBack: () => void;
-  /** Pre-filled from invite deep link. */
   initialRoomCode?: string;
-  /** When true, room code field is read-only (from invite link). */
   inviteFromLink?: boolean;
   initialError?: string | null;
 }
@@ -55,8 +49,7 @@ export function H2HJoinLobby({
     if (initialError) setError(initialError);
   }, [initialError]);
 
-  const pressBack = (e: ReactPointerEvent) => {
-    e.preventDefault();
+  const handleBack = () => {
     if (busy) return;
     hapticLight();
     onBack();
@@ -71,12 +64,19 @@ export function H2HJoinLobby({
       hapticMedium();
       onJoined(result.room_id, result.room_code);
     } catch (err) {
-      const message =
+      let message =
         err instanceof MultiplayerApiError
           ? err.message
           : err instanceof Error
             ? err.message
             : 'Could not join lobby.';
+      // Never trap on an "abandoned" dead-end — keep join usable.
+      if (
+        (err instanceof MultiplayerApiError && err.code === 'ROOM_ABANDONED') ||
+        /abandon/i.test(message)
+      ) {
+        message = 'That lobby is no longer available. Create or join a new one.';
+      }
       setError(message);
       setBusy(false);
     }
@@ -104,25 +104,21 @@ export function H2HJoinLobby({
     sanitizeH2HUsername(displayName).length >= 2 && isValidH2HRoomCode(roomCode);
 
   return (
-    <div className="h2h-lobby" aria-label="Join lobby">
-      <button
-        type="button"
-        className="h2h-lobby__back ui-tap"
-        disabled={busy}
-        onPointerDown={pressBack}
-      >
-        ← Back
-      </button>
-
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">1V1</p>
+    <H2HLobbyShell
+      className="h2h-lobby--form"
+      ariaLabel="Join lobby"
+      onBack={handleBack}
+      backDisabled={busy}
+    >
+      <header className="h2h-lobby__titles">
+        <p className="h2h-lobby__kicker">JOIN LOBBY</p>
         <h1 className="h2h-lobby__title">
-          {inviteFromLink ? 'Join Invite' : 'Join Lobby'}
+          {inviteFromLink ? 'You’re invited' : 'Enter code'}
         </h1>
-        <p className="h2h-lobby__subtitle">
+        <p className="h2h-lobby__tagline">
           {inviteFromLink
-            ? 'Enter your name — the room is already linked from the invite.'
-            : `Enter your name and the host’s ${H2H_ROOM_CODE_LENGTH}-character code.`}
+            ? 'Confirm your name to join.'
+            : `Your name and the host’s ${H2H_ROOM_CODE_LENGTH}-letter code.`}
         </p>
       </header>
 
@@ -140,7 +136,7 @@ export function H2HJoinLobby({
             disabled={busy}
             autoFocus
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Enter a name"
           />
         </label>
 
@@ -171,12 +167,12 @@ export function H2HJoinLobby({
 
         <button
           type="submit"
-          className="run-btn run-btn--primary h2h-lobby__submit ui-tap"
+          className="h2h-lobby__primary ui-tap"
           disabled={busy || !canSubmit}
         >
-          <strong>{busy ? 'JOINING…' : 'JOIN LOBBY'}</strong>
+          {busy ? 'Joining…' : 'Join lobby'}
         </button>
       </form>
-    </div>
+    </H2HLobbyShell>
   );
 }

@@ -94,7 +94,10 @@ export function mapRoomRpcError(error: unknown): MultiplayerApiError {
     return new MultiplayerApiError('ROOM_FINISHED', 'This lobby has already finished.');
   }
   if (upper.includes('ROOM_ABANDONED')) {
-    return new MultiplayerApiError('ROOM_ABANDONED', 'This lobby was abandoned.');
+    return new MultiplayerApiError(
+      'ROOM_ABANDONED',
+      'That lobby is no longer available. Create or join a new one.',
+    );
   }
   if (upper.includes('NOT_HOST')) {
     return new MultiplayerApiError('NOT_HOST', 'Only the host can start the match.');

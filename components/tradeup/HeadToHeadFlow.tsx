@@ -7,13 +7,18 @@ import {
   readActiveRoom,
   writeActiveRoom,
 } from '@/lib/multiplayer/activeRoom';
+import {
+  clearPendingH2HJoinCode,
+  consumePendingH2HJoinCode,
+} from '@/lib/multiplayer/h2hInvite';
 import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomCode';
-import { joinRoom, fetchRoomLobby } from '@/lib/multiplayer/rooms';
+import { joinRoom, fetchRoomLobby, leaveRoom } from '@/lib/multiplayer/rooms';
 import { ensureInviteDisplayName, setH2HUsername } from '@/lib/tradeup/h2hUsername';
 import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
 import { H2HJoinLobby } from './h2h/H2HJoinLobby';
+import { H2HLoadingScreen, H2HLobbyShell } from './h2h/H2HLobbyChrome';
 import { H2HMatchScreen } from './h2h/H2HMatchScreen';
 import { H2HModeSelectScreen } from './h2h/H2HModeSelectScreen';
 import { H2HWaitingLobby } from './h2h/H2HWaitingLobby';
@@ -22,15 +27,22 @@ type LobbyScreen = 'entry' | 'modes' | 'create' | 'join' | 'waiting' | 'match';
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
-  /** Room code from invite deep link — auto-join when possible. */
   pendingJoinCode?: string | null;
   onJoinCodeConsumed?: () => void;
 }
 
+function readInitialInviteCode(pendingJoinCode: string | null | undefined): string | null {
+  if (pendingJoinCode) {
+    const code = sanitizeH2HRoomCode(pendingJoinCode);
+    if (isValidH2HRoomCode(code)) return code;
+  }
+  const stored = consumePendingH2HJoinCode();
+  return stored && isValidH2HRoomCode(stored) ? stored : null;
+}
+
 /**
- * 1V1 shell — entry (create/join) → host mode select → lobby → match → rematch.
- * Guests join by code and inherit the host’s mode (no purchase gate).
- * Classic single-player remains a separate TradeUpApp path.
+ * 1V1 shell — entry → create/join → lobby → match.
+ * Always clears sticky invite/active-room state so abandoned lobbies never block re-entry.
  */
 export function HeadToHeadFlow({
   onExit,
@@ -38,39 +50,16 @@ export function HeadToHeadFlow({
   onJoinCodeConsumed,
 }: HeadToHeadFlowProps) {
   const auth = useAnonymousAuth();
-  const [screen, setScreen] = useState<LobbyScreen>(() => {
-    if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
-      return 'join';
-    }
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = window.sessionStorage.getItem('oneb:pending-h2h-join');
-        const code = stored ? sanitizeH2HRoomCode(stored) : '';
-        if (isValidH2HRoomCode(code)) return 'join';
-      } catch {
-        /* ignore */
-      }
-    }
-    return 'entry';
-  });
+  const initialInvite = useRef(readInitialInviteCode(pendingJoinCode));
+  const [screen, setScreen] = useState<LobbyScreen>(() =>
+    initialInvite.current ? 'join' : 'entry',
+  );
   const [roomId, setRoomId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<H2HGameMode>('classic');
   const [restoring, setRestoring] = useState(true);
-  const [inviteJoinCode, setInviteJoinCode] = useState<string | null>(() => {
-    if (pendingJoinCode && isValidH2HRoomCode(sanitizeH2HRoomCode(pendingJoinCode))) {
-      return sanitizeH2HRoomCode(pendingJoinCode);
-    }
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = window.sessionStorage.getItem('oneb:pending-h2h-join');
-        const code = stored ? sanitizeH2HRoomCode(stored) : '';
-        if (isValidH2HRoomCode(code)) return code;
-      } catch {
-        /* ignore */
-      }
-    }
-    return null;
-  });
+  const [inviteJoinCode, setInviteJoinCode] = useState<string | null>(
+    () => initialInvite.current,
+  );
   const [inviteJoinBusy, setInviteJoinBusy] = useState(false);
   const [inviteJoinError, setInviteJoinError] = useState<string | null>(null);
   const restoreAttempted = useRef(false);
@@ -78,18 +67,43 @@ export function HeadToHeadFlow({
   const onJoinCodeConsumedRef = useRef(onJoinCodeConsumed);
   onJoinCodeConsumedRef.current = onJoinCodeConsumed;
 
+  const resetInviteState = useCallback(() => {
+    clearPendingH2HJoinCode();
+    setInviteJoinCode(null);
+    setInviteJoinError(null);
+    setInviteJoinBusy(false);
+    inviteJoinAttempted.current = false;
+  }, []);
+
   const enterRoom = useCallback((nextRoomId: string, nextCode: string) => {
+    clearPendingH2HJoinCode();
     writeActiveRoom(nextRoomId, nextCode);
     setRoomId(nextRoomId);
     setInviteJoinCode(null);
+    setInviteJoinError(null);
     setScreen('waiting');
   }, []);
+
+  const exitToHome = useCallback(() => {
+    const leavingId = roomId;
+    clearActiveRoom();
+    clearPendingH2HJoinCode();
+    resetInviteState();
+    setRoomId(null);
+    if (leavingId) {
+      void leaveRoom(leavingId).catch(() => undefined);
+    }
+    onExit();
+  }, [onExit, resetInviteState, roomId]);
 
   useEffect(() => {
     if (!pendingJoinCode) return;
     const code = sanitizeH2HRoomCode(pendingJoinCode);
     if (!isValidH2HRoomCode(code)) return;
     setInviteJoinCode(code);
+    setInviteJoinError(null);
+    inviteJoinAttempted.current = false;
+    setScreen('join');
     onJoinCodeConsumedRef.current?.();
   }, [pendingJoinCode]);
 
@@ -122,13 +136,20 @@ export function HeadToHeadFlow({
 
         const member = snap.players.some((p) => p.user_id === auth.user.id);
         const expired = new Date(snap.room.expires_at).getTime() <= Date.now();
-        const usable =
-          member &&
-          !expired &&
-          snap.room.status === 'waiting';
+        const status = snap.room.status;
+        const usable = member && !expired && status === 'waiting';
 
         if (!usable) {
+          // Drop any dead/stale membership so create/join is never blocked.
+          if (member) {
+            try {
+              await leaveRoom(saved.roomId);
+            } catch {
+              /* already gone */
+            }
+          }
           clearActiveRoom();
+          clearPendingH2HJoinCode();
           setRestoring(false);
           return;
         }
@@ -138,7 +159,10 @@ export function HeadToHeadFlow({
         setSelectedMode(snap.room.game_mode ?? 'classic');
         setScreen('waiting');
       } catch {
-        if (!cancelled) clearActiveRoom();
+        if (!cancelled) {
+          clearActiveRoom();
+          clearPendingH2HJoinCode();
+        }
       } finally {
         if (!cancelled) setRestoring(false);
       }
@@ -154,7 +178,6 @@ export function HeadToHeadFlow({
     if (auth.status !== 'ready' || restoring) return;
 
     const savedName = ensureInviteDisplayName();
-
     inviteJoinAttempted.current = true;
     setInviteJoinBusy(true);
     setInviteJoinError(null);
@@ -165,10 +188,12 @@ export function HeadToHeadFlow({
         const result = await joinRoom(inviteJoinCode, savedName);
         enterRoom(result.room_id, result.room_code);
       } catch (err) {
+        clearPendingH2HJoinCode();
         inviteJoinAttempted.current = false;
         const message =
           err instanceof Error ? err.message : 'Could not join from invite link.';
         setInviteJoinError(message);
+        setInviteJoinCode(null);
       } finally {
         setInviteJoinBusy(false);
       }
@@ -176,6 +201,9 @@ export function HeadToHeadFlow({
   }, [auth.status, enterRoom, inviteJoinCode, restoring]);
 
   const handleHostMode = useCallback((mode: H2HGameMode) => {
+    clearPendingH2HJoinCode();
+    setInviteJoinCode(null);
+    setInviteJoinError(null);
     setSelectedMode(mode);
     setScreen('create');
   }, []);
@@ -197,39 +225,87 @@ export function HeadToHeadFlow({
 
   const handleLeftLobby = useCallback(() => {
     clearActiveRoom();
+    clearPendingH2HJoinCode();
+    resetInviteState();
     setRoomId(null);
     setScreen('entry');
-  }, []);
+  }, [resetInviteState]);
 
   const handlePlaying = useCallback(() => {
     setScreen('match');
   }, []);
 
+  const dismissInviteError = useCallback(() => {
+    resetInviteState();
+    setScreen('entry');
+  }, [resetInviteState]);
+
+  // Dead/abandoned invites must never trap on a sticky abandoned screen.
+  useEffect(() => {
+    if (!inviteJoinError) return;
+    const deadLobby =
+      /abandon/i.test(inviteJoinError) ||
+      /no longer available/i.test(inviteJoinError) ||
+      inviteJoinError.toUpperCase().includes('ROOM_ABANDONED');
+    if (!deadLobby) return;
+    clearActiveRoom();
+    clearPendingH2HJoinCode();
+    resetInviteState();
+    setScreen('entry');
+  }, [inviteJoinError, resetInviteState]);
+
   if (inviteJoinCode && auth.status === 'error') {
     return (
-      <InviteJoinNotice
-        message={auth.message}
-        onBack={onExit}
-      />
+      <InviteJoinNotice message={auth.message} onBack={exitToHome} onDismiss={dismissInviteError} />
     );
   }
 
   if (inviteJoinError) {
+    const deadLobby =
+      /abandon/i.test(inviteJoinError) ||
+      /no longer available/i.test(inviteJoinError) ||
+      inviteJoinError.toUpperCase().includes('ROOM_ABANDONED');
+    if (deadLobby) {
+      // Effect clears state; keep entry usable while that runs.
+      return (
+        <H2HEntryScreen
+          onCreate={() => {
+            clearPendingH2HJoinCode();
+            resetInviteState();
+            setSelectedMode('classic');
+            setScreen('create');
+          }}
+          onJoin={() => {
+            resetInviteState();
+            setScreen('join');
+          }}
+          onBack={exitToHome}
+          authLoading={false}
+          authError={null}
+        />
+      );
+    }
     return (
       <InviteJoinNotice
         message={inviteJoinError}
-        onBack={onExit}
+        onBack={exitToHome}
+        onDismiss={dismissInviteError}
       />
     );
   }
 
   if (restoring || auth.status === 'loading' || inviteJoinBusy) {
     return (
-      <div className="h2h-lobby" aria-label="Loading 1V1">
-        <p className="h2h-lobby__status">
-          {inviteJoinBusy ? 'Joining from invite…' : 'Loading…'}
-        </p>
-      </div>
+      <H2HLoadingScreen
+        status={
+          inviteJoinBusy
+            ? 'Joining your invite…'
+            : restoring
+              ? 'Restoring your lobby…'
+              : 'Connecting…'
+        }
+        onBack={exitToHome}
+      />
     );
   }
 
@@ -238,7 +314,10 @@ export function HeadToHeadFlow({
       <H2HCreateLobby
         gameMode={selectedMode}
         onCreated={handleCreated}
-        onBack={() => setScreen('entry')}
+        onBack={() => {
+          resetInviteState();
+          setScreen('entry');
+        }}
       />
     );
   }
@@ -248,12 +327,10 @@ export function HeadToHeadFlow({
       <H2HJoinLobby
         initialRoomCode={inviteJoinCode ?? undefined}
         inviteFromLink={Boolean(inviteJoinCode)}
-        initialError={inviteJoinError}
+        initialError={null}
         onJoined={handleJoined}
         onBack={() => {
-          setInviteJoinCode(null);
-          setInviteJoinError(null);
-          inviteJoinAttempted.current = false;
+          resetInviteState();
           setScreen('entry');
         }}
       />
@@ -264,7 +341,10 @@ export function HeadToHeadFlow({
     return (
       <H2HModeSelectScreen
         onHostMode={handleHostMode}
-        onJoin={() => setScreen('join')}
+        onJoin={() => {
+          resetInviteState();
+          setScreen('join');
+        }}
         onBack={() => setScreen('entry')}
         authLoading={false}
         authError={auth.status === 'error' ? auth.message : null}
@@ -296,27 +376,26 @@ export function HeadToHeadFlow({
     }
 
     return (
-      <div className="h2h-lobby" aria-label="Connecting to lobby">
-        <p className="h2h-lobby__status">
-          {auth.status === 'error' ? auth.message : 'Connecting…'}
-        </p>
-        {auth.status === 'error' ? (
-          <button type="button" className="h2h-lobby__leave" onClick={handleLeftLobby}>
-            Back
-          </button>
-        ) : null}
-      </div>
+      <H2HLoadingScreen
+        status={auth.status === 'error' ? auth.message : 'Connecting to lobby…'}
+        onBack={auth.status === 'error' ? handleLeftLobby : undefined}
+      />
     );
   }
 
   return (
     <H2HEntryScreen
       onCreate={() => {
+        clearPendingH2HJoinCode();
+        resetInviteState();
         setSelectedMode('classic');
         setScreen('create');
       }}
-      onJoin={() => setScreen('join')}
-      onBack={onExit}
+      onJoin={() => {
+        resetInviteState();
+        setScreen('join');
+      }}
+      onBack={exitToHome}
       authLoading={false}
       authError={auth.status === 'error' ? auth.message : null}
     />
@@ -326,22 +405,25 @@ export function HeadToHeadFlow({
 function InviteJoinNotice({
   message,
   onBack,
+  onDismiss,
 }: {
   message: string;
   onBack: () => void;
+  onDismiss: () => void;
 }) {
   return (
-    <div className="h2h-lobby" aria-label="Invite unavailable">
-      <header className="h2h-lobby__header">
-        <p className="h2h-lobby__eyebrow">1V1</p>
+    <H2HLobbyShell className="h2h-lobby--form" ariaLabel="Invite unavailable" onBack={onDismiss}>
+      <header className="h2h-lobby__titles">
+        <p className="h2h-lobby__kicker">1V1</p>
         <h1 className="h2h-lobby__title">Can’t join</h1>
+        <p className="h2h-lobby__tagline">{message}</p>
       </header>
-      <p className="h2h-lobby__status" role="alert">
-        {message}
-      </p>
-      <button type="button" className="h2h-lobby__leave" onClick={onBack}>
-        Back to home
+      <button type="button" className="h2h-lobby__primary ui-tap" onClick={onDismiss}>
+        Back to 1v1
       </button>
-    </div>
+      <button type="button" className="h2h-lobby__leave ui-tap" onClick={onBack}>
+        Home
+      </button>
+    </H2HLobbyShell>
   );
 }

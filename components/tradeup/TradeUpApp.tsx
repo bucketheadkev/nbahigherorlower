@@ -1,16 +1,18 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { useGameReducedMotion } from '@/hooks/useGameReducedMotion';
 import { useH2HInviteLink } from '@/hooks/useH2HInviteLink';
-import { readInvalidInviteReason, readJoinCodeFromLocation } from '@/lib/multiplayer/h2hInvite';
-import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
+import { readInvalidInviteReason, readJoinCodeFromLocation, clearPendingH2HJoinCode } from '@/lib/multiplayer/h2hInvite';
+import { clearActiveRoom, readActiveRoom } from '@/lib/multiplayer/activeRoom';
+import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
 import { LocaleProvider } from '@/hooks/useLocale';
-import { BallionSplash } from './BallionSplash';
+import { BallionSplash, hasIntroFinishedThisLoad, INTRO_TOTAL_MS, resetIntroFinishedThisLoad } from './BallionSplash';
 import { ChallengesScreen } from './ChallengesScreen';
+import { LeaderboardScreen } from './LeaderboardScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
 import { MyRunsScreen } from './MyRunsScreen';
 import { TradeUpHome } from './TradeUpHome';
@@ -31,6 +33,24 @@ type Screen = 'hub' | 'engine' | 'h2h';
 /** Survives Strict Mode remounts — intro plays once per page load. */
 let splashDoneThisLoad = false;
 
+/** Parent failsafe must survive Strict Mode effect cleanup (same as BallionSplash). */
+let parentSplashFailsafeId: number | null = null;
+
+function markSplashDone() {
+  splashDoneThisLoad = true;
+}
+
+function clearParentSplashFailsafe() {
+  if (parentSplashFailsafeId != null) {
+    window.clearTimeout(parentSplashFailsafeId);
+    parentSplashFailsafeId = null;
+  }
+}
+
+function shouldPlaySplash(): boolean {
+  return !splashDoneThisLoad && !hasIntroFinishedThisLoad();
+}
+
 /** App shell — Classic + Head-to-Head with hub tabs. */
 export function TradeUpApp() {
   const reduceMotion = useGameReducedMotion();
@@ -38,9 +58,12 @@ export function TradeUpApp() {
   const [hubTab, setHubTab] = useState<HubTab>('home');
   const [engineKey, setEngineKey] = useState(0);
   const [h2hKey, setH2hKey] = useState(0);
-  const [showSplash, setShowSplash] = useState(() => !splashDoneThisLoad);
-  /** Avoid SSR navy z-200 veil — splash mounts only after client hydrate. */
-  const [splashMounted, setSplashMounted] = useState(false);
+  /**
+   * Start false so SSR never paints the z-200 veil. Enable in useLayoutEffect
+   * on the client — never gate on a second `splashMounted` flag (that desync
+   * left showSplash true with no intro and dead pointer-events).
+   */
+  const [showSplash, setShowSplash] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
@@ -50,7 +73,8 @@ export function TradeUpApp() {
     setPendingH2HJoinCode(code);
     setH2hKey((k) => k + 1);
     setScreen('h2h');
-    splashDoneThisLoad = true;
+    markSplashDone();
+    clearParentSplashFailsafe();
     setShowSplash(false);
   });
 
@@ -58,12 +82,14 @@ export function TradeUpApp() {
     const invalid = readInvalidInviteReason();
     if (invalid) {
       setInvalidInvite(invalid);
-      splashDoneThisLoad = true;
+      markSplashDone();
+      clearParentSplashFailsafe();
       setShowSplash(false);
       return;
     }
     if (readJoinCodeFromLocation()) {
-      splashDoneThisLoad = true;
+      markSplashDone();
+      clearParentSplashFailsafe();
       setShowSplash(false);
       setScreen('h2h');
     }
@@ -117,21 +143,31 @@ export function TradeUpApp() {
     setScreen('engine');
   }, []);
 
-  const handleHeadToHead = useCallback(() => {
+  const releaseStickyH2HRoom = useCallback(() => {
+    const saved = readActiveRoom();
     clearActiveRoom();
-    setH2hKey((k) => k + 1);
-    setScreen('h2h');
+    clearPendingH2HJoinCode();
+    if (saved?.roomId) {
+      void leaveRoom(saved.roomId).catch(() => undefined);
+    }
   }, []);
 
+  const handleHeadToHead = useCallback(() => {
+    releaseStickyH2HRoom();
+    setH2hKey((k) => k + 1);
+    setScreen('h2h');
+  }, [releaseStickyH2HRoom]);
+
   const handleExit = useCallback(() => {
-    clearActiveRoom();
+    releaseStickyH2HRoom();
     setRunsKey((k) => k + 1);
     setHubTab('home');
     setScreen('hub');
-  }, []);
+  }, [releaseStickyH2HRoom]);
 
   const handleSplashDone = useCallback(() => {
-    splashDoneThisLoad = true;
+    markSplashDone();
+    clearParentSplashFailsafe();
     setShowSplash(false);
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
@@ -140,19 +176,41 @@ export function TradeUpApp() {
     });
   }, []);
 
-  useEffect(() => {
-    setSplashMounted(true);
+  // Client-only splash enable — before paint, no secondary mount flag.
+  useLayoutEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('replaySplash') === '1' || params.get('splash') === '1') {
+        splashDoneThisLoad = false;
+        resetIntroFinishedThisLoad();
+      }
+    } catch {
+      // ignore
+    }
+    if (!shouldPlaySplash()) {
+      markSplashDone();
+      setShowSplash(false);
+      return;
+    }
+    setShowSplash(true);
   }, []);
 
   useEffect(() => {
-    if (!showSplash || !splashMounted) return;
-    // Parent nuclear failsafe — never leave home trapped under the intro veil.
-    const failsafe = window.setTimeout(() => {
-      splashDoneThisLoad = true;
+    if (!showSplash) return;
+    if (!shouldPlaySplash()) {
+      markSplashDone();
       setShowSplash(false);
-    }, 3500);
-    return () => window.clearTimeout(failsafe);
-  }, [showSplash, splashMounted]);
+      return;
+    }
+    // Parent nuclear failsafe — Strict Mode must not clear this timer.
+    if (parentSplashFailsafeId != null) return;
+    const ms = (reduceMotion ? 720 : INTRO_TOTAL_MS) + 1200;
+    parentSplashFailsafeId = window.setTimeout(() => {
+      parentSplashFailsafeId = null;
+      markSplashDone();
+      setShowSplash(false);
+    }, ms);
+  }, [showSplash, reduceMotion]);
 
   const handleHubChange = useCallback((tab: HubTab) => {
     setHubTab(tab);
@@ -203,11 +261,13 @@ export function TradeUpApp() {
         <ChallengesScreen />
       ) : hubTab === 'runs' && !showSplash ? (
         <MyRunsScreen key={runsKey} />
+      ) : hubTab === 'board' && !showSplash ? (
+        <LeaderboardScreen />
       ) : (
         <TradeUpHome onPlay={handlePlay} onHeadToHead={handleHeadToHead} />
       )}
 
-      {showSplash && splashMounted ? (
+      {showSplash ? (
         <BallionSplash
           onDone={handleSplashDone}
           reduceMotion={reduceMotion}

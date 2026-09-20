@@ -5,7 +5,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { hapticLight } from '@/lib/tradeup/haptics';
 
-export type HubTab = 'home' | 'runs' | 'challenges';
+export type HubTab = 'home' | 'runs' | 'board' | 'challenges';
 
 interface MobileBottomNavProps {
   active: HubTab;
@@ -34,7 +34,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
     <nav className="oneb-tabbar" aria-label={t('nav.main')}>
       <button
         type="button"
-        className={`oneb-tabbar__item ui-tap${active === 'runs' ? ' is-active' : ''}`}
+        className={`oneb-tabbar__item oneb-tabbar__item--runs ui-tap${active === 'runs' ? ' is-active' : ''}`}
         aria-current={active === 'runs' ? 'page' : undefined}
         onPointerDown={go('runs')}
       >
@@ -54,6 +54,22 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
 
       <button
         type="button"
+        className={`oneb-tabbar__item oneb-tabbar__item--board ui-tap${active === 'board' ? ' is-active' : ''}`}
+        aria-current={active === 'board' ? 'page' : undefined}
+        onPointerDown={go('board')}
+      >
+        <span className="oneb-tabbar__icon" aria-hidden>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <rect x="4" y="13.5" width="4" height="6.5" rx="1" />
+            <rect x="10" y="9.5" width="4" height="10.5" rx="1" />
+            <rect x="16" y="5" width="4" height="15" rx="1" />
+          </svg>
+        </span>
+        <span className="oneb-tabbar__label">{t('nav.leaderboard')}</span>
+      </button>
+
+      <button
+        type="button"
         className={`oneb-tabbar__item ui-tap${active === 'home' ? ' is-active is-play' : ''}`}
         aria-current={active === 'home' ? 'page' : undefined}
         aria-label={t('nav.play')}
@@ -69,7 +85,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
 
       <button
         type="button"
-        className={`oneb-tabbar__item ui-tap${active === 'challenges' ? ' is-active' : ''}`}
+        className={`oneb-tabbar__item oneb-tabbar__item--challenges ui-tap${active === 'challenges' ? ' is-active' : ''}`}
         aria-current={active === 'challenges' ? 'page' : undefined}
         onPointerDown={go('challenges')}
       >

@@ -612,9 +612,9 @@ function startElementWheelSpin(targetMs: number, token: number): void {
 /**
  * Play the bundled wheel-spin sample once, rate-fitted so it ends with the reel
  * (default 2940 ms). Stops any prior spin before starting — no overlap.
- * Phone browsers play a decoded buffer when the context is already running so
- * volume works and rerolls that start after the tap still sound. Otherwise the
- * element plays in the same gesture, without reloading the file.
+ * Prefer the decoded buffer + GainNode so volume is identical on every spin
+ * (including phone rerolls that start after the tap). HTML is only a same-gesture
+ * fallback until the buffer is warm.
  */
 export function startWheelSpinSound(
   expectedDurationMs: number = WHEEL_SPIN_DURATION_MS,
@@ -623,32 +623,68 @@ export function startWheelSpinSound(
   const { sfxMuted } = getAudioSettings();
   if (sfxMuted) return;
 
-  // Reroll arms this in the tap, then the reel effect calls it again. Don't
-  // stop the sample that just started — the second call is outside the gesture.
-  if (performance.now() - wheelSpinArmedAt < 700 && wheelSpinIsLive()) return;
+  // Reroll arms this in the tap, then the reel effect / remount calls it again.
+  // Always bail in that window — even if play() is still starting (paused) —
+  // so we never stopWheelSpinSound() and kill the gesture start.
+  if (performance.now() - wheelSpinArmedAt < 700) return;
 
   unlockGameAudio();
-  void ensureWheelSpinBuffer();
-  stopWheelSpinSound();
-
-  const token = wheelSpinToken;
-  const targetMs = Math.max(80, expectedDurationMs);
   const audio = getCtx();
-  const gesture = isUserGesture();
-
-  if (wheelSpinBuffer && audio?.state === 'running') {
-    if (startWheelSpinBufferNow(wheelSpinBuffer, targetMs, token)) {
-      wheelSpinArmedAt = performance.now();
-      return;
+  if (audio?.state === 'suspended') {
+    try {
+      void audio.resume();
+    } catch {
+      /* ignore */
     }
   }
 
-  // HTML play outside a tap is blocked on iPhone and can abort a sample that
-  // already started. Desktop still plays the element from the click.
-  if (isPhoneBrowser() && !gesture) return;
+  stopWheelSpinSound();
 
-  startElementWheelSpin(targetMs, token);
+  // Claim this spin immediately so a follow-up beginSpin in the same gesture
+  // (or right after remount) cannot abort a pending HTMLAudioElement.play().
   wheelSpinArmedAt = performance.now();
+
+  const token = wheelSpinToken;
+  const targetMs = Math.max(80, expectedDurationMs);
+  const gesture = isUserGesture();
+
+  const tryStartBuffer = (): boolean => {
+    const ctxNow = getCtx();
+    if (!wheelSpinBuffer || ctxNow?.state !== 'running') return false;
+    return startWheelSpinBufferNow(wheelSpinBuffer, targetMs, token);
+  };
+
+  if (tryStartBuffer()) {
+    return;
+  }
+
+  // Same-gesture HTML fallback (phones block element.play after the tap ends).
+  if (gesture || !isPhoneBrowser()) {
+    startElementWheelSpin(targetMs, token);
+  }
+
+  // When the buffer finishes decoding / context resumes, prefer GainNode playback
+  // for consistent volume — but only if this spin is still current and silent.
+  void ensureWheelSpinBuffer().then(async (buf) => {
+    if (!buf || token !== wheelSpinToken) return;
+    const ctxNow = getCtx();
+    if (!ctxNow) return;
+    if (ctxNow.state === 'suspended') {
+      try {
+        await ctxNow.resume();
+      } catch {
+        return;
+      }
+    }
+    if (token !== wheelSpinToken || ctxNow.state !== 'running') return;
+    // Already on the buffer path.
+    if (wheelSpinSource) return;
+    // HTML already carrying this spin — leave it (restart would click).
+    if (wheelSpinIsLive()) return;
+    if (startWheelSpinBufferNow(buf, targetMs, token)) {
+      stopSound('wheel_spin');
+    }
+  });
 }
 
 /** Stop team/era spin audio (leave screen / new spin / unmount). */

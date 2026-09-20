@@ -1,16 +1,29 @@
 'use client';
 
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import { useAccountAuth } from '@/hooks/useAccountAuth';
+import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
+import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
+import {
+  hasSeenAccountPrompt,
+  markAccountPromptSeen,
+  resetAccountPromptSeen,
+} from '@/lib/account/accountPromptStorage';
 import {
   BILLION_GOAL,
   formatDollarsExact,
 } from '@/lib/tradeup/billionDollar';
 import { hapticLight } from '@/lib/tradeup/haptics';
-import { getBestRosterValue } from '@/lib/tradeup/storage';
-import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
+import { getBestRosterValue, CLASSIC_PROGRESS_EVENT } from '@/lib/tradeup/storage';
+import {
+  AccountAuthSheet,
+  type AccountSheetView,
+} from './AccountAuthSheet';
+import { AccountProgressPrompt } from './AccountProgressPrompt';
 import { ArenaAtmosphere } from './ArenaAtmosphere';
+import { HomeAccountEntry } from './HomeAccountEntry';
 import { LanguageToggle } from './LanguageToggle';
 import { MoneyRain } from './MoneyRain';
 import { BallionLogo } from './TradeUpLogo';
@@ -25,8 +38,13 @@ interface TradeUpHomeProps {
 export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
   const { resume } = useSound();
   const { t } = useLocale();
+  const { state: accountState, setState: setAccountState } = useAccountAuth();
+  useAchievementCloudSync(accountState);
   // localStorage only on client — avoid SSR/client text hydration mismatch
   const [bestRun, setBestRun] = useState(0);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
   const navLockRef = useRef(false);
 
   useEffect(() => {
@@ -34,11 +52,49 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
     refreshBest();
     window.addEventListener(USER_DATA_CLEARED_EVENT, refreshBest);
     window.addEventListener('storage', refreshBest);
+    window.addEventListener(CLASSIC_PROGRESS_EVENT, refreshBest);
     return () => {
       window.removeEventListener(USER_DATA_CLEARED_EVENT, refreshBest);
       window.removeEventListener('storage', refreshBest);
+      window.removeEventListener(CLASSIC_PROGRESS_EVENT, refreshBest);
     };
   }, []);
+
+  // Dev-only: ?resetAccountPrompt=1 clears the first-run flag (no Auth/profile delete).
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('resetAccountPrompt') === '1') {
+        resetAccountPromptSeen();
+        params.delete('resetAccountPrompt');
+        const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, '', next);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Show first-run prompt after home is up and auth has resolved — never for permanent accounts.
+  useEffect(() => {
+    if (accountState.status === 'loading') return;
+    if (accountState.status === 'permanent') {
+      setPromptOpen(false);
+      return;
+    }
+    if (accountState.status === 'needs_username') {
+      setPromptOpen(false);
+      setSheetView('claim');
+      setSheetOpen(true);
+      return;
+    }
+    if (hasSeenAccountPrompt()) {
+      setPromptOpen(false);
+      return;
+    }
+    setPromptOpen(true);
+  }, [accountState.status]);
+
   const bestIsBillion = bestRun >= BILLION_GOAL;
 
   const go = (fn: () => void) => (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -46,12 +102,26 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (navLockRef.current) return;
     navLockRef.current = true;
-    resume();
-    hapticLight();
-    fn();
-    window.setTimeout(() => {
-      navLockRef.current = false;
-    }, 800);
+    try {
+      resume();
+      hapticLight();
+      fn();
+    } finally {
+      window.setTimeout(() => {
+        navLockRef.current = false;
+      }, 800);
+    }
+  };
+
+  const openSheet = (view: AccountSheetView) => {
+    setPromptOpen(false);
+    setSheetView(view);
+    setSheetOpen(true);
+  };
+
+  const continueAsGuest = () => {
+    markAccountPromptSeen();
+    setPromptOpen(false);
   };
 
   return (
@@ -69,6 +139,10 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
             </p>
           </div>
           <div className="run-home__toolbar">
+            <HomeAccountEntry
+              state={accountState}
+              onOpen={() => openSheet(accountState.status === 'permanent' ? 'menu' : 'menu')}
+            />
             <LanguageToggle />
             <SoundSettings variant="gear" />
           </div>
@@ -89,36 +163,34 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
               role="group"
               aria-label={t('home.modesLabel')}
             >
-              <button
-                type="button"
-                className="home-tile home-tile--classic home-tile--action"
-                aria-label={t('home.classicTitle')}
-                onPointerDown={go(onPlay)}
-                onClick={go(onPlay)}
-              >
-                <span className="home-tile__frame" aria-hidden>
-                  <span className="home-tile__edge" />
-                  <span className="home-tile__accent" />
+              <div className="home-tile home-tile--classic">
+                <div className="home-tile__frame">
+                  <span className="home-tile__edge" aria-hidden />
+                  <span className="home-tile__accent" aria-hidden />
                   <strong className="home-tile__title">{t('home.classicTitle')}</strong>
                   <span className="home-tile__desc">{t('home.classicDesc')}</span>
-                  <span className="home-tile__mark">$1B</span>
-                  <span className="home-tile__play">{t('home.playButton')}</span>
-                </span>
-              </button>
+                  <span className="home-tile__mark" aria-hidden>
+                    $1B
+                  </span>
+                  <button
+                    type="button"
+                    className="home-tile__play"
+                    aria-label={`${t('home.playButton')} — ${t('home.classicTitle')}`}
+                    onPointerDown={go(onPlay)}
+                    onClick={go(onPlay)}
+                  >
+                    {t('home.playButton')}
+                  </button>
+                </div>
+              </div>
 
-              <button
-                type="button"
-                className="home-tile home-tile--h2h home-tile--action"
-                aria-label={t('home.h2hTitle')}
-                onPointerDown={go(onHeadToHead)}
-                onClick={go(onHeadToHead)}
-              >
-                <span className="home-tile__frame" aria-hidden>
-                  <span className="home-tile__edge" />
-                  <span className="home-tile__accent" />
+              <div className="home-tile home-tile--h2h">
+                <div className="home-tile__frame">
+                  <span className="home-tile__edge" aria-hidden />
+                  <span className="home-tile__accent" aria-hidden />
                   <strong className="home-tile__title">{t('home.h2hTitle')}</strong>
                   <span className="home-tile__desc">{t('home.h2hDesc')}</span>
-                  <span className="home-tile__mark home-tile__mark--dual">
+                  <span className="home-tile__mark home-tile__mark--dual" aria-hidden>
                     <svg
                       className="home-tile__dual"
                       viewBox="0 0 64 64"
@@ -131,9 +203,17 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
                       <path d="M26.5 52.5c0-10.2 6.9-16.5 15.5-16.5S57.5 42.3 57.5 52.5V56H26.5v-3.5Z" />
                     </svg>
                   </span>
-                  <span className="home-tile__play">{t('home.playButton')}</span>
-                </span>
-              </button>
+                  <button
+                    type="button"
+                    className="home-tile__play"
+                    aria-label={`${t('home.playButton')} — ${t('home.h2hTitle')}`}
+                    onPointerDown={go(onHeadToHead)}
+                    onClick={go(onHeadToHead)}
+                  >
+                    {t('home.playButton')}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div
@@ -148,6 +228,21 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
           </div>
         </div>
       </div>
+
+      <AccountProgressPrompt
+        open={promptOpen && !sheetOpen}
+        onCreateAccount={() => openSheet('signup')}
+        onLogIn={() => openSheet('login')}
+        onContinueAsGuest={continueAsGuest}
+      />
+
+      <AccountAuthSheet
+        open={sheetOpen}
+        initialView={sheetView}
+        state={accountState}
+        onStateChange={setAccountState}
+        onClose={() => setSheetOpen(false)}
+      />
     </div>
   );
 }

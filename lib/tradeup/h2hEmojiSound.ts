@@ -141,9 +141,28 @@ export function prepareH2HEmojiAudio(): void {
   if (audio.state === 'suspended') void audio.resume();
 }
 
+function runWhenAudioReady(fn: (audio: AudioContext) => void): void {
+  prepareH2HEmojiAudio();
+  const audio = getCtx();
+  if (!audio) return;
+  if (audio.state === 'running') {
+    fn(audio);
+    return;
+  }
+  void audio
+    .resume()
+    .then(() => {
+      const ready = getCtx();
+      if (ready?.state === 'running') fn(ready);
+    })
+    .catch(() => {
+      /* blocked */
+    });
+}
+
 function scheduleTrophyChime(startAt: number, scale: number, noteGain = TROPHY_EMOJI_GAIN): void {
   const audio = getCtx();
-  if (!audio || !master || scale <= 0) return;
+  if (!audio || !master || scale <= 0 || audio.state !== 'running') return;
 
   TROPHY_FREQS.forEach((freq, i) => {
     const t0 = startAt + i * TROPHY_NOTE_GAP;
@@ -237,20 +256,20 @@ function playSample(src: string, volumeScale: number, maxSec?: number): void {
 
 /** Trophy chime when a player locks into a roster slot (synthesized, not MP3). */
 export function playPlayerSlotSound(): void {
-  prepareH2HEmojiAudio();
-  const audio = getCtx();
   const scale = sfxScale();
-  if (!audio || scale <= 0) return;
-  scheduleTrophyChime(audio.currentTime, scale, SLOT_PLACE_GAIN);
+  if (scale <= 0) return;
+  runWhenAudioReady((audio) => {
+    scheduleTrophyChime(audio.currentTime, scale, SLOT_PLACE_GAIN);
+  });
 }
 
 /** Schedule trophy chime on the audio clock (call from the tap handler before slam animation). */
 export function schedulePlayerSlotSound(delayMs = 400): void {
-  prepareH2HEmojiAudio();
-  const audio = getCtx();
   const scale = sfxScale();
-  if (!audio || scale <= 0) return;
-  scheduleTrophyChime(audio.currentTime + delayMs / 1000, scale, SLOT_PLACE_GAIN);
+  if (scale <= 0) return;
+  runWhenAudioReady((audio) => {
+    scheduleTrophyChime(audio.currentTime + delayMs / 1000, scale, SLOT_PLACE_GAIN);
+  });
 }
 
 export function playEmojiTapSound(emoji: string): void {

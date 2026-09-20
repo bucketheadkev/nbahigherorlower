@@ -27,11 +27,33 @@ export interface ClassicRunSnapshot {
   fourPlayerTotalBeforeFifth: number | null;
 }
 
-interface ChallengePersistence {
+/** Local + cloud achievement blob (mirrors oneb_challenges_v1 / user_achievement_progress). */
+export interface ChallengePersistence {
   completedIds: string[];
   billionStreak: number;
   h2hWins: number;
   countedH2HRooms: string[];
+}
+
+/** When true (permanent cloud sync), money/run-count completions rely on completedIds — not foreign PB/runs. */
+let preferCompletedIdsForDerived = false;
+
+/** Optional listener after every local write (cloud push). */
+let persistenceListener: ((state: ChallengePersistence) => void) | null = null;
+let suppressPersistenceListener = 0;
+
+export function setChallengeCloudSyncActive(active: boolean): void {
+  preferCompletedIdsForDerived = active;
+}
+
+export function setChallengePersistenceListener(
+  listener: ((state: ChallengePersistence) => void) | null,
+): void {
+  persistenceListener = listener;
+}
+
+export function emptyChallengePersistence(): ChallengePersistence {
+  return emptyPersistence();
 }
 
 export type ChallengeKind = 'money' | 'count';
@@ -46,6 +68,23 @@ export interface ChallengeProgress {
 
 function emptyPersistence(): ChallengePersistence {
   return { completedIds: [], billionStreak: 0, h2hWins: 0, countedH2HRooms: [] };
+}
+
+function sanitizePersistence(state: ChallengePersistence): ChallengePersistence {
+  return {
+    completedIds: [
+      ...new Set(
+        state.completedIds.filter(
+          (id) => typeof id === 'string' && id.length > 0 && !REMOVED_CHALLENGE_IDS.has(id),
+        ),
+      ),
+    ],
+    billionStreak: Math.max(0, Math.floor(state.billionStreak)),
+    h2hWins: Math.max(0, Math.floor(state.h2hWins)),
+    countedH2HRooms: state.countedH2HRooms
+      .filter((id) => typeof id === 'string' && id.length > 0)
+      .slice(-40),
+  };
 }
 
 function readPersistence(): ChallengePersistence {
@@ -79,15 +118,87 @@ function readPersistence(): ChallengePersistence {
 
 function writePersistence(state: ChallengePersistence): void {
   if (typeof window === 'undefined') return;
+  const sanitized = sanitizePersistence(state);
   localStorage.setItem(
     CHALLENGES_STORAGE_KEY,
     JSON.stringify({
-      completedIds: [...new Set(state.completedIds)],
-      billionStreak: Math.max(0, Math.floor(state.billionStreak)),
-      h2hWins: Math.max(0, Math.floor(state.h2hWins)),
-      countedH2HRooms: state.countedH2HRooms.slice(-40),
+      completedIds: sanitized.completedIds,
+      billionStreak: sanitized.billionStreak,
+      h2hWins: sanitized.h2hWins,
+      countedH2HRooms: sanitized.countedH2HRooms,
     }),
   );
+  if (suppressPersistenceListener === 0) {
+    persistenceListener?.(sanitized);
+  }
+}
+
+/** Replace local cache (e.g. after cloud merge). Optionally skip cloud push echo. */
+export function replaceChallengePersistence(
+  state: ChallengePersistence,
+  options?: { fromCloud?: boolean },
+): void {
+  if (options?.fromCloud) suppressPersistenceListener += 1;
+  try {
+    writePersistence(state);
+  } finally {
+    if (options?.fromCloud) suppressPersistenceListener = Math.max(0, suppressPersistenceListener - 1);
+  }
+}
+
+/**
+ * Fold PB / billion-run derived completions into completedIds so cloud can preserve
+ * them before PB/run cloud sync exists. Does not clear or rewrite PB/run stores.
+ */
+export function materializeDerivedChallengeCompletions(
+  state: ChallengePersistence,
+): ChallengePersistence {
+  const next: ChallengePersistence = {
+    completedIds: [...state.completedIds],
+    billionStreak: state.billionStreak,
+    h2hWins: state.h2hWins,
+    countedH2HRooms: [...state.countedH2HRooms],
+  };
+  const pb = getBestRosterValue();
+  const moneyMilestones: Array<[string, number]> = [
+    ['halfway-home', 500_000_000],
+    ['closing-in', 750_000_000],
+    ['near-miss-950m', 950_000_000],
+    ['hit-1b', BILLION_GOAL],
+    ['hit-1-05b', 1_050_000_000],
+  ];
+  for (const [id, goal] of moneyMilestones) {
+    if (pb >= goal) markCompleted(next, id);
+  }
+  const billionRuns = getBillionRuns();
+  const runStats = statsFromBillionRuns(billionRuns);
+  if (runStats.runsAtLeast1_1b >= 5) markCompleted(next, 'five-runs-1-1b');
+  if (billionRuns.length >= 10) markCompleted(next, 'ten-billion-runs');
+  return sanitizePersistence(next);
+}
+
+/** Semantic merge: progress only moves forward. */
+export function mergeChallengePersistence(
+  a: ChallengePersistence,
+  b: ChallengePersistence,
+): ChallengePersistence {
+  const completedIds = [
+    ...new Set(
+      [...a.completedIds, ...b.completedIds].filter((id) => !REMOVED_CHALLENGE_IDS.has(id)),
+    ),
+  ];
+  const countedH2HRooms = [
+    ...new Set([...a.countedH2HRooms, ...b.countedH2HRooms].filter((id) => id.length > 0)),
+  ].slice(-40);
+  // Prefer max of counters; also never below unique counted rooms (when both sides retained rooms).
+  const h2hWins = Math.max(a.h2hWins, b.h2hWins, countedH2HRooms.length);
+  const billionStreak = Math.max(a.billionStreak, b.billionStreak);
+  return sanitizePersistence({
+    completedIds,
+    billionStreak,
+    h2hWins,
+    countedH2HRooms,
+  });
 }
 
 function playerDollarValues(players: ValuedPlayer[]): number[] {
@@ -352,6 +463,13 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
   const billionRunCount = billionRuns.length;
   const persisted = readPersistence();
   const isDone = (id: string) => persisted.completedIds.includes(id);
+  /** Permanent cloud mode: do not let leftover device PB/runs mark completions. */
+  const moneyComplete = (id: string, goal: number) =>
+    isDone(id) || (!preferCompletedIdsForDerived && pb >= goal);
+  const moneyProgress = (id: string, goal: number) => {
+    if (preferCompletedIdsForDerived && isDone(id)) return goal;
+    return Math.min(pb, goal);
+  };
 
   const flag = (id: string): ChallengeProgress => ({
     id,
@@ -370,31 +488,31 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
   return [
     {
       id: 'halfway-home',
-      progress: Math.min(pb, 500_000_000),
+      progress: moneyProgress('halfway-home', 500_000_000),
       goal: 500_000_000,
       kind: 'money',
-      complete: pb >= 500_000_000 || isDone('halfway-home'),
+      complete: moneyComplete('halfway-home', 500_000_000),
     },
     {
       id: 'closing-in',
-      progress: Math.min(pb, 750_000_000),
+      progress: moneyProgress('closing-in', 750_000_000),
       goal: 750_000_000,
       kind: 'money',
-      complete: pb >= 750_000_000 || isDone('closing-in'),
+      complete: moneyComplete('closing-in', 750_000_000),
     },
     {
       id: 'near-miss-950m',
-      progress: Math.min(pb, 950_000_000),
+      progress: moneyProgress('near-miss-950m', 950_000_000),
       goal: 950_000_000,
       kind: 'money',
-      complete: pb >= 950_000_000 || isDone('near-miss-950m'),
+      complete: moneyComplete('near-miss-950m', 950_000_000),
     },
     {
       id: 'hit-1b',
-      progress: Math.min(pb, BILLION_GOAL),
+      progress: moneyProgress('hit-1b', BILLION_GOAL),
       goal: BILLION_GOAL,
       kind: 'money',
-      complete: pb >= BILLION_GOAL || isDone('hit-1b'),
+      complete: moneyComplete('hit-1b', BILLION_GOAL),
     },
     flag('no-second-chances'),
     flag('all-in'),
@@ -403,17 +521,17 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
     flag('just-enough'),
     {
       id: 'hit-1-05b',
-      progress: Math.min(pb, 1_050_000_000),
+      progress: moneyProgress('hit-1-05b', 1_050_000_000),
       goal: 1_050_000_000,
       kind: 'money',
-      complete: pb >= 1_050_000_000 || isDone('hit-1-05b'),
+      complete: moneyComplete('hit-1-05b', 1_050_000_000),
     },
     flag('billion-and-beyond'),
     flag('elite-company'),
     flag('no-headliners'),
     flag('five-star-portfolio'),
     flag('generational-wealth'),
-    flag('league-tour'),
+    flag('league-average'),
     flag('double-trouble'),
     flag('triple-threat'),
     flag('top-of-the-market'),
@@ -434,17 +552,27 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
     },
     {
       id: 'five-runs-1-1b',
-      progress: Math.min(runStats.runsAtLeast1_1b, 5),
+      progress:
+        preferCompletedIdsForDerived && isDone('five-runs-1-1b')
+          ? 5
+          : Math.min(runStats.runsAtLeast1_1b, 5),
       goal: 5,
       kind: 'count',
-      complete: runStats.runsAtLeast1_1b >= 5,
+      complete:
+        isDone('five-runs-1-1b') ||
+        (!preferCompletedIdsForDerived && runStats.runsAtLeast1_1b >= 5),
     },
     {
       id: 'ten-billion-runs',
-      progress: Math.min(billionRunCount, 10),
+      progress:
+        preferCompletedIdsForDerived && isDone('ten-billion-runs')
+          ? 10
+          : Math.min(billionRunCount, 10),
       goal: 10,
       kind: 'count',
-      complete: billionRunCount >= 10,
+      complete:
+        isDone('ten-billion-runs') ||
+        (!preferCompletedIdsForDerived && billionRunCount >= 10),
     },
   ];
 }

@@ -35,11 +35,12 @@ import {
 import {
   getWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
+import { submitVerifiedClassicLineup } from '@/lib/account/leaderboardCloud';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
 import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
-import { measureDraftSlam } from '@/lib/tradeup/draftSlamRects';
-import { preloadGameAudio, startWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
+import { measureDraftSlam, measureDraftPlayerOrigin, measureDraftSlotTarget } from '@/lib/tradeup/draftSlamRects';
+import { preloadGameAudio, startWheelSpinSound, stopWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { useSound } from '@/hooks/useSound';
 import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -184,6 +185,16 @@ export function BillionTradeEngine({
   const [slamPayload, setSlamPayload] = useState<DraftSlamPayload | null>(null);
   const [slamSlot, setSlamSlot] = useState<Position | null>(null);
   const [justFilledSlot, setJustFilledSlot] = useState<Position | null>(null);
+  /** Hub court tilts toward this seat on placement impact. */
+  const [courtImpactSlot, setCourtImpactSlot] = useState<Position | null>(null);
+  /** Team primary at impact — drives court color surge (not hardcoded). */
+  const [courtImpactColor, setCourtImpactColor] = useState<string | null>(null);
+  /** Hide seat chip while the premium fly disc is airborne. */
+  const [concealSlot, setConcealSlot] = useState<Position | null>(null);
+  /** Classic hub: run ANALYZING FIVE on the court before the value screen. */
+  const [courtAnalyze, setCourtAnalyze] = useState(false);
+  /** True after the hub-court siphon — ClassicRosterReveal starts at FINALIZING VALUE. */
+  const [revealSkipAnalyze, setRevealSkipAnalyze] = useState(false);
   const [challengeAlertIds, setChallengeAlertIds] = useState<
     { id: string; completed: number; total: number }[]
   >([]);
@@ -285,6 +296,7 @@ export function BillionTradeEngine({
     return () => {
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
       if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+      stopWheelSpinSound();
     };
   }, [resume]);
   const filled = useMemo(() => rosterList(slots), [slots]);
@@ -444,7 +456,11 @@ export function BillionTradeEngine({
   }, [unlockInteractions]);
 
   const finishPickPlacement = useCallback(
-    async (targetSlot: Position, player: ValuedPlayer & { era?: DecadeEra }) => {
+    async (
+      targetSlot: Position,
+      player: ValuedPlayer & { era?: DecadeEra },
+      opts?: { skipReset?: boolean },
+    ) => {
       lockInteractions();
       const priorCount = rosterList(slots).length;
       if (priorCount === 4) {
@@ -462,7 +478,7 @@ export function BillionTradeEngine({
       setJustFilledSlot(targetSlot);
       window.setTimeout(() => {
         setJustFilledSlot((current) => (current === targetSlot ? null : current));
-      }, useClassicDraftChrome ? 1000 : 360);
+      }, 600);
 
       if (isOnline && onPickLock) {
         pendingLockSlotsRef.current.add(targetSlot);
@@ -497,15 +513,23 @@ export function BillionTradeEngine({
             ? 'Lineup complete — value showdown…'
             : 'Lineup complete — valuing your five…',
         );
-        // Classic / online 1v1: keep pick UI briefly so the 5th lock can settle, then auto-reveal.
+        // Classic: return to hub court (same as after every pick), siphon there, then value.
         if (useClassicDraftChrome && !deferOnlineReveal) {
           if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
-          resetTimerRef.current = window.setTimeout(() => {
-            setSpunTeam(null);
-            setSpunEra(null);
-            setOffers([]);
-            setPhase('reveal');
-          }, reduceMotion ? 80 : 480);
+          setSpunTeam(null);
+          setSpunEra(null);
+          setOffers([]);
+          setSelectedOfferId(null);
+          setMovingFrom(null);
+          if (EXPERIMENTAL_DRAFT_HUB_CARDS) {
+            resetTimerRef.current = window.setTimeout(() => {
+              setCourtAnalyze(true);
+            }, reduceMotion ? 40 : 150);
+          } else {
+            resetTimerRef.current = window.setTimeout(() => {
+              setPhase('reveal');
+            }, reduceMotion ? 80 : 480);
+          }
           return;
         }
         setSpunTeam(null);
@@ -516,8 +540,8 @@ export function BillionTradeEngine({
       }
 
       setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
+      if (opts?.skipReset) return;
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
-      // Classic / online: return to hub immediately so the seat-in plays on the roster row.
       const resetMs = useClassicDraftChrome
         ? reduceMotion
           ? 0
@@ -557,6 +581,15 @@ export function BillionTradeEngine({
       setWorldRank(rank);
       saveBestWorldRank(rank);
 
+      if (!isH2H && !isOnline) {
+        // Server verifies lineup + computes value. Never blocks Classic UX.
+        void submitVerifiedClassicLineup(lineup).then((result) => {
+          if (!result.ok && !('skipped' in result && result.skipped)) {
+            console.error('[classic] leaderboard submit did not land', result);
+          }
+        });
+      }
+
       if (value >= BILLION_GOAL) {
         if (!isH2H && !isOnline) {
           saveBillionRun(lineup, value);
@@ -572,6 +605,12 @@ export function BillionTradeEngine({
     },
     [isH2H, isOnline, onWin],
   );
+
+  const handleCourtAnalyzeComplete = useCallback(() => {
+    setCourtAnalyze(false);
+    setRevealSkipAnalyze(true);
+    setPhase('reveal');
+  }, []);
 
   const handleTotalSettled = useCallback(
     (payload: { teamValue: number }) => {
@@ -799,10 +838,53 @@ export function BillionTradeEngine({
       // Lock immediately so fast re-taps cannot select/reroll mid-place.
       lockInteractions();
 
-      // Classic + online 1v1: skip circle slam / grow — seat gently on the hub roster row.
+      // Classic hub court: fly to the seat, then weight-impact the floor (~600ms).
+      if (useClassicDraftChrome && EXPERIMENTAL_DRAFT_HUB_CARDS && !reduceMotion) {
+        const from = measureDraftPlayerOrigin(selectedOffer.id);
+        pendingAssignRef.current = { slot, valued };
+        setConcealSlot(slot);
+        setSlamSlot(slot);
+        setSpunTeam(null);
+        setSpunEra(null);
+        setOffers([]);
+        setSelectedOfferId(null);
+        setMovingFrom(null);
+        setTicketPrinting(false);
+        setStatus(`Seating ${valued.name} at ${POSITION_LABELS[slot]}…`);
+        schedulePlayerSlotSound(280);
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            if (!pendingAssignRef.current) return;
+            const to = measureDraftSlotTarget(slot);
+            if (from && to) {
+              setSlamPayload({
+                id: `${valued.id}-${slot}-${Date.now()}`,
+                from,
+                to,
+                initials: playerInitials(valued.name),
+                primary: colors.primary,
+                ink,
+                premium: true,
+              });
+              return;
+            }
+            const pending = pendingAssignRef.current;
+            pendingAssignRef.current = null;
+            setConcealSlot(null);
+            setCourtImpactSlot(slot);
+            setCourtImpactColor(colors.primary);
+            window.setTimeout(() => {
+              setCourtImpactSlot((current) => (current === slot ? null : current));
+              setCourtImpactColor(null);
+            }, 700);
+            void finishPickPlacement(pending.slot, pending.valued);
+          });
+        });
+        return;
+      }
+
       if (useClassicDraftChrome) {
         hapticSlam();
-        schedulePlayerSlotSound(0);
         void finishPickPlacement(slot, valued);
         return;
       }
@@ -858,13 +940,31 @@ export function BillionTradeEngine({
     const pending = pendingAssignRef.current;
     if (!pending) return;
     pendingAssignRef.current = null;
-    void finishPickPlacement(pending.slot, pending.valued);
-  }, [finishPickPlacement]);
+    setConcealSlot(null);
+    const teamPrimary =
+      slamPayload?.primary ?? getTeamColors(pending.valued.teamId).primary;
+    setCourtImpactSlot(pending.slot);
+    setCourtImpactColor(teamPrimary);
+    window.setTimeout(() => {
+      setCourtImpactSlot((current) =>
+        current === pending.slot ? null : current,
+      );
+      setCourtImpactColor(null);
+    }, 700);
+    void finishPickPlacement(pending.slot, pending.valued, {
+      skipReset: Boolean(slamPayload?.premium),
+    });
+  }, [finishPickPlacement, slamPayload?.premium, slamPayload?.primary]);
 
   const handleSlamComplete = useCallback(() => {
+    const wasPremium = Boolean(slamPayload?.premium);
     setSlamPayload(null);
     setSlamSlot(null);
-  }, []);
+    setConcealSlot(null);
+    if (wasPremium && !evalStartedRef.current) {
+      resetTableForNextPick();
+    }
+  }, [resetTableForNextPick, slamPayload?.premium]);
 
   const showDraft = phase === 'draft';
   const showReveal = phase === 'reveal';
@@ -876,6 +976,8 @@ export function BillionTradeEngine({
       className={`tradeup-shell tradeup-shell--game billion-shell billion-shell--draft820 billion-shell--neo${
         showDraft ? ' billion-shell--picking' : ''
       }${showReveal ? ' billion-shell--vault' : ''}${
+        courtAnalyze ? ' is-court-collapsing' : ''
+      }${
         isH2H || isOnline ? ' billion-shell--h2h' : ''
       }`}
     >
@@ -940,6 +1042,8 @@ export function BillionTradeEngine({
             return player ? [{ ...player, seatedSlot: pos }] : [];
           })}
           reduceMotion={reduceMotion}
+          skipAnalyze={revealSkipAnalyze}
+          fromCourtBeam={revealSkipAnalyze}
           onComplete={handleRevealComplete}
           onTotalSettled={handleTotalSettled}
           onPlayAgain={onPlayAgain ?? onExit}
@@ -999,6 +1103,7 @@ export function BillionTradeEngine({
                       ? t('game.h2hGoal', { name: oppLabel })
                       : null
                   }
+                  rollLocked={filledCount >= 5 || courtAnalyze}
                   onAutoRerollConsumed={() => setBoothReroll(null)}
                   onPrint={handleTicketPrint}
                   onResult={handleTicketResult}
@@ -1032,47 +1137,72 @@ export function BillionTradeEngine({
 
           {!readyToDraft && !lineupLocked ? (
             EXPERIMENTAL_DRAFT_HUB_CARDS ? (
-              <DraftHubCards slots={slots} justFilledSlot={justFilledSlot} />
+              <DraftHubCards
+                slots={slots}
+                justFilledSlot={justFilledSlot}
+                movingSlot={movingFrom}
+                impactSlot={courtImpactSlot}
+                impactColor={courtImpactColor}
+                concealSlot={concealSlot}
+                analyzing={courtAnalyze}
+                reduceMotion={reduceMotion}
+                onAnalyzeComplete={handleCourtAnalyzeComplete}
+                onSlotPress={!courtAnalyze ? handleSlotClick : undefined}
+                targetSlots={
+                  !courtAnalyze && movingFrom && movingPlayer
+                    ? Object.fromEntries(
+                        LINEUP_POSITIONS.map((slot) => {
+                          const player = slots[slot];
+                          const moveCanDrop =
+                            !player &&
+                            !evalStartedRef.current &&
+                            canMoveToSlot(movingPlayer, movingFrom, slot);
+                          return [slot, moveCanDrop];
+                        }),
+                      )
+                    : undefined
+                }
+              />
             ) : (
-            <aside className="classic-lineup-board" aria-label="Your five">
-              {LINEUP_POSITIONS.map((slot) => {
-                const player = slots[slot];
-                const colors = player
-                  ? getTeamColors(player.teamId)
-                  : null;
-                const ink = colors
-                  ? contrastOnPrimary(colors.primary)
-                  : undefined;
-                return (
-                  <div
-                    key={slot}
-                    className={`classic-lineup-row${player ? ' is-filled' : ''}${
-                      justFilledSlot === slot ? ' is-just-filled is-seating-in' : ''
-                    }`}
-                    style={
-                      player && colors
-                        ? {
-                            backgroundColor: colors.primary,
-                            color: ink,
-                            borderColor: colors.primary,
-                          }
-                        : undefined
-                    }
-                    aria-label={
-                      player
-                        ? `${POSITION_LABELS[slot]}: ${player.name}`
-                        : `Empty ${POSITION_LABELS[slot]}`
-                    }
-                  >
-                    <span className="classic-lineup-row__pos">{slot}</span>
-                    <span className="classic-lineup-row__rule" aria-hidden />
-                    <span className="classic-lineup-row__name">
-                      {player ? player.name : '—'}
-                    </span>
-                  </div>
-                );
-              })}
-            </aside>
+              <aside className="classic-lineup-board" aria-label="Your five">
+                {LINEUP_POSITIONS.map((slot) => {
+                  const player = slots[slot];
+                  const colors = player
+                    ? getTeamColors(player.teamId)
+                    : null;
+                  const ink = colors
+                    ? contrastOnPrimary(colors.primary)
+                    : undefined;
+                  return (
+                    <div
+                      key={slot}
+                      className={`classic-lineup-row${player ? ' is-filled' : ''}${
+                        justFilledSlot === slot ? ' is-just-filled is-seating-in' : ''
+                      }`}
+                      style={
+                        player && colors
+                          ? {
+                              backgroundColor: colors.primary,
+                              color: ink,
+                              borderColor: colors.primary,
+                            }
+                          : undefined
+                      }
+                      aria-label={
+                        player
+                          ? `${POSITION_LABELS[slot]}: ${player.name}`
+                          : `Empty ${POSITION_LABELS[slot]}`
+                      }
+                    >
+                      <span className="classic-lineup-row__pos">{slot}</span>
+                      <span className="classic-lineup-row__rule" aria-hidden />
+                      <span className="classic-lineup-row__name">
+                        {player ? player.name : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </aside>
             )
           ) : readyToDraft && !lineupLocked ? (
             <aside

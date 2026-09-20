@@ -18,7 +18,6 @@ import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import {
   WHEEL_SPIN_DURATION_MS,
   startWheelSpinSound,
-  stopWheelSpinSound,
 } from '@/lib/tradeup/gameAudio';
 import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
@@ -45,6 +44,8 @@ interface BallionTicketMachineProps {
   showGoal?: boolean;
   /** Optional custom goal copy (e.g. 1v1). Overrides $1B amount/tagline when set. */
   goalCopy?: string | null;
+  /** Lineup complete / analyzing — ROLL must not fire. */
+  rollLocked?: boolean;
   onAutoRerollConsumed?: () => void;
   onPrint: () => void;
   onResult: (pair: SpinPair) => void;
@@ -167,6 +168,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   holdEra = null,
   showGoal = false,
   goalCopy = null,
+  rollLocked = false,
   onAutoRerollConsumed,
   onPrint,
   onResult,
@@ -220,12 +222,15 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   useEffect(() => {
     return () => {
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
-      stopWheelSpinSound();
+      // Do NOT stopWheelSpinSound here. Reroll arms the sample in the parent
+      // tap, then this machine mounts (and Strict Mode remounts). Unmount stop
+      // was silencing almost every reroll. The sample self-ends on its timer;
+      // a new spin / leave path stops via startWheelSpinSound / stopTicketSpinHum.
     };
   }, []);
 
   const beginSpin = useCallback(
-    (pair: SpinPair, axes: { team: boolean; era: boolean }) => {
+    (pair: SpinPair, axes: { team: boolean; era: boolean }, opts?: { playSound?: boolean }) => {
       reportedRef.current = false;
       busyRef.current = true;
       pendingRef.current = pair;
@@ -233,8 +238,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       setMode('spinning');
       setTeamLanded(false);
 
-      if (!reduceMotion && (axes.team || axes.era)) {
-        // One sample for both axes / one-sided rerolls — always 2940 ms.
+      // Rerolls already arm the sample in the tap handler — don't restart it.
+      if (!reduceMotion && (axes.team || axes.era) && opts?.playSound !== false) {
         startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
       }
 
@@ -271,14 +276,14 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   );
 
   const handleRoll = useCallback(() => {
-    if (busyRef.current || mode === 'spinning') return;
+    if (rollLocked || busyRef.current || mode === 'spinning') return;
     // Instant feedback before any heavier work.
     hapticLight();
     busyRef.current = true;
     const pair = pickFairResult(allPairs);
     onPrint();
     beginSpin(pair, { team: true, era: true });
-  }, [allPairs, beginSpin, mode, onPrint]);
+  }, [allPairs, beginSpin, mode, onPrint, rollLocked]);
 
   // One-sided auto-reroll from pick screen.
   useEffect(() => {
@@ -292,10 +297,11 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     const next = pickRerollPair(allPairs, baseline, autoReroll);
     onAutoRerollConsumed?.();
     hapticLight();
+    // Sound already started in the reroll tap (iOS gesture).
     if (autoReroll === 'team') {
-      beginSpin(next, { team: true, era: false });
+      beginSpin(next, { team: true, era: false }, { playSound: false });
     } else {
-      beginSpin(next, { team: false, era: true });
+      beginSpin(next, { team: false, era: true }, { playSound: false });
     }
   }, [allPairs, autoReroll, beginSpin, onAutoRerollConsumed, rerollFrom]);
 
@@ -418,7 +424,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           </div>
         </div>
 
-        {mode === 'idle' && !autoReroll ? (
+        {mode === 'idle' && !autoReroll && !rollLocked ? (
           <button
             type="button"
             className="ter__roll"

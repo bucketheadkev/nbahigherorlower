@@ -3,6 +3,7 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
+import { clearPendingH2HJoinCode } from '@/lib/multiplayer/h2hInvite';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { useH2HMatch } from '@/hooks/useH2HMatch';
 import { IDLE_SHOWDOWN } from '@/lib/multiplayer/showdownCursor';
@@ -31,6 +32,7 @@ import {
   sumDisplayedRoster,
 } from '@/lib/multiplayer/modeConfig';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
+import { H2HLoadingScreen, H2HDisconnectNotice } from './H2HLobbyChrome';
 import { H2HTradeUpMatch } from './H2HTradeUpMatch';
 import { H2HKnockoutMatch } from './H2HKnockoutMatch';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
@@ -68,6 +70,8 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   const [revealDone, setRevealDone] = useState(false);
   /** Previous match left showdown.finished set. Ignore it until this match starts one. */
   const [staleShowdown, setStaleShowdown] = useState(false);
+  const [disconnected, setDisconnected] = useState(false);
+  const hadOpponentRef = useRef(false);
 
   useEffect(() => {
     if (!state) return;
@@ -79,6 +83,30 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     }
   }, [state]);
 
+  useEffect(() => {
+    if (!lobby) return;
+    if (lobby.players.length >= 2) hadOpponentRef.current = true;
+  }, [lobby]);
+
+  // Whoever remains sees the notice when the other player leaves (host or guest).
+  useEffect(() => {
+    if (!lobby || !state || disconnected) return;
+    if (state.phase === 'finished' && revealDone) return;
+    const abandoned = lobby.room.status === 'abandoned';
+    const stillHere = lobby.players.some((p) => p.user_id === userId);
+    const opponentGone =
+      hadOpponentRef.current &&
+      stillHere &&
+      !lobby.players.some((p) => p.user_id !== userId) &&
+      (lobby.room.status === 'playing' ||
+        lobby.room.status === 'waiting' ||
+        lobby.room.status === 'abandoned');
+    if (!abandoned && !opponentGone) return;
+    clearActiveRoom();
+    clearPendingH2HJoinCode();
+    setDisconnected(true);
+  }, [disconnected, lobby, revealDone, state, userId]);
+
   const p1Name = state?.my_player_number === 1 ? myName : opponentName;
   const p2Name = state?.my_player_number === 2 ? myName : opponentName;
 
@@ -89,15 +117,27 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
       /* still exit */
     } finally {
       clearActiveRoom();
+      clearPendingH2HJoinCode();
       onLeft();
     }
   };
 
+  if (disconnected) {
+    return (
+      <H2HDisconnectNotice
+        onContinue={() => {
+          void leaveRoom(roomId).catch(() => undefined);
+          clearActiveRoom();
+          clearPendingH2HJoinCode();
+          onLeft();
+        }}
+      />
+    );
+  }
+
   if (loading || !state) {
     return (
-      <div className="h2h-lobby" aria-label="Loading match">
-        <p className="h2h-lobby__status">{error ?? 'Loading match…'}</p>
-      </div>
+      <H2HLoadingScreen status={error ?? 'Preparing match…'} />
     );
   }
 
@@ -226,23 +266,33 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         <div className="h2h-shell h2h-shell--arena">
           <GameBackground />
           <div
-            className={`h2h-lobby h2h-lobby--results h2h-final${
+            className={`h2h-lobby h2h-lobby--guide h2h-lobby--results h2h-final${
               myWins ? ' is-win' : oppWins ? ' is-loss' : ''
             }`}
             aria-label="Final results"
           >
-            <header className="h2h-final__head">
-              <div className="h2h-final__totals">
-                <div className={`h2h-final__total-pill${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
-                  <span>{myNameFinal}</span>
-                  <strong>{formatDollars(myScore)}</strong>
-                </div>
-                <div className={`h2h-final__total-pill${oppWins ? ' is-win' : myWins ? ' is-loss' : ''}`}>
-                  <span>{oppNameFinal}</span>
-                  <strong>{formatDollars(oppScore)}</strong>
-                </div>
-              </div>
+            <header className="h2h-final__verdict">
+              <p className="h2h-final__kicker">FINAL</p>
+              <h1 className={`h2h-final__title${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
+                {headline}
+              </h1>
+              <p className="h2h-final__margin">
+                {myWins || oppWins
+                  ? `by ${formatDollars(Math.abs(myScore - oppScore))}`
+                  : 'Same total'}
+              </p>
             </header>
+
+            <div className="h2h-final__totals" aria-label="Team values">
+              <div className={`h2h-final__total-pill${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
+                <span>{myNameFinal}</span>
+                <strong>{formatDollars(myScore)}</strong>
+              </div>
+              <div className={`h2h-final__total-pill${oppWins ? ' is-win' : myWins ? ' is-loss' : ''}`}>
+                <span>{oppNameFinal}</span>
+                <strong>{formatDollars(oppScore)}</strong>
+              </div>
+            </div>
 
             <div className="h2h-final__boards">
               <FinalBoard
@@ -259,51 +309,43 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
               />
             </div>
 
-            <div className="h2h-final__verdict">
-              <h1 className={`h2h-final__title${myWins ? ' is-win' : oppWins ? ' is-loss' : ''}`}>
-                {headline}
-              </h1>
-              <p className="h2h-final__margin">
-                {myWins || oppWins
-                  ? `by ${formatDollars(Math.abs(myScore - oppScore))}`
-                  : 'Same total'}
-              </p>
-            </div>
-
             {error ? (
               <p className="h2h-lobby__error" role="alert">
                 {error}
               </p>
             ) : null}
-            {isHost ? (
+
+            <div className="h2h-final__actions">
+              {isHost ? (
+                <button
+                  type="button"
+                  className="h2h-lobby__primary ui-tap"
+                  disabled={rematchBusy}
+                  onPointerDown={(e: ReactPointerEvent) => {
+                    e.preventDefault();
+                    hapticLight();
+                    void ackRematch();
+                  }}
+                >
+                  {rematchBusy ? '…' : 'Run it back'}
+                </button>
+              ) : (
+                <p className="h2h-final__waiting" role="status">
+                  Waiting for rematch…
+                </p>
+              )}
               <button
                 type="button"
-                className="run-btn run-btn--primary h2h-lobby__submit"
-                disabled={rematchBusy}
+                className="h2h-lobby__leave ui-tap"
                 onPointerDown={(e: ReactPointerEvent) => {
                   e.preventDefault();
                   hapticLight();
-                  void ackRematch();
+                  void handleLeave();
                 }}
               >
-                <strong>{rematchBusy ? '…' : 'Run it back'}</strong>
+                Leave
               </button>
-            ) : (
-              <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
-                Waiting…
-              </p>
-            )}
-            <button
-              type="button"
-              className="run-btn run-btn--secondary h2h-lobby__submit"
-              onPointerDown={(e: ReactPointerEvent) => {
-                e.preventDefault();
-                hapticLight();
-                void handleLeave();
-              }}
-            >
-              <strong>Leave</strong>
-            </button>
+            </div>
           </div>
         </div>
       </H2HFinalScreen>

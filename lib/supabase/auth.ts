@@ -1,4 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
+import { isAnonymousUser, isPermanentAuthUser } from '@/lib/account/userKind';
 import { getSupabaseBrowserClient } from './client';
 
 export type AuthReadyState =
@@ -8,7 +9,7 @@ export type AuthReadyState =
 
 let ensureInFlight: Promise<Session> | null = null;
 
-/** Clears in-flight anonymous sign-in (after account deletion). */
+/** Clears in-flight multiplayer session ensure (after account deletion / logout). */
 export function resetAuthSessionCache(): void {
   ensureInFlight = null;
 }
@@ -23,8 +24,13 @@ function authErrorMessage(error: unknown): string {
 }
 
 /**
- * Ensures an anonymous Supabase session exists.
- * Safe to call repeatedly; concurrent callers share one in-flight request.
+ * Ensures a Supabase session exists for 1v1 multiplayer RPCs.
+ *
+ * - If a permanent (email) session is already persisted, it is kept as-is.
+ * - If an anonymous session exists, it is kept as-is.
+ * - Only when there is no session does this create a new anonymous user.
+ *
+ * Never replaces a permanent account with a fresh anonymous sign-in.
  */
 export async function ensureAnonymousSession(): Promise<Session> {
   if (ensureInFlight) return ensureInFlight;
@@ -37,6 +43,13 @@ export async function ensureAnonymousSession(): Promise<Session> {
       throw new Error(authErrorMessage(existingError));
     }
     if (existing.session?.user) {
+      // Permanent or anonymous — both are valid JWT subjects for 1v1 RPCs.
+      if (
+        isPermanentAuthUser(existing.session.user) ||
+        isAnonymousUser(existing.session.user)
+      ) {
+        return existing.session;
+      }
       return existing.session;
     }
 

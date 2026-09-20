@@ -13,6 +13,7 @@
     "clean": "node scripts/clean.mjs",
     "decade-rosters": "node scripts/build-decade-rosters.mjs",
     "check:gameplay": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-shared-gameplay.ts",
+    "generate:leaderboard-values": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/generate-classic-seat-values.ts",
     "decade-gap-check": "node scripts/gap-check-decades.mjs",
     "decade-fill-gaps": "node scripts/fill-gaps-from-bbr.mjs",
     "migrate:h2h-draft": "node scripts/apply-h2h-draft-migration.mjs",

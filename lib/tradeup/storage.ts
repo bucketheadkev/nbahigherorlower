@@ -4,6 +4,29 @@ const MUTE_KEY = 'tradeup_muted';
 const BEST_CHAIN_KEY = 'tradeup_best_chain';
 const BEST_RECORD_KEY = 'tradeup_best_season_record_v1';
 const BEST_ROSTER_VALUE_KEY = 'tradeup_best_roster_value_v1';
+export const BEST_ROSTER_VALUE_STORAGE_KEY = BEST_ROSTER_VALUE_KEY;
+
+/** Fired when Classic PB / My Runs local cache changes (home UI refresh). */
+export const CLASSIC_PROGRESS_EVENT = 'oneb:classic-progress';
+
+let classicProgressListener: (() => void) | null = null;
+let suppressClassicProgressListener = 0;
+
+export function setClassicProgressListener(listener: (() => void) | null): void {
+  classicProgressListener = listener;
+}
+
+function notifyClassicProgressWritten(): void {
+  if (suppressClassicProgressListener > 0) return;
+  classicProgressListener?.();
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new Event(CLASSIC_PROGRESS_EVENT));
+    } catch {
+      /* ignore */
+    }
+  }
+}
 const CREDITS_KEY = 'tradeup_credits';
 const STARTING_TIER_KEY = 'tradeup_starting_tier';
 const STARTING_TIERS_OWNED_KEY = 'tradeup_starting_tiers_owned';
@@ -88,12 +111,39 @@ export function saveBestRosterValue(value: number): {
   const current = getBestRosterValue();
   if (rounded > current) {
     localStorage.setItem(BEST_ROSTER_VALUE_KEY, String(rounded));
+    notifyClassicProgressWritten();
     return { best: rounded, isNewBest: true };
   }
   return { best: current, isNewBest: false };
 }
 
+/** Replace local PB (e.g. after cloud merge / guest restore). */
+export function replaceBestRosterValue(
+  value: number,
+  options?: { fromCloud?: boolean },
+): void {
+  if (typeof window === 'undefined') return;
+  const rounded = Math.max(0, Math.round(value));
+  if (options?.fromCloud) suppressClassicProgressListener += 1;
+  try {
+    if (rounded > 0) localStorage.setItem(BEST_ROSTER_VALUE_KEY, String(rounded));
+    else localStorage.removeItem(BEST_ROSTER_VALUE_KEY);
+    if (suppressClassicProgressListener === 0) {
+      try {
+        window.dispatchEvent(new Event(CLASSIC_PROGRESS_EVENT));
+      } catch {
+        /* ignore */
+      }
+    }
+  } finally {
+    if (options?.fromCloud) {
+      suppressClassicProgressListener = Math.max(0, suppressClassicProgressListener - 1);
+    }
+  }
+}
+
 const BEST_WORLD_RANK_KEY = 'tradeup_best_world_rank_v1';
+export const BEST_WORLD_RANK_STORAGE_KEY = BEST_WORLD_RANK_KEY;
 const BEST_FOUR_PLAYER_SUM_KEY = 'tradeup_best_four_player_sum_v1';
 
 /** Best (lowest) world leaderboard rank ever achieved. 0 = none yet. */
@@ -109,9 +159,36 @@ export function saveBestWorldRank(rank: number): number {
   const current = getBestWorldRank();
   if (current <= 0 || next < current) {
     localStorage.setItem(BEST_WORLD_RANK_KEY, String(next));
+    notifyClassicProgressWritten();
     return next;
   }
   return current;
+}
+
+export function replaceBestWorldRank(
+  rank: number,
+  options?: { fromCloud?: boolean },
+): void {
+  if (typeof window === 'undefined') return;
+  const next = Math.max(0, Math.round(rank));
+  if (options?.fromCloud) suppressClassicProgressListener += 1;
+  try {
+    if (next > 0) localStorage.setItem(BEST_WORLD_RANK_KEY, String(next));
+    else localStorage.removeItem(BEST_WORLD_RANK_KEY);
+  } finally {
+    if (options?.fromCloud) {
+      suppressClassicProgressListener = Math.max(0, suppressClassicProgressListener - 1);
+    }
+  }
+}
+
+/** Merge world ranks: lowest positive wins; 0 means unset. */
+export function mergeBestWorldRank(a: number, b: number): number {
+  const left = a > 0 ? a : 0;
+  const right = b > 0 ? b : 0;
+  if (left <= 0) return right;
+  if (right <= 0) return left;
+  return Math.min(left, right);
 }
 
 /** Highest sum of any four players on a finished roster. */
