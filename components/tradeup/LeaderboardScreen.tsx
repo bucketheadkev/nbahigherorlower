@@ -14,7 +14,7 @@ import {
   resolveLeaderboardLineup,
   type LeaderboardTeamPlayer,
 } from '@/lib/account/leaderboardTeamResolve';
-import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
+import { formatDollars } from '@/lib/tradeup/billionDollar';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import { ArenaAtmosphere } from './ArenaAtmosphere';
@@ -25,27 +25,13 @@ import {
 
 type LoadState = 'loading' | 'ready' | 'error' | 'empty';
 
-/** Exact roster value for leaderboard — whole millions, no soft rounding. */
+/** Leaderboard values — shared whole-million formatter (no decimal $x.xB). */
 function formatExactBoardValue(value: number): string {
-  const rounded = Math.round(value);
-  if (rounded >= 1_000_000_000) {
-    const billions = rounded / 1_000_000_000;
-    return `$${Number.isInteger(billions) ? billions.toFixed(0) : billions.toFixed(2)}B`;
-  }
-  if (rounded >= 1_000_000) {
-    const millions = rounded / 1_000_000;
-    return `$${Number.isInteger(millions) ? millions.toFixed(0) : millions.toFixed(1)}M`;
-  }
-  return formatDollarsExact(rounded);
+  return formatDollars(value);
 }
 
 function formatPlayerValue(value: number): string {
-  const millions = Math.round(value) / 1_000_000;
-  if (millions >= 1000) {
-    const billions = millions / 1000;
-    return `$${Number.isInteger(billions) ? billions.toFixed(0) : billions.toFixed(2)}B`;
-  }
-  return `$${Number.isInteger(millions) ? millions.toFixed(0) : millions.toFixed(1)}M`;
+  return formatDollars(value);
 }
 
 function LeaderboardTeamView({

@@ -1,7 +1,8 @@
 import type { H2HPosition } from './h2hPenalty';
 import { H2H_POSITIONS } from './h2hPenalty';
-import type { H2HGameMode } from './gameModes';
+import type { BountyMultiplier, H2HGameMode } from './gameModes';
 import {
+  isBountyMultiplier,
   KNOCKOUT_WINS_TO_FINISH,
   TRADE_UP_ATTEMPTS,
   TRADE_UP_STARTER_MAX_DOLLARS,
@@ -10,8 +11,10 @@ import {
 export type { H2HGameMode };
 
 export interface BountyModeConfig {
-  bountyPosition: H2HPosition;
-  multiplier: 2;
+  /** Present only after both lineups complete and the server reveals. */
+  bountyPosition: H2HPosition | null;
+  /** Whole-number 2–10; present only after reveal. */
+  multiplier: BountyMultiplier | null;
   revealed: boolean;
 }
 
@@ -69,17 +72,20 @@ export function displayedRoundValue(
   },
   side: 'p1' | 'p2',
   bountyPosition: H2HPosition | null = null,
-  multiplier = 2,
+  multiplier: number = 1,
 ): number {
   const raw =
     side === 'p1'
       ? Math.round(round.p1_raw_value ?? round.p1_adjusted_value ?? 0)
       : Math.round(round.p2_raw_value ?? round.p2_adjusted_value ?? 0);
-  const mult = bountyPosition && round.position === bountyPosition ? multiplier : 1;
+  const mult =
+    bountyPosition && round.position === bountyPosition && Number.isFinite(multiplier)
+      ? Math.max(1, Math.round(multiplier))
+      : 1;
   return raw * mult;
 }
 
-/** Sum of the integers shown on the five roster rows. Bounty doubles one slot's shown contribution. */
+/** Sum of the integers shown on the five roster rows. Bounty multiplies one slot. */
 export function sumDisplayedRoster(
   rounds: Array<{
     position: H2HPosition;
@@ -89,7 +95,7 @@ export function sumDisplayedRoster(
     p2_adjusted_value?: number | null;
   }>,
   bountyPosition: H2HPosition | null = null,
-  multiplier = 2,
+  multiplier: number = 1,
 ): { p1: number; p2: number } {
   let p1 = 0;
   let p2 = 0;
@@ -109,7 +115,7 @@ export function bountyAdjustedTotal(
     p2_adjusted_value?: number | null;
   }>,
   bountyPosition: H2HPosition,
-  multiplier = 2,
+  multiplier: number,
 ): { p1: number; p2: number } {
   return sumDisplayedRoster(rounds, bountyPosition, multiplier);
 }
@@ -118,12 +124,13 @@ export function classicModeConfig(): H2HModeConfig {
   return { mode: 'classic' };
 }
 
-export function bountyModeConfig(roomId: string): H2HModeConfig {
+/** Client-side placeholder only — live matches use server mode_config. */
+export function bountyModeConfig(_roomId?: string): H2HModeConfig {
   return {
     mode: 'bounty',
     bounty: {
-      bountyPosition: pickSharedBountyPosition(roomId),
-      multiplier: 2,
+      bountyPosition: null,
+      multiplier: null,
       revealed: false,
     },
   };
@@ -191,10 +198,17 @@ function asTradeSlot(raw: unknown, fallback: TradeUpPlayerSnapshot | null): Trad
   };
 }
 
+function parseBountyPosition(pos: unknown): H2HPosition | null {
+  if (pos === 'PG' || pos === 'SG' || pos === 'SF' || pos === 'PF' || pos === 'C') {
+    return pos;
+  }
+  return null;
+}
+
 export function parseModeConfig(raw: unknown, fallback: H2HGameMode = 'classic'): H2HModeConfig {
   if (!raw || typeof raw !== 'object') {
     if (fallback === 'knockout') return knockoutModeConfig();
-    if (fallback === 'bounty') return bountyModeConfig('fallback');
+    if (fallback === 'bounty') return bountyModeConfig();
     if (fallback === 'tradeUp') {
       return tradeUpModeConfig({
         name: '—',
@@ -211,18 +225,22 @@ export function parseModeConfig(raw: unknown, fallback: H2HGameMode = 'classic')
   const mode = row.mode ?? fallback;
   if (mode === 'bounty' && row.bounty && typeof row.bounty === 'object') {
     const b = row.bounty as Record<string, unknown>;
-    const pos = b.bountyPosition;
+    const revealed = Boolean(b.revealed);
+    const pos = parseBountyPosition(b.bountyPosition);
+    const multRaw = Number(b.multiplier);
+    const multiplier =
+      revealed && isBountyMultiplier(multRaw) ? (multRaw as BountyMultiplier) : null;
     return {
       mode: 'bounty',
       bounty: {
-        bountyPosition:
-          pos === 'PG' || pos === 'SG' || pos === 'SF' || pos === 'PF' || pos === 'C'
-            ? pos
-            : 'SF',
-        multiplier: 2,
-        revealed: Boolean(b.revealed),
+        bountyPosition: revealed ? pos : null,
+        multiplier,
+        revealed,
       },
     };
+  }
+  if (mode === 'bounty' || fallback === 'bounty') {
+    return bountyModeConfig();
   }
   if ((mode === 'tradeUp' || fallback === 'tradeUp') && row.tradeUp && typeof row.tradeUp === 'object') {
     const t = row.tradeUp as Record<string, unknown>;
@@ -263,15 +281,21 @@ export function parseModeConfig(raw: unknown, fallback: H2HGameMode = 'classic')
     };
   }
   if (fallback === 'knockout') return knockoutModeConfig();
-  if (fallback === 'bounty') return bountyModeConfig(String(row.seed ?? 'fallback'));
   return classicModeConfig();
 }
 
 export function resolveBountyPosition(
   modeConfig: H2HModeConfig,
-  roomId: string,
-  seed: string | null,
-): H2HPosition {
-  if (modeConfig.mode === 'bounty') return modeConfig.bounty.bountyPosition;
-  return pickSharedBountyPosition(seed ? `${roomId}:${seed}` : roomId);
+  _roomId?: string,
+  _seed?: string | null,
+): H2HPosition | null {
+  if (modeConfig.mode !== 'bounty') return null;
+  if (!modeConfig.bounty.revealed) return null;
+  return modeConfig.bounty.bountyPosition;
+}
+
+export function resolveBountyMultiplier(modeConfig: H2HModeConfig): BountyMultiplier | null {
+  if (modeConfig.mode !== 'bounty') return null;
+  if (!modeConfig.bounty.revealed) return null;
+  return modeConfig.bounty.multiplier;
 }

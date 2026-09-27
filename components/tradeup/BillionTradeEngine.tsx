@@ -40,7 +40,7 @@ import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
 import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
 import { measureDraftSlam, measureDraftPlayerOrigin, measureDraftSlotTarget } from '@/lib/tradeup/draftSlamRects';
-import { preloadGameAudio, startWheelSpinSound, stopWheelSpinSound, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
+import { preloadGameAudio, startWheelSpinSound, stopWheelSpinSound, unlockGameAudio, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { useSound } from '@/hooks/useSound';
 import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -332,7 +332,8 @@ export function BillionTradeEngine({
   const handleTicketPrint = useCallback(() => {
     if (phase !== 'draft' || evalStartedRef.current) return;
     resume();
-    // Sound/haptic already fired in TicketDispenser on the same tap
+    // Keep AudioContext warm on the Print gesture (shared Classic + 1V1 path).
+    unlockGameAudio();
     setTicketPrinting(true);
     setSelectedOfferId(null);
     setMovingFrom(null);
@@ -368,7 +369,7 @@ export function BillionTradeEngine({
     if (!spunTeam || !spunEra) return;
     resume();
     // Start in this tap. The reel begins in an effect, after iPhone drops HTML play().
-    if (!reduceMotion) startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
+    startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     lockInteractions();
     setSelectedOfferId(null);
     setMovingFrom(null);

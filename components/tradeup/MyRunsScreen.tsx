@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
-import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
+import { formatDollars, formatDollarsExact } from '@/lib/tradeup/billionDollar';
 import { getBillionRuns, type BillionRun } from '@/lib/tradeup/billionRuns';
 import { CLASSIC_PROGRESS_EVENT } from '@/lib/tradeup/storage';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
@@ -23,12 +23,7 @@ function formatRunDate(ts: number, locale: string): string {
 }
 
 function formatCompactMillions(value: number): string {
-  const millions = Math.round(value / 1_000_000);
-  if (millions >= 1000) {
-    const billions = millions / 1000;
-    return `$${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(2)}B`;
-  }
-  return `$${millions}M`;
+  return formatDollars(value);
 }
 
 function loadSortedRuns(): BillionRun[] {

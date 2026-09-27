@@ -87,7 +87,7 @@ type Phase =
 const TRACK_MAX = Math.round(BILLION_GOAL / 0.95);
 
 function formatCompactMillions(value: number): string {
-  return `$${(value / 1_000_000).toFixed(1)}M`;
+  return formatDollarsExact(value);
 }
 
 /** Ease-in-out for a financial processor feel (fast middle, soft ends). */

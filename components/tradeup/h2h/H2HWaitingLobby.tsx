@@ -15,8 +15,11 @@ import {
   shareH2HInvite,
 } from '@/lib/multiplayer/h2hInvite';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
+import { unlockGameAudio } from '@/lib/tradeup/gameAudio';
+import { unlockH2HReactionAudio } from '@/lib/tradeup/h2hEmojiSound';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
+import { h2hDebug } from '@/lib/multiplayer/h2hDebug';
 import { H2HLobbyShell, H2HLoadingScreen, H2HDisconnectNotice } from './H2HLobbyChrome';
 
 interface H2HWaitingLobbyProps {
@@ -111,6 +114,7 @@ export function H2HWaitingLobby({
   useEffect(() => {
     if (!room || room.status !== 'playing' || transitioned.current) return;
     transitioned.current = true;
+    h2hDebug('lobby.enterMatch', { roomId: room.id, status: room.status });
     onPlayingRef.current();
   }, [room]);
 
@@ -121,6 +125,7 @@ export function H2HWaitingLobby({
     }
     if (room.host_user_id !== userId || autoStartAttempted.current || startBusy) return;
     autoStartAttempted.current = true;
+    h2hDebug('lobby.hostAutoStart', { roomId: room.id });
     void startGame().catch(() => {
       autoStartAttempted.current = false;
     });
@@ -184,8 +189,12 @@ export function H2HWaitingLobby({
     if (!me || readyBusy || leaving || room?.status !== 'waiting') return;
     try {
       setActionError(null);
-      await setReady(!me.is_ready);
+      // Sync unlock on this Ready gesture — both game wheel + reaction soundboard.
+      unlockGameAudio();
+      unlockH2HReactionAudio();
+      const result = await setReady(!me.is_ready);
       hapticMedium();
+      h2hDebug('lobby.readyTap', { ready: !me.is_ready, started: result.started });
     } catch {
       /* surfaced via hook error */
     }

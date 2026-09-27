@@ -15,11 +15,15 @@ import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import type { RoomLobbySnapshot } from '@/lib/multiplayer/types';
 import { MultiplayerApiError } from '@/lib/multiplayer/types';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { h2hDebug } from '@/lib/multiplayer/h2hDebug';
 
 interface UseH2HMatchOptions {
   roomId: string;
   userId: string;
 }
+
+/** Reconciliation only — Realtime is primary. */
+const MATCH_RECONCILE_MS = 1500;
 
 export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
   const [lobby, setLobby] = useState<RoomLobbySnapshot | null>(null);
@@ -31,40 +35,91 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
   const [rematchBusy, setRematchBusy] = useState(false);
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
+  const lastDebugKey = useRef('');
+  const inflightRef = useRef<Promise<void> | null>(null);
+  const queuedRef = useRef(false);
+
+  const applyState = useCallback((nextState: H2HMatchState, nextLobby: RoomLobbySnapshot) => {
+    if (roomIdRef.current !== roomId) return;
+    const bounty =
+      nextState.mode_config.mode === 'bounty' ? nextState.mode_config.bounty : null;
+    const key = [
+      nextState.phase,
+      nextState.game_mode,
+      bounty?.revealed,
+      bounty?.bountyPosition,
+      bounty?.multiplier,
+      nextState.resolved_rounds.length,
+      nextState.opponent_pick_count,
+      nextState.my_picks?.length ?? 0,
+      nextState.showdown.started,
+      nextState.showdown.index,
+      nextState.showdown.finished,
+      nextState.showdown.revision,
+    ].join(':');
+    if (key !== lastDebugKey.current) {
+      lastDebugKey.current = key;
+      h2hDebug('match.state', {
+        roomId,
+        phase: nextState.phase,
+        mode: nextState.game_mode,
+        bounty,
+        myPicks: nextState.my_picks?.length ?? 0,
+        oppPicks: nextState.opponent_pick_count,
+        rounds: nextState.resolved_rounds.length,
+        showdown: nextState.showdown,
+      });
+    }
+    setState(nextState);
+    setLobby(nextLobby);
+    setError(null);
+  }, [roomId]);
 
   const refetch = useCallback(async () => {
     if (!roomId) return;
-    try {
-      let nextState: H2HMatchState;
+    if (inflightRef.current) {
+      queuedRef.current = true;
+      return inflightRef.current;
+    }
+
+    const run = (async () => {
       try {
-        nextState = await fetchH2HState(roomId);
-      } catch (err) {
-        const code = err instanceof MultiplayerApiError ? err.code : '';
-        if (code === 'ROOM_INVALID') {
-          await initH2HMatch(roomId);
+        let nextState: H2HMatchState;
+        try {
           nextState = await fetchH2HState(roomId);
-        } else {
-          throw err;
+        } catch (err) {
+          const code = err instanceof MultiplayerApiError ? err.code : '';
+          if (code === 'ROOM_INVALID') {
+            await initH2HMatch(roomId);
+            nextState = await fetchH2HState(roomId);
+          } else {
+            throw err;
+          }
+        }
+        const nextLobby = await fetchRoomLobby(roomId);
+        applyState(nextState, nextLobby);
+      } catch (err) {
+        if (roomIdRef.current !== roomId) return;
+        setError(
+          err instanceof MultiplayerApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Could not load match.',
+        );
+      } finally {
+        if (roomIdRef.current === roomId) setLoading(false);
+        inflightRef.current = null;
+        if (queuedRef.current) {
+          queuedRef.current = false;
+          void refetch();
         }
       }
-      const nextLobby = await fetchRoomLobby(roomId);
-      if (roomIdRef.current !== roomId) return;
-      setState(nextState);
-      setLobby(nextLobby);
-      setError(null);
-    } catch (err) {
-      if (roomIdRef.current !== roomId) return;
-      setError(
-        err instanceof MultiplayerApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : 'Could not load match.',
-      );
-    } finally {
-      if (roomIdRef.current === roomId) setLoading(false);
-    }
-  }, [roomId]);
+    })();
+
+    inflightRef.current = run;
+    return run;
+  }, [applyState, roomId]);
 
   useEffect(() => {
     setLoading(true);
@@ -77,6 +132,7 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'h2h_matches', filter: `room_id=eq.${roomId}` },
         () => {
+          h2hDebug('match.realtime', { table: 'h2h_matches', roomId });
           void refetch();
         },
       )
@@ -84,6 +140,7 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'h2h_rounds', filter: `room_id=eq.${roomId}` },
         () => {
+          h2hDebug('match.realtime', { table: 'h2h_rounds', roomId });
           void refetch();
         },
       )
@@ -91,6 +148,7 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'h2h_picks', filter: `room_id=eq.${roomId}` },
         () => {
+          h2hDebug('match.realtime', { table: 'h2h_picks', roomId });
           void refetch();
         },
       )
@@ -98,6 +156,7 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
         () => {
+          h2hDebug('match.realtime', { table: 'rooms', roomId });
           void refetch();
         },
       )
@@ -110,22 +169,29 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
           filter: `room_id=eq.${roomId}`,
         },
         () => {
+          h2hDebug('match.realtime', { table: 'room_players', roomId });
           void refetch();
         },
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') void refetch();
+        if (status === 'SUBSCRIBED') {
+          h2hDebug('match.subscribed', { roomId });
+          void refetch();
+        }
       });
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void refetch();
+      if (document.visibilityState === 'visible') {
+        h2hDebug('match.reconcile', { reason: 'visible', roomId });
+        void refetch();
+      }
     };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onVisible);
     window.addEventListener('focus', onVisible);
     const poll = window.setInterval(() => {
       void refetch();
-    }, 1000);
+    }, MATCH_RECONCILE_MS);
 
     return () => {
       window.clearInterval(poll);
@@ -139,8 +205,43 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
   const lockPick = useCallback(
     async (position: H2HPosition, selection: H2HPickSelection, rawValue: number) => {
       setError(null);
+      setLockBusy(true);
       try {
-        await lockH2HPick(roomId, position, selection, rawValue);
+        // Optimistic local pick so our own board never waits on the network.
+        setState((prev) => {
+          if (!prev) return prev;
+          const others = (prev.my_picks ?? []).filter((p) => p.position !== position);
+          return {
+            ...prev,
+            my_picks: [...others, { position, selection, raw_value: rawValue }],
+            my_locked: others.length + 1 >= 5,
+          };
+        });
+
+        const result = await lockH2HPick(roomId, position, selection, rawValue);
+        h2hDebug('match.pickLocked', {
+          roomId,
+          position,
+          my_count: result.my_count,
+          opp_count: result.opp_count,
+          finished: result.finished,
+        });
+
+        // Apply RPC counts immediately so opponent progress does not wait on Realtime.
+        setState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            opponent_pick_count:
+              result.opp_count != null ? result.opp_count : prev.opponent_pick_count,
+            my_locked: result.my_count != null ? result.my_count >= 5 : prev.my_locked,
+            opponent_locked:
+              result.opp_count != null ? result.opp_count >= 5 : prev.opponent_locked,
+            phase: result.finished ? 'finished' : prev.phase,
+            p1_total: result.p1_total ?? prev.p1_total,
+            p2_total: result.p2_total ?? prev.p2_total,
+          };
+        });
       } catch (err) {
         const message =
           err instanceof MultiplayerApiError
@@ -150,11 +251,13 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
               : 'Could not lock pick.';
         setError(message);
         throw err;
-      }
-      try {
-        await refetch();
-      } catch (err) {
-        console.warn('[useH2HMatch] refetch after lock failed', err);
+      } finally {
+        setLockBusy(false);
+        try {
+          await refetch();
+        } catch (err) {
+          console.warn('[useH2HMatch] refetch after lock failed', err);
+        }
       }
     },
     [refetch, roomId],
@@ -168,7 +271,6 @@ export function useH2HMatch({ roomId, userId }: UseH2HMatchOptions) {
       rawValue: number,
     ) => {
       setError(null);
-      // Optimistic local seat update so UI never waits on the network round-trip.
       setState((prev) => {
         if (!prev?.my_picks) return prev;
         const withoutFrom = prev.my_picks.filter((pick) => pick.position !== fromPosition);

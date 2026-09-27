@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { emojiSetForPosition } from '@/lib/tradeup/h2hEmojiSets';
-import { playEmojiTapSound, warmH2HReactionSounds } from '@/lib/tradeup/h2hEmojiSound';
+import {
+  playEmojiTapSound,
+  playRemoteEmojiSound,
+  unlockH2HReactionAudio,
+} from '@/lib/tradeup/h2hEmojiSound';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 
@@ -33,7 +37,8 @@ interface H2HEmojiReactionsProps {
 
 const BURST_COUNT = 3;
 const BURST_LIFE_MS = 5200;
-const TAP_COOLDOWN_MS = 110;
+/** Soft cap on network broadcast spam only — never gates local audio/visual. */
+const TAP_BROADCAST_MIN_MS = 40;
 const FINAL_EMOJIS = ['🐐', '🔥', '💰'] as const;
 
 function spawnParticles(emoji: string): Particle[] {
@@ -71,7 +76,8 @@ export function H2HEmojiReactions({
 
   useEffect(() => {
     setMounted(true);
-    warmH2HReactionSounds();
+    // Warm decode early — actual unlock still needs a user gesture for iOS.
+    unlockH2HReactionAudio();
   }, []);
 
   const addBurst = useCallback((emoji: string) => {
@@ -90,8 +96,11 @@ export function H2HEmojiReactions({
       .channel(`h2h_emoji:${roomId}${channelSuffix ? `:${channelSuffix}` : ''}`)
       .on('broadcast', { event: 'emoji_burst' }, ({ payload }) => {
         const row = payload as { emoji?: string; from?: number };
-        if (!row.emoji || row.from === myPlayerNumber) return;
+        if (!row.emoji) return;
+        // Deduplicate local echo — we already played audio + visual on tap.
+        if (row.from === myPlayerNumber) return;
         addBurst(row.emoji);
+        playRemoteEmojiSound(row.emoji);
       })
       .subscribe();
     channelRef.current = channel;
@@ -104,16 +113,21 @@ export function H2HEmojiReactions({
   const handleTap = (emoji: string) => {
     if (!enabled) return;
     const now = Date.now();
-    if (now - lastTapRef.current < TAP_COOLDOWN_MS) return;
-    lastTapRef.current = now;
+
+    // LOCAL path — never waits on Supabase / React effects / decode.
+    // 1) audio  2) visual  3) async broadcast
+    playEmojiTapSound(emoji, 'local');
     hapticLight();
-    playEmojiTapSound(emoji);
     addBurst(emoji);
-    void channelRef.current?.send({
-      type: 'broadcast',
-      event: 'emoji_burst',
-      payload: { emoji, from: myPlayerNumber },
-    });
+
+    if (now - lastTapRef.current >= TAP_BROADCAST_MIN_MS) {
+      lastTapRef.current = now;
+      void channelRef.current?.send({
+        type: 'broadcast',
+        event: 'emoji_burst',
+        payload: { emoji, from: myPlayerNumber },
+      });
+    }
   };
 
   if (!enabled) return null;
@@ -157,6 +171,8 @@ export function H2HEmojiReactions({
             aria-label={`React ${emoji}`}
             onPointerDown={(e) => {
               e.preventDefault();
+              // Unlock/resume from this gesture before / as we start the buffer.
+              unlockH2HReactionAudio();
               handleTap(emoji);
             }}
           >

@@ -4,7 +4,7 @@ import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useR
 import { createPortal } from 'react-dom';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { clearPendingH2HJoinCode } from '@/lib/multiplayer/h2hInvite';
-import { leaveRoom } from '@/lib/multiplayer/rooms';
+import { leaveRoom, setH2HShowdownCursor } from '@/lib/multiplayer/rooms';
 import { useH2HMatch } from '@/hooks/useH2HMatch';
 import { IDLE_SHOWDOWN } from '@/lib/multiplayer/showdownCursor';
 import { formatDollars } from '@/lib/tradeup/billionDollar';
@@ -13,6 +13,7 @@ import {
   playH2HDefeatSound,
   playH2HVictorySound,
   prepareH2HEmojiAudio,
+  stopH2HReactionSounds,
   warmH2HReactionSounds,
 } from '@/lib/tradeup/h2hEmojiSound';
 import {
@@ -28,6 +29,7 @@ import {
 } from '@/lib/multiplayer/gameModes';
 import {
   displayedRoundValue,
+  resolveBountyMultiplier,
   resolveBountyPosition,
   sumDisplayedRoster,
 } from '@/lib/multiplayer/modeConfig';
@@ -37,11 +39,13 @@ import { H2HTradeUpMatch } from './H2HTradeUpMatch';
 import { H2HKnockoutMatch } from './H2HKnockoutMatch';
 import { H2HSoloStyleDraft } from './H2HSoloStyleDraft';
 import { H2HShowdownSequence } from './H2HShowdownSequence';
+import { H2HBountyRevealSequence } from './H2HBountyRevealSequence';
 import { H2HEmojiReactions, H2H_FINAL_EMOJIS } from './H2HEmojiReactions';
 import { MoneyRain, RESULTS_POUR_TOTAL_MS } from '../MoneyRain';
 import { GameBackground } from '../game/GameBackground';
 import { getTeamColors, contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import type { H2HPickSelection, H2HRoundPublic } from '@/lib/multiplayer/h2hState';
+import { h2hDebug } from '@/lib/multiplayer/h2hDebug';
 
 interface H2HMatchScreenProps {
   roomId: string;
@@ -68,15 +72,24 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   } = useH2HMatch({ roomId, userId });
 
   const [revealDone, setRevealDone] = useState(false);
+  /** Bounty announcement finished — then run position showdown. */
+  const [bountyRevealDone, setBountyRevealDone] = useState(false);
   /** Previous match left showdown.finished set. Ignore it until this match starts one. */
   const [staleShowdown, setStaleShowdown] = useState(false);
   const [disconnected, setDisconnected] = useState(false);
   const hadOpponentRef = useRef(false);
 
   useEffect(() => {
+    return () => {
+      stopH2HReactionSounds();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!state) return;
     if (state.phase !== 'finished') {
       setRevealDone(false);
+      setBountyRevealDone(false);
       if (state.showdown.finished) setStaleShowdown(true);
     } else if (!state.showdown.finished) {
       setStaleShowdown(false);
@@ -195,17 +208,69 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
 
   const isHost = lobby?.room.host_user_id === userId;
   const modeMeta = modeDef(gameMode);
-  const bountyPosition: H2HPosition = resolveBountyPosition(state.mode_config, roomId, state.mode_seed);
-  const scoreBounty = gameMode === 'bounty' ? bountyPosition : null;
-  const rosterTotals = sumDisplayedRoster(state.resolved_rounds, scoreBounty, 2);
+  const bountyPosition: H2HPosition | null =
+    gameMode === 'bounty' ? resolveBountyPosition(state.mode_config, roomId, state.mode_seed) : null;
+  const bountyMultiplier = gameMode === 'bounty' ? resolveBountyMultiplier(state.mode_config) : null;
+  const scoreBounty = bountyPosition && bountyMultiplier ? bountyPosition : null;
+  const scoreMult = bountyMultiplier ?? 1;
+  const rosterTotals = sumDisplayedRoster(state.resolved_rounds, scoreBounty, scoreMult);
   const showdown =
     staleShowdown && state.showdown.finished ? IDLE_SHOWDOWN : state.showdown;
+
+  // Bounty: announce position + multiplier (no player spoilers), then Standard showdown.
+  if (gameMode === 'bounty' && state.phase === 'finished' && !bountyRevealDone) {
+    if (bountyPosition && bountyMultiplier && state.resolved_rounds.length > 0) {
+      return (
+        <H2HBountyRevealSequence
+          bountyPosition={bountyPosition}
+          multiplier={bountyMultiplier}
+          onComplete={() => {
+            h2hDebug('bounty.reveal.handoffShowdown', {
+              roomId,
+              bountyPosition,
+              bountyMultiplier,
+              isHost,
+            });
+            setBountyRevealDone(true);
+            // Host seeds showdown cursor during the handoff so the guest never
+            // sits on a dead "Start Showdown" gate after their local reveal.
+            if (isHost && !state.showdown.started) {
+              void setH2HShowdownCursor(roomId, {
+                started: true,
+                index: 0,
+                finished: false,
+              })
+                .then(() => refetch())
+                .catch((err) => {
+                  h2hDebug('showdown.seedFailed', {
+                    roomId,
+                    message: err instanceof Error ? err.message : String(err),
+                  });
+                });
+            } else {
+              void refetch();
+            }
+          }}
+        />
+      );
+    }
+    h2hDebug('bounty.waitingConfig', {
+      roomId,
+      hasPos: Boolean(bountyPosition),
+      hasMult: Boolean(bountyMultiplier),
+      rounds: state.resolved_rounds.length,
+      revealed:
+        state.mode_config.mode === 'bounty' ? state.mode_config.bounty.revealed : null,
+    });
+    return <H2HLoadingScreen status="Revealing the bounty…" />;
+  }
 
   if (
     state.phase === 'finished' &&
     !revealDone &&
     !showdown.finished &&
-    state.resolved_rounds.length > 0
+    state.resolved_rounds.length > 0 &&
+    (gameMode !== 'bounty' || bountyRevealDone)
   ) {
     return (
       <H2HShowdownSequence
@@ -218,14 +283,21 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         showdown={showdown}
         onSynced={refetch}
         bountyPosition={scoreBounty}
-        onComplete={() => setRevealDone(true)}
+        bountyMultiplier={scoreMult}
+        onComplete={() => {
+          h2hDebug('showdown.complete', { roomId, gameMode });
+          setRevealDone(true);
+        }}
       />
     );
   }
 
   if (state.phase === 'finished') {
-    const scoreP1 = rosterTotals.p1;
-    const scoreP2 = rosterTotals.p2;
+    // Prefer authoritative server totals (bounty-adjusted) over client recomputation.
+    const scoreP1 =
+      state.resolved_rounds.length >= 5 ? Math.round(state.p1_total) : rosterTotals.p1;
+    const scoreP2 =
+      state.resolved_rounds.length >= 5 ? Math.round(state.p2_total) : rosterTotals.p2;
     const p1Wins = scoreP1 > scoreP2;
     const p2Wins = scoreP2 > scoreP1;
     const iAmP1 = state.my_player_number === 1;
@@ -244,12 +316,12 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
     const myRounds = state.resolved_rounds.map((round) => ({
       position: round.position,
       selection: iAmP1 ? round.p1_selection : round.p2_selection,
-      value: displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', scoreBounty, 2),
+      value: displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', scoreBounty, scoreMult),
     }));
     const oppRounds = state.resolved_rounds.map((round) => ({
       position: round.position,
       selection: iAmP1 ? round.p2_selection : round.p1_selection,
-      value: displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', scoreBounty, 2),
+      value: displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', scoreBounty, scoreMult),
     }));
 
     return (
@@ -262,6 +334,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
         iAmP1={iAmP1}
         rounds={state.resolved_rounds}
         bountyPosition={scoreBounty}
+        bountyMultiplier={scoreMult}
       >
         <div className="h2h-shell h2h-shell--arena">
           <GameBackground />
@@ -377,6 +450,7 @@ function H2HFinalScreen({
   iAmP1,
   rounds,
   bountyPosition,
+  bountyMultiplier = 1,
   children,
 }: {
   myWins: boolean;
@@ -387,6 +461,7 @@ function H2HFinalScreen({
   iAmP1: boolean;
   rounds: H2HRoundPublic[];
   bountyPosition: H2HPosition | null;
+  bountyMultiplier?: number;
   children: ReactNode;
 }) {
   const [emojiReady, setEmojiReady] = useState(false);
@@ -411,8 +486,8 @@ function H2HFinalScreen({
       won: myWins,
       myScore,
       rounds: rounds.map((round) => {
-        const mine = displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', bountyPosition, 2);
-        const opp = displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', bountyPosition, 2);
+        const mine = displayedRoundValue(round, iAmP1 ? 'p1' : 'p2', bountyPosition, bountyMultiplier);
+        const opp = displayedRoundValue(round, iAmP1 ? 'p2' : 'p1', bountyPosition, bountyMultiplier);
         const iWon =
           (iAmP1 && round.matchup_winner === 'p1') ||
           (!iAmP1 && round.matchup_winner === 'p2');
@@ -431,7 +506,7 @@ function H2HFinalScreen({
         })),
       );
     }
-  }, [bountyPosition, iAmP1, myScore, myWins, oppWins, roomId, rounds]);
+  }, [bountyMultiplier, bountyPosition, iAmP1, myScore, myWins, oppWins, roomId, rounds]);
 
   useEffect(() => {
     setToastReady(true);

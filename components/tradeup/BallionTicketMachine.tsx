@@ -239,7 +239,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       setTeamLanded(false);
 
       // Rerolls already arm the sample in the tap handler — don't restart it.
-      if (!reduceMotion && (axes.team || axes.era) && opts?.playSound !== false) {
+      // Sound is independent of reduced-motion visuals.
+      if ((axes.team || axes.era) && opts?.playSound !== false) {
         startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
       }
 
@@ -277,12 +278,14 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   const handleRoll = useCallback(() => {
     if (rollLocked || busyRef.current || mode === 'spinning') return;
-    // Instant feedback before any heavier work.
     hapticLight();
     busyRef.current = true;
+    // Unlock + arm spin audio in this tap (WKWebView userActivation is unreliable).
+    // Audio is not gated by reduced-motion — only reel timing is.
+    startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     const pair = pickFairResult(allPairs);
     onPrint();
-    beginSpin(pair, { team: true, era: true });
+    beginSpin(pair, { team: true, era: true }, { playSound: false });
   }, [allPairs, beginSpin, mode, onPrint, rollLocked]);
 
   // One-sided auto-reroll from pick screen.

@@ -8,7 +8,7 @@
  */
 
 import { getAudioSettings, setSfxMuted, setSfxVolume } from './audioSettings';
-import { prepareH2HEmojiAudio } from './h2hEmojiSound';
+import { unlockH2HReactionAudio } from './h2hEmojiSound';
 import { playDigitalWheelLock } from './digitalWheelSound';
 
 /** Team + Era reel duration (initial spin and every Team/Era reroll). */
@@ -400,7 +400,7 @@ export function unlockGameAudio(): void {
   // Do not call element.load() here. Every spin used to reload the sample
   // immediately before play(), which aborts the tap on iPhone Safari so the
   // spin is silent or starts late. Preload warms the file once.
-  prepareH2HEmojiAudio();
+  unlockH2HReactionAudio();
 }
 
 export function syncAudioSettings(): void {
@@ -609,6 +609,18 @@ function startElementWheelSpin(targetMs: number, token: number): void {
   }, targetMs + 80);
 }
 
+function isNativeCapacitorShell(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const cap = (
+      window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }
+    ).Capacitor;
+    return Boolean(cap?.isNativePlatform?.());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Play the bundled wheel-spin sample once, rate-fitted so it ends with the reel
  * (default 2940 ms). Stops any prior spin before starting — no overlap.
@@ -647,6 +659,7 @@ export function startWheelSpinSound(
   const token = wheelSpinToken;
   const targetMs = Math.max(80, expectedDurationMs);
   const gesture = isUserGesture();
+  const nativeShell = isNativeCapacitorShell();
 
   const tryStartBuffer = (): boolean => {
     const ctxNow = getCtx();
@@ -658,8 +671,10 @@ export function startWheelSpinSound(
     return;
   }
 
-  // Same-gesture HTML fallback (phones block element.play after the tap ends).
-  if (gesture || !isPhoneBrowser()) {
+  // WKWebView often reports userActivation=false even inside a tap handler.
+  // Always allow the HTML fallback on Capacitor so the first Print is not silent
+  // while the decoded buffer is still warming.
+  if (gesture || nativeShell || !isPhoneBrowser()) {
     startElementWheelSpin(targetMs, token);
   }
 

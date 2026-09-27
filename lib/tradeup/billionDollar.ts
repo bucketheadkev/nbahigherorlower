@@ -564,20 +564,25 @@ export function sumTeamValue(players: TradePlayer[]): number {
   return players.reduce((sum, player) => sum + Math.round(getDollarValue(player)), 0);
 }
 
+/**
+ * 1B Run money display — whole millions only, never decimal billions.
+ * Examples: $199M · $760M · $1,400M · $2,440M
+ * Does not mutate underlying numeric values.
+ */
 export function formatDollars(value: number): string {
-  if (value >= 1_000_000_000) {
-    const billions = value / 1_000_000_000;
-    return `$${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(2)}B`;
+  const n = Math.max(0, Math.round(Number(value) || 0));
+  const millions = Math.round(n / 1_000_000);
+  if (millions <= 0 && n > 0) {
+    // Sub-million leftovers still round up to $1M for display consistency.
+    return '$1M';
   }
-  if (value >= 1_000_000) {
-    const millions = Math.round(value) / 1_000_000;
-    return `$${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`;
-  }
-  return `$${Math.round(value).toLocaleString()}`;
+  if (millions <= 0) return '$0M';
+  return `$${millions.toLocaleString('en-US')}M`;
 }
 
+/** Alias — same whole-million rule (no raw-cent/$1.4B displays). */
 export function formatDollarsExact(value: number): string {
-  return `$${Math.round(value).toLocaleString()}`;
+  return formatDollars(value);
 }
 
 export function withValue(player: TradePlayer): ValuedPlayer {

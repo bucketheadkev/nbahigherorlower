@@ -57,19 +57,10 @@ export function setH2HUsername(raw: string): string | null {
   }
 }
 
-/** Compact money for mode tiles — $842M / $1.05B */
+/** Compact money for mode tiles — whole millions only ($842M / $1,400M). */
 export function formatDollarsShort(value: number): string {
   const n = Math.max(0, Math.round(value));
-  if (n >= 1_000_000_000) {
-    const b = n / 1_000_000_000;
-    const text = b >= 10 ? b.toFixed(0) : b.toFixed(2).replace(/\.?0+$/, '');
-    return `$${text}B`;
-  }
-  if (n >= 1_000_000) {
-    const m = n / 1_000_000;
-    const text = m >= 100 ? m.toFixed(0) : m.toFixed(1).replace(/\.0$/, '');
-    return `$${text}M`;
-  }
   if (n <= 0) return '—';
-  return `$${n.toLocaleString()}`;
+  const millions = Math.max(1, Math.round(n / 1_000_000));
+  return `$${millions.toLocaleString('en-US')}M`;
 }

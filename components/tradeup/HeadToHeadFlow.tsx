@@ -15,6 +15,7 @@ import { isValidH2HRoomCode, sanitizeH2HRoomCode } from '@/lib/multiplayer/roomC
 import { joinRoom, fetchRoomLobby, leaveRoom } from '@/lib/multiplayer/rooms';
 import { ensureInviteDisplayName, setH2HUsername } from '@/lib/tradeup/h2hUsername';
 import type { H2HGameMode } from '@/lib/multiplayer/gameModes';
+import { isNativeApp } from '@/lib/platform/isNativeApp';
 import { H2HCreateLobby } from './h2h/H2HCreateLobby';
 import { H2HEntryScreen } from './h2h/H2HEntryScreen';
 import { H2HJoinLobby } from './h2h/H2HJoinLobby';
@@ -24,6 +25,12 @@ import { H2HModeSelectScreen } from './h2h/H2HModeSelectScreen';
 import { H2HWaitingLobby } from './h2h/H2HWaitingLobby';
 
 type LobbyScreen = 'entry' | 'modes' | 'create' | 'join' | 'waiting' | 'match';
+
+/** Native: Choose Game hub. Web: skip hub (Standard only). */
+function initialLobbyScreen(hasInvite: boolean): LobbyScreen {
+  if (hasInvite) return 'join';
+  return isNativeApp() ? 'modes' : 'entry';
+}
 
 interface HeadToHeadFlowProps {
   onExit: () => void;
@@ -41,7 +48,8 @@ function readInitialInviteCode(pendingJoinCode: string | null | undefined): stri
 }
 
 /**
- * 1V1 shell — entry → create/join → lobby → match.
+ * 1V1 shell — native: Choose Game → create/join → lobby → match.
+ * Web: entry → Standard create/join (no Bounty hub).
  * Always clears sticky invite/active-room state so abandoned lobbies never block re-entry.
  */
 export function HeadToHeadFlow({
@@ -51,8 +59,9 @@ export function HeadToHeadFlow({
 }: HeadToHeadFlowProps) {
   const auth = useAnonymousAuth();
   const initialInvite = useRef(readInitialInviteCode(pendingJoinCode));
+  const nativeApp = isNativeApp();
   const [screen, setScreen] = useState<LobbyScreen>(() =>
-    initialInvite.current ? 'join' : 'entry',
+    initialLobbyScreen(Boolean(initialInvite.current)),
   );
   const [roomId, setRoomId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<H2HGameMode>('classic');
@@ -223,13 +232,17 @@ export function HeadToHeadFlow({
     [enterRoom],
   );
 
+  const goHomeOrModes = useCallback(() => {
+    setScreen(nativeApp ? 'modes' : 'entry');
+  }, [nativeApp]);
+
   const handleLeftLobby = useCallback(() => {
     clearActiveRoom();
     clearPendingH2HJoinCode();
     resetInviteState();
     setRoomId(null);
-    setScreen('entry');
-  }, [resetInviteState]);
+    goHomeOrModes();
+  }, [goHomeOrModes, resetInviteState]);
 
   const handlePlaying = useCallback(() => {
     setScreen('match');
@@ -237,8 +250,8 @@ export function HeadToHeadFlow({
 
   const dismissInviteError = useCallback(() => {
     resetInviteState();
-    setScreen('entry');
-  }, [resetInviteState]);
+    goHomeOrModes();
+  }, [goHomeOrModes, resetInviteState]);
 
   // Dead/abandoned invites must never trap on a sticky abandoned screen.
   useEffect(() => {
@@ -251,8 +264,8 @@ export function HeadToHeadFlow({
     clearActiveRoom();
     clearPendingH2HJoinCode();
     resetInviteState();
-    setScreen('entry');
-  }, [inviteJoinError, resetInviteState]);
+    goHomeOrModes();
+  }, [goHomeOrModes, inviteJoinError, resetInviteState]);
 
   if (inviteJoinCode && auth.status === 'error') {
     return (
@@ -266,7 +279,21 @@ export function HeadToHeadFlow({
       /no longer available/i.test(inviteJoinError) ||
       inviteJoinError.toUpperCase().includes('ROOM_ABANDONED');
     if (deadLobby) {
-      // Effect clears state; keep entry usable while that runs.
+      // Effect clears state; keep hub usable while that runs.
+      if (nativeApp) {
+        return (
+          <H2HModeSelectScreen
+            onHostMode={handleHostMode}
+            onJoin={() => {
+              resetInviteState();
+              setScreen('join');
+            }}
+            onBack={exitToHome}
+            authLoading={false}
+            authError={null}
+          />
+        );
+      }
       return (
         <H2HEntryScreen
           onCreate={() => {
@@ -316,7 +343,7 @@ export function HeadToHeadFlow({
         onCreated={handleCreated}
         onBack={() => {
           resetInviteState();
-          setScreen('entry');
+          setScreen(nativeApp ? 'modes' : 'entry');
         }}
       />
     );
@@ -331,7 +358,7 @@ export function HeadToHeadFlow({
         onJoined={handleJoined}
         onBack={() => {
           resetInviteState();
-          setScreen('entry');
+          setScreen(nativeApp ? 'modes' : 'entry');
         }}
       />
     );
@@ -345,7 +372,7 @@ export function HeadToHeadFlow({
           resetInviteState();
           setScreen('join');
         }}
-        onBack={() => setScreen('entry')}
+        onBack={exitToHome}
         authLoading={false}
         authError={auth.status === 'error' ? auth.message : null}
       />
@@ -383,6 +410,7 @@ export function HeadToHeadFlow({
     );
   }
 
+  // Web-only entry: Standard create/join with no Choose Game step.
   return (
     <H2HEntryScreen
       onCreate={() => {

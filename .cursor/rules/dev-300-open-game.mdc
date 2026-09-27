@@ -1,0 +1,19 @@
+---
+description: When the user says "300", open the local game and verify it loads
+alwaysApply: true
+---
+
+# Dev server / open game shortcut (`300`)
+
+If the user's message is effectively just **300** (for example `300`, or ends with `300` as its own last token alongside other work):
+
+1. Ensure the Next.js dev server is reachable at `http://localhost:3000` (`npm run dev` uses port 3000).
+2. If it is down, start `npm run dev` from the project root and wait until it responds.
+3. If it is up but the app fails to load (blank page, Next runtime overlay, `a[d] is not a function`, 500), restart cleanly: free port 3000, clear `.next` if needed (`npm run dev:clean` or kill + `rm -rf .next` + `npm run dev`), then wait for a healthy response.
+4. Open the game in the browser at `http://localhost:3000` (visible/active tab when opening for the user).
+5. Confirm the home/shell is actually loading — not an error overlay or hung blank load.
+6. If the message is only `300`, do that and report briefly (e.g. "Game open on :3000.").
+7. If the message includes other work **and** `300`, finish that work first, then open/verify.
+
+Do not ask for confirmation before opening when this shortcut is used.
+Do not deploy, push, or commit as part of `300`.

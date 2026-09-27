@@ -1,19 +1,28 @@
 /**
- * 1v1 emoji taps — Pixabay MP3 samples (local playback only).
- * Player slot placement uses synthesized trophy chime (unchanged from pre-Pixabay).
- * Sources: public/audio/h2h/CREDITS.txt
+ * 1v1 reaction soundboard — Web Audio only (no HTMLAudioElement).
+ *
+ * Architecture:
+ *   LOCAL TAP → immediate BufferSource start + visual + async broadcast
+ *   REMOTE    → visual + BufferSource when broadcast arrives (skip self echo)
+ *
+ * Never fetch/decode at tap time. Never queue late playback.
+ * Isolated from gameAudio (wheel / cash-register).
  */
 
 import { getAudioSettings } from './audioSettings';
 
-const EMOJI_MAX_SEC_DEFAULT = 4;
+const STALE_MS = 400;
+const VOICE_CAP = 6;
+/** Same-emoji audio-only drop window — drop, never delay. */
+const SAME_EMOJI_MS = 45;
 const RESULT_MAX_SEC = 5;
 
 const EMOJI_MAX_SEC: Partial<Record<string, number>> = {
   '🚀': 2,
 };
 
-const EMOJI_SRC: Record<string, string> = {
+/** Known reaction assets — all must exist under public/audio/h2h/. */
+export const EMOJI_SRC: Readonly<Record<string, string>> = {
   '🐐': '/audio/h2h/goat.mp3',
   '👑': '/audio/h2h/crown.mp3',
   '😂': '/audio/h2h/laugh-soft.mp3',
@@ -31,18 +40,65 @@ const EMOJI_SRC: Record<string, string> = {
 const VICTORY_SRC = '/audio/h2h/victory.mp3';
 const DEFEAT_SRC = '/audio/h2h/defeat.mp3';
 
-const cache = new Map<string, HTMLAudioElement>();
+const ALL_REACTION_SRCS = [
+  ...new Set([...Object.values(EMOJI_SRC), VICTORY_SRC, DEFEAT_SRC]),
+] as const;
+
 const buffers = new Map<string, AudioBuffer>();
 const bufferJobs = new Map<string, Promise<AudioBuffer | null>>();
+const preloadFailed = new Set<string>();
 
-let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
+let reactionCtx: AudioContext | null = null;
+let reactionMaster: GainNode | null = null;
+let voiceSeq = 0;
+const activeVoices: Array<{ id: number; stop: () => void }> = [];
+const lastEmojiAudioAt = new Map<string, number>();
+let preloadStarted = false;
 
 const TROPHY_FREQS = [392, 523, 659] as const;
 const TROPHY_NOTE_GAP = 0.034;
 const TROPHY_EMOJI_GAIN = 0.07;
-/** Roster slot placement — louder than emoji-bar trophy taps. */
 const SLOT_PLACE_GAIN = 0.22;
+
+type ReactionOrigin = 'local' | 'remote';
+
+function audioDebugEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (window.localStorage.getItem('h2h_debug') === '1') return true;
+  } catch {
+    /* ignore */
+  }
+  return process.env.NODE_ENV === 'development';
+}
+
+function stamp(): string {
+  return new Date().toISOString().slice(11, 23);
+}
+
+function h2hAudioLog(message: string, detail?: Record<string, unknown>): void {
+  if (!audioDebugEnabled()) return;
+  // eslint-disable-next-line no-console
+  console.info(`[h2h-audio] ${stamp()} ${message}`, detail ?? '');
+}
+
+function emojiLabel(emoji: string): string {
+  const map: Record<string, string> = {
+    '🐐': 'goat',
+    '👑': 'crown',
+    '😂': 'laugh',
+    '🔥': 'fire',
+    '🎯': 'target',
+    '🏆': 'trophy',
+    '⭐': 'star',
+    '💰': 'money',
+    '🚀': 'rocket',
+    '🎉': 'party',
+    '💎': 'gem',
+    '😮': 'wow',
+  };
+  return map[emoji] ?? emoji;
+}
 
 function sfxScale(): number {
   const { sfxMuted, sfxVolume } = getAudioSettings();
@@ -50,100 +106,233 @@ function sfxScale(): number {
   return Math.min(1, Math.max(0.12, sfxVolume * 0.85));
 }
 
-function getCtx(): AudioContext | null {
+function getReactionCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
-  if (!ctx) {
-    ctx = new AudioContext();
-    master = ctx.createGain();
-    master.connect(ctx.destination);
+  if (!reactionCtx) {
+    const AC =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return null;
+    reactionCtx = new AC();
+    reactionMaster = reactionCtx.createGain();
+    reactionMaster.connect(reactionCtx.destination);
+    h2hAudioLog('context created', { state: reactionCtx.state });
   }
-  if (master) master.gain.value = sfxScale();
-  return ctx;
+  if (reactionMaster) reactionMaster.gain.value = sfxScale();
+  return reactionCtx;
 }
 
-const REACTION_SRCS = [...Object.values(EMOJI_SRC), VICTORY_SRC, DEFEAT_SRC];
-
-function ensureSampleBuffer(src: string): Promise<AudioBuffer | null> {
+function decodeSrc(src: string): Promise<AudioBuffer | null> {
   const ready = buffers.get(src);
   if (ready) return Promise.resolve(ready);
   const pending = bufferJobs.get(src);
   if (pending) return pending;
 
-  const audio = getCtx();
+  const audio = getReactionCtx();
   if (!audio) return Promise.resolve(null);
 
   const job = (async () => {
     try {
       const res = await fetch(src);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        preloadFailed.add(src);
+        h2hAudioLog('preload FAIL', { src, status: res.status });
+        return null;
+      }
       const raw = await res.arrayBuffer();
       const decoded = await audio.decodeAudioData(raw.slice(0));
       buffers.set(src, decoded);
+      h2hAudioLog('preload ok', { src, seconds: Number(decoded.duration.toFixed(2)) });
       return decoded;
-    } catch {
+    } catch (err) {
+      preloadFailed.add(src);
+      h2hAudioLog('preload FAIL', {
+        src,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return null;
+    } finally {
+      bufferJobs.delete(src);
     }
   })();
   bufferJobs.set(src, job);
   return job;
 }
 
-/** Decode emoji and result samples ahead of the tap so they are not late or noisy. */
-export function warmH2HReactionSounds(): void {
-  prepareH2HEmojiAudio();
-  for (const src of REACTION_SRCS) void ensureSampleBuffer(src);
-}
-
-function gestureIsActive(): boolean {
-  try {
-    return navigator.userActivation?.isActive === true;
-  } catch {
-    return false;
+/**
+ * Create/resume reaction AudioContext and decode all known reaction assets.
+ * Call from a user gesture (Ready / Print / first pointer). Silent — no audible unlock.
+ */
+export function unlockH2HReactionAudio(): void {
+  const audio = getReactionCtx();
+  if (!audio) return;
+  if (reactionMaster) reactionMaster.gain.value = sfxScale();
+  if (audio.state === 'suspended') {
+    void audio.resume().then(() => {
+      h2hAudioLog('context resumed', { state: audio.state });
+    });
+  }
+  if (!preloadStarted) {
+    preloadStarted = true;
+    h2hAudioLog('preload begin', { count: ALL_REACTION_SRCS.length });
+    for (const src of ALL_REACTION_SRCS) void decodeSrc(src);
   }
 }
 
-function playBufferNow(
+/** @deprecated alias — prefer unlockH2HReactionAudio */
+export function prepareH2HEmojiAudio(): void {
+  unlockH2HReactionAudio();
+}
+
+/** @deprecated alias */
+export function warmH2HReactionSounds(): void {
+  unlockH2HReactionAudio();
+}
+
+function releaseVoice(id: number): void {
+  const idx = activeVoices.findIndex((v) => v.id === id);
+  if (idx >= 0) activeVoices.splice(idx, 1);
+}
+
+function stopOldestVoice(): void {
+  const oldest = activeVoices.shift();
+  if (!oldest) return;
+  try {
+    oldest.stop();
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Synchronous one-shot BufferSource start. Must only be called when context is running
+ * and buffer is already decoded. Never schedules future/queued playback.
+ */
+function startBufferNow(
   buf: AudioBuffer,
   volumeScale: number,
-  maxSec?: number,
+  maxSec: number | undefined,
+  meta: { reaction: string; origin: ReactionOrigin; requestedAt: number; preloaded: boolean },
 ): boolean {
-  const audio = getCtx();
-  if (!audio || audio.state !== 'running' || !master) return false;
+  const audio = getReactionCtx();
+  if (!audio || audio.state !== 'running' || !reactionMaster) return false;
+
+  const latency = performance.now() - meta.requestedAt;
+  if (latency > STALE_MS) {
+    h2hAudioLog(`drop ${meta.reaction}`, {
+      reason: 'stale',
+      latencyMs: Math.round(latency),
+      origin: meta.origin,
+    });
+    return false;
+  }
+
+  while (activeVoices.length >= VOICE_CAP) stopOldestVoice();
+
   const gain = audio.createGain();
   gain.gain.value = Math.min(1, Math.max(0, volumeScale));
-  gain.connect(master);
+  gain.connect(reactionMaster);
   const src = audio.createBufferSource();
   src.buffer = buf;
   src.connect(gain);
+
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    try {
+      src.stop(0);
+    } catch {
+      /* ignore */
+    }
+    try {
+      gain.disconnect();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const voiceId = ++voiceSeq;
+  activeVoices.push({ id: voiceId, stop });
+
   try {
     src.start(0);
+    const dur = Math.min(buf.duration, maxSec ?? buf.duration);
+    if (dur > 0 && Number.isFinite(dur)) {
+      src.stop(audio.currentTime + Math.max(0.05, dur));
+    }
   } catch {
-    try { gain.disconnect(); } catch { /* ignore */ }
+    stop();
+    releaseVoice(voiceId);
+    h2hAudioLog(`drop ${meta.reaction}`, { reason: 'start_failed', origin: meta.origin });
     return false;
   }
-  const stopAt = Math.min(buf.duration, maxSec ?? buf.duration);
-  try {
-    src.stop(audio.currentTime + Math.max(0.05, stopAt));
-  } catch {
-    /* already scheduled */
-  }
+
   src.onended = () => {
-    try { gain.disconnect(); } catch { /* ignore */ }
+    stop();
+    releaseVoice(voiceId);
   };
+
+  h2hAudioLog(`start ${meta.reaction}`, {
+    origin: meta.origin,
+    latencyMs: Math.round(latency),
+    context: audio.state,
+    preloaded: meta.preloaded,
+    voices: activeVoices.length,
+  });
   return true;
 }
 
-/** Resume emoji synth during a user gesture (iOS requires this before delayed SFX). */
-export function prepareH2HEmojiAudio(): void {
-  const audio = getCtx();
-  if (!audio) return;
-  if (master) master.gain.value = sfxScale();
-  if (audio.state === 'suspended') void audio.resume();
+/**
+ * Play a pre-decoded buffer immediately, or after a gesture-bound resume if needed.
+ * If resume takes too long → DROP. If buffer missing → DROP (kick preload, never late-play).
+ */
+function playDecodedReaction(
+  src: string,
+  reaction: string,
+  origin: ReactionOrigin,
+  volumeScale: number,
+  maxSec?: number,
+): void {
+  const requestedAt = performance.now();
+  const audio = getReactionCtx();
+  if (!audio || volumeScale <= 0) return;
+
+  const buf = buffers.get(src);
+  if (!buf) {
+    h2hAudioLog(`drop ${reaction}`, {
+      reason: 'not_preloaded',
+      src,
+      origin,
+      failed: preloadFailed.has(src),
+    });
+    // Warm for a later tap — do NOT play when decode finishes.
+    void decodeSrc(src);
+    unlockH2HReactionAudio();
+    return;
+  }
+
+  const meta = { reaction, origin, requestedAt, preloaded: true };
+
+  if (audio.state === 'running') {
+    startBufferNow(buf, volumeScale, maxSec, meta);
+    return;
+  }
+
+  // Resume from this call stack when possible (must be user-gesture for iOS).
+  void audio
+    .resume()
+    .then(() => {
+      startBufferNow(buf, volumeScale, maxSec, meta);
+    })
+    .catch(() => {
+      h2hAudioLog(`drop ${reaction}`, { reason: 'resume_failed', origin });
+    });
 }
 
 function runWhenAudioReady(fn: (audio: AudioContext) => void): void {
-  prepareH2HEmojiAudio();
-  const audio = getCtx();
+  unlockH2HReactionAudio();
+  const audio = getReactionCtx();
   if (!audio) return;
   if (audio.state === 'running') {
     fn(audio);
@@ -152,7 +341,7 @@ function runWhenAudioReady(fn: (audio: AudioContext) => void): void {
   void audio
     .resume()
     .then(() => {
-      const ready = getCtx();
+      const ready = getReactionCtx();
       if (ready?.state === 'running') fn(ready);
     })
     .catch(() => {
@@ -161,8 +350,8 @@ function runWhenAudioReady(fn: (audio: AudioContext) => void): void {
 }
 
 function scheduleTrophyChime(startAt: number, scale: number, noteGain = TROPHY_EMOJI_GAIN): void {
-  const audio = getCtx();
-  if (!audio || !master || scale <= 0 || audio.state !== 'running') return;
+  const audio = getReactionCtx();
+  if (!audio || !reactionMaster || scale <= 0 || audio.state !== 'running') return;
 
   TROPHY_FREQS.forEach((freq, i) => {
     const t0 = startAt + i * TROPHY_NOTE_GAP;
@@ -176,85 +365,24 @@ function scheduleTrophyChime(startAt: number, scale: number, noteGain = TROPHY_E
     amp.gain.setValueAtTime(peak, t0 + 0.048);
     amp.gain.exponentialRampToValueAtTime(0.001, t0 + 0.17);
     osc.connect(amp);
-    amp.connect(master);
+    amp.connect(reactionMaster!);
     osc.start(t0);
     osc.stop(t0 + 0.22);
   });
 }
 
-function playWarmedElement(src: string, volumeScale: number, maxSec?: number): boolean {
-  let el = cache.get(src);
-  if (!el) {
-    el = new Audio(src);
-    el.preload = 'auto';
-    cache.set(src, el);
-  }
-  if (!el.paused) {
+/** Stop reaction voices only — never touches wheel/game audio. */
+export function stopH2HReactionSounds(): void {
+  while (activeVoices.length > 0) {
+    const v = activeVoices.shift();
     try {
-      el.pause();
+      v?.stop();
     } catch {
       /* ignore */
     }
   }
-  if (el.readyState >= 1) {
-    try {
-      el.currentTime = 0;
-    } catch {
-      /* not seekable yet */
-    }
-  }
-  el.volume = Math.min(1, Math.max(0, volumeScale));
-  const result = el.play();
-  if (maxSec != null && maxSec > 0) {
-    window.setTimeout(() => {
-      if (cache.get(src) !== el) return;
-      try {
-        el.pause();
-      } catch {
-        /* ignore */
-      }
-    }, maxSec * 1000);
-  }
-  if (result && typeof result.catch === 'function') {
-    result.catch(() => {
-      /* blocked outside a tap */
-    });
-  }
-  return true;
 }
 
-/**
- * Play a decoded buffer when the context is already running so iPhone doesn't
- * re-download a clone (that was the 1–2s late, scratchy emoji tap).
- */
-function playSample(src: string, volumeScale: number, maxSec?: number): void {
-  if (typeof window === 'undefined' || volumeScale <= 0) return;
-  prepareH2HEmojiAudio();
-  const audio = getCtx();
-  const ready = buffers.get(src);
-  if (ready && audio?.state === 'running' && playBufferNow(ready, volumeScale, maxSec)) {
-    return;
-  }
-
-  const gesture = gestureIsActive();
-  if (gesture) playWarmedElement(src, volumeScale, maxSec);
-
-  void ensureSampleBuffer(src).then(async (buf) => {
-    if (!buf || gesture) return;
-    const ctxNow = getCtx();
-    if (!ctxNow) return;
-    if (ctxNow.state === 'suspended') {
-      try {
-        await ctxNow.resume();
-      } catch {
-        return;
-      }
-    }
-    if (ctxNow.state === 'running') playBufferNow(buf, volumeScale, maxSec);
-  });
-}
-
-/** Trophy chime when a player locks into a roster slot (synthesized, not MP3). */
 export function playPlayerSlotSound(): void {
   const scale = sfxScale();
   if (scale <= 0) return;
@@ -263,7 +391,6 @@ export function playPlayerSlotSound(): void {
   });
 }
 
-/** Schedule trophy chime on the audio clock (call from the tap handler before slam animation). */
 export function schedulePlayerSlotSound(delayMs = 400): void {
   const scale = sfxScale();
   if (scale <= 0) return;
@@ -272,47 +399,86 @@ export function schedulePlayerSlotSound(delayMs = 400): void {
   });
 }
 
-export function playEmojiTapSound(emoji: string): void {
+/**
+ * LOCAL reaction — call directly from the pointer handler.
+ * Never waits on network / React state / HTMLAudio.
+ */
+export function playEmojiTapSound(emoji: string, origin: ReactionOrigin = 'local'): void {
   const scale = sfxScale();
-  if (scale <= 0) return;
+  const label = emojiLabel(emoji);
+  h2hAudioLog(`tap ${label}`, { origin, emoji });
+
+  if (scale <= 0) {
+    h2hAudioLog(`drop ${label}`, { reason: 'muted', origin });
+    return;
+  }
+
   const src = EMOJI_SRC[emoji] ?? EMOJI_SRC['🔥'];
-  if (!src) return;
-  playSample(src, scale, EMOJI_MAX_SEC[emoji] ?? EMOJI_MAX_SEC_DEFAULT);
+  if (!src) {
+    h2hAudioLog(`drop ${label}`, { reason: 'unknown_emoji', origin });
+    return;
+  }
+
+  if (origin === 'local') {
+    const now = performance.now();
+    const last = lastEmojiAudioAt.get(emoji) ?? 0;
+    if (now - last < SAME_EMOJI_MS) {
+      h2hAudioLog(`drop ${label}`, { reason: 'same_emoji_throttle', origin });
+      return;
+    }
+    lastEmojiAudioAt.set(emoji, now);
+  }
+
+  // Keep context warm on every tap (covers iOS background suspend).
+  unlockH2HReactionAudio();
+  playDecodedReaction(src, label, origin, scale, EMOJI_MAX_SEC[emoji]);
+}
+
+/** Opponent reaction — same engine, never delayed queue. */
+export function playRemoteEmojiSound(emoji: string): void {
+  playEmojiTapSound(emoji, 'remote');
 }
 
 export function playH2HVictorySound(): void {
   const scale = sfxScale();
   if (scale <= 0) return;
-  playSample(VICTORY_SRC, scale * 0.95, RESULT_MAX_SEC);
+  unlockH2HReactionAudio();
+  playDecodedReaction(VICTORY_SRC, 'victory', 'local', scale * 0.95, RESULT_MAX_SEC);
 }
 
-/** Short bright ping when you win a position round — not the full match victory sting. */
 export function playH2HRoundWinSound(): void {
-  prepareH2HEmojiAudio();
-  const audio = getCtx();
+  unlockH2HReactionAudio();
+  const audio = getReactionCtx();
   const scale = sfxScale();
-  if (!audio || scale <= 0) return;
+  if (!audio || scale <= 0 || !reactionMaster) return;
 
-  const freqs = [523, 784] as const;
-  freqs.forEach((freq, i) => {
-    const t0 = audio.currentTime + i * 0.055;
-    const osc = audio.createOscillator();
-    const amp = audio.createGain();
-    const peak = 0.11 * scale;
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-    amp.gain.setValueAtTime(0, t0);
-    amp.gain.linearRampToValueAtTime(peak, t0 + 0.006);
-    amp.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
-    osc.connect(amp);
-    amp.connect(master!);
-    osc.start(t0);
-    osc.stop(t0 + 0.16);
-  });
+  const start = () => {
+    if (audio.state !== 'running' || !reactionMaster) return;
+    const freqs = [523, 784] as const;
+    freqs.forEach((freq, i) => {
+      const t0 = audio.currentTime + i * 0.055;
+      const osc = audio.createOscillator();
+      const amp = audio.createGain();
+      const peak = 0.11 * scale;
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      amp.gain.setValueAtTime(0, t0);
+      amp.gain.linearRampToValueAtTime(peak, t0 + 0.006);
+      amp.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
+      osc.connect(amp);
+      amp.connect(reactionMaster!);
+      osc.start(t0);
+      osc.stop(t0 + 0.16);
+    });
+  };
+
+  if (audio.state === 'running') start();
+  else void audio.resume().then(start).catch(() => {});
 }
 
 export function playH2HDefeatSound(): void {
   const scale = sfxScale();
   if (scale <= 0) return;
-  playSample(DEFEAT_SRC, scale * 0.9, RESULT_MAX_SEC);
+  unlockH2HReactionAudio();
+  playDecodedReaction(DEFEAT_SRC, 'defeat', 'local', scale * 0.9, RESULT_MAX_SEC);
 }

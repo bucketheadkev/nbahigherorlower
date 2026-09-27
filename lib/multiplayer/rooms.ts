@@ -186,14 +186,22 @@ export async function leaveRoom(roomId: string): Promise<void> {
   if (error) throw mapRoomRpcError(error);
 }
 
-export async function setPlayerReady(roomId: string, ready: boolean): Promise<void> {
+export async function setPlayerReady(
+  roomId: string,
+  ready: boolean,
+): Promise<{ started: boolean; is_ready: boolean }> {
   await ensureAnonymousSession();
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.rpc('set_player_ready', {
+  const { data, error } = await supabase.rpc('set_player_ready', {
     room_id: roomId,
     ready,
   });
   if (error) throw mapRoomRpcError(error);
+  const row = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  return {
+    started: Boolean(row.started),
+    is_ready: ready ? Boolean(row.is_ready ?? true) : Boolean(row.is_ready ?? false),
+  };
 }
 
 export async function startRoom(roomId: string): Promise<StartRoomResult> {
@@ -302,21 +310,45 @@ export async function fetchH2HState(roomId: string): Promise<H2HMatchState> {
   return parseH2HState(data);
 }
 
+export interface LockH2HPickResult {
+  locked: boolean;
+  waiting?: boolean;
+  finished?: boolean;
+  resolved?: boolean;
+  position?: string;
+  my_count?: number;
+  opp_count?: number;
+  p1_total?: number;
+  p2_total?: number;
+}
+
 export async function lockH2HPick(
   roomId: string,
   position: H2HPosition,
   selection: H2HPickSelection,
   rawValue: number,
-): Promise<void> {
+): Promise<LockH2HPickResult> {
   await ensureAnonymousSession();
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.rpc('lock_h2h_pick', {
+  const { data, error } = await supabase.rpc('lock_h2h_pick', {
     room_id: roomId,
     player_position: position,
     selection,
     raw_value: Math.round(rawValue),
   });
   if (error) throw mapRoomRpcError(error);
+  const row = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  return {
+    locked: Boolean(row.locked ?? true),
+    waiting: row.waiting != null ? Boolean(row.waiting) : undefined,
+    finished: row.finished != null ? Boolean(row.finished) : undefined,
+    resolved: row.resolved != null ? Boolean(row.resolved) : undefined,
+    position: row.position != null ? String(row.position) : undefined,
+    my_count: row.my_count != null ? Math.round(Number(row.my_count)) : undefined,
+    opp_count: row.opp_count != null ? Math.round(Number(row.opp_count)) : undefined,
+    p1_total: row.p1_total != null ? Math.round(Number(row.p1_total)) : undefined,
+    p2_total: row.p2_total != null ? Math.round(Number(row.p2_total)) : undefined,
+  };
 }
 
 export async function moveH2HPick(

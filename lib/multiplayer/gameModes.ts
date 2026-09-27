@@ -2,8 +2,8 @@
  * 1V1 game-mode catalog — single source of truth for mode metadata.
  * Classic single-player is unrelated and must not import this for gating.
  *
- * This release ships free Classic 1V1 only. Other mode ids remain parseable
- * for older room payloads but are not hostable and have no IAP / purchase path.
+ * Shared 1B Run visual identity applies to every mode; mode ids stay stable
+ * for rooms/invites (`classic` = Standard 1v1 in the UI).
  */
 
 export type H2HGameMode = 'classic' | 'bounty' | 'tradeUp' | 'knockout';
@@ -16,6 +16,8 @@ export interface H2HModeDefinition {
   accent: string;
   /** Visible in catalog metadata only; not selectable. */
   comingSoon?: boolean;
+  /** Hostable only inside the native Capacitor app (not 1brun.com). */
+  nativeOnly?: boolean;
 }
 
 /** Tunable Trade Up attempt count — change here only. */
@@ -27,13 +29,25 @@ export const TRADE_UP_STARTER_MAX_DOLLARS = 25_000_000;
 /** Knockout first-to-N position wins. */
 export const KNOCKOUT_WINS_TO_FINISH = 3;
 
+/** Bounty multipliers — equal weight; server is authoritative. */
+export const BOUNTY_MULTIPLIERS = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+export type BountyMultiplier = (typeof BOUNTY_MULTIPLIERS)[number];
+
 export const H2H_MODE_DEFS: readonly H2HModeDefinition[] = [
   {
     id: 'classic',
-    title: 'CLASSIC',
+    title: 'STANDARD',
     tagline: 'Build your five. Higher total value wins.',
     free: true,
     accent: '#29e490',
+  },
+  {
+    id: 'bounty',
+    title: 'BOUNTY',
+    tagline: 'One position. One multiplier. Same for both.',
+    free: true,
+    accent: '#2ad4a8',
+    nativeOnly: true,
   },
   {
     id: 'knockout',
@@ -41,14 +55,6 @@ export const H2H_MODE_DEFS: readonly H2HModeDefinition[] = [
     tagline: 'Coming soon',
     free: true,
     accent: '#ff6a00',
-    comingSoon: true,
-  },
-  {
-    id: 'bounty',
-    title: 'BOUNTY',
-    tagline: 'Coming soon',
-    free: true,
-    accent: '#5b8cff',
     comingSoon: true,
   },
   {
@@ -61,9 +67,19 @@ export const H2H_MODE_DEFS: readonly H2HModeDefinition[] = [
   },
 ] as const;
 
-/** Modes hosts can pick today (excludes coming-soon placeholders). */
-export function hostableH2HModes(): H2HModeDefinition[] {
-  return H2H_MODE_DEFS.filter((m) => !m.comingSoon);
+export interface HostableH2HModesOptions {
+  /** When true, include nativeOnly modes (Bounty). Default false. */
+  native?: boolean;
+}
+
+/** Modes hosts can pick today (excludes coming-soon; respects native gate). */
+export function hostableH2HModes(opts: HostableH2HModesOptions = {}): H2HModeDefinition[] {
+  const native = Boolean(opts.native);
+  return H2H_MODE_DEFS.filter((m) => {
+    if (m.comingSoon) return false;
+    if (m.nativeOnly && !native) return false;
+    return true;
+  });
 }
 
 export function modeDef(id: H2HGameMode): H2HModeDefinition {
@@ -77,4 +93,9 @@ export function isH2HGameMode(value: unknown): value is H2HGameMode {
     value === 'tradeUp' ||
     value === 'knockout'
   );
+}
+
+export function isBountyMultiplier(value: unknown): value is BountyMultiplier {
+  const n = typeof value === 'number' ? value : Number(value);
+  return BOUNTY_MULTIPLIERS.includes(n as BountyMultiplier);
 }

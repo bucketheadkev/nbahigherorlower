@@ -5809,6 +5809,267 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   opacity: 0.8;
 }
 
+/* —— Bounty reveal (same 1B Run chrome) —— */
+.h2h-bounty-reveal {
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 1.25rem)
+    var(--page-pad-x, 1.15rem)
+    calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  color: var(--oneb-white, #f7f9fb);
+}
+
+.h2h-bounty-reveal__kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--oneb-teal, #2ad4a8);
+}
+
+.h2h-bounty-reveal__headline {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: clamp(1.65rem, 7.5vw, 2.35rem);
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--oneb-white, #f7f9fb);
+  animation: h2h-bounty-pop 0.55s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.h2h-bounty-reveal__headline--mult {
+  font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+  letter-spacing: 0.12em;
+  color: rgba(247, 249, 251, 0.88);
+}
+
+/* Hero multiplier — dominates the reveal center */
+.h2h-bounty-reveal__headline--mult.is-revealed {
+  font-size: clamp(4.2rem, 22vw, 7.25rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+  color: var(--oneb-teal, #2ad4a8);
+  text-shadow: 0 0 36px rgba(42, 212, 168, 0.32);
+  transform-origin: center;
+}
+
+.h2h-bounty-reveal.is-high-mult .h2h-bounty-reveal__headline--mult.is-revealed {
+  font-size: clamp(4.8rem, 26vw, 8.25rem);
+  text-shadow:
+    0 0 42px rgba(42, 212, 168, 0.4),
+    0 0 2px rgba(74, 168, 255, 0.35);
+  animation: h2h-bounty-impact 0.75s cubic-bezier(0.15, 0.9, 0.2, 1) both;
+}
+
+.h2h-bounty-reveal__pos-chip {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(42, 212, 168, 0.45);
+  background: rgba(2, 20, 48, 0.55);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--oneb-teal, #2ad4a8);
+}
+
+.h2h-bounty-reveal__players {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.h2h-bounty-reveal__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 0.7rem;
+  border-radius: 1rem;
+  border: 1.5px solid rgba(42, 212, 168, 0.35);
+  background:
+    linear-gradient(180deg, rgba(20, 32, 52, 0.92) 0%, rgba(8, 14, 28, 0.96) 100%);
+}
+
+.h2h-bounty-reveal__card.is-bounty {
+  box-shadow: 0 0 0 1px rgba(42, 212, 168, 0.2), 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.h2h-bounty-reveal__card-label {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oneb-silver-dim, rgba(197, 206, 216, 0.7));
+}
+
+.h2h-bounty-reveal__card-name {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+
+.h2h-bounty-reveal__card-value {
+  margin: 0.15rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.h2h-bounty-reveal__card-value strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--oneb-teal, #2ad4a8);
+}
+
+.h2h-bounty-reveal__card.is-transformed .h2h-bounty-reveal__card-raw {
+  font-size: 0.78rem;
+  color: rgba(197, 206, 216, 0.55);
+  text-decoration: line-through;
+}
+
+.h2h-bounty-reveal__card-mult {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--oneb-teal, #2ad4a8);
+}
+
+.h2h-bounty-reveal__totals {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+
+.h2h-bounty-reveal__total-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(42, 212, 168, 0.28);
+  background: rgba(2, 16, 40, 0.72);
+  animation: h2h-bounty-pop 0.45s ease-out both;
+}
+
+.h2h-bounty-reveal__total-pill span {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--oneb-silver, #c5ced8);
+}
+
+.h2h-bounty-reveal__total-pill strong {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--oneb-white, #f7f9fb);
+}
+
+.h2h-bounty-reveal__total-from {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(197, 206, 216, 0.5);
+  text-decoration: line-through;
+}
+
+.h2h-bounty-reveal__total-to {
+  color: var(--oneb-teal, #2ad4a8);
+}
+
+.h2h-bounty-reveal__explain {
+  margin: 0.35rem 0 0;
+  max-width: 22rem;
+  font-size: clamp(0.95rem, 3.6vw, 1.12rem);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: rgba(247, 249, 251, 0.92);
+  animation: h2h-bounty-pop 0.45s ease-out both;
+}
+
+.h2h-sd__bounty-tag {
+  margin: -0.15rem 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--oneb-teal, #2ad4a8);
+  text-align: center;
+}
+
+.h2h-sd__bounty-chip {
+  display: block;
+  margin: 0.15rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  opacity: 0.92;
+}
+
+.h2h-sd__match.is-bounty-boost .h2h-sd__card-value {
+  transform: scale(1.06);
+  transition: transform 0.35s ease;
+}
+
+@keyframes h2h-bounty-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes h2h-bounty-impact {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .h2h-bounty-reveal__headline,
+  .h2h-bounty-reveal.is-high-mult .h2h-bounty-reveal__headline--mult.is-revealed,
+  .h2h-bounty-reveal__total-pill {
+    animation: none;
+  }
+}
+
 .h2h-modes__restore,
 .h2h-modes__dev-reset {
   appearance: none;

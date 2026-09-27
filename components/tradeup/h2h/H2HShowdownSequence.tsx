@@ -20,6 +20,7 @@ import { hapticLight, hapticSuccess } from '@/lib/tradeup/haptics';
 import { useLocale } from '@/hooks/useLocale';
 import { GameBackground } from '../game/GameBackground';
 import { H2HEmojiReactions } from './H2HEmojiReactions';
+import { h2hDebug } from '@/lib/multiplayer/h2hDebug';
 
 const COUNT_MS = 2400;
 /** $0 fades in for this long, then both cards count up together. */
@@ -27,7 +28,7 @@ const VALUE_REVEAL_MS = 750;
 const FEED_FLOAT_MS = 780;
 const TOTAL_RISE_MS = 1400;
 
-type ShowdownPhase = 'counting' | 'feeding' | 'settled';
+type ShowdownPhase = 'counting' | 'bountyBoost' | 'feeding' | 'settled';
 
 interface H2HShowdownSequenceProps {
   roomId: string;
@@ -38,8 +39,9 @@ interface H2HShowdownSequenceProps {
   isHost: boolean;
   showdown: ShowdownCursor;
   onSynced: () => Promise<void>;
-  /** When set, that slot's shown value is doubled so the running total matches the five cards. */
+  /** When set with multiplier, that slot's shown value is scaled for running totals. */
   bountyPosition?: H2HPosition | null;
+  bountyMultiplier?: number;
   /** Running score from settled rounds (defaults to summed raw values). */
   scoreFormatter?: (rounds: H2HRoundPublic[]) => { p1: number; p2: number };
   formatScore?: (value: number) => string;
@@ -54,19 +56,28 @@ function roundValue(
   round: H2HRoundPublic,
   side: 'p1' | 'p2',
   bountyPosition: H2HPosition | null = null,
+  bountyMultiplier = 1,
 ) {
   const raw =
     side === 'p1'
       ? Math.round(round.p1_raw_value ?? round.p1_adjusted_value ?? 0)
       : Math.round(round.p2_raw_value ?? round.p2_adjusted_value ?? 0);
-  return bountyPosition && round.position === bountyPosition ? raw * 2 : raw;
+  const mult =
+    bountyPosition && round.position === bountyPosition
+      ? Math.max(1, Math.round(bountyMultiplier))
+      : 1;
+  return raw * mult;
 }
 
-function defaultTotals(settled: H2HRoundPublic[], bountyPosition: H2HPosition | null) {
+function defaultTotals(
+  settled: H2HRoundPublic[],
+  bountyPosition: H2HPosition | null,
+  bountyMultiplier = 1,
+) {
   return settled.reduce(
     (acc, r) => ({
-      p1: acc.p1 + roundValue(r, 'p1', bountyPosition),
-      p2: acc.p2 + roundValue(r, 'p2', bountyPosition),
+      p1: acc.p1 + roundValue(r, 'p1', bountyPosition, bountyMultiplier),
+      p2: acc.p2 + roundValue(r, 'p2', bountyPosition, bountyMultiplier),
     }),
     { p1: 0, p2: 0 },
   );
@@ -76,9 +87,12 @@ function sideTotals(
   rounds: H2HRoundPublic[],
   iAmP1: boolean,
   bountyPosition: H2HPosition | null,
+  bountyMultiplier: number,
   scoreFormatter?: (rounds: H2HRoundPublic[]) => { p1: number; p2: number },
 ) {
-  const raw = scoreFormatter ? scoreFormatter(rounds) : defaultTotals(rounds, bountyPosition);
+  const raw = scoreFormatter
+    ? scoreFormatter(rounds)
+    : defaultTotals(rounds, bountyPosition, bountyMultiplier);
   return {
     mine: iAmP1 ? raw.p1 : raw.p2,
     opp: iAmP1 ? raw.p2 : raw.p1,
@@ -86,17 +100,13 @@ function sideTotals(
 }
 
 /**
- * Count-up display: always climb in whole millions ($0M → $1M → … → $179M)
- * so formatDollars quirks never make the number look like it jumped backward.
+ * Count-up display: whole millions only ($0M → $1M → … → $1,683M).
+ * Never shows decimal billions.
  */
 function formatCountUpDollars(value: number, target: number, settled: boolean): string {
   if (settled) return formatDollars(target);
-  if (target >= 1_000_000_000) {
-    const b = Math.floor(Math.max(0, value) / 10_000_000) / 100;
-    return `$${b.toFixed(2)}B`;
-  }
   const m = Math.floor(Math.max(0, value) / 1_000_000);
-  return `$${m}M`;
+  return `$${m.toLocaleString('en-US')}M`;
 }
 
 /**
@@ -113,6 +123,7 @@ export function H2HShowdownSequence({
   showdown,
   onSynced,
   bountyPosition = null,
+  bountyMultiplier = 1,
   scoreFormatter,
   formatScore,
   onComplete,
@@ -154,26 +165,46 @@ export function H2HShowdownSequence({
   const isLast = index >= orderedRounds.length - 1;
   const iAmP1 = myPlayerNumber === 1;
   const positionKey = (round?.position as H2HPosition | undefined) ?? '';
-  const leftTarget = round
+  const isBountyRound = Boolean(
+    bountyPosition && bountyMultiplier > 1 && round?.position === bountyPosition,
+  );
+
+  const leftRaw = round
     ? iAmP1
-      ? roundValue(round, 'p1', bountyPosition)
-      : roundValue(round, 'p2', bountyPosition)
+      ? roundValue(round, 'p1', null, 1)
+      : roundValue(round, 'p2', null, 1)
     : 0;
-  const rightTarget = round
+  const rightRaw = round
     ? iAmP1
-      ? roundValue(round, 'p2', bountyPosition)
-      : roundValue(round, 'p1', bountyPosition)
+      ? roundValue(round, 'p2', null, 1)
+      : roundValue(round, 'p1', null, 1)
     : 0;
+  const leftBoosted = round
+    ? iAmP1
+      ? roundValue(round, 'p1', bountyPosition, bountyMultiplier)
+      : roundValue(round, 'p2', bountyPosition, bountyMultiplier)
+    : 0;
+  const rightBoosted = round
+    ? iAmP1
+      ? roundValue(round, 'p2', bountyPosition, bountyMultiplier)
+      : roundValue(round, 'p1', bountyPosition, bountyMultiplier)
+    : 0;
+
+  // Count to base values first; bounty boost applies after cards settle.
+  const leftTarget = isBountyRound ? leftRaw : leftBoosted;
+  const rightTarget = isBountyRound ? rightRaw : rightBoosted;
+  const leftFinal = leftBoosted;
+  const rightFinal = rightBoosted;
 
   // Totals before this position (Center never adds on this screen).
   const priorTotals = useMemo(
-    () => sideTotals(orderedRounds.slice(0, index), iAmP1, bountyPosition, scoreFormatter),
-    [bountyPosition, iAmP1, index, orderedRounds, scoreFormatter],
+    () => sideTotals(orderedRounds.slice(0, index), iAmP1, bountyPosition, bountyMultiplier, scoreFormatter),
+    [bountyMultiplier, bountyPosition, iAmP1, index, orderedRounds, scoreFormatter],
   );
   const afterTotals = useMemo(() => {
     if (isLast) return priorTotals;
-    return sideTotals(orderedRounds.slice(0, index + 1), iAmP1, bountyPosition, scoreFormatter);
-  }, [bountyPosition, iAmP1, index, isLast, orderedRounds, priorTotals, scoreFormatter]);
+    return sideTotals(orderedRounds.slice(0, index + 1), iAmP1, bountyPosition, bountyMultiplier, scoreFormatter);
+  }, [bountyMultiplier, bountyPosition, iAmP1, index, isLast, orderedRounds, priorTotals, scoreFormatter]);
 
   // Snap top totals to prior when entering a position.
   useEffect(() => {
@@ -302,27 +333,51 @@ export function H2HShowdownSequence({
   const handleHostStart = useCallback(() => {
     if (!isHost || live.started || pendingRef.current) return;
     hapticLight();
+    h2hDebug('showdown.hostStart', { roomId });
     void commitCursor({ started: true, index: 0, finished: false });
-  }, [commitCursor, isHost, live.started]);
+  }, [commitCursor, isHost, live.started, roomId]);
+
+  // Auto-start showdown as soon as both lineups are finished — no dead gate screen.
+  // Host writes the cursor; guest follows via Realtime / broadcast / reconcile.
+  const autoStartRef = useRef(false);
+  useEffect(() => {
+    if (autoStartRef.current) return;
+    if (!isHost || live.started || pendingRef.current) return;
+    if (orderedRounds.length < 5) return;
+    autoStartRef.current = true;
+    h2hDebug('showdown.autoStart', { roomId, rounds: orderedRounds.length });
+    void commitCursor({ started: true, index: 0, finished: false });
+  }, [commitCursor, isHost, live.started, orderedRounds.length, roomId]);
 
   const advance = useCallback(() => {
     if (!isHost || pendingRef.current || phase !== 'settled' || !live.started) return;
     hapticLight();
+    h2hDebug('showdown.advance', {
+      roomId,
+      index: live.index,
+      finished: isLast,
+    });
     if (isLast) {
       void commitCursor({ started: true, index: live.index, finished: true });
       return;
     }
     void commitCursor({ started: true, index: live.index + 1, finished: false });
-  }, [commitCursor, isHost, isLast, live.index, live.started, phase]);
+  }, [commitCursor, isHost, isLast, live.index, live.started, phase, roomId]);
 
-  // Dual card count-up — then feed into top totals (except Center).
+  // Dual card count-up — then optional bounty boost — then feed into top totals.
   useEffect(() => {
     if (!started || !positionKey || phase !== 'counting') return;
 
     if (reduceMotion) {
-      setLeftShown(leftTarget);
-      setRightShown(rightTarget);
-      setPhase(isLast ? 'settled' : 'feeding');
+      if (isBountyRound) {
+        setLeftShown(leftRaw);
+        setRightShown(rightRaw);
+        setPhase('bountyBoost');
+      } else {
+        setLeftShown(leftTarget);
+        setRightShown(rightTarget);
+        setPhase(isLast ? 'settled' : 'feeding');
+      }
       return;
     }
 
@@ -349,8 +404,12 @@ export function H2HShowdownSequence({
         if (signal.cancelled) return;
         setLeftShown(leftTarget);
         setRightShown(rightTarget);
-        // Center: no feed / no top-total update until See Results.
-        setPhase(isLast ? 'settled' : 'feeding');
+        if (isBountyRound) {
+          h2hDebug('showdown.bountyBoost', { position: positionKey, mult: bountyMultiplier });
+          setPhase('bountyBoost');
+        } else {
+          setPhase(isLast ? 'settled' : 'feeding');
+        }
       });
     }, VALUE_REVEAL_MS);
 
@@ -359,7 +418,70 @@ export function H2HShowdownSequence({
       window.cancelAnimationFrame(revealFrame);
       window.clearTimeout(countTimer);
     };
-  }, [isLast, leftTarget, phase, positionKey, reduceMotion, rightTarget, started]);
+  }, [
+    bountyMultiplier,
+    isBountyRound,
+    isLast,
+    leftRaw,
+    leftTarget,
+    phase,
+    positionKey,
+    reduceMotion,
+    rightRaw,
+    rightTarget,
+    started,
+  ]);
+
+  // Bounty: animate base → multiplied after cards are visible.
+  useEffect(() => {
+    if (!started || phase !== 'bountyBoost') return;
+
+    if (reduceMotion) {
+      setLeftShown(leftFinal);
+      setRightShown(rightFinal);
+      setPhase(isLast ? 'settled' : 'feeding');
+      return;
+    }
+
+    const signal = { cancelled: false };
+    const fromLeft = leftRaw;
+    const fromRight = rightRaw;
+    let lastLeft = fromLeft;
+    let lastRight = fromRight;
+    const hold = { id: 0 };
+
+    // Animate base → multiplied, then hold so the whole-million payoff registers.
+    void animateProgress(900, easeOutCubic, (e) => {
+      const nextLeft = Math.round(fromLeft + (leftFinal - fromLeft) * e);
+      const nextRight = Math.round(fromRight + (rightFinal - fromRight) * e);
+      lastLeft = Math.max(lastLeft, nextLeft);
+      lastRight = Math.max(lastRight, nextRight);
+      setLeftShown(lastLeft);
+      setRightShown(lastRight);
+    }, signal).then(() => {
+      if (signal.cancelled) return;
+      setLeftShown(leftFinal);
+      setRightShown(rightFinal);
+      hold.id = window.setTimeout(() => {
+        if (signal.cancelled) return;
+        setPhase(isLast ? 'settled' : 'feeding');
+      }, 1300);
+    });
+
+    return () => {
+      signal.cancelled = true;
+      if (hold.id) window.clearTimeout(hold.id);
+    };
+  }, [
+    isLast,
+    leftFinal,
+    leftRaw,
+    phase,
+    reduceMotion,
+    rightFinal,
+    rightRaw,
+    started,
+  ]);
 
   // Feed float → top totals rise (PG–PF only).
   useEffect(() => {
@@ -434,16 +556,22 @@ export function H2HShowdownSequence({
           </p>
           <p className="h2h-gate__span">PG → C</p>
           {isHost ? (
-            <button
-              type="button"
-              className="run-btn run-btn--primary h2h-lobby__submit h2h-gate__start"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                handleHostStart();
-              }}
-            >
-              <strong>{t('h2h.startShowdown')}</strong>
-            </button>
+            syncError ? (
+              <button
+                type="button"
+                className="run-btn run-btn--primary h2h-lobby__submit h2h-gate__start"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  handleHostStart();
+                }}
+              >
+                <strong>{t('h2h.startShowdown')}</strong>
+              </button>
+            ) : (
+              <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
+                Starting showdown…
+              </p>
+            )
           ) : (
             <p className="h2h-lobby__waiting h2h-lobby__waiting--ready" role="status">
               {t('h2h.waitingShowdown')}
@@ -478,25 +606,27 @@ export function H2HShowdownSequence({
           ? 'right'
           : 'left';
 
-  const cardsSettled = phase !== 'counting';
+  const cardsSettled = phase === 'settled' || phase === 'feeding';
   const canAdvance = phase === 'settled';
   const showFeed = phase === 'feeding' && !isLast;
 
   const announcer =
-    !cardsSettled
-      ? null
-      : round.matchup_winner === 'tie'
-        ? t('h2h.tiePosition', { position: positionLabel })
-        : t('h2h.winsPosition', {
-            name:
-              round.matchup_winner === 'p1'
-                ? displayName(p1Name)
-                : displayName(p2Name),
-            position: positionLabel.toLowerCase(),
-          });
+    phase === 'bountyBoost' && isBountyRound
+      ? `${bountyMultiplier}× BOUNTY`
+      : !cardsSettled
+        ? null
+        : round.matchup_winner === 'tie'
+          ? t('h2h.tiePosition', { position: positionLabel })
+          : t('h2h.winsPosition', {
+              name:
+                round.matchup_winner === 'p1'
+                  ? displayName(p1Name)
+                  : displayName(p2Name),
+              position: positionLabel.toLowerCase(),
+            });
 
   const iWonRound =
-    cardsSettled &&
+    phase === 'settled' &&
     ((iAmP1 && round.matchup_winner === 'p1') ||
       (!iAmP1 && round.matchup_winner === 'p2'));
 
@@ -528,11 +658,13 @@ export function H2HShowdownSequence({
       rightSel={rightSel}
       leftShown={leftShown}
       rightShown={rightShown}
-      leftTarget={leftTarget}
-      rightTarget={rightTarget}
-      valuesVisible={valuesVisible || cardsSettled}
+      leftTarget={phase === 'bountyBoost' || phase === 'feeding' || phase === 'settled' ? leftFinal : leftTarget}
+      rightTarget={phase === 'bountyBoost' || phase === 'feeding' || phase === 'settled' ? rightFinal : rightTarget}
+      valuesVisible={valuesVisible || cardsSettled || phase === 'bountyBoost'}
       settled={cardsSettled}
       feeding={showFeed}
+      bountyBoosting={phase === 'bountyBoost'}
+      bountyMultiplier={isBountyRound ? bountyMultiplier : null}
       canAdvance={canAdvance}
       winnerSide={winnerSide}
       announcer={announcer}
@@ -573,6 +705,8 @@ function ShowdownRoundView({
   valuesVisible,
   settled,
   feeding,
+  bountyBoosting = false,
+  bountyMultiplier = null,
   canAdvance,
   winnerSide,
   announcer,
@@ -601,6 +735,8 @@ function ShowdownRoundView({
   valuesVisible: boolean;
   settled: boolean;
   feeding: boolean;
+  bountyBoosting?: boolean;
+  bountyMultiplier?: number | null;
   canAdvance: boolean;
   winnerSide: 'left' | 'right' | null;
   announcer: string | null;
@@ -644,8 +780,13 @@ function ShowdownRoundView({
         </header>
 
         <p className="h2h-sd__pos">{position}</p>
+        {bountyMultiplier && bountyMultiplier > 1 ? (
+          <p className="h2h-sd__bounty-tag" aria-label="Bounty matchup">
+            {bountyBoosting ? `${bountyMultiplier}× BOUNTY` : `BOUNTY · ${bountyMultiplier}×`}
+          </p>
+        ) : null}
 
-        <div className={`h2h-sd__match${settled ? ' is-settled' : ''}`}>
+        <div className={`h2h-sd__match${settled ? ' is-settled' : ''}${bountyBoosting ? ' is-bounty-boost' : ''}`}>
           <ShowdownCard
             side="left"
             you
@@ -656,6 +797,8 @@ function ShowdownRoundView({
             feeding={feeding}
             valuesVisible={valuesVisible}
             dimmed={settled && winnerSide === 'right'}
+            bountyBoosting={bountyBoosting}
+            bountyMultiplier={bountyMultiplier}
           />
           <ShowdownCard
             side="right"
@@ -667,6 +810,8 @@ function ShowdownRoundView({
             feeding={feeding}
             valuesVisible={valuesVisible}
             dimmed={settled && winnerSide === 'left'}
+            bountyBoosting={bountyBoosting}
+            bountyMultiplier={bountyMultiplier}
           />
         </div>
 
@@ -707,7 +852,6 @@ function ShowdownRoundView({
 
         <div className="h2h-sd__emoji">
           <H2HEmojiReactions
-            key={position}
             roomId={roomId}
             position={position}
             myPlayerNumber={myPlayerNumber}
@@ -729,6 +873,8 @@ function ShowdownCard({
   feeding,
   valuesVisible,
   dimmed,
+  bountyBoosting = false,
+  bountyMultiplier = null,
 }: {
   side: 'left' | 'right';
   you: boolean;
@@ -739,6 +885,8 @@ function ShowdownCard({
   feeding: boolean;
   valuesVisible: boolean;
   dimmed: boolean;
+  bountyBoosting?: boolean;
+  bountyMultiplier?: number | null;
 }) {
   const colors = selection ? getTeamColors(selection.teamId) : { primary: '#10202b' };
   const ink = contrastOnPrimary(colors.primary);
@@ -749,7 +897,7 @@ function ShowdownCard({
         dimmed ? ' is-dimmed' : ''
       }${feeding ? ' is-feeding' : ''}${
         valuesVisible ? ' is-value-on' : ''
-      }`}
+      }${bountyBoosting ? ' is-bounty-boost' : ''}`}
     >
       {feeding ? (
         <span className="h2h-sd__feed" aria-hidden>
@@ -763,8 +911,13 @@ function ShowdownCard({
         <strong className="h2h-sd__card-name" style={{ color: ink }}>
           {selection?.name ?? '—'}
         </strong>
+        {bountyBoosting && bountyMultiplier ? (
+          <span className="h2h-sd__bounty-chip" style={{ color: ink }}>
+            {bountyMultiplier}× BOUNTY
+          </span>
+        ) : null}
         <em className="h2h-sd__card-value" style={{ color: ink }}>
-          {formatCountUpDollars(value, target, settled)}
+          {formatCountUpDollars(value, target, settled && !bountyBoosting)}
         </em>
       </div>
     </div>
