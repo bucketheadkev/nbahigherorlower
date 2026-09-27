@@ -57,10 +57,10 @@ export function setH2HUsername(raw: string): string | null {
   }
 }
 
-/** Compact money for mode tiles — whole millions only ($842M / $1,400M). */
+/** Compact money for mode tiles — nearest million, no suffix ($842,000,000). */
 export function formatDollarsShort(value: number): string {
   const n = Math.max(0, Math.round(value));
   if (n <= 0) return '—';
-  const millions = Math.max(1, Math.round(n / 1_000_000));
-  return `$${millions.toLocaleString('en-US')}M`;
+  const rounded = Math.max(1_000_000, Math.round(n / 1_000_000) * 1_000_000);
+  return `$${rounded.toLocaleString('en-US')}`;
 }

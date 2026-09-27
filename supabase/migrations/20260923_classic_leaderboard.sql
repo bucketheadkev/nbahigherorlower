@@ -116,8 +116,9 @@ CREATE OR REPLACE FUNCTION public.classic_seat_value(p_player_id text, p_slot te
 RETURNS bigint
 LANGUAGE sql
 STABLE
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = public
+SET row_security = off
 AS $$
   SELECT CASE upper(p_slot)
     WHEN 'PG' THEN v.value_pg
@@ -161,6 +162,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
+SET row_security = off
 AS $$
 DECLARE
   v_uid uuid := auth.uid();
@@ -210,9 +212,20 @@ BEGIN
       RAISE EXCEPTION 'duplicate_player' USING ERRCODE = '22023';
     END IF;
 
-    v_value := public.classic_seat_value(v_player_id, v_slot);
+    SELECT CASE v_slot
+      WHEN 'PG' THEN v.value_pg
+      WHEN 'SG' THEN v.value_sg
+      WHEN 'SF' THEN v.value_sf
+      WHEN 'PF' THEN v.value_pf
+      WHEN 'C' THEN v.value_c
+      ELSE NULL
+    END
+    INTO v_value
+    FROM public.classic_player_seat_values v
+    WHERE v.player_id = v_player_id;
+
     IF v_value IS NULL THEN
-      RAISE EXCEPTION 'unknown_player' USING ERRCODE = '22023';
+      RAISE EXCEPTION 'unknown_player:%:%', v_player_id, v_slot USING ERRCODE = '22023';
     END IF;
 
     v_seen_slots := array_append(v_seen_slots, v_slot);

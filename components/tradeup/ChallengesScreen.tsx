@@ -68,7 +68,7 @@ export function ChallengesScreen() {
         <div className="challenge-filter" role="group" aria-label={t('challenges.filterLabel')}>
           <button
             type="button"
-            className={`challenge-filter__btn ui-tap${
+            className={`challenge-filter__btn challenge-filter__btn--locked ui-tap${
               filter === 'incomplete' ? ' is-active' : ''
             }`}
             aria-pressed={filter === 'incomplete'}
@@ -98,7 +98,7 @@ export function ChallengesScreen() {
           </button>
           <button
             type="button"
-            className={`challenge-filter__btn ui-tap${
+            className={`challenge-filter__btn challenge-filter__btn--complete ui-tap${
               filter === 'complete' ? ' is-active' : ''
             }`}
             aria-pressed={filter === 'complete'}

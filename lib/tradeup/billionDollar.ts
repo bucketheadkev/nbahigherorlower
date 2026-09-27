@@ -143,8 +143,8 @@ export const MAX_ERA_BOARD_SIZE = 100;
 /** Hard ceiling — high GOAT max ($225M). */
 export const MAX_PLAYER_DOLLARS = 225_000_000;
 
-/** Off-primary lineup slot — ~6% haircut (within the 5–7% design band). */
-export const OFF_PRIMARY_SLOT_VALUE_FACTOR = 0.94;
+/** Off-primary lineup slot — 3% haircut, same in Classic and 1v1. */
+export const OFF_PRIMARY_SLOT_VALUE_FACTOR = 0.97;
 
 export type DollarBand = {
   minTv: number;
@@ -253,15 +253,15 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '1960s|PHI|Wilt Chamberlain': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '1960s|LAL|Wilt Chamberlain': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '1970s|LAL|Wilt Chamberlain': { minDollars: 203_000_000, maxDollars: 203_000_000 },
-  '1960s|LAL|Jerry West': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '1970s|LAL|Jerry West': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '1960s|LAL|Jerry West': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '1970s|LAL|Jerry West': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '1960s|SAC|Oscar Robertson': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1970s|MIL|Oscar Robertson': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '1970s|SAC|Oscar Robertson': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '1970s|MIL|Kareem Abdul-Jabbar': { minDollars: 201_000_000, maxDollars: 201_000_000 },
 
   // 2020s — hand-tuned Classic market prices (fixed bands)
-  '2020s|BKN|Kevin Durant': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2020s|BKN|Kevin Durant': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '2020s|HOU|Kevin Durant': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2020s|PHX|Kevin Durant': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2020s|MIN|Anthony Edwards': { minDollars: 199_000_000, maxDollars: 199_000_000 },
@@ -288,38 +288,40 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2020s|PHI|Tyrese Maxey': { minDollars: 194_000_000, maxDollars: 194_000_000 },
   '2020s|LAC|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2020s|SAS|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
+  '2020s|TOR|Kawhi Leonard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2020s|DEN|Nikola Jokić': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '2020s|PHI|LeBron James': { minDollars: 194_000_000, maxDollars: 194_000_000 },
-  '2020s|LAL|LeBron James': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2020s|GSW|Stephen Curry': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '2020s|LAL|LeBron James': { minDollars: 206_000_000, maxDollars: 206_000_000 },
+  '2020s|GSW|Stephen Curry': { minDollars: 206_000_000, maxDollars: 206_000_000 },
   '2020s|MIL|Giannis Antetokounmpo': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '2020s|SAS|Victor Wembanyama': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2020s|PHI|Joel Embiid': { minDollars: 201_000_000, maxDollars: 201_000_000 },
-  '2020s|LAL|Luka Dončić': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2020s|PHI|Joel Embiid': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '2020s|LAL|Luka Dončić': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2020s|DAL|Luka Dončić': { minDollars: 203_000_000, maxDollars: 203_000_000 },
-  '2020s|OKC|Shai Gilgeous-Alexander': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2020s|OKC|Shai Gilgeous-Alexander': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2020s|OKC|Chet Holmgren': { minDollars: 182_000_000, maxDollars: 182_000_000 },
 
   // 2010s — hand-tuned Classic market prices (fixed bands)
-  '2010s|CLE|LeBron James': { minDollars: 205_000_000, maxDollars: 205_000_000 },
-  '2010s|MIA|LeBron James': { minDollars: 205_000_000, maxDollars: 205_000_000 },
-  '2010s|LAL|LeBron James': { minDollars: 205_000_000, maxDollars: 205_000_000 },
-  '2010s|GSW|Kevin Durant': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2010s|OKC|Kevin Durant': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2010s|GSW|Stephen Curry': { minDollars: 202_000_000, maxDollars: 202_000_000 },
-  '2010s|HOU|James Harden': { minDollars: 209_000_000, maxDollars: 209_000_000 },
-  '2010s|TOR|Kawhi Leonard': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2010s|CLE|LeBron James': { minDollars: 208_000_000, maxDollars: 208_000_000 },
+  '2010s|MIA|LeBron James': { minDollars: 208_000_000, maxDollars: 208_000_000 },
+  '2010s|LAL|LeBron James': { minDollars: 206_000_000, maxDollars: 206_000_000 },
+  '2010s|GSW|Kevin Durant': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '2010s|OKC|Kevin Durant': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '2010s|GSW|Stephen Curry': { minDollars: 207_000_000, maxDollars: 207_000_000 },
+  '2010s|HOU|James Harden': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '2010s|TOR|Kawhi Leonard': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '2010s|DAL|Luka Dončić': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2010s|SAS|Kawhi Leonard': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2010s|OKC|Russell Westbrook': { minDollars: 199_000_000, maxDollars: 199_000_000 },
-  '2010s|NOP|Anthony Davis': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '2010s|LAL|Anthony Davis': { minDollars: 200_000_000, maxDollars: 200_000_000 },
+  '2010s|NOP|Anthony Davis': { minDollars: 202_000_000, maxDollars: 202_000_000 },
+  '2010s|LAL|Anthony Davis': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2010s|POR|Damian Lillard': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|MIA|Dwyane Wade': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|MIA|Chris Bosh': { minDollars: 193_000_000, maxDollars: 193_000_000 },
   '2010s|LAL|Kobe Bryant': { minDollars: 202_000_000, maxDollars: 202_000_000 },
   '2010s|BOS|Kyrie Irving': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '2010s|PHX|Devin Booker': { minDollars: 199_000_000, maxDollars: 199_000_000 },
-  '2010s|CLE|Kyrie Irving': { minDollars: 206_000_000, maxDollars: 206_000_000 },
+  '2010s|CLE|Kyrie Irving': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2010s|NOP|Chris Paul': { minDollars: 197_000_000, maxDollars: 197_000_000 },
   '2010s|MIL|Giannis Antetokounmpo': { minDollars: 203_000_000, maxDollars: 203_000_000 },
   '2010s|HOU|Chris Paul': { minDollars: 189_000_000, maxDollars: 189_000_000 },
@@ -338,19 +340,20 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '2000s|WAS|Michael Jordan': { minDollars: 190_000_000, maxDollars: 190_000_000 },
   '2000s|TOR|Chris Bosh': { minDollars: 185_000_000, maxDollars: 185_000_000 },
   '2000s|ORL|J.J. Redick': { minDollars: 110_000_000, maxDollars: 110_000_000 },
-  '2000s|CLE|LeBron James': { minDollars: 205_000_000, maxDollars: 205_000_000 },
-  '2000s|LAL|Kobe Bryant': { minDollars: 203_000_000, maxDollars: 203_000_000 },
+  '2000s|CLE|LeBron James': { minDollars: 208_000_000, maxDollars: 208_000_000 },
+  '2000s|LAL|Kobe Bryant': { minDollars: 207_000_000, maxDollars: 207_000_000 },
   '2000s|LAL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '2000s|MIA|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '2000s|CLE|Shaquille O\'Neal': { minDollars: 178_000_000, maxDollars: 178_000_000 },
   '2000s|PHX|Shaquille O\'Neal': { minDollars: 200_000_000, maxDollars: 200_000_000 },
 
   // 1990s — hand-tuned Classic market prices (fixed bands)
-  '1990s|CHI|Michael Jordan': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '1990s|CHI|Michael Jordan': { minDollars: 208_000_000, maxDollars: 208_000_000 },
+  '1990s|LAC|Dominique Wilkins': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '1990s|CHI|Scottie Pippen': { minDollars: 199_000_000, maxDollars: 199_000_000 },
   '1990s|MIA|Alonzo Mourning': { minDollars: 180_000_000, maxDollars: 180_000_000 },
   '1990s|CHA|Alonzo Mourning': { minDollars: 180_000_000, maxDollars: 180_000_000 },
-  '1990s|LAL|Kobe Bryant': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '1990s|LAL|Kobe Bryant': { minDollars: 207_000_000, maxDollars: 207_000_000 },
   '1990s|LAL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1990s|ORL|Shaquille O\'Neal': { minDollars: 204_000_000, maxDollars: 204_000_000 },
   '1990s|HOU|Hakeem Olajuwon': { minDollars: 203_000_000, maxDollars: 203_000_000 },
@@ -358,9 +361,9 @@ const DECADE_DOLLAR_BAND_OVERRIDES: Record<
   '1990s|SAS|David Robinson': { minDollars: 204_000_000, maxDollars: 204_000_000 },
 
   // 1980s — hand-tuned Classic market prices (fixed bands)
-  '1980s|CHI|Michael Jordan': { minDollars: 205_000_000, maxDollars: 205_000_000 },
+  '1980s|CHI|Michael Jordan': { minDollars: 208_000_000, maxDollars: 208_000_000 },
   '1980s|BOS|Larry Bird': { minDollars: 204_000_000, maxDollars: 204_000_000 },
-  '1980s|LAL|Magic Johnson': { minDollars: 204_000_000, maxDollars: 204_000_000 },
+  '1980s|LAL|Magic Johnson': { minDollars: 205_000_000, maxDollars: 205_000_000 },
   '1980s|LAL|Kareem Abdul-Jabbar': { minDollars: 191_000_000, maxDollars: 191_000_000 },
 };
 
@@ -548,16 +551,14 @@ export function getDollarValue(player: TradePlayer): number {
 
 /**
  * Seated price. Primary slot keeps the shared card price.
- * Off-primary uses the same 6% haircut in Classic and 1v1, from that card price — not a new roll.
+ * Off-primary uses the same 3% haircut in Classic and 1v1, then rounds to the nearest million.
  */
 export function getDollarValueForSlot(player: TradePlayer, slot: Position): number {
   const base = resolveAuthoritativePlayerValue(player);
   if (player.primaryPosition === slot) {
     return base;
   }
-  return toCleanMillions(
-    Math.min(MAX_PLAYER_DOLLARS, base * OFF_PRIMARY_SLOT_VALUE_FACTOR),
-  );
+  return toCleanMillions(base * OFF_PRIMARY_SLOT_VALUE_FACTOR);
 }
 
 export function sumTeamValue(players: TradePlayer[]): number {
@@ -565,22 +566,18 @@ export function sumTeamValue(players: TradePlayer[]): number {
 }
 
 /**
- * 1B Run money display — whole millions only, never decimal billions.
- * Examples: $199M · $760M · $1,400M · $2,440M
+ * 1B Run money display — nearest million, written out, no M or B suffix.
+ * Examples: $199,000,000 · $1,000,000,000 · $1,400,000,000
  * Does not mutate underlying numeric values.
  */
 export function formatDollars(value: number): string {
   const n = Math.max(0, Math.round(Number(value) || 0));
-  const millions = Math.round(n / 1_000_000);
-  if (millions <= 0 && n > 0) {
-    // Sub-million leftovers still round up to $1M for display consistency.
-    return '$1M';
-  }
-  if (millions <= 0) return '$0M';
-  return `$${millions.toLocaleString('en-US')}M`;
+  const rounded = Math.round(n / 1_000_000) * 1_000_000;
+  if (rounded <= 0 && n > 0) return '$1,000,000';
+  return `$${rounded.toLocaleString('en-US')}`;
 }
 
-/** Alias — same whole-million rule (no raw-cent/$1.4B displays). */
+/** Alias — same whole-dollar display. */
 export function formatDollarsExact(value: number): string {
   return formatDollars(value);
 }

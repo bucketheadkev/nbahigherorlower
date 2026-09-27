@@ -10,6 +10,7 @@ import {
   type CSSProperties,
 } from 'react';
 import {
+  eraShortLabel,
   listValidSpinPairs,
   type DecadeEra,
   type SpinPair,
@@ -21,7 +22,9 @@ import {
 } from '@/lib/tradeup/gameAudio';
 import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
-import { SpinReel, buildSpinStrip, stripFromLabels, type SpinStripItem } from './SpinReel';
+import { publishSpinHandoff, type SpinBoxSnapshot } from '@/lib/tradeup/spinHandoff';
+import { BarrelReel, REEL_NUDGE_CHANCE } from './BarrelReel';
+import { buildSpinStrip, stripFromLabels, type SpinStripItem } from './SpinReel';
 import { useLocale } from '@/hooks/useLocale';
 
 export type TicketRerollKind = 'team' | 'era';
@@ -52,19 +55,38 @@ interface BallionTicketMachineProps {
   onReroll: (kind: TicketRerollKind) => void;
 }
 
-const TEAM_ITEM_H = 84;
-/** Match team reel height so ERA text is centered like TEAM. */
-const ERA_ITEM_H = 84;
-/** Strip length scaled with duration so cruise velocity stays the same. */
-const TEAM_STRIP_LEN = 60;
-const ERA_STRIP_LEN = 46;
+const TEAM_ITEM_H = 78;
+const ERA_ITEM_H = 54;
+/** Same tile count so both reels travel the same distance at the same speed. */
+export const TEAM_STRIP_LEN = 42;
+export const ERA_STRIP_LEN = TEAM_STRIP_LEN;
+/** Cards kept after the winner so the stopped reel still shows neighbors. */
+const REEL_TAIL = 2;
+
+function appendReelTail(items: SpinStripItem[], choices: SpinStripItem[]): SpinStripItem[] {
+  if (items.length === 0 || choices.length === 0) return items;
+  const winner = items[items.length - 1]!;
+  const others = choices.filter((item) => item.label !== winner.label);
+  const source = others.length > 0 ? others : choices;
+  const tail: SpinStripItem[] = [];
+  let previous = winner.label;
+  let guard = 0;
+  while (tail.length < REEL_TAIL && guard < 24) {
+    guard += 1;
+    const pick = source[Math.floor(Math.random() * source.length)]!;
+    if (pick.label === previous && source.length > 1) continue;
+    tail.push(pick);
+    previous = pick.label;
+  }
+  return [...items, ...tail];
+}
 /** Shared with spin SFX — initial roll and every Team/Era reroll. */
 const TEAM_SPIN_MS = WHEEL_SPIN_DURATION_MS;
 const ERA_SPIN_MS = WHEEL_SPIN_DURATION_MS;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
-function uniqueTeams(pairs: SpinPair[]): TeamInfo[] {
+export function uniqueTeams(pairs: SpinPair[]): TeamInfo[] {
   const seen = new Set<string>();
   const out: TeamInfo[] = [];
   for (const p of pairs) {
@@ -75,7 +97,7 @@ function uniqueTeams(pairs: SpinPair[]): TeamInfo[] {
   return out;
 }
 
-function erasForTeam(pairs: SpinPair[], teamId: string): DecadeEra[] {
+export function erasForTeam(pairs: SpinPair[], teamId: string): DecadeEra[] {
   const seen = new Set<string>();
   const out: DecadeEra[] = [];
   for (const p of pairs) {
@@ -98,7 +120,7 @@ function pickFairResult(pairs: SpinPair[]): SpinPair {
   return { team, era };
 }
 
-function pickRerollPair(
+export function pickRerollPair(
   pairs: SpinPair[],
   locked: SpinPair,
   kind: TicketRerollKind,
@@ -128,10 +150,24 @@ function pickRerollPair(
 }
 
 function teamLabel(team: TeamInfo): string {
-  return team.fullName.toUpperCase();
+  return team.name.toUpperCase();
 }
 
-function buildTeamColorStrip(
+function snapshotReelCard(reelSelector: string): SpinBoxSnapshot | null {
+  const reel = document.querySelector(reelSelector);
+  const card = reel?.querySelector('.barrel-card.is-winner, .barrel-card.is-hold');
+  if (!(card instanceof HTMLElement)) return null;
+  const rect = card.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return null;
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+export function buildTeamColorStrip(
   teams: TeamInfo[],
   winner: TeamInfo,
   length: number,
@@ -189,6 +225,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   const [spinTeam, setSpinTeam] = useState(false);
   const [spinEra, setSpinEra] = useState(false);
   const [teamLanded, setTeamLanded] = useState(false);
+  const [nudgeSettle, setNudgeSettle] = useState(false);
 
   const reportedRef = useRef(false);
   const teamDoneRef = useRef(true);
@@ -212,10 +249,16 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     setMode('landed');
     setResult(pair);
     if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current);
-    // Brief beat so the lock reads, then hand off to pick UI.
+    // Hold the landed labels, then hand their boxes to the selection header.
     finishTimerRef.current = window.setTimeout(
-      () => onResult(pair),
-      reduceMotion ? 40 : 180,
+      () => {
+        publishSpinHandoff({
+          team: snapshotReelCard('.barrel-reel--team'),
+          era: snapshotReelCard('.barrel-reel--era'),
+        });
+        onResult(pair);
+      },
+      reduceMotion ? 40 : 280,
     );
   }, [onResult, reduceMotion]);
 
@@ -234,6 +277,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       reportedRef.current = false;
       busyRef.current = true;
       pendingRef.current = pair;
+      setNudgeSettle(Math.random() < REEL_NUDGE_CHANCE);
       setResult(pair);
       setMode('spinning');
       setTeamLanded(false);
@@ -246,7 +290,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
       if (axes.team) {
         const strip = buildTeamColorStrip(teams, pair.team, TEAM_STRIP_LEN);
-        setTeamStrip(strip);
+        const pool = buildTeamColorStrip(teams, pair.team, teams.length);
+        setTeamStrip(appendReelTail(strip, pool));
         setSpinTeam(true);
         teamDoneRef.current = false;
         setTeamSpinId((n) => n + 1);
@@ -263,7 +308,13 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           eraPool.length > 0
             ? eraPool
             : (['1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'] as DecadeEra[]);
-        setEraStrip(stripFromLabels(buildSpinStrip(labels, pair.era, ERA_STRIP_LEN)));
+        const eraItems = stripFromLabels(buildSpinStrip(labels, pair.era, ERA_STRIP_LEN)).map(
+          (item) => ({
+            label: eraShortLabel(item.label as DecadeEra),
+          }),
+        );
+        const eraChoices = labels.map((label) => ({ label: eraShortLabel(label) }));
+        setEraStrip(appendReelTail(eraItems, eraChoices));
         setSpinEra(true);
         eraDoneRef.current = false;
         setEraSpinId((n) => n + 1);
@@ -382,49 +433,44 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         </div>
       ) : null}
 
-      <div className="ter__stage">
-        <div
-          className={`ter__panel ter__panel--team${teamFill ? ' is-filled' : ''}${
-            !displayTeam && !spinTeam ? ' is-empty' : ''
-          }`}
-          style={teamPanelStyle}
-        >
-          <p className="ter__kicker">{t('game.team')}</p>
-          <div className="ter__viewport">
-            <SpinReel
-              strip={spinTeam ? teamStrip : []}
-              spinId={spinTeam ? teamSpinId : 0}
-              itemHeight={TEAM_ITEM_H}
-              durationMs={teamMs}
-              reduceMotion={reduceMotion}
-              display={displayTeam ? teamLabel(displayTeam) : '—'}
-              className="spin-reel--team"
-              displayStyle={
-                teamFill && teamInk
-                  ? { color: teamInk, background: teamFill }
-                  : undefined
-              }
-              onLocked={spinTeam ? onTeamLocked : undefined}
-            />
-          </div>
-        </div>
-
-        <div
-          className={`ter__panel ter__panel--era${displayEra || spinEra ? '' : ' is-empty'}`}
-        >
-          <p className="ter__kicker">{t('game.era')}</p>
-          <div className="ter__viewport">
-            <SpinReel
-              strip={spinEra ? eraStrip : []}
-              spinId={spinEra ? eraSpinId : 0}
-              itemHeight={ERA_ITEM_H}
-              durationMs={eraMs}
-              reduceMotion={reduceMotion}
-              display={displayEra ?? '—'}
-              className="spin-reel--era"
-              onLocked={spinEra ? onEraLocked : undefined}
-            />
-          </div>
+      <div className={`ter__stage barrel-shell is-open${mode === 'landed' ? ' is-locked' : ''}`}>
+        <div className="barrel-window" style={teamPanelStyle}>
+          <BarrelReel
+            strip={spinTeam ? teamStrip : []}
+            spinId={spinTeam ? teamSpinId : 0}
+            itemHeight={TEAM_ITEM_H}
+            durationMs={teamMs}
+            reduceMotion={reduceMotion}
+            variant="team"
+            readyLabel="TEAM"
+            holdLabel={!spinTeam && displayTeam ? teamLabel(displayTeam) : null}
+            holdStyle={
+              teamFill && teamInk
+                ? {
+                    background: `linear-gradient(180deg, ${teamFill} 0%, color-mix(in srgb, ${teamFill} 72%, #041018) 100%)`,
+                    color: teamInk,
+                  }
+                : undefined
+            }
+            celebrate={mode === 'landed'}
+            landIndex={teamStrip.length > TEAM_STRIP_LEN ? TEAM_STRIP_LEN - 1 : undefined}
+            nudgeSettle={nudgeSettle}
+            onLocked={spinTeam ? onTeamLocked : undefined}
+          />
+          <BarrelReel
+            strip={spinEra ? eraStrip : []}
+            spinId={spinEra ? eraSpinId : 0}
+            itemHeight={ERA_ITEM_H}
+            durationMs={eraMs}
+            reduceMotion={reduceMotion}
+            variant="era"
+            readyLabel="ERA"
+            holdLabel={!spinEra && displayEra ? eraShortLabel(displayEra) : null}
+            celebrate={mode === 'landed'}
+            landIndex={eraStrip.length > ERA_STRIP_LEN ? ERA_STRIP_LEN - 1 : undefined}
+            nudgeSettle={nudgeSettle}
+            onLocked={spinEra ? onEraLocked : undefined}
+          />
         </div>
 
         {mode === 'idle' && !autoReroll && !rollLocked ? (

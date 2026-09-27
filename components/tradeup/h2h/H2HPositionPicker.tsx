@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   buildEraRoster,
   getDollarValueForSlot,
@@ -671,7 +671,19 @@ export function H2HPositionPicker({
           <p className="h2h-draft-dock__hint" role="status">
             {status}
           </p>
-          <div className="billion-court-dock" aria-label="Your five dock">
+          <div
+            className="billion-court-dock"
+            aria-label="Your five dock"
+            style={
+              (selected?.teamId ?? movingPlayer?.teamId)
+                ? ({
+                    '--dock-team': getTeamColors(
+                      (selected?.teamId ?? movingPlayer?.teamId) as string,
+                    ).primary,
+                  } as CSSProperties)
+                : undefined
+            }
+          >
             {LINEUP_POSITIONS.map((slot) => {
               const pick = localSlots[slot];
               const offerCanDrop =

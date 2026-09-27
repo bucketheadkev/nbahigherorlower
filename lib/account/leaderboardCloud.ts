@@ -185,20 +185,31 @@ export async function submitVerifiedClassicLineup(
       return { ok: false, skipped: true };
     }
 
-    const probeId = seats[0]!.player_id;
-    const { data: probe, error: probeError } = await supabase
+    const ids = seats.map((seat) => seat.player_id);
+    const { data: catalog, error: probeError } = await supabase
       .from('classic_player_seat_values')
-      .select('player_id')
-      .eq('player_id', probeId)
-      .maybeSingle();
+      .select('player_id, value_pg, value_sg, value_sf, value_pf, value_c')
+      .in('player_id', ids);
     if (probeError) {
-      logLeaderboardError('seat probe failed', probeError, { player_id: probeId });
-    } else if (!probe) {
-      console.error(
-        '[leaderboard] submit blocked: classic_player_seat_values is empty/missing player. Apply supabase/migrations/20260924_classic_player_seat_values_seed.sql',
-        { player_id: probeId },
+      logLeaderboardError('seat probe failed', probeError, ids.join(','));
+    } else {
+      const byId = new Map(
+        (catalog ?? []).map((row) => [row.player_id as string, row as Record<string, unknown>]),
       );
-      return { ok: false, message: 'seat_values_missing' };
+      const missing = seats.filter((seat) => {
+        const row = byId.get(seat.player_id);
+        if (!row) return true;
+        const value = row[`value_${seat.slot.toLowerCase()}`];
+        return value == null;
+      });
+      if (missing.length > 0 || (catalog ?? []).length === 0) {
+        console.error(
+          `[leaderboard] submit blocked: unknown_player ${missing
+            .map((seat) => `${seat.slot}:${seat.player_id}`)
+            .join(', ')}. Apply supabase/migrations/20260927_classic_seat_lookup.sql`,
+        );
+        return { ok: false, message: 'unknown_player' };
+      }
     }
 
     const { data, error } = await supabase.rpc('submit_classic_leaderboard_lineup', {
@@ -206,7 +217,11 @@ export async function submitVerifiedClassicLineup(
       p_client_run_id: clientRunId?.trim() || null,
     });
     if (error) {
-      logLeaderboardError('submit failed', error, { seats });
+      logLeaderboardError(
+        'submit failed',
+        error,
+        seats.map((seat) => `${seat.slot}:${seat.player_id}`).join(','),
+      );
       return { ok: false, message: error.message };
     }
     const payload = (data ?? {}) as Record<string, unknown>;

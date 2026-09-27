@@ -466,7 +466,7 @@ export function ClassicRosterReveal({
                 className="classic-val__track-goal-label"
                 style={{ left: `${goalPct}%` }}
               >
-                $1B
+                {formatDollarsExact(BILLION_GOAL)}
               </span>
             </div>
           ) : null}

@@ -12,6 +12,7 @@ import {
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { getTeam } from '@/lib/tradeup/teams';
 import { eraShortLabel, type DecadeEra, type ValuedPlayer } from '@/lib/tradeup/billionDollar';
+import { playerInitials } from '@/lib/tradeup/draftRun';
 import type { Position } from '@/lib/tradeup/types';
 
 export type HubCardPlayer = ValuedPlayer & { era?: DecadeEra };
@@ -49,8 +50,8 @@ const IMPACT_PHYSICS: Record<
 > = {
   PF: { ox: '39%', oy: '17%', rx: '2.2deg', ry: '2.0deg', dx: '-2px', dy: '-3px' },
   C: { ox: '61%', oy: '17%', rx: '2.2deg', ry: '-2.0deg', dx: '2px', dy: '-3px' },
-  SG: { ox: '15%', oy: '76%', rx: '-2.0deg', ry: '2.4deg', dx: '-3px', dy: '2px' },
-  SF: { ox: '85%', oy: '76%', rx: '-2.0deg', ry: '-2.4deg', dx: '3px', dy: '2px' },
+  SG: { ox: '18%', oy: '74%', rx: '-2.0deg', ry: '2.4deg', dx: '-3px', dy: '2px' },
+  SF: { ox: '82%', oy: '74%', rx: '-2.0deg', ry: '-2.4deg', dx: '3px', dy: '2px' },
   PG: { ox: '50%', oy: '88%', rx: '-2.6deg', ry: '0deg', dx: '0px', dy: '3px' },
 };
 
@@ -72,12 +73,6 @@ function splitName(fullName: string): { first: string; last: string } {
   if (parts.length === 0) return { first: '—', last: '' };
   if (parts.length === 1) return { first: parts[0]!, last: '' };
   return { first: parts[0]!, last: parts.slice(1).join(' ') };
-}
-
-function playerInitials(name: string): string {
-  const { first, last } = splitName(name);
-  if (!last) return first.slice(0, 2).toUpperCase();
-  return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase();
 }
 
 /**
@@ -180,7 +175,7 @@ export function DraftHubCards({
     arm(220, () => setAnalyzeStage('focus'));
     arm(360, () => setAnalyzeStage('collapse'));
     arm(700, () => setAnalyzeStage('beam'));
-    arm(900, finish);
+    arm(1100, finish);
 
     return () => {
       timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -216,10 +211,16 @@ export function DraftHubCards({
     >
       <div className="draft-hub-court__stage">
         <div className="draft-hub-court__floor" aria-hidden="true">
+          {impact ? (
+            <>
+              <span className="draft-hub-court__impact-wash" aria-hidden="true" />
+              <span className="draft-hub-court__impact-bolt" aria-hidden="true" />
+            </>
+          ) : null}
           <svg
             className="draft-hub-court__lines"
             viewBox="0 0 100 100"
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="none"
           >
             <g className="draft-hub-court__geo draft-hub-court__geo--boundary">
               <rect x="1.2" y="1.2" width="97.6" height="97.6" rx="0.4" />
@@ -238,12 +239,9 @@ export function DraftHubCards({
               <path d="M 1.2 46.78 A 54.2 54.2 0 0 0 98.8 46.78" />
             </g>
           </svg>
-          {impact ? (
-            <>
-              <span className="draft-hub-court__impact-wash" aria-hidden="true" />
-              <span className="draft-hub-court__impact-wave" aria-hidden="true" />
-            </>
-          ) : null}
+          <span className="draft-hub-court__mark" aria-hidden="true">
+            $1B
+          </span>
           <span className="draft-hub-court__energy-sweep" aria-hidden="true" />
         </div>
 
@@ -280,9 +278,6 @@ export function DraftHubCards({
                         '--slot-primary': colors.primary,
                         '--slot-accent': colors.accent,
                         '--slot-ink': ink,
-                        backgroundColor: colors.primary,
-                        color: ink,
-                        borderColor: colors.primary,
                       } as CSSProperties)
                     : undefined
                 }
@@ -310,14 +305,18 @@ export function DraftHubCards({
                 }}
               >
                 <span className="draft-hub-court__slot-ring" aria-hidden="true" />
-                <span className="draft-hub-court__slot-mark">
-                  {filled && player ? playerInitials(player.name) : slot}
-                </span>
+                {filled && player ? (
+                  <span className="draft-hub-court__chip">
+                    <span className="draft-hub-court__chip-name">
+                      {playerInitials(player.name)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="draft-hub-court__slot-mark">{slot}</span>
+                )}
               </button>
-              {filled ? (
-                <span className="draft-hub-court__pos-label" aria-hidden="true">
-                  {slot}
-                </span>
+              {filled && player ? (
+                <span className="draft-hub-court__seat-pos">{slot}</span>
               ) : null}
             </div>
           );

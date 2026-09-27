@@ -25,7 +25,7 @@ import {
 
 type LoadState = 'loading' | 'ready' | 'error' | 'empty';
 
-/** Leaderboard values — shared whole-million formatter (no decimal $x.xB). */
+/** Leaderboard values — shared dollar formatter (nearest million, no suffix). */
 function formatExactBoardValue(value: number): string {
   return formatDollars(value);
 }

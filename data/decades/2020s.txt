@@ -516,6 +516,7 @@ LaMarcus Aldridge | PF | 21.3 PPG | 9.1 RPG | 2.0 APG
 TORONTO RAPTORS
 ========================================================================
 Scottie Barnes | SF | 20.0 PPG | 8.0 RPG | 6.0 APG
+Kawhi Leonard | SF | 24.0 PPG | 6.5 RPG | 4.0 APG
 Pascal Siakam | PF | 21.0 PPG | 7.2 RPG | 4.3 APG
 Fred VanVleet | PG | 17.0 PPG | 4.0 RPG | 7.0 APG
 Kyle Lowry | PG | 17.0 PPG | 5.0 RPG | 7.0 APG

@@ -56,6 +56,6 @@ export function pickPerfResult(): PerfSpinResult {
 }
 
 export function formatPerfDollars(n: number): string {
-  const millions = Math.max(0, Math.round(Math.max(0, n) / 1_000_000));
-  return `$${millions.toLocaleString('en-US')}M`;
+  const rounded = Math.max(0, Math.round(Math.max(0, n) / 1_000_000) * 1_000_000);
+  return `$${rounded.toLocaleString('en-US')}`;
 }

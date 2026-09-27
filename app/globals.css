@@ -12864,7 +12864,8 @@ html:not([data-full-motion]) .billion-value-block__amount.is-popping {
 .billion-result__value {
   margin: 0.15rem 0 0;
   display: block;
-  font-size: clamp(2.2rem, 9.5vw, 3.1rem);
+  font-size: clamp(1.35rem, 6.6vw, 2.1rem);
+  white-space: nowrap;
   font-weight: 900;
   letter-spacing: -0.04em;
   color: #4ade80;
@@ -20246,11 +20247,11 @@ html[data-diag-mode='G'] .hn-reel__track {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  animation: franchise-pick-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: none;
 }
 @keyframes franchise-pick-in {
-  from { opacity: 0; transform: translate3d(0, 12px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .franchise-pick {
   display: flex;
@@ -20351,7 +20352,7 @@ html[data-diag-mode='G'] .hn-reel__track {
 .franchise-pick__row {
   appearance: none;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.7rem;
   padding: 0.48rem 0.55rem;
   background: rgba(15, 23, 42, 0.55);
@@ -20362,9 +20363,10 @@ html[data-diag-mode='G'] .hn-reel__track {
   align-items: center;
   text-align: left;
   min-height: 2.85rem;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition: background 0.08s ease, border-color 0.08s ease;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  touch-action: pan-y;
+  cursor: pointer;
 }
 .franchise-pick__row.is-selected {
   border-color: rgba(56, 189, 248, 0.55);

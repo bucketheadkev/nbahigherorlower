@@ -1,0 +1,28 @@
+---
+description: Classify every 1B Run change as website-only, iOS-only, or shared before editing
+alwaysApply: true
+---
+
+# Platform scope
+
+Read `PLATFORM.md`. This is one shared Next.js game (website + Capacitor iOS). Do not split repos or duplicate game screens unless the user explicitly asks for that.
+
+The branch name `web-responsive` is not a website-only tree. It is the shared source for both platforms.
+
+BEFORE any 1B Run change, classify the request internally as:
+
+- WEBSITE ONLY
+- IOS ONLY
+- BOTH / SHARED
+
+Rules:
+
+- "website only" — do not change iOS behavior.
+- "iOS only" — do not change website behavior.
+- "both" — shared components may change.
+- Do not assume a request applies to both platforms.
+- A shared-file edit for a platform-specific feature must be guarded with `lib/platform/isNativeApp.ts`. Do not invent another platform check.
+- Do not modify `ios/` unless native iOS/Capacitor behavior actually requires it.
+- Do not create or run Supabase migrations unless the user specifically approves a backend/database change.
+- Shared Supabase/backend changes affect the website and released iOS users.
+- Keep one shared game. Editing shared code (`components/tradeup/`, `lib/`, `hooks/`, shared CSS) affects both platforms; iOS only receives it after `npm run build:ios` and a new Xcode build.

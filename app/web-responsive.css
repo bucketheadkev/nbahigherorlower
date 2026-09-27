@@ -206,6 +206,12 @@ html[data-platform='web'] textarea:focus-visible {
     margin-inline: auto;
   }
 
+  html[data-platform='web'] .barrel-shell .ter__roll {
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+  }
+
   html[data-platform='web'] .run-home__best {
     position: fixed;
     left: 0;
@@ -282,8 +288,8 @@ html[data-platform='web'] textarea:focus-visible {
   }
 
   html[data-platform='web'] .draft-hub-court {
-    width: min(23rem, 100%, 54vh);
-    max-width: 23rem;
+    width: min(26rem, 100%);
+    max-width: 26rem;
   }
 
   html[data-platform='web'] .classic-lineup-row {

@@ -99,14 +99,11 @@ function sideTotals(
   };
 }
 
-/**
- * Count-up display: whole millions only ($0M → $1M → … → $1,683M).
- * Never shows decimal billions.
- */
+/** Count-up display: nearest million, no suffix ($0 → $1,000,000 → $1,683,000,000). */
 function formatCountUpDollars(value: number, target: number, settled: boolean): string {
   if (settled) return formatDollars(target);
-  const m = Math.floor(Math.max(0, value) / 1_000_000);
-  return `$${m.toLocaleString('en-US')}M`;
+  const rounded = Math.floor(Math.max(0, value) / 1_000_000) * 1_000_000;
+  return `$${rounded.toLocaleString('en-US')}`;
 }
 
 /**

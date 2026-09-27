@@ -40,9 +40,9 @@ function buildShareText(
   const recordBit = record ? ` (${record.wins}–${record.losses})` : '';
   const rankBit = worldRank > 0 ? ` World rank ${formatWorldRank(worldRank)}.` : '';
   if (kind === 'won') {
-    return `I just built a ${formatDollarsExact(teamValue)} NBA roster${recordBit} and cleared $1B on Ballion.${rankBit}`;
+    return `I just built a ${formatDollarsExact(teamValue)} NBA roster${recordBit} and cleared ${formatDollarsExact(BILLION_GOAL)} on Ballion.${rankBit}`;
   }
-  return `Ran it back to ${formatDollarsExact(teamValue)}${recordBit} on Ballion — still chasing $1B.${rankBit}`;
+  return `Ran it back to ${formatDollarsExact(teamValue)}${recordBit} on Ballion — still chasing ${formatDollarsExact(BILLION_GOAL)}.${rankBit}`;
 }
 
 /**
