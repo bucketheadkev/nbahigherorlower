@@ -444,7 +444,7 @@ export function LeaderboardScreen() {
         {loadState === 'ready' && podium.length > 0 ? (
           <div className="lb-podium" aria-label="Top three">
             {[podium[1], podium[0], podium[2]]
-              .filter((entry): entry is LeaderboardRow => entry != null)
+              .filter((entry): entry is BoardStanding => entry != null)
               .map((entry) => (
               <PodiumCard
                 key={`${entry.rank}-${entry.username}`}
