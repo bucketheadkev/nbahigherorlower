@@ -3,6 +3,7 @@
 import {
   type CSSProperties,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -68,6 +69,66 @@ function teamLine(player: HubCardPlayer): string {
   return `${team.city} ${team.name}`.trim();
 }
 
+export function CircleName({
+  pos,
+  first,
+  last,
+}: {
+  pos: string;
+  first: string;
+  last: string;
+}) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const box = el?.parentElement;
+    if (!el || !box) return;
+
+    const fit = () => {
+      const style = getComputedStyle(box);
+      const maxW =
+        box.clientWidth -
+        (parseFloat(style.paddingLeft) || 0) -
+        (parseFloat(style.paddingRight) || 0);
+      const maxH =
+        box.clientHeight -
+        (parseFloat(style.paddingTop) || 0) -
+        (parseFloat(style.paddingBottom) || 0);
+      if (maxW < 4 || maxH < 4) return;
+      let lo = 5;
+      let hi = Math.max(6, maxH * 0.36);
+      let best = lo;
+      while (hi - lo > 0.2) {
+        const mid = (lo + hi) / 2;
+        el.style.fontSize = `${mid}px`;
+        const fits =
+          el.scrollWidth <= maxW + 0.5 && el.scrollHeight <= maxH + 0.5;
+        if (fits) {
+          best = mid;
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+      el.style.fontSize = `${best}px`;
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [first, last, pos]);
+
+  return (
+    <span ref={ref} className="draft-hub-court__face-copy">
+      <span className="draft-hub-court__face-pos">{pos}</span>
+      <span className="draft-hub-court__face-line">{first}</span>
+      {last ? <span className="draft-hub-court__face-line">{last}</span> : null}
+    </span>
+  );
+}
+
 function splitName(fullName: string): { first: string; last: string } {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return { first: '—', last: '' };
@@ -94,6 +155,7 @@ export function DraftHubCards({
   onAnalyzeComplete,
 }: DraftHubCardsProps) {
   const [detailSlot, setDetailSlot] = useState<Position | null>(null);
+  const [namedSlot, setNamedSlot] = useState<Position | null>(null);
   const [analyzeStage, setAnalyzeStage] = useState<AnalyzeStage>('idle');
   const rootRef = useRef<HTMLElement | null>(null);
   const analyzeDoneRef = useRef(false);
@@ -113,6 +175,10 @@ export function DraftHubCards({
       : null);
 
   useEffect(() => {
+    if (namedSlot && !slots[namedSlot]) setNamedSlot(null);
+  }, [namedSlot, slots]);
+
+  useEffect(() => {
     if (!detailSlot) return;
 
     const onKey = (event: KeyboardEvent) => {
@@ -130,6 +196,7 @@ export function DraftHubCards({
       if (target.closest('.draft-hub-court__pop')) return;
       if (target.closest('.draft-hub-court__slot')) return;
       setDetailSlot(null);
+      setNamedSlot(null);
     };
     document.addEventListener('pointerdown', onDoc);
     return () => document.removeEventListener('pointerdown', onDoc);
@@ -146,6 +213,7 @@ export function DraftHubCards({
     timersRef.current = [];
     analyzeDoneRef.current = false;
     setDetailSlot(null);
+    setNamedSlot(null);
 
     const arm = (ms: number, fn: () => void) => {
       timersRef.current.push(
@@ -252,6 +320,9 @@ export function DraftHubCards({
           const concealed = concealSlot === slot;
           const filled = Boolean(player) && !concealed;
           const open = detailSlot === slot && filled && !analyzing && !assignMode;
+          const showName =
+            filled && (movingSlot === slot || (namedSlot === slot && movingSlot == null));
+          const nameParts = player ? splitName(player.name) : null;
           const isTarget = Boolean(targetSlots?.[slot]);
           const isMoving = movingSlot === slot;
 
@@ -289,6 +360,9 @@ export function DraftHubCards({
                 aria-expanded={open || undefined}
                 disabled={analyzing}
                 onPointerDown={(event) => {
+                  if (filled && player && !analyzing) {
+                    setNamedSlot((prev) => (prev === slot ? null : slot));
+                  }
                   if (!onSlotPress || analyzing) return;
                   event.preventDefault();
                   event.stopPropagation();
@@ -305,10 +379,19 @@ export function DraftHubCards({
                 }}
               >
                 <span className="draft-hub-court__slot-ring" aria-hidden="true" />
-                {filled && player ? (
-                  <span className="draft-hub-court__chip">
-                    <span className="draft-hub-court__chip-name">
-                      {playerInitials(player.name)}
+                {filled && player && nameParts ? (
+                  <span className={`draft-hub-court__chip${showName ? ' is-flipped' : ''}`}>
+                    <span className="draft-hub-court__face draft-hub-court__face--front">
+                      <span className="draft-hub-court__chip-name">
+                        {playerInitials(player.name)}
+                      </span>
+                    </span>
+                    <span className="draft-hub-court__face draft-hub-court__face--back">
+                      <CircleName
+                        pos={slot}
+                        first={nameParts.first}
+                        last={nameParts.last}
+                      />
                     </span>
                   </span>
                 ) : (

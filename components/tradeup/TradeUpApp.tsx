@@ -10,7 +10,9 @@ import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
 import { LocaleProvider } from '@/hooks/useLocale';
+import { hasSeenHowItWorks, markHowItWorksSeen, resetHowItWorksSeen } from '@/lib/account/howItWorksStorage';
 import { BallionSplash, hasIntroFinishedThisLoad, INTRO_TOTAL_MS, resetIntroFinishedThisLoad } from './BallionSplash';
+import { HowItWorks } from './HowItWorks';
 import { ChallengesScreen } from './ChallengesScreen';
 import { LeaderboardScreen } from './LeaderboardScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
@@ -64,6 +66,7 @@ export function TradeUpApp() {
    * left showSplash true with no intro and dead pointer-events).
    */
   const [showSplash, setShowSplash] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
@@ -169,6 +172,7 @@ export function TradeUpApp() {
     markSplashDone();
     clearParentSplashFailsafe();
     setShowSplash(false);
+    if (!hasSeenHowItWorks()) setShowGuide(true);
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
       mod.unlockGameAudio();
@@ -187,9 +191,16 @@ export function TradeUpApp() {
     } catch {
       // ignore
     }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('resetHowItWorks') === '1') resetHowItWorksSeen();
+    } catch {
+      // ignore
+    }
     if (!shouldPlaySplash()) {
       markSplashDone();
       setShowSplash(false);
+      if (!hasSeenHowItWorks()) setShowGuide(true);
       return;
     }
     setShowSplash(true);
@@ -200,15 +211,17 @@ export function TradeUpApp() {
     if (!shouldPlaySplash()) {
       markSplashDone();
       setShowSplash(false);
+      if (!hasSeenHowItWorks()) setShowGuide(true);
       return;
     }
     // Parent nuclear failsafe — Strict Mode must not clear this timer.
     if (parentSplashFailsafeId != null) return;
     const ms = (reduceMotion ? 720 : INTRO_TOTAL_MS) + 1200;
-    parentSplashFailsafeId = window.setTimeout(() => {
+      parentSplashFailsafeId = window.setTimeout(() => {
       parentSplashFailsafeId = null;
       markSplashDone();
       setShowSplash(false);
+      if (!hasSeenHowItWorks()) setShowGuide(true);
     }, ms);
   }, [showSplash, reduceMotion]);
 
@@ -264,8 +277,21 @@ export function TradeUpApp() {
       ) : hubTab === 'board' && !showSplash ? (
         <LeaderboardScreen />
       ) : (
-        <TradeUpHome onPlay={handlePlay} onHeadToHead={handleHeadToHead} />
+        <TradeUpHome
+          onPlay={handlePlay}
+          onHeadToHead={handleHeadToHead}
+          allowAccountPrompt={!showSplash && !showGuide}
+        />
       )}
+
+      {showGuide && !showSplash ? (
+        <HowItWorks
+          onDone={() => {
+            markHowItWorksSeen();
+            setShowGuide(false);
+          }}
+        />
+      ) : null}
 
       {showSplash ? (
         <BallionSplash

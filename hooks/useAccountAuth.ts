@@ -24,25 +24,38 @@ export function useAccountAuth(): {
   const refresh = useCallback(async () => {
     try {
       const next = await resolveAccountAuthState();
+      if (next.status === 'unavailable') return;
       setState(next);
     } catch (err) {
       console.warn('[account] refresh failed', err);
-      setState({ status: 'guest' });
     }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     let debounceId: number | null = null;
+    let retryId: number | null = null;
+    let retries = 0;
 
     const apply = () => {
       void (async () => {
         try {
           const next = await resolveAccountAuthState();
-          if (!cancelled) setState(next);
+          if (cancelled) return;
+          if (next.status === 'unavailable') {
+            if (retries < 3) {
+              retries += 1;
+              retryId = window.setTimeout(() => {
+                retryId = null;
+                if (!cancelled) apply();
+              }, 700);
+            }
+            return;
+          }
+          retries = 0;
+          setState(next);
         } catch (err) {
           console.warn('[account] resolve failed', err);
-          if (!cancelled) setState({ status: 'guest' });
         }
       })();
     };
@@ -64,6 +77,7 @@ export function useAccountAuth(): {
     return () => {
       cancelled = true;
       if (debounceId != null) window.clearTimeout(debounceId);
+      if (retryId != null) window.clearTimeout(retryId);
       subscription.unsubscribe();
     };
   }, []);

@@ -32,10 +32,16 @@ import { SoundSettings } from './SoundSettings';
 interface TradeUpHomeProps {
   onPlay: () => void;
   onHeadToHead: () => void;
+  /** False while the splash or first-run guide is up, so the account popup waits its turn. */
+  allowAccountPrompt?: boolean;
 }
 
 /** $1B RUN home — premium sports composition. */
-export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
+export function TradeUpHome({
+  onPlay,
+  onHeadToHead,
+  allowAccountPrompt = true,
+}: TradeUpHomeProps) {
   const { resume } = useSound();
   const { t } = useLocale();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
@@ -75,8 +81,12 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
     }
   }, []);
 
-  // Show first-run prompt after home is up and auth has resolved — never for permanent accounts.
+  // Account popup waits until splash and the first-run guide are finished.
   useEffect(() => {
+    if (!allowAccountPrompt) {
+      setPromptOpen(false);
+      return;
+    }
     if (accountState.status === 'loading') return;
     if (accountState.status === 'permanent') {
       setPromptOpen(false);
@@ -93,7 +103,7 @@ export function TradeUpHome({ onPlay, onHeadToHead }: TradeUpHomeProps) {
       return;
     }
     setPromptOpen(true);
-  }, [accountState.status]);
+  }, [accountState.status, allowAccountPrompt]);
 
   const bestIsBillion = bestRun >= BILLION_GOAL;
 

@@ -15,6 +15,7 @@ import {
   type DecadeEra,
   type SpinPair,
 } from '@/lib/tradeup/billionDollar';
+import { DECADE_ERAS } from '@/lib/tradeup/decadeRosters';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import {
   WHEEL_SPIN_DURATION_MS,
@@ -24,7 +25,7 @@ import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { publishSpinHandoff, type SpinBoxSnapshot } from '@/lib/tradeup/spinHandoff';
 import { BarrelReel, REEL_NUDGE_CHANCE } from './BarrelReel';
-import { buildSpinStrip, stripFromLabels, type SpinStripItem } from './SpinReel';
+import { buildSpinStrip, type SpinStripItem } from './SpinReel';
 import { useLocale } from '@/hooks/useLocale';
 
 export type TicketRerollKind = 'team' | 'era';
@@ -62,6 +63,28 @@ export const TEAM_STRIP_LEN = 42;
 export const ERA_STRIP_LEN = TEAM_STRIP_LEN;
 /** Cards kept after the winner so the stopped reel still shows neighbors. */
 const REEL_TAIL = 2;
+
+/**
+ * Era reel walks 1960s → 2020s and wraps. The landing card is `winner`.
+ * Extra cards after it continue the same cycle so a peek never jumps decades.
+ */
+export function buildChronologicalEraStrip(
+  winner: DecadeEra,
+  length: number,
+  tail = 0,
+): SpinStripItem[] {
+  const order = DECADE_ERAS;
+  const winAt = Math.max(0, order.indexOf(winner));
+  const body = Math.max(2, length);
+  const total = body + Math.max(0, tail);
+  const labels: string[] = [];
+  for (let i = 0; i < total; i += 1) {
+    const delta = i - (body - 1);
+    const idx = (winAt + delta + order.length * 64) % order.length;
+    labels.push(eraShortLabel(order[idx]!));
+  }
+  return labels.map((label) => ({ label }));
+}
 
 function appendReelTail(items: SpinStripItem[], choices: SpinStripItem[]): SpinStripItem[] {
   if (items.length === 0 || choices.length === 0) return items;
@@ -303,18 +326,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       }
 
       if (axes.era) {
-        const eraPool = erasForTeam(allPairs, pair.team.id);
-        const labels =
-          eraPool.length > 0
-            ? eraPool
-            : (['1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'] as DecadeEra[]);
-        const eraItems = stripFromLabels(buildSpinStrip(labels, pair.era, ERA_STRIP_LEN)).map(
-          (item) => ({
-            label: eraShortLabel(item.label as DecadeEra),
-          }),
-        );
-        const eraChoices = labels.map((label) => ({ label: eraShortLabel(label) }));
-        setEraStrip(appendReelTail(eraItems, eraChoices));
+        setEraStrip(buildChronologicalEraStrip(pair.era, ERA_STRIP_LEN, REEL_TAIL));
         setSpinEra(true);
         eraDoneRef.current = false;
         setEraSpinId((n) => n + 1);
@@ -392,6 +404,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       ? teamColors.primary
       : undefined;
 
+  const verticalPair = showGoal && !goalCopy;
+  const boxHeight = verticalPair ? TEAM_ITEM_H : undefined;
   const busy = mode === 'spinning';
   const teamPanelStyle =
     teamFill && teamInk
@@ -434,14 +448,19 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       ) : null}
 
       <div className={`ter__stage barrel-shell is-open${mode === 'landed' ? ' is-locked' : ''}`}>
-        <div className="barrel-window" style={teamPanelStyle}>
+        <div
+          className={`barrel-window${verticalPair ? ' barrel-window--pair' : ''}`}
+          style={teamPanelStyle}
+        >
           <BarrelReel
             strip={spinTeam ? teamStrip : []}
             spinId={spinTeam ? teamSpinId : 0}
-            itemHeight={TEAM_ITEM_H}
+            itemHeight={boxHeight ?? TEAM_ITEM_H}
             durationMs={teamMs}
             reduceMotion={reduceMotion}
             variant="team"
+            axis={verticalPair ? 'y' : 'x'}
+            columns={verticalPair ? 1 : undefined}
             readyLabel="TEAM"
             holdLabel={!spinTeam && displayTeam ? teamLabel(displayTeam) : null}
             holdStyle={
@@ -460,10 +479,12 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           <BarrelReel
             strip={spinEra ? eraStrip : []}
             spinId={spinEra ? eraSpinId : 0}
-            itemHeight={ERA_ITEM_H}
+            itemHeight={boxHeight ?? ERA_ITEM_H}
             durationMs={eraMs}
             reduceMotion={reduceMotion}
             variant="era"
+            axis={verticalPair ? 'y' : 'x'}
+            columns={verticalPair ? 1 : undefined}
             readyLabel="ERA"
             holdLabel={!spinEra && displayEra ? eraShortLabel(displayEra) : null}
             celebrate={mode === 'landed'}

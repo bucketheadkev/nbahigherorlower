@@ -12,6 +12,7 @@ import {
   DECADE_ERAS,
   decadePlayerToTradePlayer,
   getDecadeRoster,
+  getHistPlayerById,
   resolveValidTeamEra,
   teamsForEra,
   type DecadeEra,
@@ -378,15 +379,31 @@ function lebronDollarBand(
   return { minDollars: 201_000_000, maxDollars: 225_000_000 };
 }
 
+/** Every Reggie Miller card, on every team, is a fixed $198M. */
+function reggieMillerDollarBand(
+  player: TradePlayer,
+): { minDollars: number; maxDollars: number } | null {
+  if (player.name.trim() !== 'Reggie Miller') return null;
+  return { minDollars: 198_000_000, maxDollars: 198_000_000 };
+}
+
 function customDollarBand(
   player: TradePlayer,
 ): { minDollars: number; maxDollars: number } | null {
+  const reggie = reggieMillerDollarBand(player);
+  if (reggie) return reggie;
   const overrideKey = decadeDollarOverrideKey(player);
   if (overrideKey != null) {
     const decade = DECADE_DOLLAR_BAND_OVERRIDES[overrideKey];
     if (decade) return decade;
   }
   return lebronDollarBand(player);
+}
+
+/** Prefer the authored decade card so 1v1 stubs price like Classic. */
+function canonicalTradePlayer(player: TradePlayer): TradePlayer {
+  const found = player.id ? getHistPlayerById(player.id) : undefined;
+  return found ?? player;
 }
 
 /**
@@ -512,18 +529,19 @@ export function dollarsFromBoxStats(stats: {
 }
 
 /**
- * Authoritative primary price for a player/team/era version.
- * Classic and every 1v1 mode must call this — no mode multiplier and no re-roll.
- * Fixed min=max overrides stay exact. Open bands use a stable id hash, not Math.random.
+ * Primary price before the nearest-million snap.
+ * Classic and 1v1 still publish the snapped value. The leaderboard uses this
+ * only to split ties.
  */
-export function resolveAuthoritativePlayerValue(player: TradePlayer): number {
-  const band = resolveDollarBand(player);
+function unroundedAuthoritativeDollars(player: TradePlayer): number {
+  const source = canonicalTradePlayer(player);
+  const band = resolveDollarBand(source);
   if (band.minDollars === band.maxDollars) {
-    return toCleanMillions(Math.min(MAX_PLAYER_DOLLARS, band.minDollars));
+    return Math.min(MAX_PLAYER_DOLLARS, band.minDollars);
   }
 
-  const eased = bandProgress(player, band);
-  const fromStats = dollarsFromBoxStats(player.stats);
+  const eased = bandProgress(source, band);
+  const fromStats = dollarsFromBoxStats(source.stats);
   const span = Math.max(1, band.maxDollars - band.minDollars);
   const statsT = Math.min(1, Math.max(0, (fromStats - band.minDollars) / span));
   const tvWeight = band.minTv === band.maxTv ? 0.35 : 0.7;
@@ -531,9 +549,18 @@ export function resolveAuthoritativePlayerValue(player: TradePlayer): number {
   const raw = band.minDollars + span * t;
   const clamped = Math.min(
     band.maxDollars,
-    Math.max(band.minDollars, raw * stablePriceJitter(player.id)),
+    Math.max(band.minDollars, raw * stablePriceJitter(source.id)),
   );
-  return toCleanMillions(Math.min(MAX_PLAYER_DOLLARS, clamped));
+  return Math.min(MAX_PLAYER_DOLLARS, clamped);
+}
+
+/**
+ * Authoritative primary price for a player/team/era version.
+ * Classic and every 1v1 mode must call this — no mode multiplier and no re-roll.
+ * Fixed min=max overrides stay exact. Open bands use a stable id hash, not Math.random.
+ */
+export function resolveAuthoritativePlayerValue(player: TradePlayer): number {
+  return toCleanMillions(unroundedAuthoritativeDollars(player));
 }
 
 /** @deprecated Name kept for callers — this no longer rolls randomly. */
@@ -554,11 +581,23 @@ export function getDollarValue(player: TradePlayer): number {
  * Off-primary uses the same 3% haircut in Classic and 1v1, then rounds to the nearest million.
  */
 export function getDollarValueForSlot(player: TradePlayer, slot: Position): number {
-  const base = resolveAuthoritativePlayerValue(player);
-  if (player.primaryPosition === slot) {
+  const source = canonicalTradePlayer(player);
+  const base = resolveAuthoritativePlayerValue(source);
+  if (source.primaryPosition === slot) {
     return base;
   }
   return toCleanMillions(base * OFF_PRIMARY_SLOT_VALUE_FACTOR);
+}
+
+/**
+ * Whole-dollar seated price before the million snap.
+ * Leaderboard tie display only. Classic and 1v1 keep getDollarValueForSlot.
+ */
+export function getDollarValueForSlotUnrounded(player: TradePlayer, slot: Position): number {
+  const source = canonicalTradePlayer(player);
+  const base = unroundedAuthoritativeDollars(source);
+  const seated = source.primaryPosition === slot ? base : base * OFF_PRIMARY_SLOT_VALUE_FACTOR;
+  return Math.max(0, Math.round(Math.min(MAX_PLAYER_DOLLARS, seated)));
 }
 
 export function sumTeamValue(players: TradePlayer[]): number {

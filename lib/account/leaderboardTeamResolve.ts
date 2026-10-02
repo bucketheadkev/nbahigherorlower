@@ -5,6 +5,7 @@
 
 import {
   getDollarValueForSlot,
+  getDollarValueForSlotUnrounded,
   type DecadeEra,
 } from '@/lib/tradeup/billionDollar';
 import {
@@ -29,7 +30,10 @@ export interface LeaderboardTeamPlayer {
   teamId: string;
   teamName: string;
   era: string;
+  /** Nearest-million seated price. Same figure Classic shows. */
   dollarValue: number;
+  /** Whole dollars before that snap. Leaderboard ties only. */
+  rawDollarValue: number;
 }
 
 type CacheEntry = {
@@ -99,6 +103,9 @@ export function resolveLeaderboardLineup(
     const dollarValue = entry
       ? getDollarValueForSlot(entry.tradePlayer, slot)
       : 0;
+    const rawDollarValue = entry
+      ? getDollarValueForSlotUnrounded(entry.tradePlayer, slot)
+      : 0;
     bySlot.set(slot, {
       playerId,
       name:
@@ -109,6 +116,7 @@ export function resolveLeaderboardLineup(
       teamName: entry ? teamNameForId(entry.teamId) : '—',
       era: entry?.era ?? '—',
       dollarValue,
+      rawDollarValue,
     });
   }
 

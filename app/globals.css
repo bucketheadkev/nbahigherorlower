@@ -21322,7 +21322,7 @@ body:has(.tradeup-shell--home-white) {
 }
 .billion-result-page__total {
   margin: 0.35rem 0 0.15rem !important;
-  font-size: clamp(2.35rem, 11vw, 3.35rem) !important;
+  font-size: clamp(2.82rem, 13.2vw, 4.02rem) !important;
   font-weight: 900 !important;
   letter-spacing: -0.04em !important;
   font-variant-numeric: tabular-nums;

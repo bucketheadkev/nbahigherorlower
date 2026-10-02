@@ -329,3 +329,24 @@ export function decadePlayerToTradePlayer(
     isFranchise: tradeValue >= 88,
   };
 }
+
+let histById: Map<string, TradePlayer> | null = null;
+
+/** Same card Classic uses, looked up by hist_* id. */
+export function getHistPlayerById(id: string): TradePlayer | undefined {
+  if (!id) return undefined;
+  if (!histById) {
+    histById = new Map();
+    for (const era of DECADE_ERAS) {
+      const teams = DB[era];
+      if (!teams) continue;
+      for (const [teamId, players] of Object.entries(teams)) {
+        for (const row of players) {
+          const player = decadePlayerToTradePlayer(row, teamId, era);
+          if (!histById.has(player.id)) histById.set(player.id, player);
+        }
+      }
+    }
+  }
+  return histById.get(id);
+}

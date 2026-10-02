@@ -11,6 +11,18 @@ export type MessageKey =
   | 'lang.en'
   | 'lang.es'
   | 'home.heroTitle'
+  | 'intro.eyebrow'
+  | 'intro.title'
+  | 'intro.goal'
+  | 'intro.step1'
+  | 'intro.step2'
+  | 'intro.step3'
+  | 'intro.valuesTitle'
+  | 'intro.valuesCopy'
+  | 'intro.cta'
+  | 'intro.seePrices'
+  | 'intro.tapTier'
+  | 'intro.sum'
   | 'home.heroSubtitle'
   | 'home.classicTitle'
   | 'home.classicDesc'
@@ -45,6 +57,7 @@ export type MessageKey =
   | 'runs.waiting'
   | 'runs.emptyCopy'
   | 'runs.bestBadge'
+  | 'runs.valueLabel'
   | 'challenges.eyebrow'
   | 'challenges.title'
   | 'challenges.completeLabel'
@@ -61,6 +74,8 @@ export type MessageKey =
   | 'leaderboard.title'
   | 'leaderboard.world'
   | 'leaderboard.metaTop'
+  | 'leaderboard.helpLabel'
+  | 'leaderboard.helpCopy'
   | 'leaderboard.loading'
   | 'leaderboard.error'
   | 'leaderboard.retry'
@@ -147,7 +162,19 @@ const EN: Record<MessageKey, string> = {
   'lang.switchToEs': 'Cambiar a español',
   'lang.en': 'EN',
   'lang.es': 'ES',
-  'home.heroTitle': 'BUILD YOUR FIVE',
+  'home.heroTitle': 'CAN YOU BUILD A $1B TEAM?',
+  'intro.eyebrow': 'THE GOAL',
+  'intro.title': '$1,000,000,000',
+  'intro.goal': 'Draft five players.',
+  'intro.step1': 'Spin',
+  'intro.step2': 'Pick',
+  'intro.step3': 'Add them up',
+  'intro.valuesTitle': 'Prices',
+  'intro.valuesCopy': 'Better players cost more.',
+  'intro.cta': 'Chase the billion',
+  'intro.seePrices': 'See prices',
+  'intro.tapTier': 'Tap a tier',
+  'intro.sum': 'Your team is those five prices added up.',
   'home.heroSubtitle': 'Draft five legends. Cross one billion dollars.',
   'home.classicTitle': 'CLASSIC RUN',
   'home.classicDesc': 'Solo draft · Reach $1,000,000,000',
@@ -182,6 +209,7 @@ const EN: Record<MessageKey, string> = {
   'runs.waiting': 'WAITING',
   'runs.emptyCopy': 'Hit $1,000,000,000 or more to bank a squad here.',
   'runs.bestBadge': 'Best',
+  'runs.valueLabel': 'Team value',
   'challenges.eyebrow': 'SEASON GOALS',
   'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
@@ -201,6 +229,9 @@ const EN: Record<MessageKey, string> = {
   'leaderboard.title': 'Leaderboard',
   'leaderboard.world': 'World',
   'leaderboard.metaTop': 'Top 100 Runs',
+  'leaderboard.helpLabel': 'How scores work',
+  'leaderboard.helpCopy':
+    'Every score in the game is the nearest million. If two teams land on the same amount, this board shows each exact total.',
   'leaderboard.loading': 'Loading World board…',
   'leaderboard.error': 'Could not load the leaderboard.',
   'leaderboard.retry': 'Try again',
@@ -309,7 +340,19 @@ const ES: Record<MessageKey, string> = {
   'lang.switchToEs': 'Cambiar a español',
   'lang.en': 'EN',
   'lang.es': 'ES',
-  'home.heroTitle': 'ARMA TU CINCO',
+  'home.heroTitle': '¿PUEDES ARMAR UN EQUIPO DE $1B?',
+  'intro.eyebrow': 'LA META',
+  'intro.title': '$1,000,000,000',
+  'intro.goal': 'Elige cinco jugadores.',
+  'intro.step1': 'Gira',
+  'intro.step2': 'Elige',
+  'intro.step3': 'Súmalos',
+  'intro.valuesTitle': 'Precios',
+  'intro.valuesCopy': 'Los mejores cuestan más.',
+  'intro.cta': 'Por el billón',
+  'intro.seePrices': 'Ver precios',
+  'intro.tapTier': 'Toca un nivel',
+  'intro.sum': 'Tu equipo es la suma de esos cinco precios.',
   'home.heroSubtitle':
     'Elige cinco leyendas. Supera mil millones de dólares.',
   'home.classicTitle': 'PARTIDA CLÁSICA',
@@ -346,6 +389,7 @@ const ES: Record<MessageKey, string> = {
   'runs.emptyCopy':
     'Alcanza $1,000,000,000 o más para guardar un quinteto aquí.',
   'runs.bestBadge': 'Mejor',
+  'runs.valueLabel': 'Valor del equipo',
   'challenges.eyebrow': 'METAS DE TEMPORADA',
   'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',
@@ -365,6 +409,9 @@ const ES: Record<MessageKey, string> = {
   'leaderboard.title': 'Clasificación',
   'leaderboard.world': 'Mundo',
   'leaderboard.metaTop': 'Top 100 partidas',
+  'leaderboard.helpLabel': 'Cómo funcionan los puntajes',
+  'leaderboard.helpCopy':
+    'Cada puntaje del juego es el millón más cercano. Si dos equipos coinciden, aquí se muestra el total exacto de cada uno.',
   'leaderboard.loading': 'Cargando el tablero mundial…',
   'leaderboard.error': 'No se pudo cargar la clasificación.',
   'leaderboard.retry': 'Reintentar',

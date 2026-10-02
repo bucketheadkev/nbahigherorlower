@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -285,6 +286,33 @@ export function ValueRevealMachine({
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement | null>(null);
+  const finalTotalRef = useRef<HTMLParagraphElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (stage !== 'results') return;
+    const el = finalTotalRef.current;
+    if (!el) return;
+    const fit = () => {
+      const page = el.closest('.billion-result-page');
+      const limit = Math.max(160, (page?.clientWidth ?? window.innerWidth) - 16);
+      let size = Math.min(Math.round(limit * 0.28), 168);
+      const apply = (px: number) => {
+        el.style.setProperty('font-size', `${px}px`, 'important');
+      };
+      apply(size);
+      let guard = 0;
+      while (el.scrollWidth > limit && size > 48 && guard < 140) {
+        size -= 1;
+        apply(size);
+        guard += 1;
+      }
+    };
+    fit();
+    const page = el.closest('.billion-result-page');
+    const observer = new ResizeObserver(fit);
+    if (page) observer.observe(page);
+    return () => observer.disconnect();
+  }, [stage, teamValue]);
 
   const handleShareX = useCallback(async () => {
     if (sharing) return;
@@ -324,7 +352,7 @@ export function ValueRevealMachine({
         <div className="billion-result-page__card">
           <div ref={shareCardRef} className="billion-result-page__share-shot">
             <p className="billion-result-page__kicker">FINAL ROSTER</p>
-            <p className="billion-result-page__total">
+            <p ref={finalTotalRef} className="billion-result-page__total">
               {formatDollarsExact(teamValue)}
             </p>
             <p

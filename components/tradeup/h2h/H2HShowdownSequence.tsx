@@ -99,11 +99,12 @@ function sideTotals(
   };
 }
 
-/** Count-up display: nearest million, no suffix ($0 → $1,000,000 → $1,683,000,000). */
+/** Count-up display: nearest million, then the exact total. Never finishes short. */
 function formatCountUpDollars(value: number, target: number, settled: boolean): string {
-  if (settled) return formatDollars(target);
-  const rounded = Math.floor(Math.max(0, value) / 1_000_000) * 1_000_000;
-  return `$${rounded.toLocaleString('en-US')}`;
+  const exact = Math.max(0, Math.round(target));
+  if (settled || Math.abs(exact - value) < 1_000_000) return formatDollars(exact);
+  const rounded = Math.round(Math.max(0, value) / 1_000_000) * 1_000_000;
+  return formatDollars(rounded);
 }
 
 /**
@@ -193,15 +194,15 @@ export function H2HShowdownSequence({
   const leftFinal = leftBoosted;
   const rightFinal = rightBoosted;
 
-  // Totals before this position (Center never adds on this screen).
+  // Totals before this position, then after it — including Center.
   const priorTotals = useMemo(
     () => sideTotals(orderedRounds.slice(0, index), iAmP1, bountyPosition, bountyMultiplier, scoreFormatter),
     [bountyMultiplier, bountyPosition, iAmP1, index, orderedRounds, scoreFormatter],
   );
-  const afterTotals = useMemo(() => {
-    if (isLast) return priorTotals;
-    return sideTotals(orderedRounds.slice(0, index + 1), iAmP1, bountyPosition, bountyMultiplier, scoreFormatter);
-  }, [bountyMultiplier, bountyPosition, iAmP1, index, isLast, orderedRounds, priorTotals, scoreFormatter]);
+  const afterTotals = useMemo(
+    () => sideTotals(orderedRounds.slice(0, index + 1), iAmP1, bountyPosition, bountyMultiplier, scoreFormatter),
+    [bountyMultiplier, bountyPosition, iAmP1, index, orderedRounds, scoreFormatter],
+  );
 
   // Snap top totals to prior when entering a position.
   useEffect(() => {
@@ -373,7 +374,7 @@ export function H2HShowdownSequence({
       } else {
         setLeftShown(leftTarget);
         setRightShown(rightTarget);
-        setPhase(isLast ? 'settled' : 'feeding');
+        setPhase('feeding');
       }
       return;
     }
@@ -405,7 +406,7 @@ export function H2HShowdownSequence({
           h2hDebug('showdown.bountyBoost', { position: positionKey, mult: bountyMultiplier });
           setPhase('bountyBoost');
         } else {
-          setPhase(isLast ? 'settled' : 'feeding');
+          setPhase('feeding');
         }
       });
     }, VALUE_REVEAL_MS);
@@ -436,7 +437,7 @@ export function H2HShowdownSequence({
     if (reduceMotion) {
       setLeftShown(leftFinal);
       setRightShown(rightFinal);
-      setPhase(isLast ? 'settled' : 'feeding');
+      setPhase('feeding');
       return;
     }
 
@@ -461,7 +462,7 @@ export function H2HShowdownSequence({
       setRightShown(rightFinal);
       hold.id = window.setTimeout(() => {
         if (signal.cancelled) return;
-        setPhase(isLast ? 'settled' : 'feeding');
+        setPhase('feeding');
       }, 1300);
     });
 
@@ -480,9 +481,9 @@ export function H2HShowdownSequence({
     started,
   ]);
 
-  // Feed float → top totals rise (PG–PF only).
+  // Feed the card into the team total, including the last position.
   useEffect(() => {
-    if (!started || phase !== 'feeding' || isLast) return;
+    if (!started || phase !== 'feeding') return;
 
     if (reduceMotion) {
       setTotalMineShown(afterTotals.mine);
@@ -529,7 +530,6 @@ export function H2HShowdownSequence({
   }, [
     afterTotals.mine,
     afterTotals.opp,
-    isLast,
     phase,
     priorTotals.mine,
     priorTotals.opp,

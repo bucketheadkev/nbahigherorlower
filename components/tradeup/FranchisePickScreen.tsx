@@ -19,16 +19,16 @@ import {
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import {
+  buildChronologicalEraStrip,
   buildTeamColorStrip,
   ERA_STRIP_LEN,
-  erasForTeam,
   pickRerollPair,
   TEAM_STRIP_LEN,
   uniqueTeams,
   type TicketRerollKind,
 } from './BallionTicketMachine';
 import { BarrelReel, REEL_NUDGE_CHANCE } from './BarrelReel';
-import { buildSpinStrip, stripFromLabels, type SpinStripItem } from './SpinReel';
+import type { SpinStripItem } from './SpinReel';
 
 interface FranchisePickScreenProps {
   team: TeamInfo;
@@ -200,16 +200,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
     if (rerolling === 'team') {
       setSpinStrip(buildTeamColorStrip(uniqueTeams(pairs), next.team, TEAM_STRIP_LEN));
     } else {
-      const pool = erasForTeam(pairs, next.team.id);
-      const labels =
-        pool.length > 0
-          ? pool
-          : (['1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'] as DecadeEra[]);
-      setSpinStrip(
-        stripFromLabels(buildSpinStrip(labels, next.era, ERA_STRIP_LEN)).map((item) => ({
-          label: eraShortLabel(item.label as DecadeEra),
-        })),
-      );
+      setSpinStrip(buildChronologicalEraStrip(next.era, ERA_STRIP_LEN));
     }
     setFreshAxis(null);
     setNudgeSettle(Math.random() < REEL_NUDGE_CHANCE);
@@ -251,6 +242,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
               durationMs={reduceMotion ? 80 : WHEEL_SPIN_DURATION_MS}
               reduceMotion={reduceMotion}
               variant="team"
+              axis="y"
               columns={1}
               nudgeSettle={nudgeSettle}
               onLocked={onReelLocked}
@@ -274,6 +266,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
               durationMs={reduceMotion ? 80 : WHEEL_SPIN_DURATION_MS}
               reduceMotion={reduceMotion}
               variant="era"
+              axis="y"
               columns={1}
               nudgeSettle={nudgeSettle}
               onLocked={onReelLocked}

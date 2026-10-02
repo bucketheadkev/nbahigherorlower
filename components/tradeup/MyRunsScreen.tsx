@@ -98,7 +98,11 @@ export function MyRunsScreen() {
                     aria-expanded={open}
                     onClick={() => toggle(run)}
                   >
+                    <span className="run-ledger__mark" aria-hidden>
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                     <span className="run-ledger__copy">
+                      <span className="run-ledger__kicker">{t('runs.valueLabel')}</span>
                       <span className="run-ledger__value-row">
                         <strong>{formatDollarsExact(run.teamValue)}</strong>
                         {isBest ? (

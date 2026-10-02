@@ -12,6 +12,8 @@ interface BarrelReelProps {
   startDelayMs?: number;
   reduceMotion?: boolean;
   variant: 'team' | 'era';
+  /** Travel axis. Vertical reels show one window and scroll upward. */
+  axis?: 'x' | 'y';
   /** Center label before the first spin (TEAM / ERA). */
   readyLabel?: string | null;
   /** Held axis — full-width row, center card, no travel. */
@@ -37,8 +39,8 @@ const GAP = 8;
 export const REEL_NUDGE_CHANCE = 0.2;
 
 /**
- * Horizontal barrel. Three tiles fill the viewport.
- * The last strip item is the predetermined landing card.
+ * Barrel reel. Horizontal shows three tiles; vertical shows one window.
+ * The landing index is the predetermined card.
  * Motion is one CSS transform — no per-frame React updates.
  */
 export const BarrelReel = memo(function BarrelReel({
@@ -48,6 +50,7 @@ export const BarrelReel = memo(function BarrelReel({
   durationMs,
   reduceMotion = false,
   variant,
+  axis = 'x',
   readyLabel = null,
   holdLabel = null,
   holdStyle,
@@ -74,17 +77,17 @@ export const BarrelReel = memo(function BarrelReel({
     const view = viewRef.current;
     if (!view) return;
     const apply = () => {
-      const viewW = view.clientWidth || 320;
+      const viewSize =
+        axis === 'y' ? view.clientHeight || itemHeight : view.clientWidth || 320;
       const cols = Math.max(1, columns);
-      const tile =
-        cols <= 1 ? viewW : (viewW - GAP * (cols - 1)) / cols;
+      const tile = cols <= 1 ? viewSize : (viewSize - GAP * (cols - 1)) / cols;
       view.style.setProperty('--barrel-tile', `${tile}px`);
     };
     apply();
     const observer = new ResizeObserver(apply);
     observer.observe(view);
     return () => observer.disconnect();
-  }, [columns]);
+  }, [axis, columns, itemHeight]);
 
   useLayoutEffect(() => {
     const el = stripRef.current;
@@ -92,23 +95,26 @@ export const BarrelReel = memo(function BarrelReel({
     if (!el || !view) return;
     if (spinId <= 0 || strip.length < 2) return;
 
-    const viewW = view.clientWidth || 320;
+    const viewSize =
+      axis === 'y' ? view.clientHeight || itemHeight : view.clientWidth || 320;
     const cols = Math.max(1, columns);
-    const tile = cols <= 1 ? viewW : (viewW - GAP * (cols - 1)) / cols;
+    const tile = cols <= 1 ? viewSize : (viewSize - GAP * (cols - 1)) / cols;
     const stride = tile + GAP;
-    const centerPad = (viewW - tile) / 2;
+    const centerPad = (viewSize - tile) / 2;
     const landAt = Math.min(
       Math.max(0, landIndex ?? strip.length - 1),
       strip.length - 1,
     );
     const target = centerPad - landAt * stride;
+    const at = (pos: number) =>
+      axis === 'y' ? `translate3d(0, ${pos}px, 0)` : `translate3d(${pos}px, 0, 0)`;
     let locked = false;
 
     const finish = () => {
       if (locked) return;
       locked = true;
       el.getAnimations().forEach((item) => item.cancel());
-      el.style.transform = `translate3d(${target}px, 0, 0)`;
+      el.style.transform = at(target);
       onLockedRef.current?.();
     };
 
@@ -124,7 +130,7 @@ export const BarrelReel = memo(function BarrelReel({
     } else {
       playedSpinRef.current = spinId;
       if (reduceMotion) {
-        el.style.transform = `translate3d(${target}px, 0, 0)`;
+        el.style.transform = at(target);
         finish();
         return;
       }
@@ -137,7 +143,6 @@ export const BarrelReel = memo(function BarrelReel({
       const remaining = Math.abs(target - cruise);
       const miss = nudgeSettle ? Math.min(stride * 0.55, remaining * 0.4) : 0;
       const near = target + direction * miss;
-      const at = (x: number) => `translate3d(${x}px, 0, 0)`;
       el.style.transform = at(centerPad);
       const frames: Keyframe[] = [
         { transform: at(centerPad), easing: 'linear' },
@@ -166,7 +171,7 @@ export const BarrelReel = memo(function BarrelReel({
       el.removeEventListener('animationend', onEnd);
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [columns, durationMs, landIndex, nudgeSettle, reduceMotion, spinId, strip.length]);
+  }, [axis, columns, durationMs, itemHeight, landIndex, nudgeSettle, reduceMotion, spinId, strip.length]);
 
   const spinning = spinId > 0 && strip.length > 1;
   const holding = !spinning && Boolean(holdLabel);
@@ -176,17 +181,21 @@ export const BarrelReel = memo(function BarrelReel({
     Math.max(0, strip.length - 1),
   );
 
+  const singleWindow = axis === 'y';
   const tileStyle = (extra?: CSSProperties): CSSProperties => ({
-    height: '100%',
+    height: singleWindow ? 'var(--barrel-tile, 100%)' : '100%',
+    flex: singleWindow ? '0 0 var(--barrel-tile, 100%)' : undefined,
     ...extra,
   });
 
   return (
     <div
       ref={viewRef}
-      className={`barrel-reel barrel-reel--${variant}${spinning ? ' is-live' : ''}${
-        ready ? ' is-ready' : ''
-      }${holding ? ' is-hold' : ''}${celebrate ? ' is-celebrate' : ''}`}
+      className={`barrel-reel barrel-reel--${variant}${singleWindow ? ' is-vertical' : ''}${
+        spinning ? ' is-live' : ''
+      }${ready ? ' is-ready' : ''}${holding ? ' is-hold' : ''}${
+        celebrate ? ' is-celebrate' : ''
+      }`}
       style={{ height: itemHeight }}
     >
       {spinning ? (
@@ -209,6 +218,17 @@ export const BarrelReel = memo(function BarrelReel({
               {item.label}
             </div>
           ))}
+        </div>
+      ) : singleWindow ? (
+        <div
+          className={`${holding ? 'barrel-reel__hold' : 'barrel-reel__ready'} barrel-reel__solo`}
+        >
+          <div
+            className={`barrel-card barrel-card--${variant} ${holding ? 'is-hold' : 'is-ready'}`}
+            style={tileStyle(holding ? holdStyle : undefined)}
+          >
+            {holding ? holdLabel : readyLabel}
+          </div>
         </div>
       ) : (
         <div className={holding ? 'barrel-reel__hold' : 'barrel-reel__ready'}>

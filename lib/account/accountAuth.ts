@@ -1,8 +1,11 @@
 import type { Session, User } from '@supabase/supabase-js';
 import {
   createOwnProfile,
+  cachedProfileForUser,
   checkUsernameAvailability,
-  fetchProfileForUser,
+  clearCachedProfile,
+  findProfileByUsername,
+  lookupProfileForUser,
   type ProfileRow,
 } from '@/lib/account/profiles';
 import { isAnonymousUser } from '@/lib/account/userKind';
@@ -34,6 +37,10 @@ export type AccountAuthState =
       status: 'needs_username';
       session: Session;
       user: User;
+    }
+  | {
+      /** Session read failed. Callers should keep the last known account, not treat this as a logout. */
+      status: 'unavailable';
     };
 
 export { isAnonymousUser, isPermanentAuthUser } from '@/lib/account/userKind';
@@ -47,50 +54,82 @@ function authErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export async function resolveAccountAuthState(): Promise<AccountAuthState> {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout : null;
+    if (!timer) {
+      resolve();
+      return;
+    }
+    timer(resolve, ms);
+  });
+}
+
+async function readSession(): Promise<
+  { ok: true; session: Session | null } | { ok: false }
+> {
   const supabase = getSupabaseBrowserClient();
-
-  // Guard against rare auth-lock hangs (surfaces as stuck "loading" / bare Event rejections).
-  const sessionResult = await Promise.race([
-    supabase.auth.getSession(),
-    new Promise<{ data: { session: null }; error: Error }>((resolve) => {
-      const timer =
-        typeof globalThis.setTimeout === 'function'
-          ? globalThis.setTimeout
-          : null;
-      if (!timer) {
-        resolve({
-          data: { session: null },
-          error: new Error('Session lookup timed out.'),
-        });
-        return;
-      }
-      timer(() => {
-        resolve({
-          data: { session: null },
-          error: new Error('Session lookup timed out.'),
-        });
-      }, 8000);
-    }),
-  ]);
-
-  const { data, error } = sessionResult;
-  if (error) {
-    console.warn('[account] getSession failed', error.message);
-    return { status: 'guest' };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const sessionResult = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<{ data: { session: null }; error: Error }>((resolve) => {
+        const timer =
+          typeof globalThis.setTimeout === 'function' ? globalThis.setTimeout : null;
+        if (!timer) {
+          resolve({
+            data: { session: null },
+            error: new Error('Session lookup timed out.'),
+          });
+          return;
+        }
+        timer(() => {
+          resolve({
+            data: { session: null },
+            error: new Error('Session lookup timed out.'),
+          });
+        }, 8000);
+      }),
+    ]);
+    if (!sessionResult.error) {
+      return { ok: true, session: sessionResult.data.session };
+    }
+    console.warn('[account] getSession failed', sessionResult.error.message);
+    if (attempt === 0) await delay(400);
   }
-  const session = data.session;
+  return { ok: false };
+}
+
+export async function resolveAccountAuthState(): Promise<AccountAuthState> {
+  const sessionResult = await readSession();
+  if (sessionResult.ok === false) return { status: 'unavailable' };
+
+  const session = sessionResult.session;
   if (!session?.user) return { status: 'guest' };
 
   if (isAnonymousUser(session.user)) {
     return { status: 'anonymous', session, user: session.user };
   }
 
-  const profile = await fetchProfileForUser(session.user.id);
-  if (!profile) {
-    return { status: 'needs_username', session, user: session.user };
+  let lookup = await lookupProfileForUser(session.user.id);
+  if (lookup.status !== 'found') {
+    await delay(lookup.status === 'error' ? 500 : 350);
+    lookup = await lookupProfileForUser(session.user.id);
   }
-  return { status: 'permanent', session, user: session.user, profile };
+
+  if (lookup.status === 'found') {
+    return { status: 'permanent', session, user: session.user, profile: lookup.profile };
+  }
+
+  if (lookup.status === 'error') {
+    const cached = cachedProfileForUser(session.user.id);
+    if (cached) {
+      return { status: 'permanent', session, user: session.user, profile: cached };
+    }
+    // A failed read is not proof the profile is missing. Do not open username setup.
+    return { status: 'unavailable' };
+  }
+
+  return { status: 'needs_username', session, user: session.user };
 }
 
 export type AuthActionResult =
@@ -226,33 +265,53 @@ export async function signInWithEmail(input: {
     return { ok: false, message: 'Unexpected anonymous session after login.' };
   }
 
-  const profile = await fetchProfileForUser(data.session.user.id);
-  if (!profile) {
+  const signedIn = await resolveAccountAuthState();
+  if (signedIn.status === 'unavailable') {
+    return { ok: false, message: 'Signed in, but your profile could not be loaded. Try again.' };
+  }
+  if (signedIn.status !== 'permanent' && signedIn.status !== 'needs_username') {
+    return { ok: false, message: 'Login did not return a session.' };
+  }
+  return { ok: true, state: signedIn };
+}
+
+async function permanentState(profile: ProfileRow): Promise<AccountAuthState> {
+  const sessionResult = await readSession();
+  if (sessionResult.ok && sessionResult.session?.user && !isAnonymousUser(sessionResult.session.user)) {
     return {
-      ok: true,
-      state: {
-        status: 'needs_username',
-        session: data.session,
-        user: data.session.user,
-      },
+      status: 'permanent',
+      session: sessionResult.session,
+      user: sessionResult.session.user,
+      profile,
     };
   }
-
-  return {
-    ok: true,
-    state: {
-      status: 'permanent',
-      session: data.session,
-      user: data.session.user,
-      profile,
-    },
-  };
+  return resolveAccountAuthState();
 }
 
 /** Complete profile for an email user missing a profiles row. */
 export async function completeUsernameForSession(
   rawUsername: string,
 ): Promise<AuthActionResult> {
+  const supabase = getSupabaseBrowserClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { ok: false, message: 'You need to be signed in to save a username.' };
+  }
+  const userId = userData.user.id;
+
+  const own = await lookupProfileForUser(userId);
+  if (own.status === 'found') {
+    return { ok: true, state: await permanentState(own.profile) };
+  }
+
+  const existing = await findProfileByUsername(rawUsername);
+  if (existing?.user_id === userId) {
+    return { ok: true, state: await permanentState(existing) };
+  }
+  if (existing) {
+    return { ok: false, message: 'That username is taken. Try another.' };
+  }
+
   if (!isValidUsername(rawUsername)) {
     return {
       ok: false,
@@ -260,21 +319,29 @@ export async function completeUsernameForSession(
     };
   }
   const availability = await checkUsernameAvailability(rawUsername);
-  if (availability === 'taken') {
-    return { ok: false, message: 'That username is taken. Try another.' };
-  }
   if (availability === 'invalid') {
     return {
       ok: false,
       message: usernameValidationMessage(rawUsername) ?? 'Invalid username.',
     };
   }
+  if (availability === 'taken') {
+    const again = await findProfileByUsername(rawUsername);
+    if (again?.user_id === userId) {
+      return { ok: true, state: await permanentState(again) };
+    }
+    return { ok: false, message: 'That username is taken. Try another.' };
+  }
+
   const profileResult = await createOwnProfile(rawUsername);
   if (profileResult.ok === false) {
+    const recovered = await lookupProfileForUser(userId);
+    if (recovered.status === 'found') {
+      return { ok: true, state: await permanentState(recovered.profile) };
+    }
     return { ok: false, message: profileResult.message };
   }
-  const state = await resolveAccountAuthState();
-  return { ok: true, state };
+  return { ok: true, state: await permanentState(profileResult.profile) };
 }
 
 export async function signOutAccount(): Promise<AuthActionResult> {
@@ -284,6 +351,7 @@ export async function signOutAccount(): Promise<AuthActionResult> {
   const { detachClassicCloudCache } = await import('@/lib/account/classicCloud');
   detachClassicCloudCache();
   detachAchievementCloudCache();
+  clearCachedProfile();
 
   const supabase = getSupabaseBrowserClient();
   try {

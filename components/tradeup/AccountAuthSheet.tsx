@@ -426,7 +426,7 @@ export function AccountAuthSheet({
             <p className="settings-name-modal__kicker">Finish setup</p>
             <h3 className="settings-name-modal__title">Choose a username</h3>
             <p className="settings-name-modal__copy">
-              Pick a public username for the future leaderboard.
+              Pick a public username for the leaderboard. If this account already has one, enter that same name to sign back in.
             </p>
             <label className="settings-name-modal__field">
               <span>Username</span>

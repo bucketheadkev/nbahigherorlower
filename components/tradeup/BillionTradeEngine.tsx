@@ -61,7 +61,7 @@ import {
   syncedPicksToSlots,
   type SyncedH2HPick,
 } from '@/lib/tradeup/h2hDraftBridge';
-import { DraftHubCards } from './DraftHubCards';
+import { CircleName, DraftHubCards } from './DraftHubCards';
 
 /**
  * Experimental: replace classic five position rows with half-court roster.
@@ -1300,7 +1300,9 @@ export function BillionTradeEngine({
                       }
                     >
                       <span
-                        className="billion-court-dock__circle"
+                        className={`billion-court-dock__circle${
+                          player && isMovingSource ? ' is-named' : ''
+                        }`}
                         style={
                           player
                             ? {
@@ -1315,7 +1317,24 @@ export function BillionTradeEngine({
                             : undefined
                         }
                       >
-                        {player ? playerInitials(player.name) : slot}
+                        {player && isMovingSource ? (
+                          <>
+                            <span className="draft-hub-court__face draft-hub-court__face--front">
+                              {playerInitials(player.name)}
+                            </span>
+                            <span className="draft-hub-court__face draft-hub-court__face--back">
+                              <CircleName
+                                pos={slot}
+                                first={player.name.trim().split(/\s+/)[0] ?? player.name}
+                                last={player.name.trim().split(/\s+/).slice(1).join(' ')}
+                              />
+                            </span>
+                          </>
+                        ) : player ? (
+                          playerInitials(player.name)
+                        ) : (
+                          slot
+                        )}
                       </span>
                       <span className="billion-court-dock__pos" aria-hidden="true">
                         {slot}

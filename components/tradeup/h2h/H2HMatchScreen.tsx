@@ -293,11 +293,9 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
   }
 
   if (state.phase === 'finished') {
-    // Prefer authoritative server totals (bounty-adjusted) over client recomputation.
-    const scoreP1 =
-      state.resolved_rounds.length >= 5 ? Math.round(state.p1_total) : rosterTotals.p1;
-    const scoreP2 =
-      state.resolved_rounds.length >= 5 ? Math.round(state.p2_total) : rosterTotals.p2;
+    // Same dollars as Classic: sum of each seated card, not the penalized server total.
+    const scoreP1 = rosterTotals.p1;
+    const scoreP2 = rosterTotals.p2;
     const p1Wins = scoreP1 > scoreP2;
     const p2Wins = scoreP2 > scoreP1;
     const iAmP1 = state.my_player_number === 1;
