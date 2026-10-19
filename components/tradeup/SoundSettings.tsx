@@ -11,6 +11,7 @@ import {
   setH2HUsername,
 } from '@/lib/tradeup/h2hUsername';
 import { deleteUserData } from '@/lib/account/deleteUserData';
+import { requestIntroReplay } from '@/lib/account/howItWorksStorage';
 import { SettingsGuidePage } from './SettingsGuidePage';
 import { SettingsLegalPage, type LegalPageId } from './SettingsLegalPage';
 
@@ -338,6 +339,30 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               </svg>
             </span>
             <span className="settings-tile__label">{guideNav.howValues}</span>
+          </button>
+          <button
+            type="button"
+            className="settings-ctrl settings-tile settings-tile--guide"
+            onPointerDown={press(() => {
+              resume();
+              hapticTap();
+              close();
+              requestIntroReplay();
+            })}
+          >
+            <span className="settings-tile__icon settings-tile__icon--replay" aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v3.8h3.8"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path d="M10.5 9.2v5.6l4.4-2.8-4.4-2.8Z" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="settings-tile__label">{guideNav.replayIntro}</span>
           </button>
         </div>
       </section>

@@ -589,17 +589,6 @@ export function getDollarValueForSlot(player: TradePlayer, slot: Position): numb
   return toCleanMillions(base * OFF_PRIMARY_SLOT_VALUE_FACTOR);
 }
 
-/**
- * Whole-dollar seated price before the million snap.
- * Leaderboard tie display only. Classic and 1v1 keep getDollarValueForSlot.
- */
-export function getDollarValueForSlotUnrounded(player: TradePlayer, slot: Position): number {
-  const source = canonicalTradePlayer(player);
-  const base = unroundedAuthoritativeDollars(source);
-  const seated = source.primaryPosition === slot ? base : base * OFF_PRIMARY_SLOT_VALUE_FACTOR;
-  return Math.max(0, Math.round(Math.min(MAX_PLAYER_DOLLARS, seated)));
-}
-
 export function sumTeamValue(players: TradePlayer[]): number {
   return players.reduce((sum, player) => sum + Math.round(getDollarValue(player)), 0);
 }

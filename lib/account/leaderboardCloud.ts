@@ -1,6 +1,7 @@
 /**
- * Public Classic World leaderboard — verified scores via Supabase RPC.
+ * Verified Classic run submission via Supabase RPC.
  * Clients submit lineups (player ids + seats); server computes the value.
+ * The public leaderboard now ranks Bank totals (see bankLeaderboardCloud).
  */
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -8,17 +9,6 @@ import { isAnonymousUser } from '@/lib/account/userKind';
 import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
 import type { ValuedPlayer } from '@/lib/tradeup/billionDollar';
 import type { Position } from '@/lib/tradeup/types';
-import type { LeaderboardSeatInput } from '@/lib/account/leaderboardTeamResolve';
-
-export interface LeaderboardRow {
-  rank: number;
-  username: string;
-  verifiedBest: number;
-  achievedAt: string | null;
-  lineup: LeaderboardSeatInput[];
-}
-
-export interface MyLeaderboardStanding extends LeaderboardRow {}
 
 export interface SubmitLineupResult {
   ok: true;
@@ -28,30 +18,6 @@ export interface SubmitLineupResult {
 }
 
 type LineupSeat = { player_id: string; slot: Position };
-
-function parseLineup(raw: unknown): LeaderboardSeatInput[] {
-  if (!Array.isArray(raw)) return [];
-  const seats: LeaderboardSeatInput[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') continue;
-    const row = item as Record<string, unknown>;
-    const playerId = typeof row.player_id === 'string' ? row.player_id : '';
-    const slot = typeof row.slot === 'string' ? row.slot : '';
-    if (!playerId || !slot) continue;
-    seats.push({ player_id: playerId, slot });
-  }
-  return seats;
-}
-
-function mapLeaderboardRow(row: Record<string, unknown>): LeaderboardRow {
-  return {
-    rank: Number(row.rank) || 0,
-    username: typeof row.username === 'string' ? row.username : '—',
-    verifiedBest: Math.max(0, Math.round(Number(row.verified_best) || 0)),
-    achievedAt: typeof row.achieved_at === 'string' ? row.achieved_at : null,
-    lineup: parseLineup(row.lineup),
-  };
-}
 
 function toLineupPayload(lineup: ValuedPlayer[]): LineupSeat[] | null {
   if (lineup.length < 5) return null;
@@ -78,86 +44,6 @@ function logLeaderboardError(
     error?.hint ? `hint=${error.hint}` : null,
   ].filter(Boolean);
   console.error(parts.join(' | '), extra ?? '');
-}
-
-/** Top N public World entries (username + verified PB + lineup seats). */
-export async function fetchClassicLeaderboardTop(limit = 100): Promise<{
-  ok: true;
-  rows: LeaderboardRow[];
-} | { ok: false; message: string }> {
-  try {
-    const supabase = getSupabaseBrowserClient();
-    const { data, error } = await supabase.rpc('get_classic_leaderboard_top', {
-      p_limit: limit,
-    });
-    if (error) {
-      logLeaderboardError('top fetch failed', error);
-      return { ok: false, message: 'Could not load the leaderboard.' };
-    }
-    const rows: LeaderboardRow[] = (Array.isArray(data) ? data : []).map((row) =>
-      mapLeaderboardRow(row as Record<string, unknown>),
-    );
-    return { ok: true, rows };
-  } catch (err) {
-    console.error('[leaderboard] top fetch error', err);
-    return { ok: false, message: 'Could not load the leaderboard.' };
-  }
-}
-
-/** Public verified lineup for one username (View Team). */
-export async function fetchClassicLeaderboardTeam(username: string): Promise<{
-  ok: true;
-  lineup: LeaderboardSeatInput[];
-  verifiedBest: number;
-} | { ok: false; message: string }> {
-  const name = username.trim();
-  if (!name) return { ok: false, message: 'Missing username.' };
-  try {
-    const supabase = getSupabaseBrowserClient();
-    const { data, error } = await supabase.rpc('get_classic_leaderboard_team', {
-      p_username: name,
-    });
-    if (error) {
-      logLeaderboardError('team fetch failed', error, { username: name });
-      return { ok: false, message: 'Could not load this team.' };
-    }
-    const row = Array.isArray(data) && data.length > 0 ? (data[0] as Record<string, unknown>) : null;
-    if (!row) return { ok: false, message: 'Team not found.' };
-    return {
-      ok: true,
-      lineup: parseLineup(row.lineup),
-      verifiedBest: Math.max(0, Math.round(Number(row.verified_best) || 0)),
-    };
-  } catch (err) {
-    console.error('[leaderboard] team fetch error', err);
-    return { ok: false, message: 'Could not load this team.' };
-  }
-}
-
-/** Current permanent user's World rank, or null if guest / no verified PB. */
-export async function fetchMyClassicLeaderboardRank(): Promise<{
-  ok: true;
-  standing: MyLeaderboardStanding | null;
-} | { ok: false; message: string }> {
-  try {
-    const supabase = getSupabaseBrowserClient();
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user ?? null;
-    if (!user || isAnonymousUser(user)) {
-      return { ok: true, standing: null };
-    }
-    const { data, error } = await supabase.rpc('get_my_classic_leaderboard_rank');
-    if (error) {
-      logLeaderboardError('my rank failed', error);
-      return { ok: false, message: 'Could not load your rank.' };
-    }
-    const row = Array.isArray(data) && data.length > 0 ? (data[0] as Record<string, unknown>) : null;
-    if (!row) return { ok: true, standing: null };
-    return { ok: true, standing: mapLeaderboardRow(row) };
-  } catch (err) {
-    console.error('[leaderboard] my rank error', err);
-    return { ok: false, message: 'Could not load your rank.' };
-  }
 }
 
 /**

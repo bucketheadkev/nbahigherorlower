@@ -1,408 +1,171 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
+import { useBankBalance } from '@/hooks/useBankBalance';
 import { useLocale } from '@/hooks/useLocale';
 import {
-  fetchClassicLeaderboardTop,
-  fetchClassicLeaderboardTeam,
-  fetchMyClassicLeaderboardRank,
-  type LeaderboardRow,
-  type MyLeaderboardStanding,
-} from '@/lib/account/leaderboardCloud';
-import {
-  resolveLeaderboardLineup,
-  type LeaderboardTeamPlayer,
-} from '@/lib/account/leaderboardTeamResolve';
-import { formatDollars } from '@/lib/tradeup/billionDollar';
-import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
-import { hapticLight } from '@/lib/tradeup/haptics';
+  fetchBankLeaderboardTop,
+  fetchMyBankRank,
+  type BankStanding,
+} from '@/lib/account/bankLeaderboardCloud';
+import { formatCash } from '@/lib/tradeup/bank';
+import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
+import { WALL_OF_FAME_GOAL } from '@/lib/tradeup/wallOfFame';
 import { ArenaAtmosphere } from './ArenaAtmosphere';
-import {
-  AccountAuthSheet,
-  type AccountSheetView,
-} from './AccountAuthSheet';
+import { AccountAuthSheet, type AccountSheetView } from './AccountAuthSheet';
+import { TickerNumber } from './onboarding/ticker';
 
-type LoadState = 'loading' | 'ready' | 'error' | 'empty';
+type LoadState = 'loading' | 'ready' | 'empty' | 'unavailable' | 'error';
 
-type BoardStanding = LeaderboardRow & {
-  /** Sum of million-rounded seated prices. */
-  roundedTotal: number;
-  /** Sum of whole-dollar seated prices, before the million snap. */
-  rawTotal: number;
-  /** True when another board team rounds to the same million total. */
-  showExact: boolean;
-};
+const EASE: [number, number, number, number] = [0.25, 1, 0.5, 1];
+const PLACE_LABEL: Record<1 | 2 | 3, string> = { 1: '1ST', 2: '2ND', 3: '3RD' };
 
-function scoreLineup(entry: LeaderboardRow): { roundedTotal: number; rawTotal: number } {
-  const players = resolveLeaderboardLineup(entry.lineup);
-  if (players.length >= 5) {
-    return {
-      roundedTotal: players.reduce((sum, player) => sum + Math.round(player.dollarValue), 0),
-      rawTotal: players.reduce((sum, player) => sum + Math.round(player.rawDollarValue), 0),
-    };
+/** ?boardPreview=1 — sample Banks for design review before the server function ships. */
+function isBoardPreview(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('boardPreview') === '1';
+  } catch {
+    return false;
   }
-  const stored = Math.max(0, Math.round(entry.verifiedBest));
-  return { roundedTotal: stored, rawTotal: stored };
 }
 
-/** Highest exact total first. Ties at the displayed million show whole dollars. */
-function rankBoard(rows: LeaderboardRow[]): BoardStanding[] {
-  const scored = rows.map((entry) => ({ entry, ...scoreLineup(entry) }));
-  scored.sort(
-    (a, b) => b.rawTotal - a.rawTotal || a.entry.rank - b.entry.rank || a.entry.username.localeCompare(b.entry.username),
-  );
-  const roundedCounts = new Map<number, number>();
-  for (const row of scored) {
-    roundedCounts.set(row.roundedTotal, (roundedCounts.get(row.roundedTotal) ?? 0) + 1);
-  }
-  return scored.map((row, index) => ({
-    ...row.entry,
-    rank: index + 1,
-    roundedTotal: row.roundedTotal,
-    rawTotal: row.rawTotal,
-    showExact: (roundedCounts.get(row.roundedTotal) ?? 0) > 1,
-  }));
-}
+const PREVIEW_ROWS: BankStanding[] = [
+  ['Vaultline', 1_840_000],
+  ['NorthStar', 1_515_000],
+  ['Kairo', 1_260_000],
+  ['Meridian', 985_000],
+  ['Atlas', 860_000],
+  ['Sable', 735_000],
+  ['Onyx', 610_000],
+  ['Halcyon', 480_000],
+].map(([username, bankTotal], i) => ({
+  rank: i + 1,
+  username: username as string,
+  bankTotal: bankTotal as number,
+}));
 
-function formatBoardDollars(value: number, exact: boolean): string {
-  const n = Math.max(0, Math.round(value));
-  if (!exact) return formatDollars(n);
-  return `$${n.toLocaleString('en-US')}`;
-}
-
-function displayTotal(entry: BoardStanding): number {
-  return entry.showExact ? entry.rawTotal : entry.roundedTotal;
-}
-
-function useCountProgress(active: boolean): number {
-  const [progress, setProgress] = useState(active ? 0 : 1);
-  useEffect(() => {
-    if (!active) {
-      setProgress(1);
-      return;
-    }
-    setProgress(0);
-    const start = performance.now();
-    const ms = 1100;
-    let raf = 0;
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / ms);
-      setProgress(t);
-      if (t < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [active]);
-  return progress;
-}
-
-function countedDollars(value: number, progress: number, exact: boolean): string {
-  const target = Math.max(0, Math.round(value));
-  if (progress >= 1) return formatBoardDollars(target, exact);
-  const eased = 1 - (1 - progress) ** 3;
-  const shown = Math.round(target * eased);
-  if (!exact && target - shown < 1_000_000) return formatBoardDollars(target, false);
-  return formatBoardDollars(shown, exact);
-}
-
-function formatPlayerValue(value: number, exact: boolean): string {
-  return formatBoardDollars(value, exact);
-}
-
-function LeaderboardTeamView({
+function PodiumCard({
   entry,
-  players,
-  loading,
-  error,
-  onBack,
+  place,
+  isYou,
+  youLabel,
+  index,
+  reduceMotion,
 }: {
-  entry: BoardStanding;
-  players: LeaderboardTeamPlayer[];
-  loading: boolean;
-  error: string | null;
-  onBack: () => void;
+  entry: BankStanding;
+  place: 1 | 2 | 3;
+  isYou: boolean;
+  youLabel: string;
+  index: number;
+  reduceMotion: boolean;
 }) {
-  const { t } = useLocale();
-
   return (
-    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub">
-      <ArenaAtmosphere intensity="hub" />
-      <header className="oneb-hub__header">
-        <button type="button" className="leaderboard-team__back" onClick={onBack}>
-          {t('leaderboard.back')}
-        </button>
-        <p className="oneb-hub__eyebrow">{t('leaderboard.teamEyebrow')}</p>
-        <h1 className="oneb-hub__title">{entry.username}</h1>
-        <p className="oneb-hub__meta">
-          #{entry.rank.toLocaleString('en-US')}
-          {' · '}
-          <span className="oneb-hub__meta-accent">{formatBoardDollars(displayTotal(entry), entry.showExact)}</span>
-        </p>
-      </header>
-
-      <main className="oneb-hub__scroll">
-        {loading ? (
-          <p className="leaderboard-world__status">{t('leaderboard.loading')}</p>
-        ) : null}
-
-        {!loading && (error || players.length === 0) ? (
-          <div className="leaderboard-world__empty">
-            <p className="run-empty__copy">{error ?? t('leaderboard.teamEmpty')}</p>
-          </div>
-        ) : null}
-
-        {!loading && players.length > 0 ? (
-          <ul className="run-ledger leaderboard-team-ledger">
-            <li className="run-ledger__card is-open">
-              <div className="run-ledger__summary leaderboard-team__summary" aria-hidden>
-                <span className="run-ledger__copy">
-                  <span className="run-ledger__value-row">
-                    <strong>{formatBoardDollars(displayTotal(entry), entry.showExact)}</strong>
-                  </span>
-                  <em>{t('leaderboard.verifiedLineup')}</em>
-                </span>
-              </div>
-              <ul className="run-ledger__players">
-                {players.map((player) => {
-                  const primary = player.teamId
-                    ? getTeamColors(player.teamId).primary
-                    : '#333333';
-                  const ink = contrastOnPrimary(primary);
-                  return (
-                    <li
-                      key={`${player.playerId}-${player.position}`}
-                      className="run-ledger__player-row leaderboard-team__player"
-                      style={
-                        {
-                          ['--row-accent' as string]: primary,
-                          ['--row-ink' as string]: ink,
-                          backgroundColor: primary,
-                          color: ink,
-                        } as CSSProperties
-                      }
-                    >
-                      <span className="run-ledger__pos">{player.position}</span>
-                      <span className="run-ledger__meta">
-                        <strong>{player.name}</strong>
-                        <em>
-                          {player.teamName}
-                          {player.era !== '—' ? ` · ${player.era}` : ''}
-                        </em>
-                      </span>
-                      <span className="run-ledger__val">
-                        {formatPlayerValue(
-                          entry.showExact ? player.rawDollarValue : player.dollarValue,
-                          entry.showExact,
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-          </ul>
-        ) : null}
-      </main>
-    </div>
+    <motion.article
+      className={`lbx-podium__card is-place-${place}${isYou ? ' is-you' : ''}`}
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: EASE, delay: 0.08 + index * 0.08 }}
+    >
+      <span className="lbx-podium__medal">{PLACE_LABEL[place]}</span>
+      <h2 className="lbx-podium__name">{entry.username}</h2>
+      {isYou ? <em className="lbx-you">{youLabel}</em> : null}
+      <p className="lbx-podium__value">
+        <TickerNumber value={entry.bankTotal} duration={reduceMotion ? 0 : 1100} />
+      </p>
+    </motion.article>
   );
 }
 
 function BoardRow({
   entry,
   isYou,
-  progress,
-  onViewTeam,
+  youLabel,
+  index,
+  reduceMotion,
 }: {
-  entry: BoardStanding;
+  entry: BankStanding;
   isYou: boolean;
-  progress: number;
-  onViewTeam: (entry: BoardStanding) => void;
+  youLabel: string;
+  index: number;
+  reduceMotion: boolean;
 }) {
-  const { t } = useLocale();
-  const total = displayTotal(entry);
-
   return (
-    <li className={`leaderboard-card${isYou ? ' is-you' : ''}`}>
-      <span className="leaderboard-card__place" aria-label={`Rank ${entry.rank}`}>
-        {entry.rank}
+    <motion.li
+      className={`lbx-row${isYou ? ' is-you' : ''}`}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: EASE, delay: Math.min(0.6, 0.2 + index * 0.025) }}
+    >
+      <span className="lbx-row__rank">{entry.rank}</span>
+      <span className="lbx-row__name">
+        <strong>{entry.username}</strong>
+        {isYou ? <em className="lbx-you">{youLabel}</em> : null}
       </span>
-      <div className="leaderboard-card__body">
-        <div className="leaderboard-card__name-row">
-          <strong>{entry.username}</strong>
-          {isYou ? <em className="leaderboard-card__you">{t('leaderboard.you')}</em> : null}
-        </div>
-        <button
-          type="button"
-          className="leaderboard-card__view"
-          onClick={() => onViewTeam(entry)}
-        >
-          {t('leaderboard.viewTeam')}
-        </button>
-      </div>
-      <span className="leaderboard-card__value">{countedDollars(total, progress, entry.showExact)}</span>
-    </li>
-  );
-}
-
-function PodiumCard({
-  entry,
-  place,
-  isYou,
-  progress,
-  onViewTeam,
-}: {
-  entry: BoardStanding;
-  place: 1 | 2 | 3;
-  isYou: boolean;
-  progress: number;
-  onViewTeam: (entry: BoardStanding) => void;
-}) {
-  const { t } = useLocale();
-  const total = displayTotal(entry);
-  const label = place === 1 ? '1st' : place === 2 ? '2nd' : '3rd';
-
-  return (
-    <article className={`lb-podium__card is-place-${place}${isYou ? ' is-you' : ''}`}>
-      <p className="lb-podium__place">{label}</p>
-      <h2 className="lb-podium__name">{entry.username}</h2>
-      {isYou ? <em className="leaderboard-card__you">{t('leaderboard.you')}</em> : null}
-      <p className={`lb-podium__value${entry.showExact ? ' is-exact' : ''}`}>
-        {countedDollars(total, progress, entry.showExact)}
-      </p>
-      <button type="button" className="lb-podium__view" onClick={() => onViewTeam(entry)}>
-        {t('leaderboard.viewTeam')}
-      </button>
-    </article>
+      <span className="lbx-row__value">{formatCash(entry.bankTotal)}</span>
+    </motion.li>
   );
 }
 
 export function LeaderboardScreen() {
   const { t } = useLocale();
+  const reduceMotion = getPrefersReducedMotion();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
-  const [rows, setRows] = useState<LeaderboardRow[]>([]);
-  const [mine, setMine] = useState<MyLeaderboardStanding | null>(null);
+  const [rows, setRows] = useState<BankStanding[]>([]);
+  const [mine, setMine] = useState<BankStanding | null>(null);
   const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
-  const [viewing, setViewing] = useState<BoardStanding | null>(null);
-  const [teamLoading, setTeamLoading] = useState(false);
-  const [teamError, setTeamError] = useState<string | null>(null);
 
   const isPermanent = accountState.status === 'permanent';
   const isGuestLike =
     accountState.status === 'guest' ||
     accountState.status === 'anonymous' ||
     accountState.status === 'needs_username';
+  const myUsername = isPermanent ? accountState.profile.username : null;
+  const bank = useBankBalance(isPermanent) ?? 0;
 
   const load = useCallback(async () => {
     setLoadState('loading');
-    setErrorMessage(null);
-
-    const [topResult, mineResult] = await Promise.all([
-      fetchClassicLeaderboardTop(100),
-      fetchMyClassicLeaderboardRank(),
-    ]);
-
-    if (topResult.ok === false) {
-      setRows([]);
+    if (isBoardPreview()) {
+      setRows(PREVIEW_ROWS);
       setMine(null);
-      setErrorMessage(topResult.message);
-      setLoadState('error');
+      setLoadState('ready');
       return;
     }
-
-    setRows(topResult.rows);
-    if (mineResult.ok === true) {
-      setMine(mineResult.standing);
-    } else {
+    const [top, me] = await Promise.all([fetchBankLeaderboardTop(100), fetchMyBankRank()]);
+    if (top.ok === false) {
+      setRows([]);
       setMine(null);
+      setLoadState(top.reason);
+      return;
     }
-
-    setLoadState(topResult.rows.length === 0 ? 'empty' : 'ready');
+    setRows(top.rows);
+    setMine(me.ok === true ? me.standing : null);
+    setLoadState(top.rows.length === 0 ? 'empty' : 'ready');
   }, []);
 
   useEffect(() => {
     void load();
   }, [load, accountState.status]);
 
-  const myUsername =
-    accountState.status === 'permanent' ? accountState.profile.username : null;
-  const board = useMemo(() => rankBoard(rows), [rows]);
-  const mineInTop = Boolean(myUsername && board.some((row) => row.username === myUsername));
-  const showMineBelow = Boolean(mine && mine.rank > 100 && !mineInTop);
-  const countProgress = useCountProgress(loadState === 'ready' && board.length > 0);
-  const podium = board.slice(0, 3);
-  const rest = board.slice(3);
-  const youOn = (entry: BoardStanding) =>
-    isPermanent && myUsername != null && entry.username === myUsername;
-
-  const viewingPlayers = useMemo(
-    () => (viewing ? resolveLeaderboardLineup(viewing.lineup) : []),
-    [viewing],
-  );
-
-  const openTeam = useCallback(async (entry: BoardStanding) => {
-    hapticLight();
-    setTeamError(null);
-
-    if (entry.lineup.length >= 5) {
-      setViewing(entry);
-      return;
-    }
-
-    setTeamLoading(true);
-    setViewing(entry);
-    const result = await fetchClassicLeaderboardTeam(entry.username);
-    setTeamLoading(false);
-
-    if (result.ok === false) {
-      setTeamError(result.message);
-      return;
-    }
-    if (result.lineup.length < 5) {
-      setTeamError(t('leaderboard.teamEmpty'));
-      return;
-    }
-    const next = {
-      ...entry,
-      lineup: result.lineup,
-      verifiedBest: result.verifiedBest || entry.verifiedBest,
-    };
-    const scored = scoreLineup(next);
-    setViewing({
-      ...next,
-      roundedTotal: scored.roundedTotal,
-      rawTotal: scored.rawTotal,
-      showExact: entry.showExact,
-    });
-  }, [t]);
-
-  const openAccount = (view: AccountSheetView = 'menu') => {
-    setSheetView(view);
-    setSheetOpen(true);
-  };
-
-  if (viewing) {
-    return (
-      <LeaderboardTeamView
-        entry={viewing}
-        players={viewingPlayers}
-        loading={teamLoading}
-        error={teamError}
-        onBack={() => {
-          setViewing(null);
-          setTeamError(null);
-          setTeamLoading(false);
-        }}
-      />
-    );
-  }
+  const isYou = (entry: BankStanding) =>
+    myUsername != null && entry.username.toLowerCase() === myUsername.toLowerCase();
+  const podium = rows.slice(0, 3);
+  const rest = rows.slice(3);
+  const mineInTop = rows.some(isYou);
+  const showMineBelow = Boolean(mine && !mineInTop && mine.rank > rows.length);
+  const wallLeft = Math.max(0, WALL_OF_FAME_GOAL - bank);
+  const wallPct = Math.min(1, bank / WALL_OF_FAME_GOAL);
+  const rankLabel = mine
+    ? t('leaderboard.rankOf', { rank: mine.rank.toLocaleString('en-US') })
+    : t('leaderboard.unranked');
 
   return (
-    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub">
+    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub lbx-screen">
       <ArenaAtmosphere intensity="hub" />
       <header className="oneb-hub__header lb-head">
         <button
@@ -420,93 +183,130 @@ export function LeaderboardScreen() {
         {helpOpen ? <p className="lb-help__note">{t('leaderboard.helpCopy')}</p> : null}
       </header>
 
-      <main className="oneb-hub__scroll leaderboard-world">
+      <main className="oneb-hub__scroll lbx-main">
+        <motion.section
+          className="lbx-mine"
+          aria-label={t('leaderboard.myBank')}
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
+        >
+          <div className="lbx-mine__top">
+            <span className="lbx-mine__label">{t('leaderboard.myBank')}</span>
+            <span className={`lbx-mine__rank${mine ? ' is-ranked' : ''}`}>
+              {isGuestLike ? t('leaderboard.unranked') : rankLabel}
+            </span>
+          </div>
+          <p className="lbx-mine__balance">
+            <TickerNumber value={bank} duration={reduceMotion ? 0 : 900} />
+          </p>
+          <div className="lbx-mine__bar" aria-hidden>
+            <motion.span
+              initial={reduceMotion ? false : { scaleX: 0 }}
+              animate={{ scaleX: Math.max(wallPct, 0.012) }}
+              transition={{ duration: 1, ease: EASE, delay: 0.2 }}
+            />
+          </div>
+          <p className="lbx-mine__goal">
+            {wallLeft > 0
+              ? t('leaderboard.wallGoal', { amount: formatCash(wallLeft) })
+              : t('leaderboard.wallReached')}
+          </p>
+        </motion.section>
+
         {loadState === 'loading' ? (
-          <p className="leaderboard-world__status">{t('leaderboard.loading')}</p>
+          <ul className="lbx-skeleton" aria-label={t('leaderboard.loading')}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <li key={i} />
+            ))}
+          </ul>
+        ) : null}
+
+        {loadState === 'unavailable' ? (
+          <div className="lbx-state">
+            <p className="lbx-state__kicker">{t('leaderboard.comingKicker')}</p>
+            <p className="lbx-state__copy">{t('leaderboard.comingCopy')}</p>
+          </div>
         ) : null}
 
         {loadState === 'error' ? (
-          <div className="leaderboard-world__empty">
-            <p className="leaderboard-world__status">{errorMessage ?? t('leaderboard.error')}</p>
-            <button type="button" className="leaderboard-world__retry" onClick={() => void load()}>
+          <div className="lbx-state">
+            <p className="lbx-state__copy">{t('leaderboard.error')}</p>
+            <button type="button" className="lbx-state__btn" onClick={() => void load()}>
               {t('leaderboard.retry')}
             </button>
           </div>
         ) : null}
 
         {loadState === 'empty' ? (
-          <div className="leaderboard-world__empty">
-            <p className="run-empty__kicker">{t('leaderboard.emptyKicker')}</p>
-            <p className="run-empty__copy">{t('leaderboard.emptyCopy')}</p>
+          <div className="lbx-state">
+            <p className="lbx-state__kicker">{t('leaderboard.emptyKicker')}</p>
+            <p className="lbx-state__copy">{t('leaderboard.emptyCopy')}</p>
           </div>
         ) : null}
 
         {loadState === 'ready' && podium.length > 0 ? (
-          <div className="lb-podium" aria-label="Top three">
+          <section className="lbx-podium" aria-label={t('leaderboard.world')}>
             {[podium[1], podium[0], podium[2]]
-              .filter((entry): entry is BoardStanding => entry != null)
-              .map((entry) => (
-              <PodiumCard
-                key={`${entry.rank}-${entry.username}`}
-                entry={entry}
-                place={entry.rank === 1 ? 1 : entry.rank === 2 ? 2 : 3}
-                isYou={youOn(entry)}
-                progress={countProgress}
-                onViewTeam={(next) => {
-                  void openTeam(next);
-                }}
-              />
-            ))}
-          </div>
+              .filter((entry): entry is BankStanding => entry != null)
+              .map((entry, i) => (
+                <PodiumCard
+                  key={entry.username}
+                  entry={entry}
+                  place={entry.rank === 1 ? 1 : entry.rank === 2 ? 2 : 3}
+                  isYou={isYou(entry)}
+                  youLabel={t('leaderboard.you')}
+                  index={i}
+                  reduceMotion={reduceMotion}
+                />
+              ))}
+          </section>
         ) : null}
 
         {loadState === 'ready' && rest.length > 0 ? (
-          <ul className="leaderboard-board" aria-label={t('leaderboard.world')}>
-            {rest.map((entry) => (
+          <ol className="lbx-list" aria-label={t('leaderboard.world')}>
+            {rest.map((entry, i) => (
               <BoardRow
-                key={`${entry.rank}-${entry.username}`}
+                key={entry.username}
                 entry={entry}
-                isYou={youOn(entry)}
-                progress={countProgress}
-                onViewTeam={(next) => {
-                  void openTeam(next);
-                }}
+                isYou={isYou(entry)}
+                youLabel={t('leaderboard.you')}
+                index={i}
+                reduceMotion={reduceMotion}
               />
             ))}
-          </ul>
+          </ol>
         ) : null}
 
         {showMineBelow && mine ? (
           <>
-            <div className="leaderboard-world__divider" aria-hidden />
-            <ul className="leaderboard-board">
+            <div className="lbx-gap" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </div>
+            <ol className="lbx-list">
               <BoardRow
-                entry={{
-                  ...mine,
-                  ...scoreLineup(mine),
-                  showExact: board.some((row) => row.roundedTotal === scoreLineup(mine).roundedTotal),
-                }}
+                entry={mine}
                 isYou
-                progress={1}
-                onViewTeam={(entry) => {
-                  void openTeam(entry);
-                }}
+                youLabel={t('leaderboard.you')}
+                index={0}
+                reduceMotion={reduceMotion}
               />
-            </ul>
+            </ol>
           </>
         ) : null}
 
-        {isPermanent && loadState !== 'loading' && loadState !== 'error' && !mine ? (
-          <p className="leaderboard-world__hint">{t('leaderboard.noVerified')}</p>
-        ) : null}
-
-        {isGuestLike && loadState !== 'loading' && loadState !== 'error' ? (
-          <div className="leaderboard-world__guest">
+        {isGuestLike && loadState !== 'loading' ? (
+          <div className="lbx-guest">
             <p>{t('leaderboard.guestHint')}</p>
             <button
               type="button"
-              className="leaderboard-world__guest-btn"
-              onClick={() => openAccount('signup')}
+              className="lbx-guest__btn"
+              onClick={() => {
+                setSheetView('signup');
+                setSheetOpen(true);
+              }}
             >
               {t('leaderboard.guestCta')}
             </button>

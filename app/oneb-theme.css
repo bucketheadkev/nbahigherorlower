@@ -1664,6 +1664,12 @@
   pointer-events: none;
 }
 
+/* Home hero type — adjust these two sizes to resize the title and subtitle everywhere on phones. */
+.run-home {
+  --home-title-size: clamp(1.15rem, 5.3vw, 1.75rem);
+  --home-subtitle-size: clamp(0.86rem, 3.7vw, 1.02rem);
+}
+
 .run-home__hero {
   position: static;
   transform: none;
@@ -1676,19 +1682,19 @@
 .run-home__title {
   margin: 0;
   font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(0.98rem, 3.85vw, 1.45rem);
+  font-size: var(--home-title-size);
   font-weight: 800;
   letter-spacing: 0.04em;
-  line-height: 1.02;
+  line-height: 1.04;
   color: var(--text-primary);
   white-space: nowrap;
 }
 
 .run-home__subtitle {
-  margin: 0.4rem auto 0;
-  max-width: 19rem;
+  margin: 0.5rem auto 0;
+  max-width: 20rem;
   padding: 0 0.25rem;
-  font-size: clamp(0.72rem, 2.9vw, 0.82rem);
+  font-size: var(--home-subtitle-size);
   font-weight: 500;
   line-height: 1.3;
   color: var(--text-secondary);
@@ -3200,8 +3206,10 @@
   word-break: break-word;
 }
 
-html:not([data-full-motion]) .draft-hub-court__chip {
-  transition: none;
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .draft-hub-court__chip {
+    transition: none;
+  }
 }
 
 .draft-hub-court__chip-pos {
@@ -5308,14 +5316,15 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 
 .challenge-toast__title {
   margin: 0;
-  font-size: clamp(0.92rem, 3.8vw, 1.05rem);
+  font-size: clamp(0.86rem, 3.6vw, 0.98rem);
   font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.15;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   color: #fff;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @keyframes challenge-toast-check {
@@ -10475,154 +10484,6 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   background: rgba(0, 0, 0, 0.14);
 }
 
-/* First-run primer — after splash, once */
-.how-it-works {
-  position: fixed;
-  inset: 0;
-  z-index: 140;
-  display: flex;
-  justify-content: center;
-  background: #010814;
-  color: var(--text-primary);
-}
-
-.how-it-works__frame {
-  position: relative;
-  width: min(100%, 32rem);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.how-it-works__scroll {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: max(1.35rem, env(safe-area-inset-top)) 1.25rem 1rem;
-}
-
-.how-it-works__eyebrow {
-  margin: 0 0 0.45rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(140, 186, 255, 0.92);
-}
-
-.how-it-works__title {
-  margin: 0;
-  max-width: 16rem;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(2rem, 9vw, 2.55rem);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 0.96;
-  color: var(--text-primary);
-}
-
-.how-it-works__lead {
-  margin: 0.85rem 0 0;
-  max-width: 22rem;
-  font-size: 0.98rem;
-  line-height: 1.4;
-  color: rgba(214, 226, 244, 0.82);
-}
-
-.how-it-works__steps {
-  list-style: none;
-  margin: 1.15rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.how-it-works__steps li {
-  display: grid;
-  grid-template-columns: 1.7rem minmax(0, 1fr);
-  gap: 0.65rem;
-  align-items: center;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.95rem;
-  border: 1px solid rgba(186, 210, 255, 0.16);
-  background: linear-gradient(180deg, rgba(16, 32, 68, 0.92), rgba(6, 14, 32, 0.92));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.how-it-works__steps span {
-  width: 1.7rem;
-  height: 1.7rem;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: rgba(77, 143, 255, 0.2);
-  color: #d6e6ff;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.how-it-works__steps p {
-  margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.3;
-  color: #f4f7ff;
-}
-
-.how-it-works__steps--short {
-  margin-top: 1.4rem;
-}
-
-.how-it-works__title--plain {
-  font-size: clamp(1.55rem, 7vw, 2rem);
-  max-width: 16rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.how-it-works__tier-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 1.25rem;
-}
-
-.how-it-works__tier {
-  appearance: none;
-  min-width: 3.1rem;
-  min-height: 2.7rem;
-  padding: 0 0.7rem;
-  border-radius: 0.8rem;
-  border: 1px solid rgba(186, 210, 255, 0.22);
-  background: rgba(8, 20, 48, 0.72);
-  color: #d6e6ff;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-}
-
-.how-it-works__tier.is-on {
-  border-color: rgba(120, 180, 255, 0.85);
-  background: linear-gradient(180deg, #3d7dff, #1746c8);
-  color: #fff;
-}
-
-.how-it-works__range {
-  margin: 1rem 0 0;
-  min-height: 1.6rem;
-  font-size: 1.05rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  color: #f4f7ff;
-}
-
 .lb-head {
   position: relative;
 }
@@ -10653,93 +10514,6 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   color: rgba(226, 236, 255, 0.88);
   font-size: 0.84rem;
   line-height: 1.4;
-}
-
-.how-it-works__values {
-  margin-top: 1.15rem;
-}
-
-.how-it-works__values h2 {
-  margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #f7fbff;
-}
-
-.how-it-works__values p {
-  margin: 0.4rem 0 0.75rem;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  color: rgba(214, 226, 244, 0.78);
-}
-
-.how-it-works__tiers {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.how-it-works__tiers li {
-  display: grid;
-  grid-template-columns: 3.4rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.42rem 0.7rem;
-  border-radius: 0.7rem;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(186, 210, 255, 0.1);
-}
-
-.how-it-works__tiers strong {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  color: #9ec0ff;
-}
-
-.how-it-works__tiers em {
-  font-style: normal;
-  font-size: 0.72rem;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  color: #f4f7ff;
-  text-align: right;
-  white-space: normal;
-}
-
-.how-it-works__dock {
-  position: relative;
-  z-index: 1;
-  padding: 0.75rem 1.25rem max(1rem, env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(1, 8, 20, 0), #010814 28%);
-}
-
-.how-it-works__cta {
-  appearance: none;
-  width: 100%;
-  min-height: 3.35rem;
-  border: 0;
-  border-radius: 1rem;
-  background: linear-gradient(180deg, #5b9bff 0%, #1769ff 46%, #0a45c8 100%);
-  color: #fff;
-  font: inherit;
-  font-size: 1.02rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 12px 28px rgba(23, 105, 255, 0.35);
-}
-
-.how-it-works__cta:active {
-  transform: translateY(1px);
 }
 
 /* Account chip + sign-in sheet */
@@ -10789,4 +10563,4992 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   gap: 0.35rem;
 }
 
+/* ── Achievements: Bank + one list, smallest payout first ────────────── */
+.ach-screen {
+  --ach-accent: #7fb6ff;
+}
 
+.ach-main {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.ach-bank {
+  position: relative;
+  overflow: hidden;
+  margin: 0.15rem 0 0.85rem;
+  padding: 1.05rem 1.1rem 1rem;
+  border-radius: 1.15rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 0%, rgba(41, 228, 144, 0.16), transparent 70%),
+    linear-gradient(168deg, #0c2547 0%, #071630 55%, #040d20 100%);
+  border: 1px solid rgba(41, 228, 144, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 14px 30px rgba(1, 8, 20, 0.5);
+}
+
+.ach-bank__label {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+.ach-bank__balance {
+  margin: 0.2rem 0 0.1rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: clamp(2.3rem, 11vw, 3.1rem);
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.ach-intro {
+  margin: 0 0 0.85rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--oneb-silver-dim);
+}
+
+.ach-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  margin: 0 0 1.05rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  background: rgba(4, 12, 28, 0.75);
+  border: 1px solid rgba(120, 170, 255, 0.18);
+}
+
+.ach-tabs__btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ach-tabs__btn.is-active {
+  background: linear-gradient(180deg, #1d3c6e, #132a52);
+  color: #f2f6ff;
+  box-shadow: 0 0 0 1px rgba(120, 170, 255, 0.35) inset;
+}
+
+.ach-tabs__btn--earned.is-active {
+  background: linear-gradient(180deg, #13734b, #0c5236);
+  box-shadow: 0 0 0 1px rgba(78, 245, 168, 0.45) inset;
+}
+
+.ach-tabs__count {
+  min-width: 1.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ach-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(168deg, rgba(16, 34, 66, 0.92), rgba(6, 15, 34, 0.94));
+  border: 1px solid rgba(120, 170, 255, 0.16);
+}
+
+.ach-card.is-earned {
+  border-color: rgba(41, 228, 144, 0.32);
+}
+
+.ach-card__medal {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  color: var(--ach-accent);
+  background: rgba(127, 182, 255, 0.1);
+  border: 1.5px solid rgba(127, 182, 255, 0.4);
+}
+
+.ach-card.is-earned .ach-card__medal {
+  color: #052014;
+  background: var(--money-green);
+  border-color: rgba(78, 245, 168, 0.9);
+}
+
+.ach-card__body {
+  min-width: 0;
+}
+
+.ach-card__goal {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: #f2f6ff;
+}
+
+.ach-card__progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.ach-card__bar {
+  flex: 1 1 100%;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ach-card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ach-accent);
+}
+
+.ach-card__progress-label {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 750;
+  color: rgba(214, 228, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.ach-card__reward {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.ach-card__cash {
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+  background: rgba(41, 228, 144, 0.1);
+  border: 1px solid rgba(41, 228, 144, 0.3);
+}
+
+.ach-card.is-earned .ach-card__cash {
+  color: #052014;
+  background: var(--money-green);
+  border-color: transparent;
+}
+
+.ach-card__stamp {
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  color: var(--money-green);
+}
+
+.ach-empty {
+  padding: 1.6rem 1rem;
+  border-radius: 1rem;
+  text-align: center;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--oneb-silver-dim);
+  background: rgba(6, 15, 34, 0.7);
+  border: 1px dashed rgba(120, 170, 255, 0.25);
+}
+
+.ach-empty p {
+  margin: 0;
+}
+
+/* ── Cash reward popup (stays until Collect) ─────────────────────────── */
+.cash-pop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) 1.1rem max(1rem, env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse 80% 60% at 50% 45%, rgba(6, 40, 30, 0.82), rgba(1, 5, 14, 0.94));
+  animation: cash-pop-fade 0.28s ease both;
+}
+
+.cash-pop .money-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cash-pop__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 23rem);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.5rem 1.25rem 1.15rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(41, 228, 144, 0.22), transparent 70%),
+    linear-gradient(170deg, #0e2a4f 0%, #071833 55%, #040c1f 100%);
+  border: 1.5px solid rgba(78, 245, 168, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 60px rgba(41, 228, 144, 0.28),
+    0 30px 60px rgba(0, 0, 0, 0.55);
+  animation: cash-pop-in 0.5s cubic-bezier(0.2, 1.3, 0.35, 1) both;
+}
+
+.cash-pop__glow {
+  position: absolute;
+  left: 50%;
+  top: -3.5rem;
+  width: 14rem;
+  height: 7rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(78, 245, 168, 0.35);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.cash-pop__kicker {
+  position: relative;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.28em;
+  color: #9ff7cf;
+}
+
+.cash-pop__amount {
+  position: relative;
+  margin: 0.35rem 0 0.2rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: clamp(2.8rem, 15vw, 3.9rem);
+  font-weight: 850;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+  text-shadow: 0 0 30px rgba(41, 228, 144, 0.45);
+}
+
+.cash-pop__heading {
+  margin: 0.25rem 0 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.86);
+}
+
+.cash-pop__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.cash-pop__item {
+  --tier: #7fb6ff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.cash-pop__item--goal {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.cash-pop__item--goal .cash-pop__name {
+  white-space: normal;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.cash-pop__tier {
+  padding: 0.16rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #071226;
+  background: var(--tier);
+}
+
+.cash-pop__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: #f2f6ff;
+}
+
+.cash-pop__reward {
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.cash-pop__more {
+  margin: 0.45rem 0 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.cash-pop__balance {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 1rem 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  background: rgba(2, 8, 20, 0.6);
+  border: 1px solid rgba(41, 228, 144, 0.25);
+}
+
+.cash-pop__balance span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+.cash-pop__balance strong {
+  font-size: 1.15rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.cash-pop__collect {
+  appearance: none;
+  width: 100%;
+  min-height: 3.3rem;
+  border: 0;
+  border-radius: 1rem;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #042012;
+  background: linear-gradient(180deg, #5ff7b4 0%, #22c97f 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.35) inset,
+    0 10px 24px rgba(41, 228, 144, 0.35);
+  cursor: pointer;
+}
+
+.cash-pop__collect:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+.cash-pop__collect:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.cash-pop__note {
+  margin: 0.7rem 0 0;
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  color: rgba(214, 228, 255, 0.45);
+}
+
+@keyframes cash-pop-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cash-pop-in {
+  0% { opacity: 0; transform: scale(0.7) translateY(18px); }
+  100% { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .cash-pop,
+  html:not([data-full-motion]) .cash-pop__card {
+    animation: none;
+  }
+}
+
+/* ── First-run playable intro (real court, real tokens) ──────────────── */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-navy-deep);
+  color: var(--text-primary);
+}
+
+.intro__frame {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 30rem);
+  height: min(100%, 56rem);
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.1rem max(0.9rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.intro__frame > *:not(.arena-atmo):not(.intro__light):not(.intro__ghost):not(.billion-celebration):not(.intro__sr) {
+  position: relative;
+  z-index: 2;
+}
+
+.intro__light {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.intro__light--green {
+  inset: 6% -25% 45%;
+  background: radial-gradient(ellipse 55% 50% at 50% 45%, rgba(41, 228, 144, 0.2), transparent 70%);
+}
+
+.intro__light--orange {
+  inset: 50% -30% 10%;
+  background: radial-gradient(ellipse 50% 45% at 50% 50%, rgba(229, 86, 34, 0.16), transparent 70%);
+}
+
+.intro__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.2rem;
+}
+
+.intro__skip {
+  appearance: none;
+  padding: 0.45rem 0.2rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--oneb-silver-mute);
+  cursor: pointer;
+}
+
+.intro__skip:hover {
+  color: var(--text-primary);
+}
+
+.intro__headline {
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  margin: 0.55rem 0 0.15rem;
+}
+
+.intro__headline h1 {
+  grid-area: 1 / 1;
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.35rem, 6.6vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.02;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+/* Team value */
+.intro__score {
+  text-align: center;
+}
+
+.intro__score-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 1.1rem;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oneb-silver-mute);
+}
+
+.intro__badge {
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  background: var(--money-green);
+  font-style: normal;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  color: #04140c;
+}
+
+.intro__total {
+  display: inline-block;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(2.2rem, 10.8vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.04;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  transition: color 0.5s ease, text-shadow 0.5s ease;
+  will-change: transform;
+}
+
+.intro__score.is-billion .intro__total {
+  color: var(--money-green);
+  text-shadow: 0 0 26px rgba(41, 228, 144, 0.35);
+}
+
+.intro__score-foot {
+  display: grid;
+  place-items: center;
+  height: 2.2rem;
+}
+
+.intro__score-foot > * {
+  grid-area: 1 / 1;
+}
+
+.intro__meter {
+  position: relative;
+  width: min(78%, 15rem);
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(var(--brand-blue-glow), 0.16);
+}
+
+.intro__meter-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--brand-blue-bright), var(--money-green));
+}
+
+.intro__meter-tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.intro__meter-tick em {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  color: var(--oneb-silver-mute);
+}
+
+/* Court (the real draft hub court) */
+.intro__court {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  will-change: transform, opacity;
+}
+
+.intro__court-box {
+  position: relative;
+  width: min(100%, 26rem, calc(100cqh / 0.82));
+  aspect-ratio: 1 / 0.82;
+}
+
+.intro__court-box .draft-hub-court {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.intro .draft-hub-court__slot {
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.18s ease;
+}
+
+.intro .draft-hub-court__slot.is-drop-hover {
+  transform: scale(1.14);
+  box-shadow:
+    0 0 0 2px rgba(80, 230, 170, 0.95),
+    0 0 24px rgba(80, 230, 170, 0.5);
+}
+
+.intro__handle {
+  appearance: none;
+  position: absolute;
+  z-index: 6;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.intro__handle::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 176, 106, 0.85);
+  animation: intro-cue 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  pointer-events: none;
+}
+
+.intro__handle.is-selected::after {
+  border-color: rgba(255, 210, 90, 0.95);
+  animation: none;
+}
+
+.intro__wave {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  border-radius: 0.55rem;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(41, 228, 144, 0);
+  animation: intro-wave-rim 1.6s ease-out both;
+}
+
+.intro__wave::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 120%;
+  top: 100%;
+  background: linear-gradient(
+    0deg,
+    rgba(41, 228, 144, 0) 0%,
+    rgba(41, 228, 144, 0.06) 22%,
+    rgba(78, 245, 168, 0.3) 50%,
+    rgba(41, 228, 144, 0.06) 78%,
+    rgba(41, 228, 144, 0) 100%
+  );
+  mix-blend-mode: screen;
+  animation: intro-wave 1.4s cubic-bezier(0.33, 0.9, 0.4, 1) both;
+}
+
+/* Contextual readout under the court */
+
+
+/* Tray: the draft row, then the Bank glimpse */
+
+
+.intro__draft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.intro__draw .franchise-pick__result {
+  height: 46px;
+}
+
+.intro__offer-slot {
+  display: grid;
+  min-height: 3.35rem;
+}
+
+.intro__offer-slot > * {
+  grid-area: 1 / 1;
+}
+
+.intro__offer {
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto !important;
+  min-height: 3.35rem;
+  border-color: rgba(var(--brand-blue-glow), 0.38);
+  background: rgba(6, 26, 74, 0.62);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.intro__offer:focus-visible,
+.intro__handle:focus-visible,
+.intro__cta:focus-visible,
+.intro__skip:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+}
+
+.intro__elig {
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  color: var(--oneb-silver-mute);
+  white-space: nowrap;
+}
+
+/* Ghost token that follows the finger */
+.intro__ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.intro__ghost-disc {
+  display: grid;
+  place-items: center;
+  width: clamp(2.8rem, 12vw, 3.3rem);
+  height: clamp(2.8rem, 12vw, 3.3rem);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid color-mix(in srgb, var(--slot-primary, #ffffff) 55%, white);
+  background: var(--slot-primary, #122848);
+  color: var(--slot-ink, #f4f7fb);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55);
+  transition: box-shadow 0.18s ease;
+}
+
+.intro.is-hovering .intro__ghost-disc {
+  box-shadow:
+    0 0 0 3px rgba(80, 230, 170, 0.75),
+    0 16px 30px rgba(0, 0, 0, 0.55);
+}
+
+.intro__cta {
+  appearance: none;
+  width: 100%;
+  min-height: 3.35rem;
+  border-radius: var(--oneb-radius);
+  border: 1.5px solid rgba(255, 214, 180, 0.82);
+  background: linear-gradient(180deg, #ffb06a 0%, var(--basketball-orange-highlight) 42%, var(--basketball-orange) 100%);
+  color: #fff8f3;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.14s cubic-bezier(0.25, 1, 0.5, 1), filter 0.14s ease;
+}
+
+.intro__cta:active {
+  transform: scale(0.98);
+  filter: brightness(0.92);
+}
+
+.intro .billion-celebration {
+  position: absolute;
+  z-index: 8;
+}
+
+.intro__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
+
+.intro__sr:focus {
+  clip: auto;
+  width: auto;
+  height: auto;
+  left: 1.1rem;
+  bottom: 1rem;
+  z-index: 40;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.7rem;
+  background: var(--brand-navy-mid);
+  color: var(--text-primary);
+  outline: 2px solid var(--money-green);
+}
+
+@keyframes intro-cue {
+  0% { opacity: 0.9; transform: scale(0.96); }
+  70%, 100% { opacity: 0; transform: scale(1.18); }
+}
+
+@keyframes intro-wave {
+  from { transform: translateY(0); }
+  to { transform: translateY(-185%); }
+}
+
+@keyframes intro-wave-rim {
+  0% { box-shadow: inset 0 0 0 1px rgba(41, 228, 144, 0); }
+  30% { box-shadow: inset 0 0 0 1.5px rgba(41, 228, 144, 0.7), 0 0 28px rgba(41, 228, 144, 0.28); }
+  100% { box-shadow: inset 0 0 0 1px rgba(41, 228, 144, 0.25), 0 0 18px rgba(41, 228, 144, 0.12); }
+}
+
+@media (max-height: 720px) {
+  .intro__headline {
+    height: 2.1rem;
+    margin-top: 0.35rem;
+  }
+
+  .intro__total {
+    font-size: 2.1rem;
+  }
+
+  .intro__score-foot {
+    height: 1.8rem;
+  }
+
+
+  .intro__draw .franchise-pick__result {
+    height: 40px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .intro__handle::after,
+  html:not([data-full-motion]) .intro__wave,
+  html:not([data-full-motion]) .intro__wave::before {
+    animation: none;
+  }
+}
+/* Intro stage: one court carries all three moments */
+.intro__stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+}
+
+.intro__scene {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  will-change: transform, opacity;
+}
+
+.intro__play .intro__court {
+  flex: 1;
+}
+
+.intro__readout {
+  display: grid;
+  place-items: center;
+  height: 2.6rem;
+}
+
+.intro__readout-row {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  white-space: nowrap;
+}
+
+.intro__readout-name {
+  font-size: 0.86rem;
+  font-weight: 750;
+  color: var(--oneb-silver-dim);
+}
+
+.intro__readout-value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.intro__chip {
+  padding: 0.3rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.intro__chip.is-alt {
+  border-color: rgba(255, 109, 40, 0.55);
+  background: rgba(229, 86, 34, 0.18);
+  color: #ffb06a;
+}
+
+.intro__chip.is-primary {
+  border-color: rgba(41, 228, 144, 0.55);
+  background: rgba(41, 228, 144, 0.14);
+  color: var(--money-green);
+}
+
+.intro__tray {
+  display: grid;
+  min-height: 11.2rem;
+}
+
+.intro__tray > * {
+  grid-area: 1 / 1;
+  align-self: end;
+}
+
+/* The one direction on screen — big and plain */
+.intro__direction {
+  display: grid;
+  place-items: center;
+  min-height: 3.1rem;
+  margin: 0.15rem 0 0.05rem;
+  text-align: center;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.12;
+  color: var(--text-primary);
+}
+
+.intro__direction > span {
+  grid-area: 1 / 1;
+  max-width: 20rem;
+}
+
+.intro__direction strong {
+  color: var(--money-green);
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.intro__direction.is-warn {
+  color: #ffb06a;
+}
+
+.intro__fine {
+  margin: 0;
+  text-align: center;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--oneb-silver-mute);
+}
+
+@media (max-height: 720px) {
+  .intro__tray {
+    min-height: 10.2rem;
+  }
+
+  .intro__direction {
+    font-size: 1.1rem;
+    min-height: 2.7rem;
+  }
+}
+
+/* Home Bank bar → Wall of Fame */
+.run-home__best--bank {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.14s ease, border-color 0.25s ease;
+}
+
+.run-home__best--bank:active {
+  filter: brightness(1.18);
+}
+
+.run-home__best--bank:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+}
+
+.run-home__best-link {
+  margin-top: 0.08rem;
+  font-size: 0.52rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.38);
+}
+
+/* ── Wall of Fame ────────────────────────────────────────────────────── */
+.wof {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 28%, var(--brand-navy-mid) 0%, transparent 70%),
+    var(--brand-navy-deep);
+  color: var(--text-primary);
+}
+
+.wof__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(100%, 30rem);
+  height: min(100%, 56rem);
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.15rem max(1rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.wof__top {
+  display: flex;
+  min-height: 2.2rem;
+  align-items: center;
+}
+
+.wof__back {
+  appearance: none;
+  padding: 0.45rem 0.1rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--oneb-silver-mute);
+  cursor: pointer;
+}
+
+.wof__back:hover {
+  color: var(--text-primary);
+}
+
+.wof__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.wof__eyebrow {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--oneb-silver-mute);
+}
+
+.wof__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.9rem, 8.6vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.wof__rule {
+  position: relative;
+  display: block;
+  width: 5.5rem;
+  height: 1px;
+  margin: 0.45rem 0 0.25rem;
+  background: linear-gradient(90deg, transparent, rgba(41, 228, 144, 0.75), transparent);
+}
+
+.wof__rule i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  background: var(--money-green);
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0 0 8px rgba(41, 228, 144, 0.6);
+}
+
+.wof__sub {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--oneb-silver-dim);
+}
+
+.wof__wall {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: var(--oneb-radius-lg);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 30%),
+    linear-gradient(180deg, #07111e 0%, #050b14 70%, #04080f 100%);
+  box-shadow:
+    inset 0 0 70px rgba(0, 0, 0, 0.45),
+    var(--oneb-shadow-panel);
+  scrollbar-width: none;
+}
+
+.wof__wall::-webkit-scrollbar {
+  display: none;
+}
+
+.wof__wall-light {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: -30%;
+  height: 70%;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(var(--brand-blue-glow), 0.14), transparent 70%);
+}
+
+.wof__names {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wof__name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  max-width: 100%;
+}
+
+.wof__ink {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0 0.35em;
+  overflow: visible;
+  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
+  font-size: clamp(2.3rem, 11vw, 3.1rem);
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: rgba(236, 243, 255, 0.86);
+  text-shadow: 0 0 18px rgba(var(--brand-blue-glow), 0.32);
+}
+
+.wof__name.is-you .wof__ink {
+  color: #effff7;
+  text-shadow:
+    0 0 22px rgba(41, 228, 144, 0.42),
+    0 0 2px rgba(41, 228, 144, 0.5);
+  animation: wof-sign 1.7s cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+
+.wof__you {
+  font-size: 0.52rem;
+  font-weight: 850;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--money-green);
+}
+
+.wof__empty {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.wof__ghost {
+  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
+  font-size: clamp(2rem, 9.5vw, 2.6rem);
+  line-height: 1.2;
+  color: rgba(214, 228, 255, 0.16);
+}
+
+.wof__line {
+  width: min(72%, 16rem);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--brand-blue-glow), 0.5), transparent);
+}
+
+.wof__empty-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--oneb-silver-mute);
+}
+
+.wof__note {
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--oneb-silver-dim);
+}
+
+.wof__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.38);
+  background:
+    linear-gradient(180deg, rgba(var(--brand-blue-glow), 0.08) 0%, transparent 42%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 48%, var(--brand-navy-deep) 100%);
+}
+
+.wof__progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.wof__progress-row span {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.wof__progress-row strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.wof__meter {
+  position: relative;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(var(--brand-blue-glow), 0.16);
+  overflow: hidden;
+}
+
+.wof__meter-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--brand-blue-bright), var(--money-green));
+}
+
+.wof__togo {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 650;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--oneb-silver-mute);
+}
+
+.wof__back:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+}
+
+@keyframes wof-sign {
+  from {
+    clip-path: inset(-30% 100% -30% -12%);
+  }
+  to {
+    clip-path: inset(-30% -12% -30% -12%);
+  }
+}
+
+@media (max-height: 720px) {
+  .wof__frame {
+    gap: 0.75rem;
+  }
+
+  .wof__wall {
+    padding: 1.4rem 0.9rem;
+  }
+
+  .wof__names {
+    gap: 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .wof__name.is-you .wof__ink {
+    animation: none;
+  }
+}
+
+/* ── Bank leaderboard ────────────────────────────────────────────────── */
+.lbx-screen {
+  --lbx-gold: #f2d38b;
+  --lbx-gold-deep: #c99a3c;
+  --lbx-silver: #e3e9f2;
+  --lbx-silver-deep: #9aa7b8;
+  --lbx-bronze: #e0a476;
+  --lbx-bronze-deep: #a8653b;
+}
+
+.lbx-main {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.lbx-you {
+  display: inline-block;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(41, 228, 144, 0.16);
+  font-style: normal;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--money-green);
+}
+
+/* My Bank card */
+.lbx-mine {
+  position: relative;
+  overflow: hidden;
+  margin: 0.15rem 0 1rem;
+  padding: 1rem 1.1rem 0.95rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(41, 228, 144, 0.35);
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 0%, rgba(41, 228, 144, 0.14), transparent 70%),
+    linear-gradient(168deg, #0c2547 0%, #071630 55%, #040d20 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 14px 30px rgba(1, 8, 20, 0.5);
+}
+
+.lbx-mine__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lbx-mine__label {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+.lbx-mine__rank {
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.35);
+  background: rgba(4, 12, 28, 0.6);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--oneb-silver-dim);
+}
+
+.lbx-mine__rank.is-ranked {
+  border-color: rgba(41, 228, 144, 0.45);
+  color: var(--money-green);
+}
+
+.lbx-mine__balance {
+  margin: 0.3rem 0 0.75rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: clamp(2.3rem, 11vw, 3.1rem);
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.lbx-mine__bar {
+  position: relative;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.lbx-mine__bar span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--brand-blue-bright), var(--money-green));
+}
+
+.lbx-mine__goal {
+  margin: 0.5rem 0 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+/* Podium */
+.lbx-podium {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr 1fr;
+  align-items: end;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+}
+
+.lbx-podium__card {
+  --medal: var(--lbx-silver);
+  --medal-deep: var(--lbx-silver-deep);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.95rem 0.5rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--medal) 38%, transparent);
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, color-mix(in srgb, var(--medal) 16%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(20, 37, 72, 0.9) 0%, rgba(9, 19, 42, 0.92) 100%);
+  box-shadow:
+    inset 0 2px 0 color-mix(in srgb, var(--medal) 70%, transparent),
+    0 14px 28px rgba(1, 8, 20, 0.45);
+  text-align: center;
+}
+
+.lbx-podium__card.is-place-1 {
+  --medal: var(--lbx-gold);
+  --medal-deep: var(--lbx-gold-deep);
+  padding-top: 1.35rem;
+  padding-bottom: 1.15rem;
+}
+
+.lbx-podium__card.is-place-3 {
+  --medal: var(--lbx-bronze);
+  --medal-deep: var(--lbx-bronze-deep);
+}
+
+.lbx-podium__card.is-you {
+  border-color: rgba(41, 228, 144, 0.55);
+}
+
+.lbx-podium__medal {
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--medal) 0%, var(--medal-deep) 100%);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  color: #0b1424;
+}
+
+.lbx-podium__name {
+  width: 100%;
+  margin: 0.15rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.lbx-podium__card.is-place-1 .lbx-podium__name {
+  font-size: 0.98rem;
+}
+
+.lbx-podium__value {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: clamp(0.82rem, 3.6vw, 0.98rem);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+}
+
+.lbx-podium__card.is-place-1 .lbx-podium__value {
+  font-size: clamp(0.92rem, 4vw, 1.1rem);
+}
+
+/* Ranks 4–100 */
+.lbx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lbx-row {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.78rem 0.95rem 0.78rem 0.7rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(168deg, rgba(16, 34, 66, 0.9), rgba(6, 15, 34, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.lbx-row.is-you {
+  border-color: rgba(41, 228, 144, 0.45);
+  background: linear-gradient(168deg, rgba(18, 66, 56, 0.85), rgba(8, 34, 32, 0.9));
+}
+
+.lbx-row__rank {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 850;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--oneb-silver-mute);
+}
+
+.lbx-row__name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.lbx-row__name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+
+.lbx-row__value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+}
+
+.lbx-gap {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0;
+}
+
+.lbx-gap span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(214, 228, 255, 0.3);
+}
+
+/* States */
+.lbx-state {
+  padding: 1.5rem 1rem;
+  border-radius: 1rem;
+  border: 1px dashed rgba(var(--brand-blue-glow), 0.3);
+  background: rgba(6, 15, 34, 0.7);
+  text-align: center;
+}
+
+.lbx-state__kicker {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.24em;
+  color: var(--money-green);
+}
+
+.lbx-state__copy {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--oneb-silver-dim);
+}
+
+.lbx-state__btn,
+.lbx-guest__btn {
+  appearance: none;
+  margin-top: 0.85rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.45);
+  background: rgba(var(--brand-blue-glow), 0.14);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.lbx-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lbx-skeleton li {
+  height: 3.1rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 34, 66, 0.6) 0%,
+    rgba(26, 52, 96, 0.75) 50%,
+    rgba(16, 34, 66, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: lbx-shimmer 1.4s ease-in-out infinite;
+}
+
+.lbx-guest {
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.28);
+  background: rgba(6, 26, 74, 0.45);
+  text-align: center;
+}
+
+.lbx-guest p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--oneb-silver-dim);
+}
+
+.lbx-guest__btn {
+  border-color: rgba(41, 228, 144, 0.5);
+  background: rgba(41, 228, 144, 0.14);
+  color: var(--money-green);
+}
+
+@keyframes lbx-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .lbx-skeleton li {
+    animation: none;
+  }
+}
+
+.cash-pop__item--bet {
+  --tier: var(--money-green);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tier reward"
+    "name reward";
+  row-gap: 0.28rem;
+}
+
+.cash-pop__item--bet .cash-pop__tier {
+  grid-area: tier;
+  justify-self: start;
+}
+
+.cash-pop__item--bet .cash-pop__name {
+  grid-area: name;
+}
+
+.cash-pop__item--bet .cash-pop__reward {
+  grid-area: reward;
+}
+
+/* Big payouts ($12,000,000+) shrink to the card instead of clipping. */
+.cash-pop__card {
+  container-type: inline-size;
+}
+
+.cash-pop__amount {
+  font-size: min(clamp(2.8rem, 15vw, 3.9rem), calc(100cqi * 1.7 / var(--chars, 9)));
+  white-space: nowrap;
+}
+
+.cash-pop__name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.2;
+}
+
+/* Bet card adds height above the court: let the court shrink (keeping its shape) instead of overflowing. */
+.billion-draft-layout--classic-hub:has(.bet-bar) {
+  container-type: inline-size;
+}
+
+.billion-draft-layout--classic-hub:has(.bet-bar) .draft-hub-court {
+  flex: 1 1 0;
+  min-height: 0;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 26rem);
+  max-height: calc(min(100cqw, 26rem) * 0.82);
+  aspect-ratio: 1 / 0.82;
+  margin-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* =========================================================
+   Classic results — run earnings + Surplus Spin
+   ========================================================= */
+
+.classic-val:has(.classic-val__earnings) {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.classic-val:has(.classic-val__earnings) .classic-val__shot {
+  flex: 0 0 auto;
+}
+
+.classic-val__earnings {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.run-earn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.7rem 0.75rem 0.65rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, rgba(6, 26, 74, 0.62) 0%, rgba(3, 16, 44, 0.84) 100%);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+}
+
+.run-earn__title {
+  margin: 0;
+  text-align: center;
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.28em;
+  color: rgba(214, 228, 255, 0.58);
+}
+
+.run-earn__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run-earn__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.run-earn__row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.run-earn__label {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #eef4ff;
+}
+
+.run-earn__detail {
+  font-size: 0.64rem;
+  color: rgba(214, 228, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-earn__detail--goal {
+  white-space: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgba(226, 236, 255, 0.78);
+}
+
+.run-earn__value,
+.run-earn__foot strong,
+.run-earn__balance-value {
+  flex: 0 0 auto;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #eef4ff;
+}
+
+.run-earn__value {
+  font-size: 0.92rem;
+}
+
+.run-earn .is-up,
+.run-earn__balance-value {
+  color: var(--money-green);
+}
+
+.run-earn .is-down {
+  color: #ff8f7d;
+}
+
+.run-earn__row.is-pending .run-earn__label {
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.run-earn__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.15rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.run-earn__foot > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.run-earn__foot span:not(.run-earn__balance-value) {
+  font-size: 0.56rem;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.run-earn__foot strong,
+.run-earn__balance-value {
+  font-size: 1.08rem;
+}
+
+.run-earn__balance {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Surplus decision */
+.sdec {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.65rem 0.7rem 0.55rem;
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(41, 228, 144, 0.12) 0%, rgba(41, 228, 144, 0) 62%),
+    rgba(3, 14, 38, 0.78);
+  border: 1px solid rgba(41, 228, 144, 0.38);
+  overflow: hidden;
+}
+
+.sdec__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.sdec__kicker {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--money-green);
+}
+
+.sdec__sub {
+  margin: 0.14rem 0 0;
+  font-size: 0.64rem;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.sdec__amount {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.3rem, 6vw, 1.6rem);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+  text-shadow: 0 0 18px rgba(41, 228, 144, 0.3);
+}
+
+.sdec.is-resolved .sdec__amount {
+  color: rgba(234, 242, 255, 0.72);
+  text-shadow: none;
+  font-size: 1.05rem;
+}
+
+.sdec__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sdec__prompt {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 750;
+  color: #fff;
+}
+
+.sdec__note {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(214, 228, 255, 0.68);
+}
+
+.sdec__note--error {
+  color: #ff8f7d;
+}
+
+.sdec__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.sdec__btn {
+  appearance: none;
+  min-height: 3rem;
+  padding: 0.35rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  border-radius: 0.75rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: filter 0.12s ease, opacity 0.15s ease;
+}
+
+.sdec__btn span {
+  font-size: 0.88rem;
+  font-weight: 850;
+  letter-spacing: 0.2em;
+  margin-right: -0.2em;
+}
+
+.sdec__btn em {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdec__btn--bank {
+  border: 1px solid rgba(78, 245, 168, 0.7);
+  background: linear-gradient(180deg, rgba(41, 228, 144, 0.24) 0%, rgba(41, 228, 144, 0.1) 100%);
+  color: #eafff4;
+}
+
+.sdec__btn--bank em {
+  color: var(--money-green);
+}
+
+.sdec__btn--risk {
+  border: 1.5px solid rgba(255, 214, 180, 0.82);
+  background: linear-gradient(
+    180deg,
+    #ffb06a 0%,
+    var(--basketball-orange-highlight) 42%,
+    var(--basketball-orange) 100%
+  );
+  color: #fff8f3;
+  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
+  box-shadow: 0 6px 16px rgba(229, 86, 34, 0.28);
+}
+
+.sdec__btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.sdec__btn--ghost span {
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  margin-right: -0.12em;
+}
+
+.sdec__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sdec__btn:active:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.sdec__btn:focus-visible,
+.sdec__link:focus-visible,
+.surplus-sheet__close:focus-visible {
+  outline: 2px solid rgba(var(--brand-blue-glow), 0.9);
+  outline-offset: 2px;
+}
+
+.sdec__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sdec__link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0.2rem 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(150, 200, 255, 0.92);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.sdec__cash {
+  font-size: 0.6rem;
+  color: rgba(214, 228, 255, 0.4);
+}
+
+.sdec__odds {
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sdec__odds ul {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sdec__odd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  padding: 0.3rem 0.2rem;
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sdec__odd span {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #e6efff;
+}
+
+.sdec__odd em {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.sdec__odd--mid {
+  border-color: rgba(var(--brand-blue-glow), 0.45);
+}
+
+.sdec__odd--rare {
+  border-color: rgba(255, 190, 77, 0.45);
+}
+
+.sdec__odd--rare span {
+  color: #ffd27a;
+}
+
+.sdec__odds p {
+  margin: 0.45rem 0 0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+/* Reel */
+.sreel {
+  position: relative;
+  height: 3.3rem;
+  border-radius: 0.7rem;
+  background: linear-gradient(180deg, rgba(2, 8, 22, 0.92) 0%, rgba(6, 22, 58, 0.86) 100%);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.28);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.sreel__viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+}
+
+.sreel__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: flex;
+  gap: 0.4rem;
+  margin-top: -1.2rem;
+  will-change: transform;
+}
+
+.sreel__tile {
+  flex: 0 0 auto;
+  width: 3.2rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.55rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.82);
+  background: rgba(20, 40, 80, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.32s cubic-bezier(0.25, 1, 0.5, 1),
+    background 0.32s ease,
+    border-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+.sreel__tile.is-zero {
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.sreel__tile--mid {
+  color: #cfe4ff;
+  background: rgba(26, 125, 255, 0.16);
+  border-color: rgba(var(--brand-blue-glow), 0.6);
+}
+
+.sreel__tile--rare {
+  color: #ffd27a;
+  background: rgba(255, 190, 77, 0.1);
+  border-color: rgba(255, 190, 77, 0.65);
+}
+
+.sreel__tile.is-hit {
+  transform: scale(1.1);
+  color: #eafff4;
+  background: rgba(41, 228, 144, 0.24);
+  border-color: var(--money-green);
+  box-shadow: 0 0 18px rgba(41, 228, 144, 0.45);
+}
+
+.sreel__tile.is-hit.is-zero {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+}
+
+.sreel__tile.is-hit.sreel__tile--rare {
+  color: #fff3d6;
+  background: rgba(255, 190, 77, 0.26);
+  border-color: #ffbe4d;
+  box-shadow: 0 0 20px rgba(255, 190, 77, 0.5);
+}
+
+.sreel__marker {
+  position: absolute;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 30%, rgba(255, 255, 255, 0.95) 70%, rgba(255, 255, 255, 0) 100%);
+  box-shadow: 0 0 10px rgba(var(--brand-blue-glow), 0.85);
+  pointer-events: none;
+}
+
+.sreel.is-landed .sreel__marker {
+  box-shadow: 0 0 12px rgba(41, 228, 144, 0.9);
+}
+
+/* Result */
+.sdec__result {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.sdec__tag {
+  flex: 0 0 auto;
+  min-width: 3.3rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 0.55rem;
+  text-align: center;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 850;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.sdec__tag--bank {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  color: var(--money-green);
+  background: rgba(41, 228, 144, 0.14);
+  border-color: rgba(41, 228, 144, 0.55);
+}
+
+.sdec__tag--mid {
+  color: #cfe4ff;
+  background: rgba(26, 125, 255, 0.18);
+  border-color: rgba(var(--brand-blue-glow), 0.6);
+}
+
+.sdec__tag--rare {
+  color: #ffe2a3;
+  background: rgba(255, 190, 77, 0.18);
+  border-color: rgba(255, 190, 77, 0.7);
+}
+
+.sdec__payout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.sdec__payout strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 850;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.sdec__result.is-zero .sdec__payout strong {
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.sdec__payout > span {
+  font-size: 0.64rem;
+  color: rgba(214, 228, 255, 0.58);
+}
+
+/* Recovery sheet */
+.surplus-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(1, 8, 20, 0.78);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.surplus-sheet__card {
+  width: min(100%, 24rem);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.1rem 1rem 1rem;
+  border-radius: 1.2rem;
+  background: linear-gradient(170deg, #0e2a4f 0%, #071833 55%, #040c1f 100%);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.3);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  box-sizing: border-box;
+}
+
+.surplus-sheet__title {
+  margin: 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  color: var(--money-green);
+}
+
+.surplus-sheet__from {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.surplus-sheet__close {
+  appearance: none;
+  min-height: 2.6rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.85);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.surplus-sheet__close.is-done {
+  border-color: rgba(78, 245, 168, 0.6);
+  background: rgba(41, 228, 144, 0.14);
+  color: var(--money-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .sreel__tile {
+    transition: none;
+  }
+}
+
+/* Home My Bank — balance, next milestone, Wall of Fame affordance */
+.run-home__best--bank {
+  gap: 0.3rem;
+  padding: 0.6rem 0.85rem 0.62rem;
+  align-items: stretch;
+  border-color: rgba(var(--brand-blue-glow), 0.42);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(41, 228, 144, 0.1) 0%, rgba(41, 228, 144, 0) 60%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 48%, var(--brand-navy-deep) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 26px rgba(41, 228, 144, 0.1),
+    0 8px 20px rgba(1, 8, 20, 0.45);
+}
+
+.bank-chip__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.run-home__best--bank .run-home__best-link {
+  margin: 0;
+  color: rgba(150, 200, 255, 0.62);
+}
+
+.run-home__best--bank .run-home__best-value {
+  text-align: left;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.25rem, 5.6vw, 1.5rem);
+  font-weight: 850;
+  letter-spacing: -0.005em;
+  line-height: 1.05;
+  text-shadow: 0 0 18px rgba(41, 228, 144, 0.28);
+}
+
+.bank-chip__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+}
+
+.bank-chip__meter {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.bank-chip__meter i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(41, 228, 144, 0.55), var(--money-green));
+  box-shadow: 0 0 8px rgba(41, 228, 144, 0.55);
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.bank-chip__next {
+  text-align: left;
+  font-size: 0.6rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.run-home__best--bank.is-wall .bank-chip__next {
+  color: var(--money-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .bank-chip__meter i {
+    transition: none;
+  }
+}
+
+/* Intro — three-moment progress, sublines, Bank preview */
+.intro__steps {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro__step {
+  width: 1.35rem;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.intro__step.is-active {
+  background: rgba(var(--brand-blue-glow), 0.95);
+  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.7);
+}
+
+.intro__step.is-done {
+  background: var(--money-green);
+}
+
+.intro__skip-spacer {
+  width: 2.4rem;
+}
+
+.intro__headline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: auto;
+  min-height: 3.6rem;
+  gap: 0.28rem;
+}
+
+.intro__subline {
+  margin: 0;
+  max-width: 22rem;
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--oneb-silver-dim);
+}
+
+/* Intro · Welcome — the most valuable legends, end-of-run row style */
+.intro-welcome {
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding-top: 0.35rem;
+}
+
+.intro-welcome__board {
+  margin-block: auto;
+  padding: 0.7rem 0.7rem 0.6rem;
+  box-shadow: 0 18px 40px rgba(1, 8, 20, 0.45);
+}
+
+.intro-legends .classic-val__five-row {
+  position: relative;
+  min-height: clamp(2.05rem, 7.6vh, 3.75rem);
+  margin-top: clamp(0.22rem, 0.9vh, 0.5rem);
+  opacity: 1;
+  transform: none;
+  will-change: transform, opacity;
+}
+
+.intro-legends .classic-val__five-row:first-child {
+  margin-top: 0;
+}
+
+.intro-legend .classic-val__five-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.1;
+}
+
+.intro-legend__tag {
+  font-size: 0.56rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.intro-legend .classic-val__five-value {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+/* One light sweep down the board once every row has landed. */
+.intro-legend::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.32) 50%, transparent 70%);
+  transform: translateX(-110%);
+  animation: intro-legend-sheen 0.9s cubic-bezier(0.25, 1, 0.5, 1) both;
+  animation-delay: calc(1.25s + var(--row-i, 0) * 0.06s);
+  pointer-events: none;
+}
+
+.intro-legend.is-top {
+  box-shadow:
+    0 0 0 1.5px rgba(255, 214, 120, 0.9),
+    0 0 22px rgba(255, 190, 77, 0.38);
+}
+
+.intro-welcome__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.intro-welcome__line {
+  margin: 0;
+  text-align: center;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.05rem, 4.6vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+@keyframes intro-legend-sheen {
+  to { transform: translateX(110%); }
+}
+
+/* Intro · after $1B: "+$5,000,000 OVER $1B", practice Bank-or-Risk, Get Started */
+.intro__over {
+  margin: 0;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(41, 228, 144, 0.55);
+  background: rgba(41, 228, 144, 0.12);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+  box-shadow: 0 0 18px rgba(41, 228, 144, 0.22);
+}
+
+.intro.is-victory .intro__readout {
+  height: 0.4rem;
+}
+
+.intro-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sdec.sdec--demo {
+  border: 1.5px dashed rgba(255, 210, 122, 0.7);
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 190, 77, 0.1) 0%, rgba(255, 190, 77, 0) 62%),
+    rgba(3, 14, 38, 0.82);
+}
+
+.sdec__demo {
+  align-self: center;
+  margin: 0;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 190, 77, 0.16);
+  border: 1px solid rgba(255, 210, 122, 0.6);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: #ffd27a;
+}
+
+.intro-finish__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.intro-finish__row .intro__cta {
+  flex: 1;
+}
+
+.intro-finish__again {
+  appearance: none;
+  flex: 0 0 auto;
+  min-height: 3.35rem;
+  padding: 0 0.9rem;
+  border-radius: var(--oneb-radius);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.45);
+  background: rgba(6, 26, 74, 0.62);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #d9e9ff;
+  cursor: pointer;
+}
+
+.intro-finish__start.is-ready {
+  animation: intro-start-glow 2.2s ease-in-out 0.6s infinite;
+}
+
+@keyframes intro-start-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 140, 60, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 140, 60, 0.18), 0 0 26px rgba(255, 140, 60, 0.45); }
+}
+
+@media (max-height: 640px) {
+  .intro-legends .classic-val__five-row {
+    min-height: 1.85rem;
+    margin-top: 0.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .intro-legend::after,
+  html:not([data-full-motion]) .intro-finish__start.is-ready {
+    animation: none;
+  }
+
+  html:not([data-full-motion]) .intro-legend::after {
+    display: none;
+  }
+}
+
+/* Wall of Fame — count, induction dates, compact list for many names */
+.wof__count {
+  margin: 0.35rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(var(--brand-blue-glow), 0.9);
+}
+
+.wof__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wof__date {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.45);
+}
+
+.wof__names--compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem 0.6rem;
+  align-self: flex-start;
+}
+
+.wof__names--compact .wof__ink {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(1.45rem, 6.4vw, 1.85rem);
+}
+
+.wof__wall:has(.wof__names--compact) {
+  align-items: flex-start;
+  padding: 1.25rem 0.75rem;
+}
+
+/* Wall of Fame — milestone ladder in the unsigned state */
+.wof__ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wof__rung {
+  display: grid;
+  grid-template-columns: 0.6rem 8.4rem 2.4rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wof__rung-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  border: 1px solid rgba(214, 228, 255, 0.28);
+}
+
+.wof__rung-amount {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: rgba(214, 228, 255, 0.36);
+}
+
+.wof__rung-pct {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(var(--brand-blue-glow), 1);
+}
+
+.wof__rung.is-reached .wof__rung-dot {
+  border-color: var(--money-green);
+  background: var(--money-green);
+  box-shadow: 0 0 6px rgba(41, 228, 144, 0.6);
+}
+
+.wof__rung.is-reached .wof__rung-amount {
+  color: rgba(41, 228, 144, 0.85);
+}
+
+.wof__rung.is-next .wof__rung-dot {
+  border-color: rgba(var(--brand-blue-glow), 1);
+  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.8);
+}
+
+.wof__rung.is-next .wof__rung-amount {
+  color: #fff;
+}
+
+.wof__rung.is-goal .wof__rung-amount {
+  color: rgba(255, 214, 140, 0.75);
+}
+
+/* Home My Bank — main area opens the Wall of Fame; The Circuit pill sits on the milestone row */
+.run-home__best--bank {
+  max-width: 22.5rem;
+}
+
+.run-home__best--bank:active {
+  filter: none;
+}
+
+.bank-chip__main,
+.bank-chip__circuit {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.14s ease;
+}
+
+.bank-chip__main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0;
+  background: none;
+  text-align: left;
+}
+
+.bank-chip__main .bank-chip__top {
+  min-height: 1.55rem;
+  padding-right: 8.4rem;
+}
+
+.bank-chip__main:active,
+.bank-chip__circuit:active {
+  filter: brightness(1.18);
+}
+
+.bank-chip__main:focus-visible,
+.bank-chip__circuit:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+  border-radius: 0.4rem;
+}
+
+.bank-chip__circuit {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 1.55rem;
+  padding: 0 0.6rem 0 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.55);
+  background: rgba(26, 125, 255, 0.14);
+  box-shadow: 0 0 12px rgba(var(--brand-blue-glow), 0.18);
+}
+
+.bank-chip__circuit::after {
+  content: "";
+  position: absolute;
+  inset: -0.55rem -0.4rem;
+}
+
+.bank-chip__circuit-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #d9e9ff;
+}
+
+.bank-chip__circuit-name i {
+  width: 0.34rem;
+  height: 0.34rem;
+  background: rgba(var(--brand-blue-glow), 1);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.9);
+}
+
+.bank-chip__circuit-cta {
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(214, 228, 255, 0.7);
+}
+
+/* =========================================================
+   The Circuit — Cash Leagues
+   ========================================================= */
+
+.circuit {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(26, 125, 255, 0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 55% at 50% 30%, var(--brand-navy-mid) 0%, transparent 72%),
+    var(--brand-navy-deep);
+  color: var(--text-primary);
+}
+
+.circuit__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: min(100%, 30rem);
+  height: 100%;
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.05rem max(1.2rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.circuit__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.2rem;
+}
+
+.circuit__back {
+  appearance: none;
+  padding: 0.45rem 0.1rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--oneb-silver-mute);
+  cursor: pointer;
+}
+
+.circuit__bank {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(41, 228, 144, 0.32);
+  background: rgba(41, 228, 144, 0.08);
+}
+
+.circuit__bank em {
+  font-style: normal;
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.circuit__bank strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.circuit__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.circuit__eyebrow {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: rgba(150, 200, 255, 0.85);
+}
+
+.circuit__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.9rem, 8.6vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.circuit__rule {
+  position: relative;
+  display: block;
+  width: 5.5rem;
+  height: 1px;
+  margin: 0.45rem 0 0.2rem;
+  background: linear-gradient(90deg, transparent, rgba(var(--brand-blue-glow), 0.85), transparent);
+}
+
+.circuit__rule i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(var(--brand-blue-glow), 1);
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.7);
+}
+
+.circuit__sub {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--oneb-silver-dim);
+}
+
+.circuit__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.circuit-card {
+  --accent: var(--brand-blue-glow);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 0.9rem 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(var(--accent), 0.3);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(var(--accent), 0.1) 0%, transparent 55%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 52%, var(--brand-navy-deep) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 26px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+}
+
+.circuit-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent), 0.9), transparent);
+  opacity: 0.7;
+}
+
+.circuit-card--high_stakes {
+  --accent: 255, 190, 77;
+}
+
+.circuit-card.is-entered {
+  border-color: rgba(41, 228, 144, 0.42);
+}
+
+.circuit-card--skeleton {
+  min-height: 11rem;
+  background:
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%) 0 0 / 200% 100%,
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy-deep) 100%);
+  animation: lbx-shimmer 1.4s linear infinite;
+}
+
+.circuit-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.circuit-card__name {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.circuit-card--high_stakes .circuit-card__name {
+  color: #ffe2a3;
+}
+
+.circuit-card__rules {
+  margin: 0.2rem 0 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--oneb-silver-dim);
+}
+
+.circuit-card__clock {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(1, 8, 20, 0.45);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: #eaf2ff;
+}
+
+.circuit-card__clock i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--money-green);
+  box-shadow: 0 0 8px rgba(41, 228, 144, 0.8);
+}
+
+.circuit-card__clock.is-soon i {
+  background: var(--basketball-orange-highlight);
+  box-shadow: 0 0 8px rgba(255, 109, 40, 0.8);
+}
+
+.circuit-card__clock.is-ended {
+  color: var(--oneb-silver-mute);
+}
+
+.circuit-card__clock.is-ended i {
+  background: rgba(214, 228, 255, 0.4);
+  box-shadow: none;
+}
+
+.circuit-card__stats {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 0.7fr;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.circuit-card__stats > div {
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.circuit-card__stats dt {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.circuit-card__stats dd {
+  margin: 0.15rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #eef4ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.circuit-card__stats dd.is-money {
+  color: var(--money-green);
+  text-shadow: 0 0 14px rgba(41, 228, 144, 0.28);
+}
+
+.circuit-card__split {
+  margin: -0.15rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(214, 228, 255, 0.48);
+}
+
+.circuit-card__action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.circuit-card__btn {
+  appearance: none;
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0 0.9rem;
+  border-radius: 0.8rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: filter 0.12s ease, opacity 0.15s ease;
+}
+
+.circuit-card__btn--play {
+  border: 1.5px solid rgba(255, 214, 180, 0.82);
+  background: linear-gradient(
+    180deg,
+    #ffb06a 0%,
+    var(--basketball-orange-highlight) 42%,
+    var(--basketball-orange) 100%
+  );
+  color: #fff8f3;
+  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
+  box-shadow: 0 8px 18px rgba(229, 86, 34, 0.28);
+}
+
+.circuit-card__btn--ghost {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.85);
+  letter-spacing: 0.14em;
+}
+
+.circuit-card__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+.circuit-card__btn:active:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.circuit-card__btn:focus-visible,
+.circuit-card__toggle:focus-visible,
+.circuit__back:focus-visible {
+  outline: 2px solid rgba(var(--brand-blue-glow), 0.9);
+  outline-offset: 2px;
+}
+
+.circuit-card__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.circuit-card__prompt {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 750;
+  color: #fff;
+}
+
+.circuit-card__row {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.circuit-card__note {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--oneb-silver-mute);
+}
+
+.circuit-card__error {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #ff8f7d;
+}
+
+.circuit-card__entry {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(41, 228, 144, 0.38);
+  background: rgba(41, 228, 144, 0.08);
+}
+
+.circuit-card__entry span {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--money-green);
+}
+
+.circuit-card__entry strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.circuit-card__entry em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: rgba(150, 200, 255, 0.95);
+}
+
+.circuit-card__toggle {
+  appearance: none;
+  align-self: flex-start;
+  padding: 0.15rem 0;
+  border: 0;
+  background: none;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: rgba(150, 200, 255, 0.85);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.circuit__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.2rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.25);
+  background: rgba(3, 16, 44, 0.6);
+  text-align: center;
+}
+
+.circuit__state-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.22em;
+  color: rgba(150, 200, 255, 0.95);
+}
+
+.circuit__state-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--oneb-silver-dim);
+}
+
+.circuit__link {
+  appearance: none;
+  border: 0;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(150, 200, 255, 0.95);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.circuit__section {
+  margin: 0 0 0.45rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.circuit__results ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.circuit-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.circuit-result div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.circuit-result strong {
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.circuit-result span {
+  font-size: 0.64rem;
+  color: var(--oneb-silver-mute);
+}
+
+.circuit-result em {
+  font-style: normal;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.circuit-result em.is-paid {
+  color: var(--money-green);
+}
+
+.circuit__cash {
+  margin: 0;
+  text-align: center;
+  font-size: 0.6rem;
+  color: rgba(214, 228, 255, 0.38);
+}
+
+/* Booth reminder during a Circuit entry run */
+.circuit-run {
+  position: relative;
+  width: 100%;
+  margin: var(--classic-hub-spin-gap, 0.55rem) 0 0;
+  padding: 0.55rem 0.8rem;
+  box-sizing: border-box;
+  border-radius: var(--oneb-radius, 14px);
+  border: 1px solid rgba(var(--brand-blue-glow), 0.45);
+  background:
+    radial-gradient(110% 140% at 0% 0%, rgba(var(--brand-blue-glow), 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(6, 26, 74, 0.7) 0%, rgba(3, 16, 44, 0.86) 100%);
+  box-shadow: 0 0 22px rgba(var(--brand-blue-glow), 0.14);
+}
+
+.circuit-run__kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(150, 200, 255, 0.95);
+}
+
+.circuit-run__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(var(--brand-blue-glow), 1);
+  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.9);
+}
+
+.circuit-run__name {
+  margin: 0.15rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.circuit-run__rule {
+  margin: 0.05rem 0 0;
+  font-size: 0.68rem;
+  color: var(--oneb-silver-dim);
+}
+
+.billion-draft-layout--classic-hub:has(.circuit-run) {
+  container-type: inline-size;
+}
+
+.billion-draft-layout--classic-hub:has(.circuit-run) .draft-hub-court {
+  flex: 1 1 0;
+  min-height: 0;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 26rem);
+  max-height: calc(min(100cqw, 26rem) * 0.82);
+  aspect-ratio: 1 / 0.82;
+  margin-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.run-earn__row--circuit {
+  border-color: rgba(var(--brand-blue-glow), 0.35);
+  background: rgba(26, 125, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .circuit-card--skeleton {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   The Circuit — prizes, standings, final results
+   ========================================================= */
+
+.circuit-prizes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.circuit-prize {
+  --medal: 255, 210, 122;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.42rem 0.5rem 0.45rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(var(--medal), 0.32);
+  background: linear-gradient(180deg, rgba(var(--medal), 0.1) 0%, rgba(var(--medal), 0.02) 100%);
+  min-width: 0;
+}
+
+.circuit-prize--2 {
+  --medal: 214, 226, 242;
+}
+
+.circuit-prize--3 {
+  --medal: 224, 167, 122;
+}
+
+.circuit-prize__place {
+  font-size: 0.52rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  color: rgba(var(--medal), 0.95);
+}
+
+.circuit-prize__amount {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.circuit-prize__holder {
+  font-size: 0.62rem;
+  font-weight: 650;
+  color: rgba(214, 228, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.circuit-prize__holder.is-me {
+  color: var(--money-green);
+  font-weight: 800;
+}
+
+.circuit-result {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.circuit-result:active {
+  filter: brightness(1.12);
+}
+
+/* Sheets over The Circuit */
+.circuit-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(26, 125, 255, 0.14) 0%, transparent 70%),
+    var(--brand-navy-deep);
+  color: var(--text-primary);
+}
+
+.circuit-sheet--results {
+  z-index: 175;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 18%, rgba(255, 210, 122, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 55% at 50% 30%, var(--brand-navy-mid) 0%, transparent 72%),
+    var(--brand-navy-deep);
+}
+
+.circuit-sheet__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: min(100%, 30rem);
+  height: 100%;
+  padding: max(0.7rem, env(safe-area-inset-top)) 1.05rem max(1.2rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.circuit-sheet__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.2rem;
+}
+
+.circuit-sheet__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.circuit-sheet__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.7rem, 7.6vw, 2.2rem);
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.circuit-sheet__title--high_stakes {
+  color: #ffe2a3;
+}
+
+.circuit-sheet__facts {
+  display: flex;
+  gap: 1.2rem;
+  margin: 0.45rem 0 0;
+}
+
+.circuit-sheet__facts div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.circuit-sheet__facts dt {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.circuit-sheet__facts dd {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.circuit-sheet__facts dd.is-money {
+  color: var(--money-green);
+}
+
+.circuit-sheet__warn {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 109, 40, 0.38);
+  background: rgba(229, 86, 34, 0.1);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: #ffc49a;
+}
+
+.circuit-sheet__note {
+  margin: 0;
+  text-align: center;
+  font-size: 0.74rem;
+  color: var(--oneb-silver-dim);
+}
+
+/* Your entry, pinned */
+.circuit-me {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(41, 228, 144, 0.5);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(41, 228, 144, 0.16) 0%, transparent 60%),
+    rgba(3, 16, 44, 0.8);
+  box-shadow: 0 0 22px rgba(41, 228, 144, 0.12);
+}
+
+.circuit-me__tag {
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: var(--money-green);
+  font-size: 0.54rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #04140c;
+}
+
+.circuit-me__rank {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 850;
+  line-height: 1;
+  color: #fff;
+}
+
+.circuit-me__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.circuit-me__value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.02rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #eef4ff;
+}
+
+.circuit-me__line {
+  font-size: 0.66rem;
+  font-weight: 650;
+  color: var(--money-green);
+}
+
+/* Full standings */
+.circuit-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.circuit-table__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  padding: 0 0.65rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.circuit-table__row.has-gap {
+  margin-top: 0.7rem;
+}
+
+.circuit-table__row.has-gap::before {
+  content: "···";
+  position: absolute;
+  transform: translateY(-1.35rem);
+  left: 50%;
+  color: rgba(214, 228, 255, 0.35);
+  letter-spacing: 0.2em;
+}
+
+.circuit-table__row.is-top {
+  border-color: rgba(var(--brand-blue-glow), 0.22);
+}
+
+.circuit-table__row.is-me {
+  background: rgba(41, 228, 144, 0.1);
+  border-color: rgba(41, 228, 144, 0.42);
+}
+
+.circuit-table__rank {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 850;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.circuit-table__row.is-top-1 .circuit-table__rank { color: #ffd27a; }
+.circuit-table__row.is-top-2 .circuit-table__rank { color: #d6e2f2; }
+.circuit-table__row.is-top-3 .circuit-table__rank { color: #e0a77a; }
+
+.circuit-table__user {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.circuit-table__value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgba(234, 242, 255, 0.92);
+}
+
+/* Final results */
+.circuit-final__head {
+  padding-top: 1.2rem;
+}
+
+.circuit-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.45rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.circuit-podium__step {
+  --medal: 255, 210, 122;
+  --lift: 7.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.circuit-podium__step--2 {
+  --medal: 214, 226, 242;
+  --lift: 5.6rem;
+}
+
+.circuit-podium__step--3 {
+  --medal: 224, 167, 122;
+  --lift: 4.6rem;
+}
+
+.circuit-podium__user {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.circuit-podium__step.is-me .circuit-podium__user {
+  color: var(--money-green);
+}
+
+.circuit-podium__value {
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.circuit-podium__block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  width: 100%;
+  height: var(--lift);
+  margin-top: 0.3rem;
+  padding-top: 0.6rem;
+  border-radius: 0.75rem 0.75rem 0.3rem 0.3rem;
+  border: 1px solid rgba(var(--medal), 0.4);
+  border-bottom-color: transparent;
+  background: linear-gradient(180deg, rgba(var(--medal), 0.18) 0%, rgba(var(--medal), 0.03) 100%);
+  box-shadow: 0 -6px 22px rgba(var(--medal), 0.12);
+}
+
+.circuit-podium__step.is-me .circuit-podium__block {
+  box-shadow:
+    0 -6px 22px rgba(41, 228, 144, 0.22),
+    inset 0 0 0 1px rgba(41, 228, 144, 0.5);
+}
+
+.circuit-podium__place {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  color: rgba(var(--medal), 1);
+}
+
+.circuit-podium__prize {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.circuit-final__you {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.3);
+  background: rgba(3, 16, 44, 0.75);
+  text-align: center;
+}
+
+.circuit-final__you.is-won {
+  border-color: rgba(41, 228, 144, 0.5);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(41, 228, 144, 0.16) 0%, transparent 60%),
+    rgba(3, 16, 44, 0.8);
+}
+
+.circuit-final__place {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+  letter-spacing: 0.03em;
+}
+
+.circuit-final__run {
+  margin: 0;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.circuit-final__reward {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.circuit-final__you.is-won .circuit-final__reward {
+  color: var(--money-green);
+}
+
+.circuit-final__cancel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.1rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 109, 40, 0.32);
+  background: rgba(229, 86, 34, 0.08);
+  text-align: center;
+}
+
+.circuit-final__cancel p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--oneb-silver-dim);
+}
+
+.circuit-final__cancel strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: var(--money-green);
+}
+
+.circuit-final__done {
+  margin-top: auto;
+}
+
+/* Wall of Fame — signing ceremony */
+.wof__wall.is-signing {
+  cursor: text;
+}
+
+.wof__wall.is-revealing {
+  overflow: hidden;
+}
+
+.wof-sign {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.wof-sign__kicker {
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.26em;
+  color: rgba(255, 214, 140, 0.85);
+}
+
+/* Scoped past the web-wide 16px input rule; the large size also avoids iOS focus zoom. */
+.wof .wof-sign__input {
+  width: 100%;
+  padding: 0 0.3em;
+  border: 0;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
+  font-size: clamp(2.3rem, 11vw, 3.1rem);
+  font-weight: 400;
+  line-height: 1.25;
+  color: #effff7;
+  caret-color: var(--money-green);
+  text-shadow:
+    0 0 22px rgba(41, 228, 144, 0.42),
+    0 0 2px rgba(41, 228, 144, 0.5);
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), text-shadow 0.35s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wof-sign__input::placeholder {
+  color: rgba(214, 228, 255, 0.24);
+  text-shadow: none;
+}
+
+.wof-sign__input:disabled {
+  color: #effff7;
+  -webkit-text-fill-color: #effff7;
+  opacity: 1;
+}
+
+.wof-sign.is-focused .wof__line {
+  background: linear-gradient(90deg, transparent, rgba(41, 228, 144, 0.8), transparent);
+}
+
+.wof-sign.is-stamping .wof-sign__input {
+  transform: scale(1.06);
+  text-shadow:
+    0 0 34px rgba(41, 228, 144, 0.75),
+    0 0 4px rgba(41, 228, 144, 0.8);
+}
+
+.wof-sign.is-stamping::after {
+  content: "";
+  position: absolute;
+  inset: -1.5rem -1rem;
+  border-radius: 1.2rem;
+  background: radial-gradient(ellipse 50% 45% at 50% 50%, rgba(41, 228, 144, 0.22), transparent 70%);
+  animation: wof-stamp-flash 0.7s ease-out both;
+  pointer-events: none;
+}
+
+.wof-stamp-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.wof-stamp {
+  appearance: none;
+  width: 100%;
+  min-height: 3.2rem;
+  border-radius: var(--oneb-radius, 14px);
+  border: 1.5px solid rgba(255, 214, 180, 0.82);
+  background: linear-gradient(
+    180deg,
+    #ffb06a 0%,
+    var(--basketball-orange-highlight) 42%,
+    var(--basketball-orange) 100%
+  );
+  color: #fff8f3;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: 0.24em;
+  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
+  box-shadow: 0 10px 24px rgba(229, 86, 34, 0.3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: filter 0.12s ease, opacity 0.2s ease;
+}
+
+.wof-stamp:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.wof-stamp:active:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.wof-stamp:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+}
+
+.wof__note--error {
+  color: #ff8f7d;
+}
+
+.wof__name.is-fresh .wof__ink {
+  animation: none;
+  clip-path: none;
+}
+
+.wof-congrats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 1rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 214, 140, 0.4);
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(255, 214, 140, 0.16) 0%, transparent 60%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 55%, var(--brand-navy-deep) 100%);
+  box-shadow: 0 0 34px rgba(255, 214, 140, 0.14);
+  text-align: center;
+}
+
+.wof-congrats__kicker {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.3em;
+  color: #ffd27a;
+}
+
+.wof-congrats__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 850;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.wof-congrats__sub {
+  margin: 0 0 0.35rem;
+  font-size: 0.74rem;
+  color: var(--oneb-silver-dim);
+}
+
+@keyframes wof-stamp-flash {
+  0% { opacity: 0; transform: scale(0.85); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .wof-sign.is-stamping::after {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   Bet on Yourself — collapsed bar, wager sheet, results
+   ========================================================= */
+
+.bet-bar {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2.9rem;
+  margin: var(--classic-hub-spin-gap, 0.55rem) 0 0;
+  padding: 0.45rem 0.75rem 0.45rem 0.55rem;
+  box-sizing: border-box;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 16, 44, 0.55);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: border-color 0.2s ease, background 0.2s ease, filter 0.12s ease;
+}
+
+.bet-bar:active:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.bet-bar:disabled {
+  cursor: default;
+}
+
+.bet-bar:focus-visible {
+  outline: 2px solid rgba(var(--brand-blue-glow), 0.9);
+  outline-offset: 2px;
+}
+
+.bet-bar.has-picks {
+  border-color: rgba(41, 228, 144, 0.28);
+}
+
+.bet-bar.is-locked {
+  border-color: rgba(41, 228, 144, 0.4);
+  background:
+    radial-gradient(120% 140% at 0% 50%, rgba(41, 228, 144, 0.1) 0%, transparent 60%),
+    rgba(3, 16, 44, 0.6);
+}
+
+.bet-bar.is-error {
+  border-color: rgba(255, 109, 40, 0.35);
+}
+
+.bet-bar__mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(41, 228, 144, 0.35);
+  color: var(--money-green);
+}
+
+.bet-bar__mark svg,
+.bet-row__icon svg,
+.wager-result__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bet-bar__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.bet-bar__title {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: rgba(234, 242, 255, 0.92);
+}
+
+.bet-bar__title em {
+  font-style: normal;
+  color: var(--money-green);
+}
+
+.bet-bar__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.64rem;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.bet-bar.is-error .bet-bar__sub {
+  color: #ffb08a;
+}
+
+.bet-bar__chevron {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: none;
+  stroke: rgba(214, 228, 255, 0.55);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sheet */
+.bet-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 155;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(1, 6, 16, 0.62);
+}
+
+.bet-sheet__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 30rem);
+  max-height: min(86dvh, 46rem);
+  border-radius: 1.25rem 1.25rem 0 0;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.26);
+  border-bottom: 0;
+  background: linear-gradient(180deg, #0a1f45 0%, var(--brand-navy) 40%, var(--brand-navy-deep) 100%);
+  box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  will-change: transform;
+}
+
+.bet-sheet__grabber {
+  align-self: center;
+  width: 2.4rem;
+  height: 4px;
+  margin: 0.5rem 0 0.1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.bet-sheet__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.45rem 1rem 0.6rem;
+}
+
+.bet-sheet__head > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bet-sheet__kicker {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.24em;
+  color: var(--money-green);
+}
+
+.bet-sheet__intro {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--oneb-silver-dim);
+}
+
+.bet-sheet__bank {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+}
+
+.bet-sheet__bank span {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.bet-sheet__bank strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.bet-sheet__close {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: -0.15rem -0.35rem 0 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.bet-sheet__close svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: none;
+  stroke: rgba(234, 242, 255, 0.8);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bet-sheet__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.1rem 0.85rem 0.6rem;
+  list-style: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.bet-row {
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.bet-row.is-chosen {
+  border-color: rgba(41, 228, 144, 0.45);
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(41, 228, 144, 0.09) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.bet-row.is-disabled {
+  opacity: 0.45;
+}
+
+.bet-row__head {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bet-row__head:disabled {
+  cursor: default;
+}
+
+.bet-row__head:focus-visible {
+  outline: 2px solid rgba(var(--brand-blue-glow), 0.9);
+  outline-offset: -2px;
+  border-radius: 0.8rem;
+}
+
+.bet-row__icon {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.55rem;
+  background: rgba(var(--brand-blue-glow), 0.12);
+  color: rgba(170, 210, 255, 0.95);
+}
+
+.bet-row.is-chosen .bet-row__icon {
+  background: rgba(41, 228, 144, 0.14);
+  color: var(--money-green);
+}
+
+.bet-row__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.bet-row__name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #f1f6ff;
+}
+
+.bet-row__rule {
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: rgba(214, 228, 255, 0.58);
+}
+
+.bet-row__mult {
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #eaf2ff;
+}
+
+.bet-row.is-chosen .bet-row__mult {
+  border-color: rgba(41, 228, 144, 0.5);
+  color: var(--money-green);
+}
+
+.bet-row__check {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(214, 228, 255, 0.3);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bet-row.is-chosen .bet-row__check {
+  border-color: var(--money-green);
+  background:
+    radial-gradient(circle, var(--money-green) 0 40%, transparent 44%);
+  box-shadow: 0 0 8px rgba(41, 228, 144, 0.5);
+}
+
+.bet-row__detail {
+  overflow: hidden;
+  padding: 0 0.7rem;
+}
+
+.bet-row__numbers {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1.1fr;
+  gap: 0.35rem;
+  margin: 0 0 0.35rem;
+}
+
+.bet-row__numbers > div {
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  border-radius: 0.55rem;
+  background: rgba(1, 8, 20, 0.45);
+}
+
+.bet-row__numbers dt {
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.bet-row__numbers dd {
+  margin: 0.12rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.bet-row__numbers dd.is-money {
+  color: var(--money-green);
+}
+
+.bet-row__profit {
+  margin: 0 0 0.45rem;
+  font-size: 0.64rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: rgba(41, 228, 144, 0.8);
+}
+
+.bet-row__stakes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding-bottom: 0.65rem;
+}
+
+.bet-chip {
+  appearance: none;
+  min-height: 1.9rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.85);
+  font-size: 0.68rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.bet-chip.is-on {
+  border-color: var(--money-green);
+  background: rgba(41, 228, 144, 0.16);
+  color: #eafff4;
+}
+
+.bet-chip:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.bet-sheet__foot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem max(0.8rem, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(1, 8, 20, 0.55);
+}
+
+.bet-sheet__summary {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1.1fr;
+  gap: 0.5rem;
+}
+
+.bet-sheet__summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.bet-sheet__summary span {
+  font-size: 0.52rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.bet-sheet__summary strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.bet-sheet__summary > div:first-child strong {
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: 650;
+  color: #ffb08a;
+}
+
+.bet-sheet__summary strong.is-money {
+  color: var(--money-green);
+}
+
+.bet-sheet__note,
+.bet-sheet__cash {
+  margin: 0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.bet-sheet__cash {
+  text-align: center;
+  color: rgba(214, 228, 255, 0.35);
+}
+
+.bet-sheet__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bet-sheet__clear {
+  appearance: none;
+  flex: 0 0 auto;
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.8);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bet-sheet__done {
+  appearance: none;
+  flex: 1 1 auto;
+  min-height: 2.8rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid rgba(255, 214, 180, 0.82);
+  background: linear-gradient(180deg, #ffb06a 0%, var(--basketball-orange-highlight) 42%, var(--basketball-orange) 100%);
+  color: #fff8f3;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 850;
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bet-sheet__done:active,
+.bet-sheet__clear:active {
+  filter: brightness(0.9);
+}
+
+/* Results */
+.wager-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wager-results__title {
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.wager-results__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wager-result {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.5s ease, background 0.5s ease, box-shadow 0.5s ease;
+}
+
+.wager-result.is-won {
+  border-color: rgba(41, 228, 144, 0.45);
+  background:
+    radial-gradient(120% 140% at 100% 50%, rgba(41, 228, 144, 0.14) 0%, transparent 60%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 0 18px rgba(41, 228, 144, 0.1);
+}
+
+.wager-result.is-lost {
+  opacity: 0.78;
+}
+
+.wager-result__icon {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.wager-result.is-won .wager-result__icon {
+  background: rgba(41, 228, 144, 0.16);
+  color: var(--money-green);
+}
+
+.wager-result__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.wager-result__name {
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #eef4ff;
+}
+
+.wager-result__name em {
+  margin-left: 0.4rem;
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.wager-result__detail {
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.wager-result__outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+}
+
+.wager-result__state {
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.wager-result.is-won .wager-result__state {
+  color: var(--money-green);
+}
+
+.wager-result__amount {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(234, 242, 255, 0.7);
+}
+
+.wager-result.is-won .wager-result__amount {
+  color: var(--money-green);
+  text-shadow: 0 0 12px rgba(41, 228, 144, 0.35);
+}
+
+.wager-results__totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin: 0.1rem 0 0;
+}
+
+.wager-results__totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.wager-results__totals dt {
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.wager-results__totals dd {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.wager-results__totals dd.is-up {
+  color: var(--money-green);
+}
+
+.wager-results__totals dd.is-down {
+  color: #ff9a86;
+}
+
+.wager-results__note {
+  margin: 0;
+  font-size: 0.66rem;
+  color: var(--oneb-silver-mute);
+}
+
+/* Leaderboard podium: 1st is the tall center block; 2nd and 3rd match, smaller, on either side.
+   Fixed heights so a YOU tag or long name never makes a lower place look taller. */
+.lbx-podium {
+  --lbx-podium-top-h: 10.4rem;
+  --lbx-podium-side-h: 8.4rem;
+  grid-template-columns: 1fr 1.24fr 1fr;
+}
+
+.lbx-podium__card {
+  height: var(--lbx-podium-side-h);
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.lbx-podium__card.is-place-1 {
+  height: var(--lbx-podium-top-h);
+}
+
+.lbx-podium__card.is-place-1 .lbx-podium__medal {
+  font-size: 0.74rem;
+  padding: 0.22rem 0.7rem;
+}

@@ -5,7 +5,6 @@
 import { BILLION_GOAL, getDollarValue, MAX_PLAYER_DOLLARS, type ValuedPlayer } from './billionDollar';
 import type { DecadeEra } from './decadeRosters';
 import { getBillionRuns } from './billionRuns';
-import { statsFromBillionRuns } from './challengeStats';
 import { getBestRosterValue } from './storage';
 
 export const CHALLENGES_STORAGE_KEY = 'oneb_challenges_v1';
@@ -16,6 +15,7 @@ export const REMOVED_CHALLENGE_IDS = new Set([
   'max-player-350m',
   'three-billion-runs',
   'five-billion-runs',
+  'five-runs-1-1b',
 ]);
 
 export interface ClassicRunSnapshot {
@@ -170,10 +170,7 @@ export function materializeDerivedChallengeCompletions(
   for (const [id, goal] of moneyMilestones) {
     if (pb >= goal) markCompleted(next, id);
   }
-  const billionRuns = getBillionRuns();
-  const runStats = statsFromBillionRuns(billionRuns);
-  if (runStats.runsAtLeast1_1b >= 5) markCompleted(next, 'five-runs-1-1b');
-  if (billionRuns.length >= 10) markCompleted(next, 'ten-billion-runs');
+  if (getBillionRuns().length >= 10) markCompleted(next, 'ten-billion-runs');
   return sanitizePersistence(next);
 }
 
@@ -458,9 +455,7 @@ export function consumeAchievementCelebration(maxAgeMs = 12000): boolean {
 /** Ordered challenge list for the Challenges screen. */
 export function buildChallengeProgressList(): ChallengeProgress[] {
   const pb = getBestRosterValue();
-  const billionRuns = getBillionRuns();
-  const runStats = statsFromBillionRuns(billionRuns);
-  const billionRunCount = billionRuns.length;
+  const billionRunCount = getBillionRuns().length;
   const persisted = readPersistence();
   const isDone = (id: string) => persisted.completedIds.includes(id);
   /** Permanent cloud mode: do not let leftover device PB/runs mark completions. */
@@ -531,7 +526,7 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
     flag('no-headliners'),
     flag('five-star-portfolio'),
     flag('generational-wealth'),
-    flag('league-average'),
+    flag('league-tour'),
     flag('double-trouble'),
     flag('triple-threat'),
     flag('top-of-the-market'),
@@ -549,18 +544,6 @@ export function buildChallengeProgressList(): ChallengeProgress[] {
       goal: 3,
       kind: 'count',
       complete: isDone('h2h-three-wins'),
-    },
-    {
-      id: 'five-runs-1-1b',
-      progress:
-        preferCompletedIdsForDerived && isDone('five-runs-1-1b')
-          ? 5
-          : Math.min(runStats.runsAtLeast1_1b, 5),
-      goal: 5,
-      kind: 'count',
-      complete:
-        isDone('five-runs-1-1b') ||
-        (!preferCompletedIdsForDerived && runStats.runsAtLeast1_1b >= 5),
     },
     {
       id: 'ten-billion-runs',

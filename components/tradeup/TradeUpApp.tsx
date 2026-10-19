@@ -10,9 +10,19 @@ import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
 import { LocaleProvider } from '@/hooks/useLocale';
-import { hasSeenHowItWorks, markHowItWorksSeen, resetHowItWorksSeen } from '@/lib/account/howItWorksStorage';
+import {
+  hasSeenHowItWorks,
+  markHowItWorksSeen,
+  REPLAY_INTRO_EVENT,
+  resetHowItWorksSeen,
+} from '@/lib/account/howItWorksStorage';
 import { BallionSplash, hasIntroFinishedThisLoad, INTRO_TOTAL_MS, resetIntroFinishedThisLoad } from './BallionSplash';
-import { HowItWorks } from './HowItWorks';
+import { Onboarding } from './onboarding/Onboarding';
+import { CashRewardHost } from './CashRewardPopup';
+import { PendingSurplusHost } from './surplus/PendingSurplusHost';
+import { CircuitResultsHost } from './circuit/CircuitResultsHost';
+import { WagerResultsPreview } from './wagers/WagerResultsPreview';
+import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 import { ChallengesScreen } from './ChallengesScreen';
 import { LeaderboardScreen } from './LeaderboardScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
@@ -59,6 +69,7 @@ export function TradeUpApp() {
   const [screen, setScreen] = useState<Screen>('hub');
   const [hubTab, setHubTab] = useState<HubTab>('home');
   const [engineKey, setEngineKey] = useState(0);
+  const [circuitRun, setCircuitRun] = useState<CircuitRunConfig | null>(null);
   const [h2hKey, setH2hKey] = useState(0);
   /**
    * Start false so SSR never paints the z-200 veil. Enable in useLayoutEffect
@@ -142,6 +153,13 @@ export function TradeUpApp() {
   }, []);
 
   const handlePlay = useCallback(() => {
+    setCircuitRun(null);
+    setEngineKey((k) => k + 1);
+    setScreen('engine');
+  }, []);
+
+  const handlePlayCircuit = useCallback((config: CircuitRunConfig) => {
+    setCircuitRun(config);
     setEngineKey((k) => k + 1);
     setScreen('engine');
   }, []);
@@ -162,6 +180,7 @@ export function TradeUpApp() {
   }, [releaseStickyH2HRoom]);
 
   const handleExit = useCallback(() => {
+    setCircuitRun(null);
     releaseStickyH2HRoom();
     setRunsKey((k) => k + 1);
     setHubTab('home');
@@ -225,6 +244,16 @@ export function TradeUpApp() {
     }, ms);
   }, [showSplash, reduceMotion]);
 
+  useEffect(() => {
+    const replay = () => {
+      setScreen('hub');
+      setHubTab('home');
+      setShowGuide(true);
+    };
+    window.addEventListener(REPLAY_INTRO_EVENT, replay);
+    return () => window.removeEventListener(REPLAY_INTRO_EVENT, replay);
+  }, []);
+
   const handleHubChange = useCallback((tab: HubTab) => {
     setHubTab(tab);
     setScreen('hub');
@@ -261,7 +290,11 @@ export function TradeUpApp() {
         <BillionTradeEngine
           key={engineKey}
           onExit={handleExit}
-          onPlayAgain={() => setEngineKey((k) => k + 1)}
+          onPlayAgain={() => {
+            setCircuitRun(null);
+            setEngineKey((k) => k + 1);
+          }}
+          circuit={circuitRun}
         />
       ) : screen === 'h2h' ? (
         <HeadToHeadFlow
@@ -279,13 +312,14 @@ export function TradeUpApp() {
       ) : (
         <TradeUpHome
           onPlay={handlePlay}
+          onPlayCircuit={handlePlayCircuit}
           onHeadToHead={handleHeadToHead}
           allowAccountPrompt={!showSplash && !showGuide}
         />
       )}
 
       {showGuide && !showSplash ? (
-        <HowItWorks
+        <Onboarding
           onDone={() => {
             markHowItWorksSeen();
             setShowGuide(false);
@@ -309,6 +343,15 @@ export function TradeUpApp() {
           <MobileBottomNav active={hubTab} onChange={handleHubChange} />
         </div>
       ) : null}
+
+      <CashRewardHost enabled={!showSplash && !showGuide && !invalidInvite} />
+      <PendingSurplusHost
+        enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
+      />
+      <WagerResultsPreview />
+      <CircuitResultsHost
+        enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
+      />
     </LocaleProvider>
   );
 }

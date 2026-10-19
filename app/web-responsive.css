@@ -92,9 +92,6 @@ html[data-platform='web'] textarea:focus-visible {
     min-height: 13.5rem;
   }
 
-  html[data-platform='web'] .run-home__title {
-    font-size: 1.55rem;
-  }
 }
 
 /*
@@ -167,7 +164,6 @@ html[data-platform='web'] textarea:focus-visible {
 
   html[data-platform='web'] .run-home__subtitle {
     max-width: 20rem;
-    font-size: 0.84rem;
   }
 
   html[data-platform='web'] .run-home__modes--tiles {
@@ -461,5 +457,96 @@ html[data-platform='web'] textarea:focus-visible {
   html[data-platform='web'] .h2h-reveal__card {
     min-height: 4.6rem;
     padding: 0.55rem 0.45rem 0.6rem;
+  }
+}
+
+@media (min-width: 768px) {
+  html[data-platform='web'] .bet-bar {
+    max-width: 22.5rem;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  html[data-platform='web'] .circuit-run {
+    max-width: 22.5rem;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  html[data-platform='web'] .run-home__best--bank {
+    width: min(22.5rem, calc(100% - 2rem));
+    max-width: 22.5rem;
+  }
+}
+
+/*
+ * Home (every device): My Bank sits in normal flow, centered between the mode tiles and the
+ * tab bar — equal space above and below, never touching the bar. --home-tabbar-h is measured
+ * from the real tab bar in TradeUpHome; --home-bank-gap is the minimum space on each side.
+ */
+.run-home.run-home--tabbed {
+  --home-bank-gap: clamp(0.75rem, 2.2vh, 1.25rem);
+}
+
+.run-home.run-home--tabbed .run-home__ui {
+  padding-bottom: var(--home-tabbar-h, calc(3.45rem + env(safe-area-inset-bottom, 0px)));
+}
+
+.run-home.run-home--tabbed .run-home__main {
+  padding-bottom: 0;
+}
+
+.run-home.run-home--tabbed .run-home__stage {
+  gap: var(--home-bank-gap);
+  padding-bottom: var(--home-bank-gap);
+}
+
+.run-home.run-home--tabbed .run-home__best--bank {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  flex: 0 0 auto;
+  margin: auto 0;
+  z-index: 1;
+}
+
+@media (max-height: 600px) {
+  .run-home.run-home--tabbed .run-home__hoop-gap {
+    height: 0.75rem;
+  }
+
+  .run-home.run-home--tabbed .home-tile {
+    min-height: 12.25rem;
+    aspect-ratio: 0.78 / 1;
+  }
+}
+
+/*
+ * Desktop web (Mac / PC with a mouse or trackpad): site-style header. Logo + wordmark pinned
+ * to the far left, account / language / menu to the far right. .run-home__top keeps its height
+ * in the centered column so nothing below it moves.
+ */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  html[data-platform='web'] .run-home__brand,
+  html[data-platform='web'] .run-home__toolbar {
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top));
+    z-index: 30;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  html[data-platform='web'] .run-home__brand {
+    left: max(clamp(1.25rem, 2.5vw, 2.5rem), env(safe-area-inset-left));
+    flex: none;
+  }
+
+  html[data-platform='web'] .run-home__toolbar {
+    right: max(clamp(1.25rem, 2.5vw, 2.5rem), env(safe-area-inset-right));
   }
 }

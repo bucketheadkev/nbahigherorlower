@@ -17,11 +17,9 @@ import {
   warmH2HReactionSounds,
 } from '@/lib/tradeup/h2hEmojiSound';
 import {
-  getAchievementSummary,
   notifyAchievementsUnlocked,
   processH2HMatchChallenges,
 } from '@/lib/tradeup/challenges';
-import { ChallengeCompleteToast } from '../ChallengeCompleteToast';
 import {
   isH2HGameMode,
   modeDef,
@@ -463,10 +461,6 @@ function H2HFinalScreen({
   children: ReactNode;
 }) {
   const [emojiReady, setEmojiReady] = useState(false);
-  const [toastReady, setToastReady] = useState(false);
-  const [achievementQueue, setAchievementQueue] = useState<
-    Array<{ id: string; completed: number; total: number }>
-  >([]);
   const settledKey = useRef('');
 
   useEffect(() => {
@@ -492,23 +486,8 @@ function H2HFinalScreen({
         return { mine, opp, iWon };
       }),
     });
-    if (unlocked.length > 0) {
-      notifyAchievementsUnlocked();
-      const summary = getAchievementSummary();
-      const alreadyShown = summary.completed - unlocked.length;
-      setAchievementQueue(
-        unlocked.map((id, index) => ({
-          id,
-          completed: alreadyShown + index + 1,
-          total: summary.total,
-        })),
-      );
-    }
+    if (unlocked.length > 0) notifyAchievementsUnlocked();
   }, [bountyMultiplier, bountyPosition, iAmP1, myScore, myWins, oppWins, roomId, rounds]);
-
-  useEffect(() => {
-    setToastReady(true);
-  }, []);
 
   useEffect(() => {
     const delay = myWins ? RESULTS_POUR_TOTAL_MS + 350 : 900;
@@ -516,21 +495,8 @@ function H2HFinalScreen({
     return () => window.clearTimeout(t);
   }, [myWins]);
 
-  const activeAchievement = achievementQueue[0] ?? null;
-
   return (
     <>
-      {activeAchievement && toastReady
-        ? createPortal(
-            <ChallengeCompleteToast
-              challengeId={activeAchievement.id}
-              completed={activeAchievement.completed}
-              total={activeAchievement.total}
-              onDismiss={() => setAchievementQueue((queue) => queue.slice(1))}
-            />,
-            document.body,
-          )
-        : null}
       {myWins ? (
         <div className="h2h-win-celebration" aria-hidden>
           <MoneyRain intense mega durationMs={4200} />

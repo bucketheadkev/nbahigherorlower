@@ -18,8 +18,8 @@ interface ChallengeCompleteToastProps {
   onDismiss: () => void;
 }
 
-function challengeTitleKey(id: string): MessageKey {
-  return `challenge.${id}.title` as MessageKey;
+function challengeGoalKey(id: string): MessageKey {
+  return `challenge.${id}.blurb` as MessageKey;
 }
 
 /**
@@ -37,7 +37,7 @@ export function ChallengeCompleteToast({
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
   const reduceMotion = getPrefersReducedMotion();
-  const title = t(challengeTitleKey(challengeId));
+  const title = t(challengeGoalKey(challengeId));
   const heading = t('challenges.unlocked');
   const countLabel = t('challenges.progress', {
     done: completed,

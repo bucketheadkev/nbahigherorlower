@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from 'react';
 import {
   BILLION_GOAL,
@@ -73,6 +74,8 @@ interface ClassicRosterRevealProps {
    * (physically connected handoff — no fade between screens).
    */
   fromCourtBeam?: boolean;
+  /** Classic: run earnings (surplus decision, rewards, Bank change) shown above the actions. */
+  earnings?: ReactNode;
 }
 
 type Phase =
@@ -139,6 +142,7 @@ export function ClassicRosterReveal({
   eyebrow = null,
   skipAnalyze = false,
   fromCourtBeam = false,
+  earnings = null,
 }: ClassicRosterRevealProps) {
   const teamValue = useMemo(
     () =>
@@ -542,6 +546,8 @@ export function ClassicRosterReveal({
           </div>
         ) : null}
       </div>
+
+      {showActions && earnings ? <div className="classic-val__earnings">{earnings}</div> : null}
 
       {showActions && actions === 'continue' ? (
         <div className="classic-val__actions">

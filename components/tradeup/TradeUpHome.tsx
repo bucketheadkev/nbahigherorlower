@@ -3,20 +3,17 @@
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
+import { useBankBalance } from '@/hooks/useBankBalance';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
-import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
 import {
   hasSeenAccountPrompt,
   markAccountPromptSeen,
   resetAccountPromptSeen,
 } from '@/lib/account/accountPromptStorage';
-import {
-  BILLION_GOAL,
-  formatDollarsExact,
-} from '@/lib/tradeup/billionDollar';
+import { formatCash, readBankPreview } from '@/lib/tradeup/bank';
+import { nextMilestone, recordLocalInduction } from '@/lib/tradeup/wallOfFame';
 import { hapticLight } from '@/lib/tradeup/haptics';
-import { getBestRosterValue, CLASSIC_PROGRESS_EVENT } from '@/lib/tradeup/storage';
 import {
   AccountAuthSheet,
   type AccountSheetView,
@@ -28,9 +25,15 @@ import { LanguageToggle } from './LanguageToggle';
 import { MoneyRain } from './MoneyRain';
 import { BallionLogo } from './TradeUpLogo';
 import { SoundSettings } from './SoundSettings';
+import { WallOfFameScreen } from './WallOfFameScreen';
+import { TickerNumber } from './onboarding/ticker';
+import { CircuitScreen } from './circuit/CircuitScreen';
+import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 
 interface TradeUpHomeProps {
   onPlay: () => void;
+  /** Launch a Circuit league entry run. */
+  onPlayCircuit: (config: CircuitRunConfig) => void;
   onHeadToHead: () => void;
   /** False while the splash or first-run guide is up, so the account popup waits its turn. */
   allowAccountPrompt?: boolean;
@@ -39,6 +42,7 @@ interface TradeUpHomeProps {
 /** $1B RUN home — premium sports composition. */
 export function TradeUpHome({
   onPlay,
+  onPlayCircuit,
   onHeadToHead,
   allowAccountPrompt = true,
 }: TradeUpHomeProps) {
@@ -46,25 +50,32 @@ export function TradeUpHome({
   const { t } = useLocale();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
   useAchievementCloudSync(accountState);
-  // localStorage only on client — avoid SSR/client text hydration mismatch
-  const [bestRun, setBestRun] = useState(0);
+  const bank = useBankBalance(accountState.status === 'permanent');
   const [promptOpen, setPromptOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
-  const navLockRef = useRef(false);
+  const [wallOpen, setWallOpen] = useState(false);
+  const [circuitOpen, setCircuitOpen] = useState(false);
+  const milestone = bank == null ? null : nextMilestone(bank);
+  const permanent = accountState.status === 'permanent';
 
   useEffect(() => {
-    const refreshBest = () => setBestRun(getBestRosterValue());
-    refreshBest();
-    window.addEventListener(USER_DATA_CLEARED_EVENT, refreshBest);
-    window.addEventListener('storage', refreshBest);
-    window.addEventListener(CLASSIC_PROGRESS_EVENT, refreshBest);
-    return () => {
-      window.removeEventListener(USER_DATA_CLEARED_EVENT, refreshBest);
-      window.removeEventListener('storage', refreshBest);
-      window.removeEventListener(CLASSIC_PROGRESS_EVENT, refreshBest);
-    };
+    if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
+  }, [bank, permanent]);
+
+  // Bank card centers between the tiles and the tab bar; the bar's height varies by device.
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>('.oneb-tabbar');
+    if (!bar) return;
+    const root = document.documentElement;
+    const apply = () => root.style.setProperty('--home-tabbar-h', `${Math.round(bar.getBoundingClientRect().height)}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(bar);
+    return () => observer.disconnect();
   }, []);
+  const navLockRef = useRef(false);
+
 
   // Dev-only: ?resetAccountPrompt=1 clears the first-run flag (no Auth/profile delete).
   useEffect(() => {
@@ -104,8 +115,6 @@ export function TradeUpHome({
     }
     setPromptOpen(true);
   }, [accountState.status, allowAccountPrompt]);
-
-  const bestIsBillion = bestRun >= BILLION_GOAL;
 
   const go = (fn: () => void) => (e: ReactPointerEvent<HTMLButtonElement>) => {
     // Primary pointer only — ignore multi-touch / trailing events.
@@ -226,14 +235,54 @@ export function TradeUpHome({
               </div>
             </div>
 
-            <div
-              className={`run-home__best${bestIsBillion ? ' is-billion' : ''}`}
-              aria-label={t('home.bestRunLabel')}
+            <div className={`run-home__best run-home__best--bank${milestone ? '' : ' is-wall'}`}>
+            <button
+              type="button"
+              className="bank-chip__main"
+              aria-label={`${t('home.bankLabel')}: ${formatCash(bank ?? 0)}. ${
+                milestone ? t('home.nextMilestone', { amount: formatCash(milestone.next) }) : ''
+              } ${t('home.wallOfFame')}`}
+              onClick={() => {
+                hapticLight();
+                setWallOpen(true);
+              }}
             >
-              <span className="run-home__best-label">{t('home.bestRunLabel')}</span>
-              <strong className="run-home__best-value">
-                {bestRun > 0 ? formatDollarsExact(bestRun) : t('home.bestRunEmpty')}
+              <span className="bank-chip__top" aria-hidden>
+                <span className="run-home__best-label">{t('home.bankLabel')}</span>
+              </span>
+              <strong className="run-home__best-value" aria-hidden>
+                {bank == null ? t('home.bestRunEmpty') : <TickerNumber value={bank} duration={900} />}
               </strong>
+              {bank != null ? (
+                <span className="bank-chip__progress" aria-hidden>
+                  <span className="bank-chip__meter">
+                    <i style={{ transform: `scaleX(${milestone ? Math.max(milestone.pct, 0.015) : 1})` }} />
+                  </span>
+                  <span className="bank-chip__next">
+                    {milestone
+                      ? t('home.nextMilestone', { amount: formatCash(milestone.next) })
+                      : t('home.wallReached')}
+                  </span>
+                </span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              className="bank-chip__circuit"
+              aria-label={t('home.circuit')}
+              onClick={() => {
+                hapticLight();
+                setCircuitOpen(true);
+              }}
+            >
+              <span className="bank-chip__circuit-name">
+                <i aria-hidden />
+                {t('home.circuit')}
+              </span>
+              <span className="bank-chip__circuit-cta" aria-hidden>
+                ›
+              </span>
+            </button>
             </div>
           </div>
         </div>
@@ -244,6 +293,29 @@ export function TradeUpHome({
         onCreateAccount={() => openSheet('signup')}
         onLogIn={() => openSheet('login')}
         onContinueAsGuest={continueAsGuest}
+      />
+
+      <CircuitScreen
+        open={circuitOpen}
+        permanent={permanent}
+        bankBalance={bank}
+        onClose={() => setCircuitOpen(false)}
+        onPlay={(config) => {
+          setCircuitOpen(false);
+          onPlayCircuit(config);
+        }}
+        onSignIn={() => {
+          setCircuitOpen(false);
+          openSheet('signup');
+        }}
+      />
+
+      <WallOfFameScreen
+        open={wallOpen}
+        bankBalance={bank ?? 0}
+        username={accountState.status === 'permanent' ? accountState.profile.username : null}
+        permanent={permanent}
+        onClose={() => setWallOpen(false)}
       />
 
       <AccountAuthSheet

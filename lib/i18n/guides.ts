@@ -142,6 +142,7 @@ export const GUIDE_NAV: Record<
   {
     howToPlay: string;
     howValues: string;
+    replayIntro: string;
     back: string;
     guidesLabel: string;
     tierRanges: string;
@@ -154,6 +155,7 @@ export const GUIDE_NAV: Record<
   en: {
     howToPlay: 'How to Play',
     howValues: 'How Values Work',
+    replayIntro: 'Replay Intro',
     back: 'Back',
     guidesLabel: 'Guides',
     tierRanges: 'Tier ranges',
@@ -165,6 +167,7 @@ export const GUIDE_NAV: Record<
   es: {
     howToPlay: 'Cómo jugar',
     howValues: 'Cómo funcionan los valores',
+    replayIntro: 'Ver la intro',
     back: 'Atrás',
     guidesLabel: 'Guías',
     tierRanges: 'Rangos por tier',

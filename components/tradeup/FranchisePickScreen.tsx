@@ -39,6 +39,8 @@ interface FranchisePickScreenProps {
   selectedName?: string | null;
   canRerollTeam: boolean;
   canRerollEra: boolean;
+  /** Format has no rerolls (The Circuit · No Reroll). */
+  rerollsOff?: boolean;
   /** Blocks select/reroll during slam, placement, or handoff. */
   interactionLocked?: boolean;
   /** Spin one header box in place. The other result stays put. */
@@ -96,6 +98,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   selectedId,
   canRerollTeam,
   canRerollEra,
+  rerollsOff = false,
   interactionLocked = false,
   rerolling = null,
   reduceMotion = false,
@@ -286,7 +289,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
             onReroll('team');
           }}
         >
-          <em>{canRerollTeam ? '1 left' : 'Used'}</em>
+          <em>{canRerollTeam ? '1 left' : rerollsOff ? 'Off' : 'Used'}</em>
           <strong>Reroll Team</strong>
         </button>
         <button
@@ -300,7 +303,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
             onReroll('era');
           }}
         >
-          <em>{canRerollEra ? '1 left' : 'Used'}</em>
+          <em>{canRerollEra ? '1 left' : rerollsOff ? 'Off' : 'Used'}</em>
           <strong>Reroll Era</strong>
         </button>
       </div>

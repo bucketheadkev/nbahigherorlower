@@ -90,6 +90,11 @@
     border-radius: 1.61rem;
   }
 
+  .run-home.run-home--tabbed .bank-chip__circuit {
+    top: 1.04rem;
+    right: 1.42rem;
+  }
+
   .run-home.run-home--tabbed .run-home__best-label {
     font-size: 1.1rem;
   }
