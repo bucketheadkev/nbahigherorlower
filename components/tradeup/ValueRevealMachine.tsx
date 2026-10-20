@@ -396,7 +396,7 @@ export function ValueRevealMachine({
           <button
             type="button"
             className="billion-result-page__again"
-            onPointerDown={() => {
+            onClick={() => {
               hapticTap();
               onPlayAgain();
             }}
@@ -524,7 +524,7 @@ export function ValueRevealMachine({
       <button
         type="button"
         className="value-vault__skip"
-        onPointerDown={(e) => {
+        onClick={(e) => {
           e.preventDefault();
           handleSkipToResult();
         }}

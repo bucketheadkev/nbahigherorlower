@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent as ReactMouseEvent } from 'react';
 import { hostableH2HModes, type H2HGameMode } from '@/lib/multiplayer/gameModes';
 import { isNativeApp } from '@/lib/platform/isNativeApp';
 import { hapticLight } from '@/lib/tradeup/haptics';
@@ -26,7 +26,7 @@ export function H2HModeSelectScreen({
 }: H2HModeSelectScreenProps) {
   const modes = useMemo(() => hostableH2HModes({ native: isNativeApp() }), []);
 
-  const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
+  const press = (fn: () => void, disabled: boolean) => (e: ReactMouseEvent) => {
     e.preventDefault();
     if (disabled) return;
     hapticLight();
@@ -44,7 +44,7 @@ export function H2HModeSelectScreen({
 
   return (
     <div className="h2h-modes" aria-label="Choose game">
-      <button type="button" className="h2h-modes__back ui-tap" onPointerDown={press(onBack, false)}>
+      <button type="button" className="h2h-modes__back ui-tap" onClick={press(onBack, false)}>
         ← Back
       </button>
 
@@ -70,7 +70,7 @@ export function H2HModeSelectScreen({
             style={{ ['--mode-accent' as string]: mode.accent }}
             disabled={locked}
             aria-disabled={locked}
-            onPointerDown={press(() => handleSelect(mode.id), locked)}
+            onClick={press(() => handleSelect(mode.id), locked)}
           >
             <div className="h2h-mode-card__top">
               <strong className="h2h-mode-card__title">{mode.title}</strong>
@@ -84,7 +84,7 @@ export function H2HModeSelectScreen({
         type="button"
         className="run-btn run-btn--secondary h2h-modes__join ui-tap"
         disabled={locked}
-        onPointerDown={press(onJoin, locked)}
+        onClick={press(onJoin, locked)}
       >
         <strong>JOIN GAME</strong>
         <span>enter a friend’s room code</span>

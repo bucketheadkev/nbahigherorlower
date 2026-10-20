@@ -29,10 +29,6 @@ const COPY = {
   inPrizes: { en: 'On pace for {amount}', es: 'Vas por {amount}' },
   behind: { en: '{amount} behind 3rd', es: 'A {amount} del 3.º' },
   runOpen: { en: 'Your entry run is still open — make it count.', es: 'Tu partida de entrada sigue abierta.' },
-  minNote: {
-    en: 'Pays out at {min}+ runs — {more} more needed, otherwise every entry is refunded.',
-    es: 'Paga con {min}+ partidas — faltan {more}; si no, se reembolsan todas las entradas.',
-  },
   noRuns: { en: 'No runs yet — be the first on the board.', es: 'Aún no hay partidas: sé el primero.' },
   loadError: { en: "Couldn't load standings.", es: 'No se pudo cargar la clasificación.' },
   tie: {
@@ -47,8 +43,8 @@ const COPY = {
   noRun: { en: 'Your entry run wasn’t submitted.', es: 'No enviaste tu partida de entrada.' },
   cancelled: { en: 'LEAGUE CANCELLED', es: 'LIGA CANCELADA' },
   cancelledWhy: {
-    en: 'Fewer than {min} runs were submitted, so the league didn’t pay out.',
-    es: 'Se enviaron menos de {min} partidas, así que la liga no pagó premios.',
+    en: 'No runs were submitted, so every entry was refunded.',
+    es: 'No se envió ninguna partida, así que se reembolsaron todas las entradas.',
   },
   cancelledOther: { en: 'This league was cancelled.', es: 'Esta liga fue cancelada.' },
   refunded: { en: '{amount} refunded to your Bank', es: '{amount} reembolsados a tu Banco' },
@@ -185,7 +181,6 @@ export function StandingsSheet({
   const list = rows ?? live.standings;
   const me = list.find((r) => r.isMe) ?? null;
   const third = list.find((r) => r.rank === 3);
-  const short = Math.max(0, live.minRuns - live.submitted);
   const msLeft = Date.parse(live.endsAt) - serverNow;
 
   let meLine: string | null = null;
@@ -232,11 +227,6 @@ export function StandingsSheet({
 
       <PrizeLadder prizes={live.prizes} holders={[1, 2, 3].map((r) => list.find((s) => s.rank === r))} locale={locale} />
 
-      {short > 0 ? (
-        <p className="circuit-sheet__warn">
-          {fill(pick(COPY.minNote, locale), { min: live.minRuns, more: short })}
-        </p>
-      ) : null}
 
       {me ? (
         <div className="circuit-me">
@@ -302,8 +292,8 @@ export function ResultsSheet({ result, onClose }: { result: CircuitResult; onClo
       {cancelled ? (
         <div className="circuit-final__cancel">
           <p>
-            {result.cancelReason === 'not_enough_runs'
-              ? fill(pick(COPY.cancelledWhy, locale), { min: result.minRuns })
+            {result.cancelReason === 'not_enough_runs' || result.cancelReason === 'no_runs'
+              ? pick(COPY.cancelledWhy, locale)
               : pick(COPY.cancelledOther, locale)}
           </p>
           <strong>{fill(pick(COPY.refunded, locale), { amount: formatCash(result.payout || result.entryFee) })}</strong>

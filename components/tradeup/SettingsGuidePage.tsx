@@ -36,14 +36,11 @@ export function SettingsGuidePage({ guideId, onBack }: SettingsGuidePageProps) {
         <button
           type="button"
           className="settings-ctrl settings-guide__back"
-          onPointerDown={(e) => {
-            if (e.pointerType === 'mouse' && e.button !== 0) return;
-            e.preventDefault();
+          onClick={(e) => {
             e.stopPropagation();
             hapticTap();
             onBack();
           }}
-          onClick={onBack}
         >
           ← {nav.back}
         </button>

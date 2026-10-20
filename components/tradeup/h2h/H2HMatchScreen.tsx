@@ -1,6 +1,6 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { clearActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { clearPendingH2HJoinCode } from '@/lib/multiplayer/h2hInvite';
@@ -390,7 +390,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
                   type="button"
                   className="h2h-lobby__primary ui-tap"
                   disabled={rematchBusy}
-                  onPointerDown={(e: ReactPointerEvent) => {
+                  onClick={(e: ReactMouseEvent) => {
                     e.preventDefault();
                     hapticLight();
                     void ackRematch();
@@ -406,7 +406,7 @@ export function H2HMatchScreen({ roomId, userId, onLeft }: H2HMatchScreenProps) 
               <button
                 type="button"
                 className="h2h-lobby__leave ui-tap"
-                onPointerDown={(e: ReactPointerEvent) => {
+                onClick={(e: ReactMouseEvent) => {
                   e.preventDefault();
                   hapticLight();
                   void handleLeave();

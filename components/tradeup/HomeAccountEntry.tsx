@@ -1,6 +1,6 @@
 'use client';
 
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { AccountAuthState } from '@/lib/account/accountAuth';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
@@ -11,8 +11,8 @@ interface HomeAccountEntryProps {
 
 /** Compact home toolbar chip — Guest or signed-in username. */
 export function HomeAccountEntry({ state, onOpen }: HomeAccountEntryProps) {
-  const press = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const press = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     hapticTap();
@@ -37,7 +37,7 @@ export function HomeAccountEntry({ state, onOpen }: HomeAccountEntryProps) {
       className={`home-account-chip${state.status === 'permanent' ? ' is-signed-in' : ''}`}
       aria-label={aria}
       title={aria}
-      onPointerDown={press}
+      onClick={press}
     >
       <span className="home-account-chip__icon" aria-hidden>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">

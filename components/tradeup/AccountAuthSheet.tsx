@@ -4,7 +4,7 @@ import {
   useEffect,
   useState,
   type FormEvent,
-  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
 } from 'react';
 import {
   completeUsernameForSession,
@@ -60,8 +60,8 @@ export function AccountAuthSheet({
 
   const press =
     (fn: () => void, opts?: { skipWhen?: () => boolean }) =>
-    (e: ReactPointerEvent<HTMLButtonElement>) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
       if (opts?.skipWhen?.()) return;
       e.preventDefault();
       e.stopPropagation();
@@ -200,7 +200,7 @@ export function AccountAuthSheet({
         className="settings-ctrl settings-name-modal__scrim"
         aria-label="Close"
         disabled={busy}
-        onPointerDown={press(close, { skipWhen: () => busy })}
+        onClick={press(close, { skipWhen: () => busy })}
       />
       <div className="settings-name-modal__card account-sheet__card">
         {showSignedIn ? (
@@ -216,7 +216,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onPointerDown={press(close, { skipWhen: () => busy })}
+                onClick={press(close, { skipWhen: () => busy })}
               >
                 Close
               </button>
@@ -224,7 +224,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
                 disabled={busy}
-                onPointerDown={press(handleLogOut, { skipWhen: () => busy })}
+                onClick={press(handleLogOut, { skipWhen: () => busy })}
               >
                 {busy ? 'Logging out…' : 'Log Out'}
               </button>
@@ -244,21 +244,21 @@ export function AccountAuthSheet({
               <button
                 type="button"
                 className="settings-ctrl settings-name-modal__save account-sheet__full"
-                onPointerDown={press(() => go('signup'))}
+                onClick={press(() => go('signup'))}
               >
                 Create Account
               </button>
               <button
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel account-sheet__full"
-                onPointerDown={press(() => go('login'))}
+                onClick={press(() => go('login'))}
               >
                 Log In
               </button>
               <button
                 type="button"
                 className="settings-ctrl account-sheet__text-link"
-                onPointerDown={press(close)}
+                onClick={press(close)}
               >
                 Close
               </button>
@@ -311,7 +311,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onPointerDown={press(() => go('menu'), { skipWhen: () => busy })}
+                onClick={press(() => go('menu'), { skipWhen: () => busy })}
               >
                 Back
               </button>
@@ -323,7 +323,7 @@ export function AccountAuthSheet({
               type="button"
               className="settings-ctrl account-sheet__text-link"
               disabled={busy}
-              onPointerDown={press(() => go('login'), { skipWhen: () => busy })}
+              onClick={press(() => go('login'), { skipWhen: () => busy })}
             >
               Already have an account? Log In
             </button>
@@ -359,7 +359,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onPointerDown={press(() => go('menu'), { skipWhen: () => busy })}
+                onClick={press(() => go('menu'), { skipWhen: () => busy })}
               >
                 Back
               </button>
@@ -371,7 +371,7 @@ export function AccountAuthSheet({
               type="button"
               className="settings-ctrl account-sheet__text-link"
               disabled={busy}
-              onPointerDown={press(() => go('forgot'), { skipWhen: () => busy })}
+              onClick={press(() => go('forgot'), { skipWhen: () => busy })}
             >
               Forgot Password?
             </button>
@@ -379,7 +379,7 @@ export function AccountAuthSheet({
               type="button"
               className="settings-ctrl account-sheet__text-link"
               disabled={busy}
-              onPointerDown={press(() => go('signup'), { skipWhen: () => busy })}
+              onClick={press(() => go('signup'), { skipWhen: () => busy })}
             >
               Don&apos;t have an account? Sign Up
             </button>
@@ -410,7 +410,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onPointerDown={press(() => go('login'), { skipWhen: () => busy })}
+                onClick={press(() => go('login'), { skipWhen: () => busy })}
               >
                 Back
               </button>
@@ -446,7 +446,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onPointerDown={press(handleLogOut, { skipWhen: () => busy })}
+                onClick={press(handleLogOut, { skipWhen: () => busy })}
               >
                 Log out
               </button>

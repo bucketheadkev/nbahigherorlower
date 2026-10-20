@@ -84,7 +84,7 @@ export const HeadToHeadMatchmaking = memo(function HeadToHeadMatchmaking({
 
   return (
     <div className={`h2hmm is-${phase}`} aria-label="Head-to-Head matchmaking">
-      <button type="button" className="h2hmm__back" onPointerDown={onExit}>
+      <button type="button" className="h2hmm__back" onClick={onExit}>
         ← Home
       </button>
 

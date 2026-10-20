@@ -22,6 +22,7 @@ import { CashRewardHost } from './CashRewardPopup';
 import { PendingSurplusHost } from './surplus/PendingSurplusHost';
 import { CircuitResultsHost } from './circuit/CircuitResultsHost';
 import { WagerResultsPreview } from './wagers/WagerResultsPreview';
+import { RunResultsPreview } from './dev/RunResultsPreview';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 import { ChallengesScreen } from './ChallengesScreen';
 import { LeaderboardScreen } from './LeaderboardScreen';
@@ -349,6 +350,7 @@ export function TradeUpApp() {
         enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
       />
       <WagerResultsPreview />
+      <RunResultsPreview />
       <CircuitResultsHost
         enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
       />

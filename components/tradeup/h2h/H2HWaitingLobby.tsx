@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useRef,
@@ -143,7 +143,7 @@ export function H2HWaitingLobby({
     return () => window.clearTimeout(id);
   }, [inviteFlash]);
 
-  const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
+  const press = (fn: () => void, disabled: boolean) => (e: ReactMouseEvent) => {
     e.preventDefault();
     if (disabled) return;
     hapticLight();
@@ -251,7 +251,7 @@ export function H2HWaitingLobby({
           type="button"
           className="h2h-lobby__text-btn ui-tap"
           aria-disabled={shareDisabled}
-          onPointerDown={press(() => void handleCopy(), shareDisabled)}
+          onClick={press(() => void handleCopy(), shareDisabled)}
         >
           {copyFlash ? 'Copied' : 'Copy link'}
         </button>
@@ -262,7 +262,7 @@ export function H2HWaitingLobby({
           type="button"
           className="h2h-lobby__text-btn ui-tap"
           aria-disabled={shareDisabled}
-          onPointerDown={press(() => void handleInvite(), shareDisabled)}
+          onClick={press(() => void handleInvite(), shareDisabled)}
         >
           {inviteBusy ? '…' : inviteFlash ?? 'Invite'}
         </button>
@@ -299,7 +299,7 @@ export function H2HWaitingLobby({
           type="button"
           className={`h2h-lobby__primary ui-tap${me.is_ready ? ' is-armed' : ''}`}
           disabled={readyDisabled}
-          onPointerDown={press(() => void handleReadyToggle(), readyDisabled)}
+          onClick={press(() => void handleReadyToggle(), readyDisabled)}
         >
           {readyBusy ? '…' : me.is_ready ? 'Cancel ready' : 'Ready up'}
         </button>
@@ -315,7 +315,7 @@ export function H2HWaitingLobby({
         type="button"
         className="h2h-lobby__leave ui-tap"
         disabled={leaving}
-        onPointerDown={press(() => void handleLeave(), leaving)}
+        onClick={press(() => void handleLeave(), leaving)}
       >
         {leaving ? 'Leaving…' : 'Leave lobby'}
       </button>

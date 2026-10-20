@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
@@ -82,8 +82,8 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   /** Instant press — preventDefault avoids iOS ghost/click delay. */
   const press =
     (fn: () => void, opts?: { skipWhen?: () => boolean }) =>
-    (e: ReactPointerEvent<HTMLButtonElement>) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
       if (opts?.skipWhen?.()) return;
       e.preventDefault();
       e.stopPropagation();
@@ -219,7 +219,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               aria-checked={!muted}
               aria-label={muted ? 'Sound effects off' : 'Sound effects on'}
               className={`settings-ctrl sound-settings__toggle-track${muted ? '' : ' is-on'}`}
-              onPointerDown={press(() => {
+              onClick={press(() => {
                 resume();
                 hapticTap();
                 toggleMute();
@@ -259,7 +259,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               aria-checked={hapticsEnabled}
               aria-label={hapticsEnabled ? 'Haptics on' : 'Haptics off'}
               className={`settings-ctrl sound-settings__toggle-track${hapticsEnabled ? ' is-on' : ''}`}
-              onPointerDown={press(() => {
+              onClick={press(() => {
                 resume();
                 hapticTap();
                 toggleHaptics();
@@ -279,7 +279,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         <button
           type="button"
           className="settings-ctrl sound-settings__nav-link sound-settings__nav-link--profile"
-          onPointerDown={press(openNameModal)}
+          onClick={press(openNameModal)}
         >
           <span className="sound-settings__nav-copy">
             <em>Head-to-Head Name</em>
@@ -301,7 +301,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-tile settings-tile--guide"
-            onPointerDown={press(() => openGuide('how-to-play'))}
+            onClick={press(() => openGuide('how-to-play'))}
           >
             <span className="settings-tile__icon settings-tile__icon--book" aria-hidden>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -324,7 +324,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-tile settings-tile--guide"
-            onPointerDown={press(() => openGuide('how-values-work'))}
+            onClick={press(() => openGuide('how-values-work'))}
           >
             <span className="settings-tile__icon settings-tile__icon--values" aria-hidden>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -343,7 +343,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-tile settings-tile--guide"
-            onPointerDown={press(() => {
+            onClick={press(() => {
               resume();
               hapticTap();
               close();
@@ -377,7 +377,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-mini-link"
-            onPointerDown={press(() => openLegalPage('privacy'))}
+            onClick={press(() => openLegalPage('privacy'))}
           >
             Privacy Policy
           </button>
@@ -387,7 +387,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-mini-link"
-            onPointerDown={press(() => openLegalPage('support'))}
+            onClick={press(() => openLegalPage('support'))}
           >
             Player Support
           </button>
@@ -395,7 +395,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         <button
           type="button"
           className="settings-ctrl settings-mini-link settings-mini-link--danger"
-          onPointerDown={press(openDeleteConfirm)}
+          onClick={press(openDeleteConfirm)}
         >
           Delete My Data
         </button>
@@ -414,7 +414,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         type="button"
         className="settings-ctrl settings-name-modal__scrim"
         aria-label="Close"
-        onPointerDown={press(closeNameModal)}
+        onClick={press(closeNameModal)}
       />
       <form className="settings-name-modal__card" onSubmit={saveName}>
         <p className="settings-name-modal__kicker">1V1</p>
@@ -443,7 +443,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-name-modal__cancel"
-            onPointerDown={press(closeNameModal)}
+            onClick={press(closeNameModal)}
           >
             Cancel
           </button>
@@ -468,7 +468,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         className="settings-ctrl settings-name-modal__scrim"
         aria-label="Close"
         disabled={deleteBusy}
-        onPointerDown={press(cancelDelete, { skipWhen: () => deleteBusy })}
+        onClick={press(cancelDelete, { skipWhen: () => deleteBusy })}
       />
       <div className="settings-name-modal__card">
         <p className="settings-name-modal__kicker">Legal</p>
@@ -489,7 +489,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__cancel"
             disabled={deleteBusy}
-            onPointerDown={press(cancelDelete, { skipWhen: () => deleteBusy })}
+            onClick={press(cancelDelete, { skipWhen: () => deleteBusy })}
           >
             Cancel
           </button>
@@ -497,8 +497,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
             disabled={deleteBusy}
-            onPointerDown={press(confirmDelete, { skipWhen: () => deleteBusy })}
-            onClick={confirmDelete}
+            onClick={press(confirmDelete, { skipWhen: () => deleteBusy })}
           >
             {deleteBusy ? 'Deleting…' : 'Delete Permanently'}
           </button>
@@ -519,7 +518,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         type="button"
         className="settings-ctrl settings-name-modal__scrim"
         aria-label="Close"
-        onPointerDown={press(closeDeleteSuccess)}
+        onClick={press(closeDeleteSuccess)}
       />
       <div className="settings-name-modal__card">
         <p className="settings-name-modal__kicker settings-name-modal__kicker--success">Success</p>
@@ -533,7 +532,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-name-modal__save"
-            onPointerDown={press(closeDeleteSuccess)}
+            onClick={press(closeDeleteSuccess)}
           >
             OK
           </button>
@@ -550,7 +549,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           className="settings-ctrl sound-settings__gear"
           aria-expanded={open}
           aria-label="Settings"
-          onPointerDown={press(() => {
+          onClick={press(() => {
             if (open) return;
             setOpen(true);
             setEditingName(false);
@@ -585,7 +584,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               type="button"
               className="settings-ctrl settings-drawer__scrim"
               aria-label="Close settings"
-              onPointerDown={press(close)}
+              onClick={press(close)}
             />
             <aside className="settings-drawer__panel">
               <header className="settings-drawer__header">
@@ -597,7 +596,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
                   type="button"
                   className="settings-ctrl settings-drawer__close"
                   aria-label="Close"
-                  onPointerDown={press(close)}
+                  onClick={press(close)}
                 >
                   ✕
                 </button>
@@ -632,7 +631,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         className="settings-ctrl sound-settings__toggle tu-btn tu-btn--ghost"
         aria-expanded={open}
         aria-label="Settings"
-        onPointerDown={press(() => {
+        onClick={press(() => {
           resume();
           hapticTap();
           setOpen((value) => !value);

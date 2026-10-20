@@ -261,31 +261,102 @@ export function settleLocalSlip(runRef: string, facts: WagerRunFacts): WagerResu
   return results;
 }
 
-/** Signed-in settlement after the verified submit. The server prices the lineup. */
+/* ── Signed-in settlement (survives the app closing before the result lands) ── */
+
+const PENDING_SETTLE_KEY = 'oneb_wager_settle_v1';
+const SETTLE_TIMEOUT_MS = 12_000;
+
+interface PendingSettle {
+  runRef: string;
+  fifthPlayerId: string | null;
+  rerollsUsed: boolean;
+  at: number;
+}
+
+function readPendingSettles(): PendingSettle[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PENDING_SETTLE_KEY) ?? '[]') as unknown;
+    return Array.isArray(parsed)
+      ? parsed.filter((p): p is PendingSettle => Boolean(p) && typeof (p as PendingSettle).runRef === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingSettles(list: PendingSettle[]): void {
+  try {
+    localStorage.setItem(PENDING_SETTLE_KEY, JSON.stringify(list.slice(-10)));
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Remember how to settle this run's slip in case the app closes before it does. */
+export function rememberServerSettle(runRef: string, fifthPlayerId: string | null, rerollsUsed: boolean): void {
+  const list = readPendingSettles().filter((p) => p.runRef !== runRef);
+  writePendingSettles([...list, { runRef, fifthPlayerId, rerollsUsed, at: Date.now() }]);
+}
+
+function forgetServerSettle(runRef: string): void {
+  writePendingSettles(readPendingSettles().filter((p) => p.runRef !== runRef));
+}
+
+type SettleOutcome = { done: boolean; row: ServerSlipRow | null };
+
+async function callSettle(runRef: string, fifthPlayerId: string | null, rerollsUsed: boolean): Promise<SettleOutcome> {
+  let timer = 0;
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = window.setTimeout(() => reject(new Error('timeout')), SETTLE_TIMEOUT_MS);
+    });
+    const { data, error } = await Promise.race([
+      getSupabaseBrowserClient().rpc('settle_wager_slip', {
+        p_client_run_id: runRef,
+        p_fifth_player_id: fifthPlayerId,
+        p_rerolls_used: rerollsUsed,
+      }),
+      timeout,
+    ]);
+    if (error) {
+      console.error('[wagers] settle failed', error.message);
+      // The run hasn't landed yet — keep the note and try again later.
+      return { done: false, row: null };
+    }
+    return { done: true, row: (data ?? {}) as ServerSlipRow };
+  } catch (err) {
+    console.error('[wagers] settle error', err);
+    return { done: false, row: null };
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+/** Signed-in settlement after the verified submit. The server prices the lineup and pays once. */
 export async function settleServerSlip(
   runRef: string,
   fifthPlayerId: string | null,
   rerollsUsed: boolean,
 ): Promise<WagerResult[] | null> {
-  if (state.current?.mode !== 'server' || state.current.runRef !== runRef) return null;
-  try {
-    const { data, error } = await getSupabaseBrowserClient().rpc('settle_wager_slip', {
-      p_client_run_id: runRef,
-      p_fifth_player_id: fifthPlayerId,
-      p_rerolls_used: rerollsUsed,
-    });
-    if (error) {
-      console.error('[wagers] settle failed', error.message);
-      return null;
-    }
-    const slip = slipFromServer((data ?? {}) as ServerSlipRow, runRef, state.current.picks);
-    state.current = slip;
-    notifyBank();
-    emit();
-    return slip.results ?? null;
-  } catch (err) {
-    console.error('[wagers] settle error', err);
-    return null;
+  const outcome = await callSettle(runRef, fifthPlayerId, rerollsUsed);
+  if (!outcome.done || !outcome.row) return null;
+  forgetServerSettle(runRef);
+  const fallback = state.current?.runRef === runRef ? state.current.picks : [];
+  const slip = slipFromServer(outcome.row, runRef, fallback);
+  if (state.current?.runRef === runRef) state.current = slip;
+  notifyBank();
+  emit();
+  return slip.results ?? null;
+}
+
+/** Retries any settlement that didn't finish (app closed, offline). Safe to call often. */
+export async function settlePendingServerSlips(): Promise<void> {
+  for (const pending of readPendingSettles()) {
+    const outcome = await callSettle(pending.runRef, pending.fifthPlayerId, pending.rerollsUsed);
+    const stale = Date.now() - pending.at > 7 * 60 * 60 * 1000;
+    if (outcome.done || stale) forgetServerSettle(pending.runRef);
+    if (outcome.done) notifyBank();
   }
 }
 

@@ -39,6 +39,7 @@ import {
   beginWagerRun,
   getSlipState,
   lockDraftForRun,
+  rememberServerSettle,
   settleLocalSlip,
   settleServerSlip,
 } from '@/lib/tradeup/wagerSlip';
@@ -151,6 +152,25 @@ function rosterInSlotOrder(slots: RosterSlots): ValuedPlayer[] {
   return LINEUP_POSITIONS.map((pos) => slots[pos]).filter(
     (p): p is ValuedPlayer => Boolean(p),
   );
+}
+
+/** A stalled submit must not leave the results screen waiting forever. */
+const SUBMIT_TIMEOUT_MS = 20_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => resolve(fallback), ms);
+    void promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        window.clearTimeout(timer);
+        resolve(fallback);
+      },
+    );
+  });
 }
 
 function newRunRef(): string {
@@ -684,11 +704,28 @@ export function BillionTradeEngine({
       if (!isH2H && !isOnline) {
         recordClassicRun(total, [], nextSlots);
         const runRef = runPayoutRef();
+        const lockedSlip = getSlipState().current;
+        if (lockedSlip?.mode === 'server' && lockedSlip.runRef === runRef) {
+          rememberServerSettle(
+            runRef,
+            draftOrderRef.current[4] ?? null,
+            teamRerollUsedRef.current || eraRerollUsedRef.current,
+          );
+        }
         // Server verifies lineup + computes value. Never blocks Classic UX.
-        void submitVerifiedClassicLineup(lineup, runRef).then((result) => {
+        void withTimeout(submitVerifiedClassicLineup(lineup, runRef), SUBMIT_TIMEOUT_MS, {
+          ok: false as const,
+          message: 'timeout',
+        }).then((result) => {
           const skipped = !result.ok && 'skipped' in result && Boolean(result.skipped);
           setEarnings((current) =>
-            current ? { ...current, submit: result.ok ? 'ok' : skipped ? 'skipped' : 'failed' } : current,
+            current
+              ? {
+                  ...current,
+                  submit: result.ok ? 'ok' : skipped ? 'skipped' : 'failed',
+                  verifiedValue: result.ok ? result.verifiedValue : null,
+                }
+              : current,
           );
           const slip = getSlipState().current;
           if (slip?.mode === 'server' && slip.runRef === runRef) {

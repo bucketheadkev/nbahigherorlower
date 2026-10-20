@@ -1,6 +1,6 @@
 'use client';
 
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
 interface AccountProgressPromptProps {
@@ -20,8 +20,8 @@ export function AccountProgressPrompt({
   if (!open) return null;
 
   const press =
-    (fn: () => void) => (e: ReactPointerEvent<HTMLButtonElement>) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+    (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       hapticTap();
@@ -54,14 +54,14 @@ export function AccountProgressPrompt({
           <button
             type="button"
             className="settings-ctrl settings-name-modal__save account-sheet__full account-progress-prompt__primary"
-            onPointerDown={press(onCreateAccount)}
+            onClick={press(onCreateAccount)}
           >
             Create Account
           </button>
           <button
             type="button"
             className="settings-ctrl settings-name-modal__cancel account-sheet__full account-progress-prompt__secondary"
-            onPointerDown={press(onLogIn)}
+            onClick={press(onLogIn)}
           >
             Log In
           </button>
@@ -69,7 +69,7 @@ export function AccountProgressPrompt({
             <button
               type="button"
               className="settings-ctrl account-progress-prompt__guest"
-              onPointerDown={press(onContinueAsGuest)}
+              onClick={press(onContinueAsGuest)}
             >
               Continue as Guest →
             </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, useEffect, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useEffect, useState } from 'react';
 import { formatDollarsExact } from '@/lib/tradeup/billionDollar';
 import { H2H_POSITIONS, type H2HPosition } from '@/lib/multiplayer/h2hPenalty';
 import { hapticLight } from '@/lib/tradeup/haptics';
@@ -178,7 +178,7 @@ export function H2HKnockoutMatch({
             type="button"
             className="run-btn run-btn--primary h2h-lobby__submit"
             disabled={rematchBusy}
-            onPointerDown={(e: ReactPointerEvent) => {
+            onClick={(e: ReactMouseEvent) => {
               e.preventDefault();
               hapticLight();
               void onRematch();
@@ -193,7 +193,7 @@ export function H2HKnockoutMatch({
         <button
           type="button"
           className="run-btn run-btn--secondary h2h-lobby__submit"
-          onPointerDown={(e: ReactPointerEvent) => {
+          onClick={(e: ReactMouseEvent) => {
             e.preventDefault();
             hapticLight();
             void onExit();

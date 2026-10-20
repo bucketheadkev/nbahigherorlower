@@ -40,14 +40,11 @@ export function SettingsLegalPage({ pageId, onBack }: SettingsLegalPageProps) {
           <button
             type="button"
             className="legal-page__back"
-            onPointerDown={(event) => {
-              if (event.pointerType === 'mouse' && event.button !== 0) return;
-              event.preventDefault();
+            onClick={(event) => {
               event.stopPropagation();
               hapticTap();
               onBack();
             }}
-            onClick={onBack}
           >
             ← Back
           </button>

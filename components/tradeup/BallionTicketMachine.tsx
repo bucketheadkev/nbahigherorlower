@@ -499,7 +499,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
             type="button"
             className="ter__roll"
             disabled={busy}
-            onPointerDown={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               handleRoll();
             }}

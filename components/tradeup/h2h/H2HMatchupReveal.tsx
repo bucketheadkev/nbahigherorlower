@@ -142,7 +142,7 @@ export function H2HMatchupReveal({
               type="button"
               className="run-btn run-btn--primary h2h-reveal__next ui-tap"
               disabled={continueBusy}
-              onPointerDown={(e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 if (continueBusy) return;
                 onContinue();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, type MouseEvent as ReactMouseEvent } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { hapticLight } from '@/lib/tradeup/haptics';
@@ -17,7 +17,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
   const { t } = useLocale();
 
   const go = useCallback(
-    (tab: HubTab) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+    (tab: HubTab) => (e: ReactMouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       if (tab === active) return;
       onChange(tab);
@@ -36,7 +36,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
         type="button"
         className={`oneb-tabbar__item oneb-tabbar__item--runs ui-tap${active === 'runs' ? ' is-active' : ''}`}
         aria-current={active === 'runs' ? 'page' : undefined}
-        onPointerDown={go('runs')}
+        onClick={go('runs')}
       >
         <span className="oneb-tabbar__icon" aria-hidden>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
@@ -56,7 +56,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
         type="button"
         className={`oneb-tabbar__item oneb-tabbar__item--board ui-tap${active === 'board' ? ' is-active' : ''}`}
         aria-current={active === 'board' ? 'page' : undefined}
-        onPointerDown={go('board')}
+        onClick={go('board')}
       >
         <span className="oneb-tabbar__icon" aria-hidden>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -73,7 +73,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
         className={`oneb-tabbar__item ui-tap${active === 'home' ? ' is-active is-play' : ''}`}
         aria-current={active === 'home' ? 'page' : undefined}
         aria-label={t('nav.play')}
-        onPointerDown={go('home')}
+        onClick={go('home')}
       >
         <span className="oneb-tabbar__icon" aria-hidden>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -87,7 +87,7 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
         type="button"
         className={`oneb-tabbar__item oneb-tabbar__item--challenges ui-tap${active === 'challenges' ? ' is-active' : ''}`}
         aria-current={active === 'challenges' ? 'page' : undefined}
-        onPointerDown={go('challenges')}
+        onClick={go('challenges')}
       >
         <span className="oneb-tabbar__icon" aria-hidden>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none">

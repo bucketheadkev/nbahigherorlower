@@ -1,6 +1,6 @@
 'use client';
 
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import { H2HLobbyShell } from './H2HLobbyChrome';
 
@@ -19,7 +19,7 @@ export function H2HEntryScreen({
   authError = null,
   authLoading = false,
 }: H2HEntryScreenProps) {
-  const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
+  const press = (fn: () => void, disabled: boolean) => (e: ReactMouseEvent) => {
     e.preventDefault();
     if (disabled) return;
     hapticLight();
@@ -47,7 +47,7 @@ export function H2HEntryScreen({
           type="button"
           className="h2h-lobby__action ui-tap"
           disabled={locked}
-          onPointerDown={press(onCreate, locked)}
+          onClick={press(onCreate, locked)}
         >
           <strong>Create lobby</strong>
           <span>Host a room and share the code</span>
@@ -56,7 +56,7 @@ export function H2HEntryScreen({
           type="button"
           className="h2h-lobby__action ui-tap"
           disabled={locked}
-          onPointerDown={press(onJoin, locked)}
+          onClick={press(onJoin, locked)}
         >
           <strong>Join lobby</strong>
           <span>Enter a friend’s room code</span>

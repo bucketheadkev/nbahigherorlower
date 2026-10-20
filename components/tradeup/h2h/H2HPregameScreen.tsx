@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
   useEffect,
   useRef,
   useState,
@@ -56,7 +56,7 @@ export function H2HPregameScreen({
     return () => window.clearTimeout(id);
   }, [onContinue]);
 
-  const press = (fn: () => void, disabled: boolean) => (e: ReactPointerEvent) => {
+  const press = (fn: () => void, disabled: boolean) => (e: ReactMouseEvent) => {
     e.preventDefault();
     if (disabled) return;
     hapticLight();
@@ -131,7 +131,7 @@ export function H2HPregameScreen({
         type="button"
         className="run-btn run-btn--primary h2h-lobby__submit"
         disabled={leaving}
-        onPointerDown={press(handleContinue, leaving)}
+        onClick={press(handleContinue, leaving)}
       >
         <strong>ENTER MATCH</strong>
       </button>
@@ -140,7 +140,7 @@ export function H2HPregameScreen({
         type="button"
         className="h2h-lobby__leave"
         disabled={leaving}
-        onPointerDown={press(() => void handleLeave(), leaving)}
+        onClick={press(() => void handleLeave(), leaving)}
       >
         {leaving ? 'Leaving…' : 'Leave Match'}
       </button>

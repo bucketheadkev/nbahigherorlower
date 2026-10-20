@@ -54,6 +54,7 @@ const COPY = {
     es: 'Retorno promedio {avg} por cada $1 arriesgado. Guardar siempre paga 1×.',
   },
   errorLoad: { en: "Couldn't load this surplus.", es: 'No se pudo cargar el excedente.' },
+  verifying: { en: 'Verifying your run…', es: 'Verificando tu partida…' },
   errorResolve: { en: "Couldn't save your choice. Try again.", es: 'No se pudo guardar tu elección. Intenta de nuevo.' },
   unverified: {
     en: "This run couldn't be verified, so its surplus can't be paid.",
@@ -105,6 +106,7 @@ export function SurplusDecision({
   const [spun, setSpun] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
+  const [pendingChoice, setPendingChoice] = useState<SurplusChoice | null>(null);
 
   const resolved = state?.status === 'resolved';
   const choice = state?.choice;
@@ -117,7 +119,8 @@ export function SurplusDecision({
     hapticTap();
     // Mark the spin first so the reel mounts at rest and animates to the stored result.
     if (next === 'spin') setSpun(true);
-    const result = await onChoose(next);
+    setPendingChoice(next);
+    const result = await onChoose(next).finally(() => setPendingChoice(null));
     if (!result || result.status !== 'resolved') {
       setSpun(false);
       return;
@@ -133,11 +136,9 @@ export function SurplusDecision({
         <p className="sdec__note sdec__note--error" role="alert">
           {pick(error === 'unverified' ? COPY.unverified : COPY.errorLoad, locale)}
         </p>
-        {error !== 'unverified' ? (
-          <button type="button" className="sdec__link" onClick={onRetry}>
-            {pick(COPY.retry, locale)}
-          </button>
-        ) : null}
+        <button type="button" className="sdec__link" onClick={onRetry}>
+          {pick(COPY.retry, locale)}
+        </button>
       </section>
     );
   }
@@ -199,10 +200,10 @@ export function SurplusDecision({
                 <button
                   type="button"
                   className="sdec__btn sdec__btn--risk"
-                  disabled={busy || mode === 'loading'}
+                  disabled={busy}
                   onClick={() => void choose('spin')}
                 >
-                  <span>{busy ? pick(COPY.locking, locale) : pick(COPY.spin, locale)}</span>
+                  <span>{pendingChoice === 'spin' ? pick(COPY.locking, locale) : pick(COPY.spin, locale)}</span>
                 </button>
               </div>
             </motion.div>
@@ -215,21 +216,23 @@ export function SurplusDecision({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <p className="sdec__note">{pick(demo ? COPY.demoChoose : COPY.choose, locale)}</p>
+              <p className="sdec__note">
+                {pick(mode === 'loading' ? COPY.verifying : demo ? COPY.demoChoose : COPY.choose, locale)}
+              </p>
               <div className="sdec__actions">
                 <button
                   type="button"
                   className="sdec__btn sdec__btn--bank"
-                  disabled={busy || mode === 'loading'}
+                  disabled={busy}
                   onClick={() => void choose('bank')}
                 >
-                  <span>{pick(COPY.bank, locale)}</span>
+                  <span>{pendingChoice === 'bank' ? pick(COPY.locking, locale) : pick(COPY.bank, locale)}</span>
                   <em>+{formatCash(surplus)}</em>
                 </button>
                 <button
                   type="button"
                   className="sdec__btn sdec__btn--risk"
-                  disabled={busy || mode === 'loading'}
+                  disabled={busy}
                   onClick={() => {
                     if (demo) {
                       void choose('spin');

@@ -282,7 +282,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
           type="button"
           className={`franchise-pick__reroll${canRerollTeam ? '' : ' is-used'}`}
           disabled={!teamRerollOpen}
-          onPointerDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             if (!teamRerollOpen) return;
             hapticMedium();
@@ -296,7 +296,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
           type="button"
           className={`franchise-pick__reroll${canRerollEra ? '' : ' is-used'}`}
           disabled={!eraRerollOpen}
-          onPointerDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             if (!eraRerollOpen) return;
             hapticMedium();

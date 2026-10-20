@@ -169,7 +169,7 @@ export function H2HEmojiReactions({
             type="button"
             className="h2h-emoji__btn"
             aria-label={`React ${emoji}`}
-            onPointerDown={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               // Unlock/resume from this gesture before / as we start the buffer.
               unlockH2HReactionAudio();

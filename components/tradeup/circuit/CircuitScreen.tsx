@@ -28,8 +28,8 @@ const COPY = {
   eyebrow: { en: 'COMPETE FOR CASH', es: 'COMPITE POR EFECTIVO' },
   title: { en: 'CASH LEAGUES', es: 'LIGAS DE EFECTIVO' },
   sub: {
-    en: 'Enter with Bank money. One Classic run counts. The top three split the pool.',
-    es: 'Entra con dinero del Banco. Cuenta una partida Clásica. Los tres mejores se reparten el bote.',
+    en: 'Enter with Bank money. One Classic run counts. The top three win Cash.',
+    es: 'Entra con dinero del Banco. Cuenta una partida Clásica. Los tres mejores ganan efectivo.',
   },
   bank: { en: 'My Bank', es: 'Mi Banco' },
   entry: { en: 'Entry', es: 'Entrada' },
@@ -55,13 +55,9 @@ const COPY = {
   yourEntry: { en: 'YOUR ENTRY', es: 'TU ENTRADA' },
   rankOf: { en: '#{rank} of {count}', es: '#{rank} de {count}' },
   standings: { en: 'View standings ›', es: 'Ver clasificación ›' },
-  minNote: {
-    en: 'Pays out at {min}+ runs · {more} more needed · otherwise refunded',
-    es: 'Paga con {min}+ partidas · faltan {more} · si no, se reembolsa',
-  },
   results: { en: 'RECENT RESULTS', es: 'RESULTADOS RECIENTES' },
   refunded: { en: 'Refunded', es: 'Reembolsado' },
-  cancelledShort: { en: 'Cancelled · not enough runs', es: 'Cancelada · pocas partidas' },
+  cancelledShort: { en: 'Cancelled · no runs', es: 'Cancelada · sin partidas' },
   noPrize: { en: 'No prize', es: 'Sin premio' },
   noRun: { en: 'No run submitted', es: 'Sin partida' },
   offline: { en: 'CASH LEAGUES ARE COMING ONLINE', es: 'LAS LIGAS DE EFECTIVO ESTÁN POR ABRIR' },
@@ -408,8 +404,6 @@ function CircuitCard({
   const entered = Boolean(me);
   const played = me?.runValue != null;
   const short = bankBalance != null && bankBalance < competition.entryFee;
-  const runsShort = Math.max(0, competition.minRuns - competition.submitted);
-
   const run = async (kind: Exclude<Busy, null>, task: () => Promise<void>) => {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -582,13 +576,6 @@ function CircuitCard({
       </dl>
 
       <PrizeLadder prizes={competition.prizes} locale={locale} />
-      {runsShort > 0 ? (
-        <p className="circuit-card__split">
-          {pick(COPY.minNote, locale)
-            .replace('{min}', String(competition.minRuns))
-            .replace('{more}', String(runsShort))}
-        </p>
-      ) : null}
 
       <div className="circuit-card__action">{action}</div>
       {error ? (

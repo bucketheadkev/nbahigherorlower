@@ -1,6 +1,6 @@
 'use client';
 
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
 import { useBankBalance } from '@/hooks/useBankBalance';
@@ -14,6 +14,7 @@ import {
 import { formatCash, readBankPreview } from '@/lib/tradeup/bank';
 import { nextMilestone, recordLocalInduction } from '@/lib/tradeup/wallOfFame';
 import { hapticLight } from '@/lib/tradeup/haptics';
+import { settlePendingServerSlips } from '@/lib/tradeup/wagerSlip';
 import {
   AccountAuthSheet,
   type AccountSheetView,
@@ -62,6 +63,10 @@ export function TradeUpHome({
   useEffect(() => {
     if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
   }, [bank, permanent]);
+
+  useEffect(() => {
+    if (permanent) void settlePendingServerSlips();
+  }, [permanent]);
 
   // Bank card centers between the tiles and the tab bar; the bar's height varies by device.
   useEffect(() => {
@@ -116,9 +121,9 @@ export function TradeUpHome({
     setPromptOpen(true);
   }, [accountState.status, allowAccountPrompt]);
 
-  const go = (fn: () => void) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+  const go = (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
     // Primary pointer only — ignore multi-touch / trailing events.
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.button !== 0) return;
     if (navLockRef.current) return;
     navLockRef.current = true;
     try {
@@ -195,7 +200,6 @@ export function TradeUpHome({
                     type="button"
                     className="home-tile__play"
                     aria-label={`${t('home.playButton')} — ${t('home.classicTitle')}`}
-                    onPointerDown={go(onPlay)}
                     onClick={go(onPlay)}
                   >
                     {t('home.playButton')}
@@ -226,7 +230,6 @@ export function TradeUpHome({
                     type="button"
                     className="home-tile__play"
                     aria-label={`${t('home.playButton')} — ${t('home.h2hTitle')}`}
-                    onPointerDown={go(onHeadToHead)}
                     onClick={go(onHeadToHead)}
                   >
                     {t('home.playButton')}

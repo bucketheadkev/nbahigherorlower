@@ -554,7 +554,7 @@ export function ClassicRosterReveal({
           <button
             type="button"
             className="billion-result-page__again"
-            onPointerDown={() => {
+            onClick={() => {
               hapticTap();
               onContinue?.();
             }}
@@ -569,7 +569,7 @@ export function ClassicRosterReveal({
           <button
             type="button"
             className="billion-result-page__again"
-            onPointerDown={() => {
+            onClick={() => {
               hapticTap();
               onPlayAgain();
             }}

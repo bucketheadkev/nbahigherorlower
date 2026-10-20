@@ -128,7 +128,7 @@ export const HeadToHeadShowdown = memo(function HeadToHeadShowdown({
           <button
             type="button"
             className="h2h-showdown__rematch"
-            onPointerDown={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               hapticTap();
               onFindNewOpponent();
@@ -139,7 +139,7 @@ export const HeadToHeadShowdown = memo(function HeadToHeadShowdown({
           <button
             type="button"
             className="h2h-showdown__home"
-            onPointerDown={(e) => {
+            onClick={(e) => {
               e.preventDefault();
               hapticTap();
               onExit();

@@ -20,6 +20,8 @@ export interface RunEarningsData {
   /** Bet on Yourself slip for this run (settles independently of Surplus Spin). */
   wagers: RunWagers;
   submit: 'pending' | 'ok' | 'skipped' | 'failed';
+  /** Server-priced team value once the submit lands. */
+  verifiedValue?: number | null;
   /** Set when this run is a Circuit league entry. */
   circuit?: { name: string } | null;
 }
@@ -61,6 +63,7 @@ export function RunEarnings({ data, reduceMotion }: { data: RunEarningsData; red
     permanent,
     ready: surplus > 0 && account.status !== 'loading' && (!permanent || data.submit !== 'pending'),
     submitFailed: data.submit === 'failed',
+    verifiedValue: data.verifiedValue ?? null,
   });
 
   const achievementCash = data.achievementIds.reduce((sum, id) => sum + challengeReward(id), 0);
@@ -84,7 +87,7 @@ export function RunEarnings({ data, reduceMotion }: { data: RunEarningsData; red
     <section ref={ref} className="run-earn" aria-label={pick(COPY.title, locale)}>
       <p className="run-earn__title">{pick(COPY.title, locale)}</p>
 
-      {surplus > 0 ? (
+      {surplus > 0 && surplusFlow.error !== 'below' ? (
         <SurplusDecision
           surplus={surplus}
           mode={surplusFlow.mode}

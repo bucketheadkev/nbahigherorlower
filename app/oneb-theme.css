@@ -14891,8 +14891,7 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 .bet-bar__mark svg,
-.bet-row__icon svg,
-.wager-result__icon svg {
+.bet-row__icon svg {
   width: 1rem;
   height: 1rem;
 }
@@ -15388,140 +15387,95 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   list-style: none;
 }
 
-.wager-result {
-  display: grid;
-  grid-template-columns: 1.7rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.5s ease, background 0.5s ease, box-shadow 0.5s ease;
-}
-
-.wager-result.is-won {
-  border-color: rgba(41, 228, 144, 0.45);
-  background:
-    radial-gradient(120% 140% at 100% 50%, rgba(41, 228, 144, 0.14) 0%, transparent 60%),
-    rgba(255, 255, 255, 0.035);
-  box-shadow: 0 0 18px rgba(41, 228, 144, 0.1);
-}
-
-.wager-result.is-lost {
-  opacity: 0.78;
-}
-
-.wager-result__icon {
-  display: grid;
-  place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(214, 228, 255, 0.6);
-}
-
-.wager-result.is-won .wager-result__icon {
-  background: rgba(41, 228, 144, 0.16);
-  color: var(--money-green);
-}
-
-.wager-result__copy {
+.wager-ticket {
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
-  min-width: 0;
+  gap: 0.4rem;
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  transition: border-color 0.5s ease, background 0.5s ease;
 }
 
-.wager-result__name {
-  font-size: 0.78rem;
-  font-weight: 750;
+.wager-ticket.is-won {
+  border-color: rgba(41, 228, 144, 0.5);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(41, 228, 144, 0.14) 0%, transparent 60%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.wager-ticket.is-lost {
+  opacity: 0.8;
+}
+
+.wager-ticket__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wager-ticket__name {
+  font-size: 0.82rem;
+  font-weight: 800;
   color: #eef4ff;
 }
 
-.wager-result__name em {
-  margin-left: 0.4rem;
-  font-style: normal;
-  font-size: 0.66rem;
-  font-weight: 800;
-  color: rgba(214, 228, 255, 0.55);
+.wager-ticket__state {
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.wager-result__detail {
-  font-size: 0.62rem;
-  font-variant-numeric: tabular-nums;
-  color: rgba(214, 228, 255, 0.5);
+.wager-ticket.is-won .wager-ticket__state {
+  color: #052014;
+  background: var(--money-green);
 }
 
-.wager-result__outcome {
+.wager-ticket__nums {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.wager-ticket__nums > div {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 0.05rem;
+  min-width: 0;
 }
 
-.wager-result__state {
-  font-size: 0.54rem;
-  font-weight: 850;
+.wager-ticket__nums dt {
+  font-size: 0.5rem;
+  font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(214, 228, 255, 0.5);
 }
 
-.wager-result.is-won .wager-result__state {
-  color: var(--money-green);
-}
-
-.wager-result__amount {
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.92rem;
-  font-weight: 850;
-  font-variant-numeric: tabular-nums;
-  color: rgba(234, 242, 255, 0.7);
-}
-
-.wager-result.is-won .wager-result__amount {
-  color: var(--money-green);
-  text-shadow: 0 0 12px rgba(41, 228, 144, 0.35);
-}
-
-.wager-results__totals {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
-  margin: 0.1rem 0 0;
-}
-
-.wager-results__totals > div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-}
-
-.wager-results__totals dt {
-  font-size: 0.52rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(214, 228, 255, 0.5);
-}
-
-.wager-results__totals dd {
+.wager-ticket__nums dd {
   margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.88rem;
-  font-weight: 850;
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
-  color: rgba(234, 242, 255, 0.85);
+  color: rgba(234, 242, 255, 0.9);
 }
 
-.wager-results__totals dd.is-up {
+.wager-ticket__return {
+  text-align: right;
+}
+
+.wager-ticket.is-won .wager-ticket__return dd {
   color: var(--money-green);
-}
-
-.wager-results__totals dd.is-down {
-  color: #ff9a86;
+  font-weight: 850;
 }
 
 .wager-results__note {

@@ -183,6 +183,8 @@ export function resolveLocalSurplus(runRef: string, choice: SurplusChoice): Surp
 /* ── Signed-in (server) ──────────────────────────────────────── */
 
 const MISSING_FUNCTION_CODES = new Set(['PGRST202', '42883']);
+/** A stalled request must surface as an error with Retry, never an endlessly disabled panel. */
+const SURPLUS_RPC_TIMEOUT_MS = 12_000;
 
 export type ServerSurplusResult =
   | { ok: true; state: SurplusState }
@@ -209,7 +211,13 @@ async function callSurplus(
   runRef: string,
 ): Promise<ServerSurplusResult> {
   try {
-    const { data, error } = await getSupabaseBrowserClient().rpc(fn, args);
+    let timer = 0;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = window.setTimeout(() => reject(new Error('timeout')), SURPLUS_RPC_TIMEOUT_MS);
+    });
+    const { data, error } = await Promise.race([getSupabaseBrowserClient().rpc(fn, args), timeout]).finally(
+      () => window.clearTimeout(timer),
+    );
     if (error) {
       if (error.code && MISSING_FUNCTION_CODES.has(error.code)) return { ok: false, reason: 'unavailable' };
       console.error(`[surplus] ${fn} failed`, error.message);

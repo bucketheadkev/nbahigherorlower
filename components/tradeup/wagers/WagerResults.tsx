@@ -3,13 +3,7 @@
 import { motion } from 'framer-motion';
 import { useLocale } from '@/hooks/useLocale';
 import { formatCash } from '@/lib/tradeup/bank';
-import {
-  formatMultiplierX100,
-  WAGER_BY_ID,
-  type WagerPick,
-  type WagerResult,
-} from '@/lib/tradeup/wagers';
-import { WagerIcon } from './WagerIcon';
+import { WAGER_BY_ID, wagerReturn, type WagerPick, type WagerResult } from '@/lib/tradeup/wagers';
 
 export type RunWagers =
   | { status: 'none' }
@@ -20,17 +14,16 @@ export type RunWagers =
 type Copy = { en: string; es: string };
 
 const COPY = {
-  title: { en: 'WAGERS', es: 'APUESTAS' },
+  title: { en: 'YOUR BETS', es: 'TUS APUESTAS' },
   settling: { en: 'Settling…', es: 'Liquidando…' },
   won: { en: 'Won', es: 'Ganada' },
   lost: { en: 'Missed', es: 'Fallida' },
-  stake: { en: '{amount} stake', es: 'Apuesta de {amount}' },
-  returned: { en: 'Returned', es: 'Devuelto' },
-  lostTotal: { en: 'Lost', es: 'Perdido' },
-  net: { en: 'Net', es: 'Neto' },
+  target: { en: 'Target', es: 'Meta' },
+  stake: { en: 'Stake', es: 'Apuesta' },
+  returned: { en: 'Return', es: 'Retorno' },
   error: {
-    en: "Couldn't settle these wagers right now — they settle when this run is verified.",
-    es: 'No se pudieron liquidar ahora: se liquidan cuando se verifique la partida.',
+    en: "Couldn't settle these bets right now. They settle when this run is verified.",
+    es: 'No se pudieron liquidar ahora. Se liquidan cuando se verifique la partida.',
   },
 } satisfies Record<string, Copy>;
 
@@ -44,18 +37,15 @@ export function wagersNet(wagers: RunWagers): number {
   return wagers.results.reduce((sum, r) => sum + r.returned - r.stake, 0);
 }
 
+/** One simple ticket per bet: target, stake, return. */
 export function WagerResults({ wagers, reduceMotion }: { wagers: RunWagers; reduceMotion: boolean }) {
   const { locale } = useLocale();
   if (wagers.status === 'none') return null;
 
-  const rows =
-    wagers.status === 'settled'
-      ? wagers.results
-      : wagers.picks.map((p) => ({ ...p, won: false, returned: 0, multiplierX100: WAGER_BY_ID[p.id].multiplierX100 }));
   const settled = wagers.status === 'settled';
-  const returned = settled ? wagers.results.reduce((s, r) => s + r.returned, 0) : 0;
-  const lost = settled ? wagers.results.filter((r) => !r.won).reduce((s, r) => s + r.stake, 0) : 0;
-  const net = wagersNet(wagers);
+  const rows = settled
+    ? wagers.results
+    : wagers.picks.map((p) => ({ ...p, won: false, returned: 0, multiplierX100: WAGER_BY_ID[p.id].multiplierX100 }));
 
   return (
     <section className="wager-results" aria-label={pick(COPY.title, locale)}>
@@ -64,67 +54,42 @@ export function WagerResults({ wagers, reduceMotion }: { wagers: RunWagers; redu
         {rows.map((row, i) => {
           const def = WAGER_BY_ID[row.id];
           const state = settled ? (row.won ? 'won' : 'lost') : 'pending';
+          const returned = state === 'pending' ? wagerReturn(row.stake, row.multiplierX100) : row.returned;
           return (
             <motion.li
               key={row.id}
-              className={`wager-result is-${state}`}
+              className={`wager-ticket is-${state}`}
               initial={reduceMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1], delay: 0.12 + i * 0.16 }}
+              transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1], delay: 0.12 + i * 0.14 }}
             >
-              <span className="wager-result__icon" aria-hidden>
-                <WagerIcon icon={def.icon} />
-              </span>
-              <div className="wager-result__copy">
-                <span className="wager-result__name">
-                  {def.name}
-                  <em>{formatMultiplierX100(row.multiplierX100)}</em>
-                </span>
-                <span className="wager-result__detail">
-                  {pick(COPY.stake, locale).replace('{amount}', formatCash(row.stake))}
-                </span>
-              </div>
-              <div className="wager-result__outcome">
-                <span className="wager-result__state">
+              <div className="wager-ticket__head">
+                <span className="wager-ticket__name">{def.name}</span>
+                <span className="wager-ticket__state">
                   {state === 'pending'
                     ? pick(COPY.settling, locale)
                     : pick(state === 'won' ? COPY.won : COPY.lost, locale)}
                 </span>
-                <strong className="wager-result__amount">
-                  {state === 'won' ? `+${formatCash(row.returned)}` : state === 'lost' ? `−${formatCash(row.stake)}` : ''}
-                </strong>
               </div>
+              <dl className="wager-ticket__nums">
+                <div>
+                  <dt>{pick(COPY.target, locale)}</dt>
+                  <dd>{def.target}</dd>
+                </div>
+                <div>
+                  <dt>{pick(COPY.stake, locale)}</dt>
+                  <dd>{formatCash(row.stake)}</dd>
+                </div>
+                <div className="wager-ticket__return">
+                  <dt>{pick(COPY.returned, locale)}</dt>
+                  <dd>{state === 'won' ? `+${formatCash(returned)}` : formatCash(state === 'lost' ? 0 : returned)}</dd>
+                </div>
+              </dl>
             </motion.li>
           );
         })}
       </ul>
-
-      {settled ? (
-        <motion.dl
-          className="wager-results__totals"
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 + rows.length * 0.16 }}
-        >
-          <div>
-            <dt>{pick(COPY.returned, locale)}</dt>
-            <dd className="is-up">+{formatCash(returned)}</dd>
-          </div>
-          <div>
-            <dt>{pick(COPY.lostTotal, locale)}</dt>
-            <dd className={lost > 0 ? 'is-down' : ''}>{lost > 0 ? `−${formatCash(lost)}` : formatCash(0)}</dd>
-          </div>
-          <div>
-            <dt>{pick(COPY.net, locale)}</dt>
-            <dd className={net >= 0 ? 'is-up' : 'is-down'}>
-              {net >= 0 ? '+' : '−'}
-              {formatCash(Math.abs(net))}
-            </dd>
-          </div>
-        </motion.dl>
-      ) : wagers.status === 'error' ? (
-        <p className="wager-results__note">{pick(COPY.error, locale)}</p>
-      ) : null}
+      {wagers.status === 'error' ? <p className="wager-results__note">{pick(COPY.error, locale)}</p> : null}
     </section>
   );
 }

@@ -557,7 +557,7 @@ export function H2HShowdownSequence({
               <button
                 type="button"
                 className="run-btn run-btn--primary h2h-lobby__submit h2h-gate__start"
-                onPointerDown={(e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   handleHostStart();
                 }}
@@ -826,7 +826,7 @@ function ShowdownRoundView({
             <button
               type="button"
               className="run-btn run-btn--primary h2h-sd__next"
-              onPointerDown={(e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 onHostAdvance();
               }}
