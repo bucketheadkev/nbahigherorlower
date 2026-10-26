@@ -190,7 +190,7 @@ export function DraftHubCards({
 
   useEffect(() => {
     if (!assignMode) return;
-    const onDoc = (event: PointerEvent) => {
+    const onDoc = (event: MouseEvent) => {
       const target = event.target as Element | null;
       if (!target || !rootRef.current) return;
       if (target.closest('.draft-hub-court__pop')) return;
@@ -198,8 +198,8 @@ export function DraftHubCards({
       setDetailSlot(null);
       setNamedSlot(null);
     };
-    document.addEventListener('pointerdown', onDoc);
-    return () => document.removeEventListener('pointerdown', onDoc);
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
   }, [assignMode]);
 
   useEffect(() => {
@@ -359,18 +359,16 @@ export function DraftHubCards({
                 }
                 aria-expanded={open || undefined}
                 disabled={analyzing}
-                onPointerDown={(event) => {
-                  if (filled && player && !analyzing) {
-                    setNamedSlot((prev) => (prev === slot ? null : slot));
-                  }
-                  if (!onSlotPress || analyzing) return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onSlotPress(slot);
-                }}
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (analyzing || onSlotPress) return;
+                  if (analyzing) return;
+                  if (filled && player) {
+                    setNamedSlot((prev) => (prev === slot ? null : slot));
+                  }
+                  if (onSlotPress) {
+                    onSlotPress(slot);
+                    return;
+                  }
                   if (!player || concealed) {
                     setDetailSlot(null);
                     return;
@@ -420,7 +418,7 @@ export function DraftHubCards({
               '--slot-ink': detailInk,
             } as CSSProperties
           }
-          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
         >
           {(() => {
             const { first, last } = splitName(detailPlayer.name);

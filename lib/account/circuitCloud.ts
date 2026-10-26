@@ -279,28 +279,29 @@ export function readCircuitPreview(): CircuitSnapshot | null {
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
   const base = { status: 'open' as const, cancelReason: null, minRuns: 3 };
-  const open = 7 * 500_000;
-  const noReroll = 3 * 500_000;
-  const high = 5 * 5_000_000;
-  const settledPool = 6 * 500_000;
+  const fee = 25_000;
+  const open = 7 * fee;
+  const noReroll = 3 * fee;
+  const high = 5 * fee;
+  const settledPool = 6 * fee;
   return {
     clockOffsetMs: 0,
     competitions: [
       {
-        ...base, id: 'preview-open', format: 'open_run', name: 'Open Run', entryFee: 500_000, rerollsAllowed: true,
+        ...base, id: 'preview-open', format: 'open_run', name: 'Open Run', entryFee: fee, rerollsAllowed: true,
         startsAt: iso(now - 3_600_000 * 6), endsAt: iso(now + 3_600_000 * 5 + 754_000),
         participants: 7, submitted: 5, prizePool: open, prizes: prizesFor(open),
         standings: previewStandings(5, 1_061_000_000, 2),
         me: { attemptId: 'circuit_preview_open', runValue: 1_054_000_000, rank: 2, payout: 0 },
       },
       {
-        ...base, id: 'preview-noreroll', format: 'no_reroll', name: 'No Reroll', entryFee: 500_000, rerollsAllowed: false,
+        ...base, id: 'preview-noreroll', format: 'no_reroll', name: 'No Reroll', entryFee: fee, rerollsAllowed: false,
         startsAt: iso(now - 3_600_000 * 20), endsAt: iso(now + 2_400_000),
         participants: 3, submitted: 2, prizePool: noReroll, prizes: prizesFor(noReroll),
         standings: previewStandings(2, 1_018_000_000, null), me: null,
       },
       {
-        ...base, id: 'preview-high', format: 'high_stakes', name: 'High Stakes', entryFee: 5_000_000, rerollsAllowed: true,
+        ...base, id: 'preview-high', format: 'high_stakes', name: 'High Stakes', entryFee: fee, rerollsAllowed: true,
         startsAt: iso(now - 3_600_000 * 30), endsAt: iso(now + 3_600_000 * 41),
         participants: 5, submitted: 3, prizePool: high, prizes: prizesFor(high),
         standings: previewStandings(3, 1_082_000_000, null),
@@ -311,14 +312,14 @@ export function readCircuitPreview(): CircuitSnapshot | null {
       {
         competitionId: 'preview-r1', format: 'open_run', name: 'Open Run', status: 'settled', cancelReason: null,
         endsAt: iso(now - 3_600_000 * 20), minRuns: 3, participants: 6, entrants: 6, prizePool: settledPool,
-        rank: 2, runValue: 1_064_000_000, entryFee: 500_000, payout: prizesFor(settledPool)[1]!,
+        rank: 2, runValue: 1_064_000_000, entryFee: fee, payout: prizesFor(settledPool)[1]!,
         podium: previewStandings(3, 1_071_000_000, 2, settledPool),
       },
       {
         competitionId: 'preview-r2', format: 'no_reroll', name: 'No Reroll', status: 'cancelled',
         cancelReason: 'not_enough_runs', endsAt: iso(now - 3_600_000 * 44), minRuns: 3, participants: 2,
-        entrants: 2, prizePool: 1_000_000, rank: null, runValue: 962_000_000, entryFee: 500_000,
-        payout: 500_000, podium: [],
+        entrants: 2, prizePool: 2 * fee, rank: null, runValue: 962_000_000, entryFee: fee,
+        payout: fee, podium: [],
       },
     ],
   };

@@ -6,7 +6,6 @@
 import assert from 'node:assert/strict';
 import {
   HIGH_ROLLER_TARGET,
-  MAX_WAGER_RETURN,
   WAGERS,
   WAGER_BY_ID,
   WAGER_MAX_TEAM_TARGET,
@@ -55,18 +54,20 @@ ok(win('triple_threat', facts(900 * M, [185 * M, 185 * M, 185 * M, 100 * M, 100 
 ok(!win('triple_threat', facts(900 * M, [220 * M, 220 * M, 184 * M, 184 * M, 92 * M])), 'triple: only two');
 
 // Superteam (every player)
-ok(win('superteam', facts(850 * M, five(170 * M))), 'superteam: all exactly $170M');
-ok(!win('superteam', facts(950 * M, [220 * M, 220 * M, 220 * M, 220 * M, 170 * M - 1])), 'superteam: one short');
+ok(win('superteam', facts(950 * M, five(190 * M))), 'superteam: all exactly $190M');
+ok(!win('superteam', facts(950 * M, [220 * M, 220 * M, 220 * M, 220 * M, 190 * M - 1])), 'superteam: one short');
+ok(!win('superteam', facts(900 * M, five(180 * M))), 'superteam: the old $170M bar no longer wins');
 ok(!win('superteam', facts(800 * M, [200 * M, 200 * M, 200 * M, 200 * M])), 'superteam: needs five');
+ok(WAGER_BY_ID.superteam.multiplierX100 === 145, 'superteam multiplier unchanged');
 
-// Clutch Pick (the fifth drafted, not the best)
-ok(win('clutch_pick', facts(900 * M, [150 * M, 150 * M, 150 * M, 150 * M, 190 * M])), 'clutch: fifth at $190M');
-ok(!win('clutch_pick', facts(900 * M, [220 * M, 150 * M, 150 * M, 150 * M, 189 * M])), 'clutch: best pick earlier does not count');
+// Clutch Pick is gone
+ok(!WAGERS.some((w) => (w.id as string) === 'clutch_pick'), 'clutch pick removed');
 
 // No Rerolls
 ok(win('no_rerolls', facts(900 * M, five(180 * M), false)), 'no rerolls: exact $900M');
 ok(!win('no_rerolls', facts(990 * M, five(198 * M), true)), 'no rerolls: any reroll loses');
 ok(!win('no_rerolls', facts(900 * M - 1, five(180 * M), false)), 'no rerolls: $1 short loses');
+ok(WAGER_BY_ID.no_rerolls.multiplierX100 === 130, 'no rerolls pays 1.3×');
 
 // A run can miss $1B and still win lower-target wagers.
 const miss = facts(960 * M, [205 * M, 195 * M, 190 * M, 185 * M, 185 * M]);
@@ -75,7 +76,11 @@ ok(!win('billion_or_bust', miss) && win('dynamic_duo', miss) && win('triple_thre
 // Payouts are whole dollars; caps hold.
 ok(wagerReturn(250_000, 115) === 287_500, '1.15× of $250,000');
 ok(wagerReturn(100_000, 105) === 105_000, '1.05× of $100,000');
-for (const w of WAGERS) ok(wagerReturn(maxStakeFor(w.id), w.multiplierX100) <= MAX_WAGER_RETURN, `${w.id} max return capped`);
+ok(maxStakeFor('billion_or_bust') === 10_000_000, 'billion or bust takes up to $10,000,000');
+ok(validateSlip([{ id: 'billion_or_bust', stake: 5_000_000 }], 1e9) === null, 'billion or bust $5,000,000 allowed');
+ok(validateSlip([{ id: 'billion_or_bust', stake: 10_000_000 }], 1e9) === null, 'billion or bust $10,000,000 allowed');
+ok(wagerReturn(10_000_000, 2000) === 200_000_000, '20× of $10,000,000');
+ok(validateSlip([{ id: 'star_hunter', stake: 10_000_000 }], 1e9) === 'stake', '$10,000,000 only on Billion or Bust');
 
 // Slip validation
 ok(validateSlip([], 1e9) === 'count', 'empty slip rejected');
@@ -85,7 +90,7 @@ ok(
       { id: 'star_hunter', stake: 100_000 },
       { id: 'dynamic_duo', stake: 100_000 },
       { id: 'superteam', stake: 100_000 },
-      { id: 'clutch_pick', stake: 100_000 },
+      { id: 'no_rerolls', stake: 100_000 },
     ],
     1e9,
   ) === 'count',

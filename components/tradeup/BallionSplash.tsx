@@ -13,11 +13,24 @@ export const INTRO_MARKS = {
   atmosphereEnd: 100,
   logoRevealStart: 0,
   logoRevealEnd: 620,
-  loadBarStart: 180,
-  loadBarFull: 3000,
+  loadBarStart: 1360,
+  loadBarFull: 2720,
   logoHoldEnd: 2800,
   homeRevealEnd: 3400,
 } as const;
+
+/** Longest the intro waits near the end of the bar for the app to be ready. */
+export const INTRO_HOLD_MAX_MS = 4000;
+
+/** Bar fill window as fractions of the timeline; it may only pass HOLD_AT once the app is ready. */
+const BAR_START = 0.4;
+const BAR_FULL = 0.8;
+const HOLD_AT = 0.7;
+
+function barProgress(elapsed: number, duration: number): number {
+  const p = Math.min(1, Math.max(0, (elapsed / duration - BAR_START) / (BAR_FULL - BAR_START)));
+  return 1 - (1 - p) * (1 - p);
+}
 
 export const INTRO_EASING = {
   materialize: 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -117,6 +130,8 @@ export function BallionSplash({
   const finishedRef = useRef(introFinishedThisLoad);
   const appReadyRef = useRef(appReady);
   const timersRef = useRef<number[]>([]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const fillRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     onDoneRef.current = onDone;
@@ -174,23 +189,44 @@ export function BallionSplash({
     }
 
     const duration = reduceMotion ? 720 : INTRO_TOTAL_MS;
-    // Nuclear: survive Strict Mode timer clears — must outlast the full intro.
-    armModuleFailsafe(finish, duration + 1000);
+    // Nuclear: survive Strict Mode timer clears — must outlast the full intro and its longest hold.
+    armModuleFailsafe(finish, duration + INTRO_HOLD_MAX_MS + 1000);
 
     setBoot(false);
     setRun(true);
-    void preloadIntroAssets();
+    let assetsReady = false;
+    void preloadIntroAssets().then(() => {
+      assetsReady = true;
+    });
 
-    schedule(() => {
-      if (finishedRef.current) return;
-      // Don't block exit on appReady — stuck ready flag caused blank navy.
-      finish();
-    }, duration);
+    // The bar tracks real readiness: it fills on the timeline, but past HOLD_AT the whole intro
+    // pauses (CSS included) until the app is ready, then the bar completes and the intro exits.
+    let elapsed = 0;
+    let held = 0;
+    let last = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      const ready = appReadyRef.current && assetsReady;
+      const holding = !ready && elapsed >= duration * HOLD_AT && held < INTRO_HOLD_MAX_MS;
+      rootRef.current?.classList.toggle('is-holding', holding);
+      if (holding) held += dt;
+      else elapsed += dt;
+      if (fillRef.current) fillRef.current.style.transform = `scaleX(${barProgress(elapsed, duration)})`;
+      if (elapsed >= duration) {
+        finish();
+        return;
+      }
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
 
-    // Secondary only — never cut the cinematic short of INTRO_TOTAL_MS.
-    schedule(finish, duration + 800);
+    // Backgrounded tabs don't run frames; never leave the veil up.
+    schedule(finish, duration + INTRO_HOLD_MAX_MS + 800);
 
     return () => {
+      window.cancelAnimationFrame(raf);
       clearTimers();
       // Intentionally do NOT clear moduleFailsafe — Strict Mode must not kill it.
     };
@@ -200,6 +236,7 @@ export function BallionSplash({
 
   return (
     <div
+      ref={rootRef}
       className={[
         'oneb-intro',
         boot ? 'oneb-intro--boot' : '',
@@ -249,7 +286,7 @@ export function BallionSplash({
           <div className="oneb-intro__load" role="status" aria-label="Loading">
             <div className="oneb-intro__bar">
               <span className="oneb-intro__bar-track" aria-hidden />
-              <span className="oneb-intro__bar-fill">
+              <span ref={fillRef} className="oneb-intro__bar-fill">
                 <span className="oneb-intro__bar-sheen" aria-hidden />
               </span>
             </div>

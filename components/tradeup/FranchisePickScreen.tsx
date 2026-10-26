@@ -326,7 +326,6 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                 aria-disabled={ineligible || interactionLocked || undefined}
                 onPointerDown={(e) => {
                   if (ineligible || e.button !== 0) return;
-                  e.currentTarget.setPointerCapture(e.pointerId);
                   pointerStartRef.current = {
                     id: e.pointerId,
                     x: e.clientX,
@@ -342,7 +341,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                     Math.abs(e.clientX - start.x) > TAP_SLOP_PX ||
                     Math.abs(e.clientY - start.y) > TAP_SLOP_PX
                   ) {
-                    pointerStartRef.current = { ...start, playerId: '' };
+                    pointerStartRef.current = null;
                     e.currentTarget.classList.remove('is-pressed');
                   }
                 }}
@@ -350,12 +349,11 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                   e.currentTarget.classList.remove('is-pressed');
                   pointerStartRef.current = null;
                 }}
-                onPointerUp={(e) => {
-                  e.currentTarget.classList.remove('is-pressed');
-                  const start = pointerStartRef.current;
+                onPointerLeave={(e) => e.currentTarget.classList.remove('is-pressed')}
+                onPointerUp={(e) => e.currentTarget.classList.remove('is-pressed')}
+                onClick={() => {
                   pointerStartRef.current = null;
-                  if (ineligible || interactionLocked || !start) return;
-                  if (start.id !== e.pointerId || start.playerId !== player.id) return;
+                  if (ineligible || interactionLocked) return;
                   onSelect(player);
                 }}
               >

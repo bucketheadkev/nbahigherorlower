@@ -88,7 +88,7 @@ export const LOCAL_LEDGER_STORAGE_KEY = 'oneb_bank_ledger_v1';
 export interface LocalLedgerEntry {
   ref: string;
   amount: number;
-  kind: 'classic_run_bonus' | 'cash_table_wager' | 'cash_table_payout' | 'cash_table_refund';
+  kind: 'classic_run_bonus' | 'cash_table_wager' | 'cash_table_payout' | 'cash_table_refund' | 'rank_reward';
   at: number;
 }
 
@@ -119,6 +119,10 @@ export function appendLocalLedger(entry: Omit<LocalLedgerEntry, 'at'>): boolean 
     return false;
   }
   return true;
+}
+
+export function getLocalLedgerRefs(kind: LocalLedgerEntry['kind']): Set<string> {
+  return new Set(readLocalLedger().filter((e) => e.kind === kind).map((e) => e.ref));
 }
 
 function localLedgerTotal(): number {

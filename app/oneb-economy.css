@@ -1,0 +1,856 @@
+/* =========================================================
+   1B Run economy: home My Bank row, Franchises, earnings summary, My Rank
+   ========================================================= */
+
+/* ── Home: My Bank (left) + Franchises / Cash Cups (right) ── */
+.home-money {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.55rem;
+  width: 100%;
+  max-width: 22.5rem;
+  flex: 0 0 auto;
+  margin: auto 0;
+  box-sizing: border-box;
+}
+
+.home-bank {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.38rem;
+  min-width: 0;
+  padding: 0.62rem 0.7rem 0.68rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.42);
+  background:
+    radial-gradient(90% 120% at 30% 0%, rgba(41, 228, 144, 0.1) 0%, rgba(41, 228, 144, 0) 60%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 48%, var(--brand-navy-deep) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 26px rgba(41, 228, 144, 0.1),
+    0 8px 20px rgba(1, 8, 20, 0.45);
+}
+
+.home-bank::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0.9rem;
+  width: 38%;
+  height: 2px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, rgba(41, 228, 144, 0.85), transparent);
+  pointer-events: none;
+}
+
+.home-bank__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-height: 1.75rem;
+}
+
+.home-bank__label {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(214, 228, 255, 0.58);
+}
+
+.home-bank__wof {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 1.85rem;
+  padding: 0 0.45rem 0 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--brand-blue-glow), 0.9);
+  background: linear-gradient(180deg, #2b7dff 0%, #1453d6 55%, #0b3a9e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 #072a73,
+    0 6px 14px rgba(26, 125, 255, 0.35);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.14s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.home-bank__wof-chev {
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: -0.05rem;
+  opacity: 0.9;
+}
+
+/* Comfortable touch target without growing the pill. */
+.home-bank__wof::after {
+  content: "";
+  position: absolute;
+  inset: -0.5rem -0.35rem;
+}
+
+@media (hover: hover) {
+  .home-bank__wof:hover {
+    filter: brightness(1.12);
+  }
+}
+
+.home-bank__wof:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 0 #072a73,
+    0 3px 8px rgba(26, 125, 255, 0.3);
+}
+
+.home-bank__wof:focus-visible,
+.home-dest__card:focus-visible {
+  outline: 2px solid var(--money-green);
+  outline-offset: 3px;
+}
+
+.home-bank__value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.12rem, 5.3vw, 1.5rem);
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+  text-shadow: 0 0 18px rgba(41, 228, 144, 0.28);
+}
+
+.home-dest {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.home-dest__card {
+  --dest-accent: #29e490;
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.5rem 0.55rem 0.5rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--dest-accent) 45%, transparent);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--dest-accent) 16%, transparent) 0%, transparent 60%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 55%, var(--brand-navy-deep) 100%);
+  box-shadow:
+    inset 3px 0 0 var(--dest-accent),
+    0 6px 16px rgba(1, 8, 20, 0.4);
+  color: #f2f6ff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.14s ease, transform 0.14s ease;
+}
+
+.home-dest__card--franchises {
+  --dest-accent: #ff6a00;
+}
+
+.home-dest__card--cups {
+  --dest-accent: #29e490;
+}
+
+.home-dest__card:active {
+  filter: brightness(1.16);
+  transform: scale(0.985);
+}
+
+.home-dest__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.home-dest__text strong {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(0.74rem, 3.5vw, 0.9rem);
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-dest__text em {
+  overflow: hidden;
+  font-style: normal;
+  font-size: 0.58rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.home-dest__chev {
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--dest-accent);
+}
+
+@media (max-width: 359px) {
+  .home-money {
+    gap: 0.45rem;
+  }
+
+  .home-bank {
+    padding-inline: 0.6rem;
+  }
+
+  .home-bank__wof {
+    width: 2.1rem;
+    padding: 0;
+  }
+
+  .home-bank__wof-text,
+  .home-bank__wof-chev {
+    display: none;
+  }
+
+  .home-dest__card {
+    padding-left: 0.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .home-dest__card {
+    transition: none;
+  }
+}
+
+/* ── Rank badge (non-interactive) ── */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.32rem;
+  max-width: 100%;
+  padding: 0.14rem 0.55rem 0.14rem 0.28rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--rank-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--rank-accent) 12%, rgba(3, 14, 38, 0.82));
+  color: var(--rank-accent);
+  font-size: 0.55rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rank-badge__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rank-emblem {
+  flex: 0 0 auto;
+  display: block;
+  overflow: visible;
+}
+
+.rank-badge .rank-emblem {
+  margin: -0.12rem 0;
+}
+
+/* ── Franchise draft: the Classic engine in its own layer ── */
+.frd-host {
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  overflow: hidden;
+  background: var(--brand-navy-deep);
+}
+
+.frd-host > .tradeup-shell {
+  position: absolute;
+  inset: 0;
+}
+
+.billion-booth-stage--review {
+  justify-content: flex-start;
+}
+
+/* ── Earnings summary ── */
+.earn {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(0.9rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(0.9rem, env(safe-area-inset-left));
+  box-sizing: border-box;
+}
+
+.earn__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 30%, rgba(41, 228, 144, 0.16), transparent 70%),
+    rgba(1, 6, 16, 0.86);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Nothing to scroll here; keeps a drag on the dimmed area from moving the page behind. */
+  touch-action: none;
+}
+
+.earn__sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  width: min(100%, 25rem);
+  max-height: 100%;
+  padding: 1.35rem 1.1rem 1.05rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(41, 228, 144, 0.42);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(41, 228, 144, 0.14), transparent 60%),
+    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 50%, var(--brand-navy-deep) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 60px rgba(41, 228, 144, 0.16),
+    0 24px 60px rgba(0, 0, 0, 0.55);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+.earn__glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 46%;
+  height: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--money-green), transparent);
+  pointer-events: none;
+}
+
+.earn__kicker {
+  margin: 0;
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  color: var(--money-green);
+}
+
+.earn__total-label {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.earn__total {
+  margin: 0 0 0.35rem;
+  text-align: center;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.9rem, calc(19rem / max(var(--chars, 10), 8)), 3.1rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--money-green);
+  text-shadow: 0 0 26px rgba(41, 228, 144, 0.4);
+}
+
+.earn__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.earn__row {
+  --earn-accent: var(--money-green);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.6rem 0.7rem 0.6rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(3, 14, 38, 0.72);
+  box-shadow: inset 3px 0 0 var(--earn-accent);
+}
+
+.earn__row.is-credited {
+  --earn-accent: rgba(var(--brand-blue-glow), 0.85);
+}
+
+.earn__row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.earn__row-text strong {
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #f2f6ff;
+}
+
+.earn__row-text em {
+  font-style: normal;
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+.earn__row-note {
+  color: rgba(156, 200, 255, 0.8) !important;
+}
+
+.earn__row b {
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.earn__changed,
+.earn__error {
+  margin: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.earn__changed {
+  color: #9cc8ff;
+}
+
+.earn__error {
+  color: #ff9a8a;
+}
+
+.earn__cta {
+  appearance: none;
+  min-height: 3.1rem;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, #3ff0a0 0%, #16c784 100%);
+  color: #032015;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 10px 26px rgba(41, 228, 144, 0.3);
+}
+
+.earn__cta:disabled {
+  opacity: 0.7;
+}
+
+.earn__cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.earn__note {
+  margin: 0;
+  text-align: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: rgba(214, 228, 255, 0.4);
+}
+
+/* ── My Rank ── */
+.rank2-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+/* The column scrolls; sections keep their full height instead of shrinking to fit. */
+.rank2-main > * {
+  flex-shrink: 0;
+}
+
+.rank2-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.1rem 1rem 1.2rem;
+  border-radius: 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--rank-color) 45%, transparent);
+  background:
+    radial-gradient(70% 60% at 50% 32%, color-mix(in srgb, var(--rank-color) 26%, transparent) 0%, transparent 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--rank-deep) 55%, #07142b) 0%, #050d1d 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 46px color-mix(in srgb, var(--rank-color) 18%, transparent);
+  overflow: hidden;
+  text-align: center;
+}
+
+.rank2-hero__halo {
+  position: absolute;
+  top: 1.2rem;
+  left: 50%;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--rank-color) 34%, transparent) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.rank2-hero__emblem {
+  position: relative;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 18px color-mix(in srgb, var(--rank-color) 45%, transparent));
+}
+
+.rank2-hero__name {
+  position: relative;
+  margin: 0.15rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(2.3rem, 11vw, 3rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--rank-color);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--rank-color) 45%, transparent);
+}
+
+.rank2-hero--goat .rank2-hero__name {
+  letter-spacing: 0.12em;
+}
+
+.rank2-hero__best {
+  position: relative;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: rgba(214, 228, 255, 0.65);
+}
+
+.rank2-hero__best strong {
+  margin-left: 0.25rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: var(--money-green);
+}
+
+.rank2-next {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.85rem 0.95rem 0.8rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(5, 14, 32, 0.78);
+}
+
+.rank2-next__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.rank2-next__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.rank2-next__label b {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--next-color);
+}
+
+.rank2-next__togo {
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #eaf2ff;
+  text-align: right;
+}
+
+.rank2-next__bar {
+  position: relative;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.rank2-next__bar i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--rank-color), var(--next-color));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--next-color) 55%, transparent);
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.rank2-next__ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.45);
+}
+
+.rank2-top {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: var(--rank-color);
+}
+
+.rank2-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank2-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.6rem;
+  padding: 0.45rem 0.85rem 0.45rem 0.6rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(6, 14, 30, 0.72);
+  opacity: 0.55;
+}
+
+.rank2-step .rank-emblem {
+  filter: grayscale(0.85) brightness(0.75);
+}
+
+.rank2-step.is-reached {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--step-color) 30%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--step-color) 12%, transparent), transparent 70%),
+    rgba(6, 14, 30, 0.78);
+}
+
+.rank2-step.is-reached .rank-emblem {
+  filter: none;
+}
+
+.rank2-step.is-current {
+  border-color: color-mix(in srgb, var(--step-color) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--step-color) 35%, transparent) inset,
+    0 0 22px color-mix(in srgb, var(--step-color) 25%, transparent);
+}
+
+.rank2-step__name {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.12rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--step-color);
+}
+
+.rank2-step__min {
+  font-size: 0.74rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.72);
+}
+
+.rank2-step__you {
+  position: absolute;
+  top: -0.45rem;
+  right: 0.8rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--step-color);
+  color: #04101f;
+  font-style: normal;
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.rank2-note {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+/* Higher ranks breathe: Superstar and Legend glow, GOAT's rays turn and its crest pulses. */
+.rank-emblem--superstar,
+.rank-emblem--legend,
+.rank-emblem--goat {
+  animation: rank-glow 3.2s ease-in-out infinite;
+}
+
+.rank-emblem--goat .rank-emblem__rays {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rank-rays 28s linear infinite;
+}
+
+@keyframes rank-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--rank-color) 35%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--rank-color) 70%, transparent));
+  }
+}
+
+@keyframes rank-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rank2-step:not(.is-reached) .rank-emblem,
+.rank-badge .rank-emblem {
+  animation: none;
+}
+
+.rank2-step:not(.is-reached) .rank-emblem__rays {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rank-emblem,
+  html:not([data-full-motion]) .rank-emblem__rays {
+    animation: none;
+  }
+
+  html:not([data-full-motion]) .rank2-next__bar i {
+    transition: none;
+  }
+}
+
+/* Five tabs on narrow phones: keep every label on one line inside its own tab. */
+@media (max-width: 400px) {
+  .oneb-tabbar {
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
+  }
+
+  .oneb-tabbar__item {
+    min-width: 0;
+  }
+
+  .oneb-tabbar__label {
+    max-width: 100%;
+    font-size: 0.5rem !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 359px) {
+  .oneb-tabbar__label {
+    font-size: 0.42rem !important;
+    letter-spacing: 0 !important;
+  }
+}
+
+/* Short phones: keep the My Bank row clear of the tab bar. */
+@media (max-height: 700px) {
+  .run-home.run-home--tabbed .run-home__hoop-gap {
+    height: 0.6rem;
+  }
+
+  .run-home.run-home--tabbed .home-tile {
+    min-height: 11.75rem;
+    aspect-ratio: 0.8 / 1;
+  }
+
+  .home-bank {
+    gap: 0.25rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.52rem;
+  }
+
+  .home-dest {
+    gap: 0.4rem;
+  }
+
+  .home-dest__card {
+    min-height: 2.75rem;
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+  }
+}

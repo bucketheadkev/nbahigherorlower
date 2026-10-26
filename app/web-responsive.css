@@ -234,15 +234,15 @@ html[data-platform='web'] textarea:focus-visible {
     justify-content: space-evenly;
     align-items: center;
     box-sizing: border-box;
-    padding-left: clamp(2rem, 14vw, 12rem);
-    padding-right: clamp(2rem, 14vw, 12rem);
+    padding-left: clamp(1.5rem, 10vw, 10rem);
+    padding-right: clamp(1.5rem, 10vw, 10rem);
     min-height: calc(3.35rem + env(safe-area-inset-bottom, 0px));
   }
 
   html[data-platform='web'] .oneb-tabbar__item {
     width: auto;
     flex: 0 0 auto;
-    min-width: 6.5rem;
+    min-width: 6rem;
   }
 
   html[data-platform='web'] .billion-draft-layout--classic-hub,

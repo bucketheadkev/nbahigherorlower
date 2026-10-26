@@ -1,14 +1,14 @@
 /**
  * Wall of Fame — players whose Bank reaches $1,000,000,000.
  *
- * Signed-in players are inducted permanently on the server (wall_of_fame table).
- * Guests keep a permanent on-device record; spending afterwards never removes either.
+ * Signed-in players earn their place on the server (wall_of_fame) and sign the public wall.
+ * Guests keep an on-device record of reaching it and need an account to sign.
+ * Spending afterwards never removes either.
  */
 
 export const WALL_OF_FAME_GOAL = 1_000_000_000;
 
 const LOCAL_WALL_KEY = 'oneb_wall_of_fame_local_v1';
-const LOCAL_SIGNATURE_KEY = 'oneb_wall_signature_v1';
 
 export const SIGNATURE_MAX = 24;
 
@@ -17,36 +17,6 @@ export function normalizeSignature(raw: string): string | null {
   const name = raw.replace(/\s+/g, ' ').trim();
   if (name.length < 2 || name.length > SIGNATURE_MAX) return null;
   return /^[\p{L}\p{N} .'\-]+$/u.test(name) ? name : null;
-}
-
-export interface WallSignature {
-  name: string;
-  signedAt: string;
-}
-
-/** Guest signature on this device (permanent once stamped). */
-export function getLocalSignature(): WallSignature | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const parsed = JSON.parse(localStorage.getItem(LOCAL_SIGNATURE_KEY) ?? 'null') as WallSignature | null;
-    return parsed && typeof parsed.name === 'string' && typeof parsed.signedAt === 'string' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveLocalSignature(raw: string): WallSignature | null {
-  const existing = getLocalSignature();
-  if (existing) return existing;
-  const name = normalizeSignature(raw);
-  if (!name) return null;
-  const signature = { name, signedAt: new Date().toISOString() };
-  try {
-    localStorage.setItem(LOCAL_SIGNATURE_KEY, JSON.stringify(signature));
-  } catch {
-    return null;
-  }
-  return signature;
 }
 
 export function qualifiesForWall(bankBalance: number): boolean {
@@ -100,13 +70,23 @@ export function isWallPreview(): boolean {
   }
 }
 
-const PREVIEW_NAMES = ['Vaultline', 'NorthStar', 'Kairo', 'Meridian', 'Halcyon', 'Brightwater', 'Okonkwo'];
+const PREVIEW_FIRST = [
+  'Vaultline', 'NorthStar', 'Kairo', 'Meridian', 'Halcyon', 'Brightwater', 'Okonkwo', 'Maya Reyes',
+  'J. Thornton', 'Deshawn', 'Lucia', 'Big Mike', 'Ana Sofia', 'Tre Daniels', 'Coach K', 'Ramon',
+  'Priya', 'Leo Marsh', "D'Angelo", 'Skyler', 'Mateo', 'Ivy Chen', 'Nate Harlow', 'Bianca',
+];
 
-/** Dev-only sample inductees for design review (never shown in production). */
-export function previewInductees(): Array<{ username: string; inductedAt: string }> {
+/** Dev-only sample wall (`?wallPreview=1`) for design review; never shown in production. */
+export function previewWall(count = 180): Array<{ number: number; signature: string; username: string; signedAt: string }> {
   if (process.env.NODE_ENV === 'production') return [];
-  return PREVIEW_NAMES.map((name, i) => ({
-    username: name,
-    inductedAt: new Date(Date.UTC(2026, 8, 3 + i * 6, 18)).toISOString(),
-  }));
+  return Array.from({ length: count }, (_, i) => {
+    const base = PREVIEW_FIRST[i % PREVIEW_FIRST.length]!;
+    const signature = i < PREVIEW_FIRST.length ? base : `${base} ${Math.floor(i / PREVIEW_FIRST.length) + 1}`;
+    return {
+      number: i + 1,
+      signature,
+      username: signature.replace(/[^A-Za-z0-9]/g, '').slice(0, 14) || `player${i}`,
+      signedAt: new Date(Date.UTC(2026, 6, 1) + i * 9 * 3_600_000).toISOString(),
+    };
+  });
 }

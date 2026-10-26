@@ -38,7 +38,7 @@ export function RunResultsPreview() {
     [
       { id: 'billion_or_bust', stake: 1_000_000 },
       { id: 'star_hunter', stake: 500_000 },
-      { id: 'clutch_pick', stake: 250_000 },
+      { id: 'superteam', stake: 250_000 },
     ],
     { total, draftValues: roster.map((p) => p.dollarValue), rerollsUsed: true },
   );

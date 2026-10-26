@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   BILLION_GOAL,
   buildEraRoster,
@@ -90,8 +90,13 @@ interface BillionTradeEngineProps {
   onExit: () => void;
   onPlayAgain?: () => void;
   onWin?: () => void;
-  /** Default billion run. `h2h` = local AI showdown. `online` = private 1V1. */
-  challengeMode?: 'billion' | 'h2h' | 'online';
+  /**
+   * Default billion run. `h2h` = local AI showdown. `online` = private 1V1.
+   * `franchise` = Franchise Ownership lineup (needs `franchise`).
+   */
+  challengeMode?: 'billion' | 'h2h' | 'online' | 'franchise';
+  /** Franchise drafts: server-rolled spins, no rerolls, no Classic rewards or run records. */
+  franchise?: FranchiseDraftOptions | null;
   h2hOpponent?: H2HOpponent | null;
   h2hPlayerName?: string | null;
   /** Online 1V1: opponent display + live progress 0–5. */
@@ -120,6 +125,16 @@ interface BillionTradeEngineProps {
   onlineDraftError?: string | null;
   /** The Circuit: this Classic run is the player's official league entry. */
   circuit?: CircuitRunConfig | null;
+}
+
+export interface FranchiseDraftOptions {
+  /** A spin the server already rolled (the draft was left and resumed). */
+  pendingSpin: SpinPair | null;
+  resolveRoll: () => Promise<SpinPair | null>;
+  exitLabel: string;
+  goal: string;
+  /** Replaces the dock once all five are seated: value, earnings, and the lock button. */
+  review: ReactNode;
 }
 
 type RosterSlots = Record<Position, ValuedPlayer | null>;
@@ -212,9 +227,15 @@ export function BillionTradeEngine({
   deferOnlineReveal = false,
   onlineDraftError = null,
   circuit = null,
+  franchise = null,
 }: BillionTradeEngineProps) {
   const isH2H = challengeMode === 'h2h' && Boolean(h2hOpponent);
   const isOnline = challengeMode === 'online';
+  const isFranchise = challengeMode === 'franchise' && Boolean(franchise);
+  /** Picks and moves are saved by the parent (1V1 room or Franchise cycle). */
+  const isSynced = isOnline || isFranchise;
+  /** A real Classic Run: wagers, run records, achievements, surplus. */
+  const isClassicRun = !isH2H && !isSynced;
   /** Classic Run draft chrome (vertical five + hub/pick) — also used for online 1v1. */
   const useClassicDraftChrome = !isH2H;
   const playerHandle = (h2hPlayerName ?? 'YOU').trim() || 'YOU';
@@ -227,8 +248,8 @@ export function BillionTradeEngine({
 
   const [slots, setSlots] = useState<RosterSlots>(EMPTY_ROSTER);
   const [phase, setPhase] = useState<Phase>('draft');
-  const [spunTeam, setSpunTeam] = useState<TeamInfo | null>(null);
-  const [spunEra, setSpunEra] = useState<DecadeEra | null>(null);
+  const [spunTeam, setSpunTeam] = useState<TeamInfo | null>(() => franchise?.pendingSpin?.team ?? null);
+  const [spunEra, setSpunEra] = useState<DecadeEra | null>(() => franchise?.pendingSpin?.era ?? null);
   const [ticketPrinting, setTicketPrinting] = useState(false);
   const [offers, setOffers] = useState<EraOfferPlayer[]>([]);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
@@ -251,7 +272,7 @@ export function BillionTradeEngine({
     valued: ValuedPlayer & { era?: DecadeEra };
   } | null>(null);
   /** One free team reroll + one free era reroll for the entire run (no ads). */
-  const rerollsAllowed = !circuit || circuit.rerollsAllowed;
+  const rerollsAllowed = !isFranchise && (!circuit || circuit.rerollsAllowed);
   const [teamRerolls, setTeamRerolls] = useState(rerollsAllowed ? 1 : 0);
   const [eraRerolls, setEraRerolls] = useState(rerollsAllowed ? 1 : 0);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);
@@ -279,8 +300,8 @@ export function BillionTradeEngine({
   accountStatusRef.current = account.status;
 
   useEffect(() => {
-    if (!isH2H && !isOnline) beginWagerRun();
-  }, [isH2H, isOnline]);
+    if (isClassicRun) beginWagerRun();
+  }, [isClassicRun]);
   const teamRerollUsedRef = useRef(false);
   const eraRerollUsedRef = useRef(false);
   /** Blocks select/reroll/slot commits until placement finishes or table resets. */
@@ -304,7 +325,7 @@ export function BillionTradeEngine({
   const pendingLockSlotsRef = useRef<Set<Position>>(new Set());
 
   useEffect(() => {
-    if (!isOnline) return;
+    if (!isSynced) return;
     if (slamPayload || movingFrom) return;
 
     const pendingMove = pendingMoveRef.current;
@@ -344,7 +365,7 @@ export function BillionTradeEngine({
     syncedSlotSetRef.current = new Set(
       syncedPicks.map((pick) => pick.position as Position),
     );
-  }, [isOnline, syncedPicks, slamPayload, movingFrom]);
+  }, [isSynced, syncedPicks, slamPayload, movingFrom]);
 
   useEffect(() => {
     resume();
@@ -387,7 +408,7 @@ export function BillionTradeEngine({
 
   const handleTicketPrint = useCallback(() => {
     if (phase !== 'draft' || evalStartedRef.current) return;
-    if (!runStarted && !isH2H && !isOnline && !circuit) {
+    if (!runStarted && isClassicRun && !circuit) {
       // First spin of a Classic Run: lock any Bet on Yourself wagers before anything is revealed.
       setRunStarted(true);
       runRefRef.current ??= newRunRef();
@@ -403,7 +424,7 @@ export function BillionTradeEngine({
     setSpunTeam(null);
     setSpunEra(null);
     setStatus('Rolling…');
-  }, [circuit, isH2H, isOnline, phase, resume, runStarted]);
+  }, [circuit, isClassicRun, phase, resume, runStarted]);
 
   const handleTicketResult = useCallback((pair: SpinPair) => {
     unlockInteractions();
@@ -551,7 +572,7 @@ export function BillionTradeEngine({
         setJustFilledSlot((current) => (current === targetSlot ? null : current));
       }, 600);
 
-      if (isOnline && onPickLock) {
+      if (isSynced && onPickLock) {
         pendingLockSlotsRef.current.add(targetSlot);
         syncedSlotSetRef.current.add(targetSlot);
         const era = (player.era ?? spunEra ?? '2020s') as DecadeEra;
@@ -572,8 +593,8 @@ export function BillionTradeEngine({
       }
 
       if (full) {
-        if (isOnline && deferOnlineReveal) {
-          setStatus('Lineup locked — waiting for opponent…');
+        if (isSynced && deferOnlineReveal) {
+          setStatus(isFranchise ? 'Lineup complete.' : 'Lineup locked — waiting for opponent…');
           resetTableForNextPick();
           return;
         }
@@ -627,8 +648,9 @@ export function BillionTradeEngine({
     },
     [
       deferOnlineReveal,
+      isFranchise,
       isH2H,
-      isOnline,
+      isSynced,
       lockInteractions,
       onPickLock,
       reduceMotion,
@@ -661,7 +683,7 @@ export function BillionTradeEngine({
   /** Once per Classic run: open the surplus decision, settle a guest slip, collect earnings. */
   const recordClassicRun = useCallback(
     (total: number, achievementIds: string[], finalSlots: RosterSlots) => {
-      if (isH2H || isOnline || runRecordedRef.current) return;
+      if (!isClassicRun || runRecordedRef.current) return;
       runRecordedRef.current = true;
       const runRef = runPayoutRef();
       if (account.status !== 'permanent') openLocalSurplus(runRef, total);
@@ -684,7 +706,7 @@ export function BillionTradeEngine({
         circuit: circuit ? { name: circuit.name } : null,
       });
     },
-    [account.status, circuit, isH2H, isOnline, runPayoutRef, wagerFacts],
+    [account.status, circuit, isClassicRun, runPayoutRef, wagerFacts],
   );
 
   const finishRun = useCallback(
@@ -701,7 +723,7 @@ export function BillionTradeEngine({
       setWorldRank(rank);
       saveBestWorldRank(rank);
 
-      if (!isH2H && !isOnline) {
+      if (isClassicRun) {
         recordClassicRun(total, [], nextSlots);
         const runRef = runPayoutRef();
         const lockedSlip = getSlipState().current;
@@ -754,7 +776,7 @@ export function BillionTradeEngine({
       }
 
       if (total >= BILLION_GOAL) {
-        if (!isH2H && !isOnline) {
+        if (isClassicRun) {
           saveBillionRun(lineup, total);
         }
         // Result SFX is owned by the reveal UI (results_celebration).
@@ -766,7 +788,7 @@ export function BillionTradeEngine({
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };
     },
-    [isH2H, isOnline, onWin, recordClassicRun, runPayoutRef],
+    [isClassicRun, onWin, recordClassicRun, runPayoutRef],
   );
 
   const handleCourtAnalyzeComplete = useCallback(() => {
@@ -777,7 +799,7 @@ export function BillionTradeEngine({
 
   const handleTotalSettled = useCallback(
     (payload: { teamValue: number }) => {
-      if (isH2H || isOnline) return;
+      if (!isClassicRun) return;
       const lineup = rosterInSlotOrder(slots);
       const previousBest = getBestRosterValue();
       const unlocked = processClassicRunChallenges(
@@ -798,7 +820,7 @@ export function BillionTradeEngine({
       const seatTotal = pricedLineup(slots).reduce((sum, player) => sum + player.dollarValue, 0);
       recordClassicRun(seatTotal > 0 ? seatTotal : payload.teamValue, unlocked, slots);
     },
-    [isH2H, isOnline, recordClassicRun, slots],
+    [isClassicRun, recordClassicRun, slots],
   );
 
   const handleRevealComplete = useCallback(
@@ -878,7 +900,7 @@ export function BillionTradeEngine({
         const moveFrom = movingFrom;
         setMovingFrom(null);
         hapticSlotConfirm();
-        if (isOnline && onPickMove && syncedSlotSetRef.current.has(moveFrom)) {
+        if (isSynced && onPickMove && syncedSlotSetRef.current.has(moveFrom)) {
           const era = (spunEra ?? '2020s') as DecadeEra;
           const { selection, rawValue } = playerToH2HPick(
             reseated,
@@ -1074,7 +1096,7 @@ export function BillionTradeEngine({
       unlockInteractions,
       useClassicDraftChrome,
       isH2H,
-      isOnline,
+      isSynced,
     ],
   );
 
@@ -1110,7 +1132,9 @@ export function BillionTradeEngine({
 
   const showDraft = phase === 'draft';
   const showReveal = phase === 'reveal';
-  const lineupLocked = isOnline && deferOnlineReveal && filledCount >= 5;
+  const lineupLocked = isSynced && deferOnlineReveal && filledCount >= 5;
+  /** Once five are seated, Franchise shows its own roster preview in place of the court. */
+  const showHubCourt = !readyToDraft && !lineupLocked;
   const playerTeamValue = teamValue;
 
   return (
@@ -1135,7 +1159,7 @@ export function BillionTradeEngine({
             onExit();
           }}
         >
-          {t('game.home')}
+          {franchise?.exitLabel ?? t('game.home')}
         </button>
         {isOnline ? (
           <span className="billion-draft-meta billion-draft-meta--h2h-spacer" aria-hidden="true" />
@@ -1167,7 +1191,7 @@ export function BillionTradeEngine({
         />
       ) : null}
 
-      {showReveal && !isH2H && !(isOnline && deferOnlineReveal) ? (
+      {showReveal && !isH2H && !(isSynced && deferOnlineReveal) ? (
         <ClassicRosterReveal
           roster={LINEUP_POSITIONS.flatMap((pos) => {
             const player = slots[pos];
@@ -1186,7 +1210,7 @@ export function BillionTradeEngine({
       {showDraft ? (
         <div
           className={`billion-draft-layout billion-draft-layout--no-value billion-draft-layout--vertical-booth${
-            useClassicDraftChrome && !readyToDraft && !lineupLocked
+            useClassicDraftChrome && showHubCourt
               ? ' billion-draft-layout--classic-hub'
               : ''
           }${
@@ -1208,7 +1232,9 @@ export function BillionTradeEngine({
                 </span>
               </div>
             ) : null}
-            {lineupLocked ? (
+            {lineupLocked && isFranchise ? (
+              <div className="billion-booth-stage billion-booth-stage--review">{franchise!.review}</div>
+            ) : lineupLocked ? (
               <div className="h2h-rearrange-stage">
                 <p className="h2h-rearrange-stage__title">Lineup locked</p>
                 <p className="h2h-rearrange-stage__hint" role="status">
@@ -1230,13 +1256,16 @@ export function BillionTradeEngine({
                   rerollFrom={rerollFrom}
                   holdTeam={spunTeam ?? rerollFrom?.team ?? null}
                   holdEra={spunEra ?? rerollFrom?.era ?? null}
-                  showGoal={useClassicDraftChrome && !isOnline}
+                  showGoal={isClassicRun}
                   goalCopy={
                     isOnline
                       ? t('game.h2hGoal', { name: oppLabel })
-                      : null
+                      : isFranchise
+                        ? franchise!.goal
+                        : null
                   }
                   rollLocked={filledCount >= 5 || courtAnalyze}
+                  resolveRoll={franchise?.resolveRoll}
                   onAutoRerollConsumed={() => setBoothReroll(null)}
                   onPrint={handleTicketPrint}
                   onResult={handleTicketResult}
@@ -1244,7 +1273,7 @@ export function BillionTradeEngine({
                 />
                 {circuit ? (
                   <CircuitRunCard name={circuit.name} rerollsAllowed={circuit.rerollsAllowed} />
-                ) : useClassicDraftChrome && !isOnline ? (
+                ) : isClassicRun ? (
                   <BetOnYourself runStarted={runStarted} reduceMotion={reduceMotion} />
                 ) : null}
               </div>
@@ -1277,7 +1306,7 @@ export function BillionTradeEngine({
             ) : null}
           </main>
 
-          {!readyToDraft && !lineupLocked ? (
+          {showHubCourt ? (
             EXPERIMENTAL_DRAFT_HUB_CARDS ? (
               <DraftHubCards
                 slots={slots}
@@ -1401,10 +1430,7 @@ export function BillionTradeEngine({
                         isJustFilled ? ' is-just-filled' : ''
                       }`}
                       disabled={evalStartedRef.current}
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        handleSlotClick(slot);
-                      }}
+                      onClick={() => handleSlotClick(slot)}
                       aria-label={
                         player
                           ? `${POSITION_LABELS[slot]}: ${player.name}`

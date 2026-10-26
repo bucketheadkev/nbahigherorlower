@@ -24,14 +24,19 @@ export function TickerNumber({
   duration = 800,
   easing = easeOutQuart,
   className,
+  format = money,
+  from: start,
 }: {
   value: number;
   duration?: number;
   easing?: (p: number) => number;
   className?: string;
+  format?: (value: number) => string;
+  /** Count up from here on first paint instead of showing the value straight away. */
+  from?: number;
 }) {
   const ref = useRef<HTMLSpanElement | null>(null);
-  const shown = useRef<number | null>(null);
+  const shown = useRef<number | null>(start ?? null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -39,7 +44,7 @@ export function TickerNumber({
     const from = shown.current;
     if (from === null || from === value || getPrefersReducedMotion()) {
       shown.current = value;
-      el.textContent = money(value);
+      el.textContent = format(value);
       return;
     }
     let raf = 0;
@@ -48,12 +53,13 @@ export function TickerNumber({
       const p = Math.min(1, (now - start) / duration);
       const next = Math.round(from + (value - from) * easing(p));
       shown.current = next;
-      el.textContent = money(next);
+      el.textContent = format(next);
       if (p < 1) raf = requestAnimationFrame(tick);
     };
+    el.textContent = format(from);
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [duration, easing, value]);
+  }, [duration, easing, format, value]);
 
   return <span ref={ref} className={className} />;
 }

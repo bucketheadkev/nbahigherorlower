@@ -33,12 +33,12 @@ const COPY = {
   achievements: { en: 'Achievements', es: 'Logros' },
   change: { en: 'Bank change', es: 'Cambio en el Banco' },
   balance: { en: 'Bank', es: 'Banco' },
-  circuit: { en: 'Cash Leagues · {name}', es: 'Ligas de efectivo · {name}' },
+  circuit: { en: 'Cash Cups · {name}', es: 'Copas de efectivo · {name}' },
   circuitPending: { en: 'Submitting your official entry…', es: 'Enviando tu entrada oficial…' },
   circuitOk: { en: 'Official entry recorded · standings update live', es: 'Entrada oficial registrada · la tabla se actualiza en vivo' },
   circuitFailed: {
-    en: "Couldn't submit — your entry run is still open in Cash Leagues",
-    es: 'No se pudo enviar: tu partida de entrada sigue abierta en Ligas de efectivo',
+    en: "Couldn't submit — your entry run is still open in Cash Cups",
+    es: 'No se pudo enviar: tu partida de entrada sigue abierta en Copas de efectivo',
   },
 } satisfies Record<string, Copy>;
 

@@ -1,15 +1,31 @@
 /**
- * Wall of Fame reads (supabase/migrations/20261018_2_wall_of_fame.sql).
- * Induction itself happens server-side when a Bank balance reaches $1B.
+ * Wall of Fame (supabase/migrations/20261018_2, 20261018_5, 20261025_5).
+ * Eligibility happens server-side when a Bank reaches $1B; the public wall lists signed players.
  */
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const MISSING_FUNCTION_CODES = new Set(['PGRST202', '42883']);
 
-export interface WallInductee {
+export interface WallEntry {
+  /** Signing order: No. 1 signed first. */
+  number: number;
+  signature: string;
   username: string;
-  inductedAt: string;
+  signedAt: string;
+}
+
+export interface WallPage {
+  total: number;
+  entries: WallEntry[];
+}
+
+export interface MyWallStatus {
+  /** Reached a $1B Bank (may sign). */
+  inductedAt: string | null;
+  signature: string | null;
+  signedAt: string | null;
+  number: number | null;
 }
 
 type Failure = { ok: false; reason: 'unavailable' | 'error' };
@@ -20,67 +36,81 @@ function failure(error: { code?: string; message?: string }): Failure {
   return { ok: false, reason: 'error' };
 }
 
-export async function fetchWallOfFame(): Promise<{ ok: true; entries: WallInductee[] } | Failure> {
+const str = (v: unknown) => (typeof v === 'string' && v ? v : null);
+const num = (v: unknown) => (typeof v === 'number' ? v : v == null ? null : Number(v) || null);
+
+export async function fetchWallPage(offset: number, limit = 120): Promise<{ ok: true; page: WallPage } | Failure> {
   try {
-    const { data, error } = await getSupabaseBrowserClient().rpc('get_wall_of_fame', { p_limit: 500 });
+    const { data, error } = await getSupabaseBrowserClient().rpc('get_wall_of_fame_page', {
+      p_offset: offset,
+      p_limit: limit,
+    });
     if (error) return failure(error);
-    const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
+    const raw = (data ?? {}) as Record<string, unknown>;
+    const rows = Array.isArray(raw.entries) ? (raw.entries as Array<Record<string, unknown>>) : [];
     return {
       ok: true,
-      entries: rows
-        .filter((row) => typeof row.username === 'string' && row.username)
-        .map((row) => ({ username: row.username as string, inductedAt: String(row.inducted_at ?? '') })),
+      page: {
+        total: Number(raw.total) || 0,
+        entries: rows
+          .filter((row) => str(row.signature) && str(row.username))
+          .map((row) => ({
+            number: Number(row.number) || 0,
+            signature: row.signature as string,
+            username: row.username as string,
+            signedAt: String(row.signed_at ?? ''),
+          })),
+      },
     };
   } catch {
     return { ok: false, reason: 'error' };
   }
 }
 
-/** The signed-in player's induction and stamped display name (20261018_5_wall_signature.sql). */
-export async function fetchMySignature(): Promise<
-  { ok: true; inductedAt: string | null; displayName: string | null; signedAt: string | null } | Failure
-> {
+export async function fetchMyWallStatus(): Promise<{ ok: true; status: MyWallStatus } | Failure> {
   try {
     const { data, error } = await getSupabaseBrowserClient().rpc('get_my_wall_signature');
     if (error) return failure(error);
     const row = (data ?? {}) as Record<string, unknown>;
     return {
       ok: true,
-      inductedAt: typeof row.inducted_at === 'string' ? row.inducted_at : null,
-      displayName: typeof row.display_name === 'string' ? row.display_name : null,
-      signedAt: typeof row.signed_at === 'string' ? row.signed_at : null,
+      status: {
+        inductedAt: str(row.inducted_at),
+        signature: str(row.display_name),
+        signedAt: str(row.signed_at),
+        number: num(row.number),
+      },
     };
   } catch {
     return { ok: false, reason: 'error' };
   }
 }
 
-/** Stamps the player's name on the public wall once. Repeat calls return the existing name. */
-export async function stampWallOfFame(
+export type SignFailure = 'unavailable' | 'invalid' | 'taken' | 'not_inducted' | 'account' | 'error';
+
+/** Signs the public wall once. Repeat calls return the existing signature. */
+export async function signWallOfFame(
   name: string,
-): Promise<{ ok: true; displayName: string; signedAt: string } | { ok: false; reason: 'unavailable' | 'invalid' | 'not_inducted' | 'error' }> {
+): Promise<{ ok: true; signature: string; signedAt: string; number: number | null } | { ok: false; reason: SignFailure }> {
   try {
     const { data, error } = await getSupabaseBrowserClient().rpc('stamp_wall_of_fame', { p_name: name });
     if (error) {
+      const msg = error.message ?? '';
       if (error.code && MISSING_FUNCTION_CODES.has(error.code)) return { ok: false, reason: 'unavailable' };
-      if (error.message?.includes('invalid_name')) return { ok: false, reason: 'invalid' };
-      if (error.message?.includes('not_inducted')) return { ok: false, reason: 'not_inducted' };
-      console.error('[wall-of-fame] stamp', error.message);
+      if (msg.includes('invalid_name')) return { ok: false, reason: 'invalid' };
+      if (msg.includes('name_taken')) return { ok: false, reason: 'taken' };
+      if (msg.includes('not_inducted')) return { ok: false, reason: 'not_inducted' };
+      if (msg.includes('permanent_account_required')) return { ok: false, reason: 'account' };
+      console.error('[wall-of-fame] sign', msg);
       return { ok: false, reason: 'error' };
     }
     const row = (data ?? {}) as Record<string, unknown>;
-    return { ok: true, displayName: String(row.display_name ?? name), signedAt: String(row.signed_at ?? '') };
-  } catch {
-    return { ok: false, reason: 'error' };
-  }
-}
-
-/** The signed-in player's induction time, or null when not inducted. */
-export async function fetchMyInduction(): Promise<{ ok: true; inductedAt: string | null } | Failure> {
-  try {
-    const { data, error } = await getSupabaseBrowserClient().rpc('get_my_wall_of_fame');
-    if (error) return failure(error);
-    return { ok: true, inductedAt: typeof data === 'string' && data ? data : null };
+    return {
+      ok: true,
+      signature: String(row.display_name ?? name),
+      signedAt: String(row.signed_at ?? ''),
+      number: num(row.number),
+    };
   } catch {
     return { ok: false, reason: 'error' };
   }

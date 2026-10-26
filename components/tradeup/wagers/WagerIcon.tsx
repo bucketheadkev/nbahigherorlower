@@ -39,14 +39,6 @@ export function WagerIcon({ icon }: { icon: WagerDef['icon'] }) {
           <path d="M7 9V6.8a3 3 0 0 1 6 0V9" />
         </svg>
       );
-    case 'clutch':
-      return (
-        <svg {...common}>
-          <circle cx="10" cy="10" r="6.8" />
-          <path d="M10 6.2V10l2.6 1.8" />
-          <path d="M10 2v1.2" />
-        </svg>
-      );
     case 'team':
       return (
         <svg {...common}>

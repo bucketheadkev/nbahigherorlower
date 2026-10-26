@@ -9,6 +9,7 @@ import { clearActiveRoom, readActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
+import { installTapGuard } from '@/lib/tradeup/tapGuard';
 import { LocaleProvider } from '@/hooks/useLocale';
 import {
   hasSeenHowItWorks,
@@ -16,9 +17,16 @@ import {
   REPLAY_INTRO_EVENT,
   resetHowItWorksSeen,
 } from '@/lib/account/howItWorksStorage';
-import { BallionSplash, hasIntroFinishedThisLoad, INTRO_TOTAL_MS, resetIntroFinishedThisLoad } from './BallionSplash';
+import {
+  BallionSplash,
+  hasIntroFinishedThisLoad,
+  INTRO_HOLD_MAX_MS,
+  INTRO_TOTAL_MS,
+  resetIntroFinishedThisLoad,
+} from './BallionSplash';
 import { Onboarding } from './onboarding/Onboarding';
-import { CashRewardHost } from './CashRewardPopup';
+import { EarningsSummaryHost } from './EarningsSummary';
+import { RankScreen } from './rank/RankScreen';
 import { PendingSurplusHost } from './surplus/PendingSurplusHost';
 import { CircuitResultsHost } from './circuit/CircuitResultsHost';
 import { WagerResultsPreview } from './wagers/WagerResultsPreview';
@@ -42,6 +50,14 @@ const HeadToHeadFlow = dynamic(
 );
 
 type Screen = 'hub' | 'engine' | 'h2h';
+
+const HOME_ART = [
+  '/images/home-v2/arena.jpg',
+  '/images/home-v2/classic.jpg',
+  '/images/home-v2/1v1.jpg',
+  '/images/home-v2/money.png',
+  '/images/home-v2/trophy.png',
+];
 
 /** Survives Strict Mode remounts — intro plays once per page load. */
 let splashDoneThisLoad = false;
@@ -112,6 +128,16 @@ export function TradeUpApp() {
 
   useEffect(() => {
     initAdaptiveQuality();
+    // Decode the home artwork once so returning to Play never waits on images; the intro's
+    // load bar finishes only once it has (or after a short cap on slow networks).
+    const artDecoded = Promise.all(
+      HOME_ART.map((src) => {
+        const img = new Image();
+        img.src = src;
+        return img.decode?.().catch(() => undefined) ?? Promise.resolve();
+      }),
+    );
+    const artReady = Promise.race([artDecoded, new Promise((resolve) => window.setTimeout(resolve, 2500))]);
 
     const idle =
       typeof requestIdleCallback === 'function'
@@ -119,7 +145,7 @@ export function TradeUpApp() {
         : window.setTimeout(() => warmSpinPairIndex(), 200);
 
     let removeAudioUnlock = () => {};
-    let removeWebHaptics = () => {};
+    const removeTapGuard = installTapGuard();
     let bootCancelled = false;
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
@@ -127,18 +153,18 @@ export function TradeUpApp() {
       if (bootCancelled) return;
       removeAudioUnlock = mod.installPhoneAudioUnlock();
     });
-    void import('@/lib/tradeup/haptics').then((mod) => {
-      if (bootCancelled) return;
-      removeWebHaptics = mod.installWebHapticTargets();
-    });
 
     const readyId = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => setAppReady(true));
+      window.requestAnimationFrame(() => {
+        void artReady.then(() => {
+          if (!bootCancelled) setAppReady(true);
+        });
+      });
     });
 
     return () => {
       bootCancelled = true;
-      removeWebHaptics();
+      removeTapGuard();
       removeAudioUnlock();
       window.cancelAnimationFrame(readyId);
       if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
@@ -236,7 +262,7 @@ export function TradeUpApp() {
     }
     // Parent nuclear failsafe — Strict Mode must not clear this timer.
     if (parentSplashFailsafeId != null) return;
-    const ms = (reduceMotion ? 720 : INTRO_TOTAL_MS) + 1200;
+    const ms = (reduceMotion ? 720 : INTRO_TOTAL_MS) + INTRO_HOLD_MAX_MS + 1200;
       parentSplashFailsafeId = window.setTimeout(() => {
       parentSplashFailsafeId = null;
       markSplashDone();
@@ -310,6 +336,8 @@ export function TradeUpApp() {
         <MyRunsScreen key={runsKey} />
       ) : hubTab === 'board' && !showSplash ? (
         <LeaderboardScreen />
+      ) : hubTab === 'rank' && !showSplash ? (
+        <RankScreen />
       ) : (
         <TradeUpHome
           onPlay={handlePlay}
@@ -345,7 +373,7 @@ export function TradeUpApp() {
         </div>
       ) : null}
 
-      <CashRewardHost enabled={!showSplash && !showGuide && !invalidInvite} />
+      <EarningsSummaryHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
       <PendingSurplusHost
         enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
       />

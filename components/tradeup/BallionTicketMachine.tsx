@@ -20,6 +20,7 @@ import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import {
   WHEEL_SPIN_DURATION_MS,
   startWheelSpinSound,
+  stopWheelSpinSound,
 } from '@/lib/tradeup/gameAudio';
 import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
@@ -50,6 +51,8 @@ interface BallionTicketMachineProps {
   goalCopy?: string | null;
   /** Lineup complete / analyzing — ROLL must not fire. */
   rollLocked?: boolean;
+  /** Server-decided spin (Franchise drafts). Null result = roll failed; the board stays idle. */
+  resolveRoll?: () => Promise<SpinPair | null>;
   onAutoRerollConsumed?: () => void;
   onPrint: () => void;
   onResult: (pair: SpinPair) => void;
@@ -57,7 +60,6 @@ interface BallionTicketMachineProps {
 }
 
 const TEAM_ITEM_H = 78;
-const ERA_ITEM_H = 54;
 /** Same tile count so both reels travel the same distance at the same speed. */
 export const TEAM_STRIP_LEN = 42;
 export const ERA_STRIP_LEN = TEAM_STRIP_LEN;
@@ -228,6 +230,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   showGoal = false,
   goalCopy = null,
   rollLocked = false,
+  resolveRoll,
   onAutoRerollConsumed,
   onPrint,
   onResult,
@@ -346,10 +349,20 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     // Unlock + arm spin audio in this tap (WKWebView userActivation is unreliable).
     // Audio is not gated by reduced-motion — only reel timing is.
     startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
-    const pair = pickFairResult(allPairs);
     onPrint();
+    if (resolveRoll) {
+      void resolveRoll().then((pair) => {
+        if (pair) beginSpin(pair, { team: true, era: true }, { playSound: false });
+        else {
+          busyRef.current = false;
+          stopWheelSpinSound();
+        }
+      });
+      return;
+    }
+    const pair = pickFairResult(allPairs);
     beginSpin(pair, { team: true, era: true }, { playSound: false });
-  }, [allPairs, beginSpin, mode, onPrint, rollLocked]);
+  }, [allPairs, beginSpin, mode, onPrint, resolveRoll, rollLocked]);
 
   // One-sided auto-reroll from pick screen.
   useEffect(() => {
@@ -404,8 +417,6 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       ? teamColors.primary
       : undefined;
 
-  const verticalPair = showGoal && !goalCopy;
-  const boxHeight = verticalPair ? TEAM_ITEM_H : undefined;
   const busy = mode === 'spinning';
   const teamPanelStyle =
     teamFill && teamInk
@@ -449,18 +460,18 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
       <div className={`ter__stage barrel-shell is-open${mode === 'landed' ? ' is-locked' : ''}`}>
         <div
-          className={`barrel-window${verticalPair ? ' barrel-window--pair' : ''}`}
+          className="barrel-window barrel-window--pair"
           style={teamPanelStyle}
         >
           <BarrelReel
             strip={spinTeam ? teamStrip : []}
             spinId={spinTeam ? teamSpinId : 0}
-            itemHeight={boxHeight ?? TEAM_ITEM_H}
+            itemHeight={TEAM_ITEM_H}
             durationMs={teamMs}
             reduceMotion={reduceMotion}
             variant="team"
-            axis={verticalPair ? 'y' : 'x'}
-            columns={verticalPair ? 1 : undefined}
+            axis="y"
+            columns={1}
             readyLabel="TEAM"
             holdLabel={!spinTeam && displayTeam ? teamLabel(displayTeam) : null}
             holdStyle={
@@ -479,12 +490,12 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           <BarrelReel
             strip={spinEra ? eraStrip : []}
             spinId={spinEra ? eraSpinId : 0}
-            itemHeight={boxHeight ?? ERA_ITEM_H}
+            itemHeight={TEAM_ITEM_H}
             durationMs={eraMs}
             reduceMotion={reduceMotion}
             variant="era"
-            axis={verticalPair ? 'y' : 'x'}
-            columns={verticalPair ? 1 : undefined}
+            axis="y"
+            columns={1}
             readyLabel="ERA"
             holdLabel={!spinEra && displayEra ? eraShortLabel(displayEra) : null}
             celebrate={mode === 'landed'}

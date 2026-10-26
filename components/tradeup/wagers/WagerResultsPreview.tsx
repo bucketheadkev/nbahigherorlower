@@ -17,7 +17,7 @@ export function WagerResultsPreview() {
     [
       { id: 'billion_or_bust', stake: 1_000_000 },
       { id: 'star_hunter', stake: 500_000 },
-      { id: 'clutch_pick', stake: 250_000 },
+      { id: 'superteam', stake: 250_000 },
     ],
     { total: 986_000_000, draftValues: [212_000_000, 196_000_000, 194_000_000, 192_000_000, 192_000_000], rerollsUsed: true },
   );

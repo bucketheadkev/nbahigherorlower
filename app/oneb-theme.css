@@ -628,11 +628,11 @@
 }
 
 /* —— Cinematic launch intro (KovA → 1B Run logo + load bar → home) ——
-   Single 5000ms timeline. Studio text is GRID-CENTERED with NO translateY.
+   Single 3400ms timeline. Studio text is GRID-CENTERED with NO translateY.
    Animate opacity / blur / scale / letter-spacing only on studio copy.
    Duration must match INTRO_TOTAL_MS in BallionSplash.tsx. */
 .oneb-intro {
-  --oneb-intro-ms: 5000ms;
+  --oneb-intro-ms: 3400ms;
   --oneb-intro-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --oneb-intro-settle: cubic-bezier(0.16, 1, 0.3, 1);
   --oneb-intro-soften: cubic-bezier(0.4, 0, 0.2, 1);
@@ -1173,8 +1173,10 @@
   animation: oneb-intro-load var(--oneb-intro-ms) var(--oneb-intro-soften) forwards;
 }
 
-.oneb-intro--run .oneb-intro__bar-fill {
-  animation: oneb-intro-bar-fill var(--oneb-intro-ms) cubic-bezier(0.22, 0.08, 0.18, 1) forwards;
+/* BallionSplash drives the fill from real readiness and pauses everything while it waits. */
+.oneb-intro.is-holding,
+.oneb-intro.is-holding * {
+  animation-play-state: paused !important;
 }
 
 .oneb-intro--run .oneb-intro__bar-sheen {
@@ -1432,12 +1434,6 @@
   46% { opacity: 1; }
   86% { opacity: 1; }
   100% { opacity: 0; }
-}
-
-@keyframes oneb-intro-bar-fill {
-  0%, 40% { transform: scaleX(0); }
-  94% { transform: scaleX(1); }
-  100% { transform: scaleX(1); }
 }
 
 @keyframes oneb-intro-bar-sheen {
@@ -9146,12 +9142,15 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 .classic-val__total {
-  margin: 0.05rem 0 0;
+  margin: 0.1rem 0 0.05rem;
   color: var(--oneb-green);
-  font-size: clamp(1.45rem, 7.4vw, 2.15rem);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  /* Sized so a $1,000,000,000+ total fills the column on a 320px phone without wrapping. */
+  font-size: clamp(2.2rem, 12.4vw, 3.7rem);
   font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 0 26px rgba(41, 228, 144, 0.35);
   font-variant-numeric: tabular-nums;
   text-align: center;
   white-space: nowrap;
@@ -11640,322 +11639,6 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   color: rgba(214, 228, 255, 0.38);
 }
 
-/* ── Wall of Fame ────────────────────────────────────────────────────── */
-.wof {
-  position: fixed;
-  inset: 0;
-  z-index: 160;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% 28%, var(--brand-navy-mid) 0%, transparent 70%),
-    var(--brand-navy-deep);
-  color: var(--text-primary);
-}
-
-.wof__frame {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: min(100%, 30rem);
-  height: min(100%, 56rem);
-  padding: max(0.7rem, env(safe-area-inset-top)) 1.15rem max(1rem, env(safe-area-inset-bottom));
-  box-sizing: border-box;
-}
-
-.wof__top {
-  display: flex;
-  min-height: 2.2rem;
-  align-items: center;
-}
-
-.wof__back {
-  appearance: none;
-  padding: 0.45rem 0.1rem;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  color: var(--oneb-silver-mute);
-  cursor: pointer;
-}
-
-.wof__back:hover {
-  color: var(--text-primary);
-}
-
-.wof__head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  text-align: center;
-}
-
-.wof__eyebrow {
-  margin: 0;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-  color: var(--oneb-silver-mute);
-}
-
-.wof__title {
-  margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(1.9rem, 8.6vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-
-.wof__rule {
-  position: relative;
-  display: block;
-  width: 5.5rem;
-  height: 1px;
-  margin: 0.45rem 0 0.25rem;
-  background: linear-gradient(90deg, transparent, rgba(41, 228, 144, 0.75), transparent);
-}
-
-.wof__rule i {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 5px;
-  height: 5px;
-  background: var(--money-green);
-  transform: translate(-50%, -50%) rotate(45deg);
-  box-shadow: 0 0 8px rgba(41, 228, 144, 0.6);
-}
-
-.wof__sub {
-  margin: 0;
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--oneb-silver-dim);
-}
-
-.wof__wall {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border-radius: var(--oneb-radius-lg);
-  border: 1px solid rgba(var(--brand-blue-glow), 0.28);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 30%),
-    linear-gradient(180deg, #07111e 0%, #050b14 70%, #04080f 100%);
-  box-shadow:
-    inset 0 0 70px rgba(0, 0, 0, 0.45),
-    var(--oneb-shadow-panel);
-  scrollbar-width: none;
-}
-
-.wof__wall::-webkit-scrollbar {
-  display: none;
-}
-
-.wof__wall-light {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: -30%;
-  height: 70%;
-  pointer-events: none;
-  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(var(--brand-blue-glow), 0.14), transparent 70%);
-}
-
-.wof__names {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  width: 100%;
-  max-height: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.wof__name {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  max-width: 100%;
-}
-
-.wof__ink {
-  display: inline-block;
-  max-width: 100%;
-  padding: 0 0.35em;
-  overflow: visible;
-  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
-  font-size: clamp(2.3rem, 11vw, 3.1rem);
-  font-weight: 400;
-  line-height: 1.2;
-  white-space: nowrap;
-  color: rgba(236, 243, 255, 0.86);
-  text-shadow: 0 0 18px rgba(var(--brand-blue-glow), 0.32);
-}
-
-.wof__name.is-you .wof__ink {
-  color: #effff7;
-  text-shadow:
-    0 0 22px rgba(41, 228, 144, 0.42),
-    0 0 2px rgba(41, 228, 144, 0.5);
-  animation: wof-sign 1.7s cubic-bezier(0.45, 0.05, 0.25, 1) both;
-}
-
-.wof__you {
-  font-size: 0.52rem;
-  font-weight: 850;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--money-green);
-}
-
-.wof__empty {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-}
-
-.wof__ghost {
-  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
-  font-size: clamp(2rem, 9.5vw, 2.6rem);
-  line-height: 1.2;
-  color: rgba(214, 228, 255, 0.16);
-}
-
-.wof__line {
-  width: min(72%, 16rem);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--brand-blue-glow), 0.5), transparent);
-}
-
-.wof__empty-label {
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--oneb-silver-mute);
-}
-
-.wof__note {
-  margin: 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--oneb-silver-dim);
-}
-
-.wof__progress {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.85rem 1rem 0.8rem;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(var(--brand-blue-glow), 0.38);
-  background:
-    linear-gradient(180deg, rgba(var(--brand-blue-glow), 0.08) 0%, transparent 42%),
-    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 48%, var(--brand-navy-deep) 100%);
-}
-
-.wof__progress-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.wof__progress-row span {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(214, 228, 255, 0.55);
-}
-
-.wof__progress-row strong {
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
-  font-size: 1.1rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--money-green);
-}
-
-.wof__meter {
-  position: relative;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(var(--brand-blue-glow), 0.16);
-  overflow: hidden;
-}
-
-.wof__meter-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  transform-origin: left center;
-  background: linear-gradient(90deg, var(--brand-blue-bright), var(--money-green));
-}
-
-.wof__togo {
-  margin: 0;
-  font-size: 0.66rem;
-  font-weight: 650;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  color: var(--oneb-silver-mute);
-}
-
-.wof__back:focus-visible {
-  outline: 2px solid var(--money-green);
-  outline-offset: 3px;
-}
-
-@keyframes wof-sign {
-  from {
-    clip-path: inset(-30% 100% -30% -12%);
-  }
-  to {
-    clip-path: inset(-30% -12% -30% -12%);
-  }
-}
-
-@media (max-height: 720px) {
-  .wof__frame {
-    gap: 0.75rem;
-  }
-
-  .wof__wall {
-    padding: 1.4rem 0.9rem;
-  }
-
-  .wof__names {
-    gap: 1.1rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-full-motion]) .wof__name.is-you .wof__ink {
-    animation: none;
-  }
-}
-
-/* ── Bank leaderboard ────────────────────────────────────────────────── */
 .lbx-screen {
   --lbx-gold: #f2d38b;
   --lbx-gold-deep: #c99a3c;
@@ -13337,113 +13020,6 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   }
 }
 
-/* Wall of Fame — count, induction dates, compact list for many names */
-.wof__count {
-  margin: 0.35rem 0 0;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(var(--brand-blue-glow), 0.9);
-}
-
-.wof__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.wof__date {
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
-  color: rgba(214, 228, 255, 0.45);
-}
-
-.wof__names--compact {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 1rem 0.6rem;
-  align-self: flex-start;
-}
-
-.wof__names--compact .wof__ink {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: clamp(1.45rem, 6.4vw, 1.85rem);
-}
-
-.wof__wall:has(.wof__names--compact) {
-  align-items: flex-start;
-  padding: 1.25rem 0.75rem;
-}
-
-/* Wall of Fame — milestone ladder in the unsigned state */
-.wof__ladder {
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-  margin: 1.1rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.wof__rung {
-  display: grid;
-  grid-template-columns: 0.6rem 8.4rem 2.4rem;
-  align-items: center;
-  gap: 0.6rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.wof__rung-dot {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
-  border: 1px solid rgba(214, 228, 255, 0.28);
-}
-
-.wof__rung-amount {
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.82rem;
-  font-weight: 750;
-  color: rgba(214, 228, 255, 0.36);
-}
-
-.wof__rung-pct {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: rgba(var(--brand-blue-glow), 1);
-}
-
-.wof__rung.is-reached .wof__rung-dot {
-  border-color: var(--money-green);
-  background: var(--money-green);
-  box-shadow: 0 0 6px rgba(41, 228, 144, 0.6);
-}
-
-.wof__rung.is-reached .wof__rung-amount {
-  color: rgba(41, 228, 144, 0.85);
-}
-
-.wof__rung.is-next .wof__rung-dot {
-  border-color: rgba(var(--brand-blue-glow), 1);
-  box-shadow: 0 0 8px rgba(var(--brand-blue-glow), 0.8);
-}
-
-.wof__rung.is-next .wof__rung-amount {
-  color: #fff;
-}
-
-.wof__rung.is-goal .wof__rung-amount {
-  color: rgba(255, 214, 140, 0.75);
-}
-
 /* Home My Bank — main area opens the Wall of Fame; The Circuit pill sits on the milestone row */
 .run-home__best--bank {
   max-width: 22.5rem;
@@ -14640,206 +14216,24 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   margin-top: auto;
 }
 
-/* Wall of Fame — signing ceremony */
-.wof__wall.is-signing {
-  cursor: text;
-}
-
-.wof__wall.is-revealing {
-  overflow: hidden;
-}
-
-.wof-sign {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-}
-
-.wof-sign__kicker {
-  margin: 0;
-  font-size: 0.56rem;
-  font-weight: 850;
-  letter-spacing: 0.26em;
-  color: rgba(255, 214, 140, 0.85);
-}
-
-/* Scoped past the web-wide 16px input rule; the large size also avoids iOS focus zoom. */
-.wof .wof-sign__input {
-  width: 100%;
-  padding: 0 0.3em;
-  border: 0;
-  outline: none;
-  background: transparent;
-  text-align: center;
-  font-family: var(--font-signature), "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
-  font-size: clamp(2.3rem, 11vw, 3.1rem);
-  font-weight: 400;
-  line-height: 1.25;
-  color: #effff7;
-  caret-color: var(--money-green);
-  text-shadow:
-    0 0 22px rgba(41, 228, 144, 0.42),
-    0 0 2px rgba(41, 228, 144, 0.5);
-  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), text-shadow 0.35s ease;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.wof-sign__input::placeholder {
-  color: rgba(214, 228, 255, 0.24);
-  text-shadow: none;
-}
-
-.wof-sign__input:disabled {
-  color: #effff7;
-  -webkit-text-fill-color: #effff7;
-  opacity: 1;
-}
-
-.wof-sign.is-focused .wof__line {
-  background: linear-gradient(90deg, transparent, rgba(41, 228, 144, 0.8), transparent);
-}
-
-.wof-sign.is-stamping .wof-sign__input {
-  transform: scale(1.06);
-  text-shadow:
-    0 0 34px rgba(41, 228, 144, 0.75),
-    0 0 4px rgba(41, 228, 144, 0.8);
-}
-
-.wof-sign.is-stamping::after {
-  content: "";
-  position: absolute;
-  inset: -1.5rem -1rem;
-  border-radius: 1.2rem;
-  background: radial-gradient(ellipse 50% 45% at 50% 50%, rgba(41, 228, 144, 0.22), transparent 70%);
-  animation: wof-stamp-flash 0.7s ease-out both;
-  pointer-events: none;
-}
-
-.wof-stamp-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.wof-stamp {
-  appearance: none;
-  width: 100%;
-  min-height: 3.2rem;
-  border-radius: var(--oneb-radius, 14px);
-  border: 1.5px solid rgba(255, 214, 180, 0.82);
-  background: linear-gradient(
-    180deg,
-    #ffb06a 0%,
-    var(--basketball-orange-highlight) 42%,
-    var(--basketball-orange) 100%
-  );
-  color: #fff8f3;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1rem;
-  font-weight: 850;
-  letter-spacing: 0.24em;
-  text-shadow: 0 1px 0 rgba(90, 28, 0, 0.35);
-  box-shadow: 0 10px 24px rgba(229, 86, 34, 0.3);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: filter 0.12s ease, opacity 0.2s ease;
-}
-
-.wof-stamp:disabled {
-  opacity: 0.45;
-  cursor: default;
-  box-shadow: none;
-}
-
-.wof-stamp:active:not(:disabled) {
-  filter: brightness(0.9);
-}
-
-.wof-stamp:focus-visible {
-  outline: 2px solid var(--money-green);
-  outline-offset: 3px;
-}
-
-.wof__note--error {
-  color: #ff8f7d;
-}
-
-.wof__name.is-fresh .wof__ink {
-  animation: none;
-  clip-path: none;
-}
-
-.wof-congrats {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 1rem 1rem 0.9rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 214, 140, 0.4);
-  background:
-    radial-gradient(120% 120% at 50% 0%, rgba(255, 214, 140, 0.16) 0%, transparent 60%),
-    linear-gradient(168deg, var(--brand-navy-mid) 0%, var(--brand-navy) 55%, var(--brand-navy-deep) 100%);
-  box-shadow: 0 0 34px rgba(255, 214, 140, 0.14);
-  text-align: center;
-}
-
-.wof-congrats__kicker {
-  margin: 0;
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.3em;
-  color: #ffd27a;
-}
-
-.wof-congrats__title {
-  margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1.3rem;
-  font-weight: 850;
-  line-height: 1.15;
-  color: #fff;
-}
-
-.wof-congrats__sub {
-  margin: 0 0 0.35rem;
-  font-size: 0.74rem;
-  color: var(--oneb-silver-dim);
-}
-
-@keyframes wof-stamp-flash {
-  0% { opacity: 0; transform: scale(0.85); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: scale(1.15); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-full-motion]) .wof-sign.is-stamping::after {
-    animation: none;
-  }
-}
-
 /* =========================================================
    Bet on Yourself — collapsed bar, wager sheet, results
    ========================================================= */
 
+/* Compact pill: one line, sized to its text, centered under the booth. */
 .bet-bar {
   appearance: none;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  width: 100%;
-  min-height: 2.9rem;
-  margin: var(--classic-hub-spin-gap, 0.55rem) 0 0;
-  padding: 0.45rem 0.75rem 0.45rem 0.55rem;
+  align-self: center;
+  gap: 0.4rem;
+  width: fit-content;
+  max-width: min(100%, 19rem);
+  min-height: 2.05rem;
+  margin: var(--classic-hub-spin-gap, 0.45rem) auto 0;
+  padding: 0.18rem 0.6rem 0.18rem 0.22rem;
   box-sizing: border-box;
-  border-radius: 0.85rem;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(3, 16, 44, 0.55);
   color: inherit;
@@ -14883,29 +14277,35 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 50%;
   border: 1px solid rgba(41, 228, 144, 0.35);
   color: var(--money-green);
 }
 
-.bet-bar__mark svg,
+.bet-bar__mark svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
 .bet-row__icon svg {
   width: 1rem;
   height: 1rem;
 }
 
 .bet-bar__text {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.08rem;
+  align-items: baseline;
+  gap: 0.4rem;
+  white-space: nowrap;
 }
 
 .bet-bar__title {
-  font-size: 0.78rem;
+  flex: 0 0 auto;
+  font-size: 0.7rem;
   font-weight: 750;
   color: rgba(234, 242, 255, 0.92);
 }
@@ -14916,10 +14316,11 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 .bet-bar__sub {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.64rem;
+  font-size: 0.6rem;
   color: rgba(214, 228, 255, 0.5);
 }
 
@@ -14929,8 +14330,8 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 
 .bet-bar__chevron {
   flex: 0 0 auto;
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 0.75rem;
+  height: 0.75rem;
   fill: none;
   stroke: rgba(214, 228, 255, 0.55);
   stroke-width: 1.8;

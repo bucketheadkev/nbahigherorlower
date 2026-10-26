@@ -3,7 +3,7 @@
 import { useLocale } from '@/hooks/useLocale';
 
 const COPY = {
-  kicker: { en: 'CASH LEAGUES · OFFICIAL ENTRY', es: 'LIGAS DE EFECTIVO · ENTRADA OFICIAL' },
+  kicker: { en: 'CASH CUPS · OFFICIAL ENTRY', es: 'COPAS DE EFECTIVO · ENTRADA OFICIAL' },
   oneRun: { en: 'One run counts. Make it great.', es: 'Solo cuenta una partida. Que sea grande.' },
   noRerolls: { en: 'Rerolls off · one run counts', es: 'Sin cambios · solo cuenta una partida' },
 };

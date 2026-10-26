@@ -1,0 +1,1440 @@
+/* =========================================================
+   Franchises — carousel, owned-franchise dashboard, roster preview.
+   Team colors arrive as --team / --team-deep / --team-row-end / --team-ink / --team-accent
+   (components/tradeup/ownership/FranchiseParts.tsx → teamTheme).
+   ========================================================= */
+
+.fx__frame {
+  gap: 0.85rem;
+  padding-bottom: max(1.6rem, env(safe-area-inset-bottom));
+}
+
+.fx-icon {
+  flex: 0 0 auto;
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+/* ── Title ── */
+.fx-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.fx-head__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.9rem, 8.6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.fx-head__motto {
+  max-width: 21rem;
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 800;
+  line-height: 1.65;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(150, 200, 255, 0.8);
+}
+
+/* ── Section headers ── */
+.fx-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: 1.1rem;
+}
+
+.fx-sub > span {
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.22em;
+  color: rgba(214, 228, 255, 0.58);
+}
+
+.fx-browse__count {
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.fx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.fx-chip.is-live {
+  color: #3cf09c;
+  background: rgba(41, 228, 144, 0.13);
+}
+
+.fx-chip.is-live::before {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: #3cf09c;
+  box-shadow: 0 0 0 0 rgba(60, 240, 156, 0.6);
+  animation: fx-live 1.8s ease-out infinite;
+}
+
+.fx-chip.is-draft {
+  color: #ffd27a;
+  background: rgba(255, 190, 77, 0.14);
+}
+
+.fx-chip.is-expired {
+  color: #ffb0a8;
+  background: rgba(255, 90, 80, 0.14);
+}
+
+/* ── Notes ── */
+.fx-note {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.fx-note.is-bought,
+.fx-note.is-sold {
+  border: 1px solid rgba(41, 228, 144, 0.45);
+  background: rgba(41, 228, 144, 0.12);
+  color: #c8ffe3;
+}
+
+.fx-error {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  color: #ff9b8f;
+}
+
+/* ── Buttons ── */
+.fx-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, filter 0.14s ease, opacity 0.2s ease;
+}
+
+.fx-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(1.08);
+}
+
+.fx-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.fx-btn:focus-visible,
+.fx-card:focus-visible,
+.fx-own__sell:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.fx-btn--go {
+  background: linear-gradient(180deg, #ff8d33 0%, #f5661c 52%, #db4a0e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 190, 0.5),
+    0 0 14px rgba(255, 110, 30, 0.28),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+}
+
+.fx-btn--collect {
+  background: linear-gradient(180deg, #4ff5ab 0%, #22d886 55%, #12b46c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(220, 255, 236, 0.55),
+    0 0 14px rgba(41, 228, 144, 0.28);
+  color: #03251a;
+}
+
+.fx-btn--ghost {
+  border: 1px solid rgba(214, 228, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #dfe8ff;
+}
+
+.fx-btn--sell {
+  background: linear-gradient(180deg, #ff8d33 0%, #e85a12 100%);
+  color: #ffffff;
+}
+
+/* ── Rules (before purchase) ── */
+.fx-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(60, 120, 255, 0.3);
+  background: linear-gradient(180deg, rgba(12, 28, 64, 0.9) 0%, rgba(6, 16, 40, 0.94) 100%);
+}
+
+.fx-rules__lead {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #eef4ff;
+}
+
+.fx-rules__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fx-rules__chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.64rem;
+  font-weight: 750;
+  color: rgba(222, 234, 255, 0.85);
+}
+
+.fx-rules__chips li::before {
+  content: "";
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 50%;
+  background: var(--money-green);
+}
+
+.fx-rules__formula {
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.45;
+  color: rgba(156, 255, 206, 0.85);
+}
+
+/* ── Pay formula ── */
+.fx-pay-math {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.6rem 0.65rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(2, 10, 26, 0.55);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.fx-pay-math__title {
+  margin: 0;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.fx-pay-math__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.fx-pay-math__rows > div {
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.fx-pay-math__rows dt {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: rgba(214, 228, 255, 0.7);
+}
+
+.fx-pay-math__rows dd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.fx-pay-math__rows dd span {
+  min-width: 0;
+  font-size: 0.6rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.fx-pay-math__rows dd small {
+  font-size: inherit;
+  color: rgba(214, 228, 255, 0.42);
+}
+
+.fx-pay-math__rows dd b {
+  flex: 0 0 auto;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #f2f6ff;
+}
+
+.fx-pay-math__rows dd b.is-money {
+  color: #3cf09c;
+}
+
+.fx-pay-math__note {
+  margin: 0;
+  font-size: 0.58rem;
+  line-height: 1.45;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.fx-fans__how {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.9rem;
+  padding: 0 0.4rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(214, 228, 255, 0.7);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.fx-fans__how svg {
+  width: 0.7rem;
+  height: 0.7rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.fx-fans__how.is-open svg {
+  transform: rotate(180deg);
+}
+
+.fx-fans__math {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Carousel ── */
+.fx-browse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fx-carousel {
+  position: relative;
+  margin: 0 -1.05rem;
+}
+
+.fx-carousel__track {
+  --fx-card-w: min(66vw, 15rem);
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.55rem calc(50% - var(--fx-card-w) / 2) 0.95rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 calc(50% - var(--fx-card-w) / 2);
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+.fx-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.fx-card {
+  appearance: none;
+  position: relative;
+  flex: 0 0 var(--fx-card-w);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 13.4rem;
+  padding: 0.75rem 0.85rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(120% 80% at 90% 0%, rgba(255, 255, 255, 0.16) 0%, transparent 55%),
+    linear-gradient(160deg, var(--team) 0%, var(--team-deep) 56%, #040b1a 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  isolation: isolate;
+  scroll-snap-align: center;
+  transform-origin: center 60%;
+  will-change: transform, opacity;
+  cursor: pointer;
+  touch-action: pan-x pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.fx-card.is-centered {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.45),
+    0 0 26px color-mix(in srgb, var(--team) 40%, transparent);
+}
+
+.fx-card.is-owned {
+  border-color: rgba(60, 240, 156, 0.75);
+}
+
+.fx-card__mark {
+  position: absolute;
+  right: -0.35rem;
+  bottom: 2.4rem;
+  z-index: -1;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 5.4rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.fx-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.fx-card__tier,
+.fx-card__owned {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fx-card__tier {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.fx-card--iconic .fx-card__tier {
+  border-color: rgba(255, 211, 107, 0.7);
+  color: #ffd36b;
+}
+
+.fx-card--legendary .fx-card__tier {
+  border-color: rgba(230, 214, 255, 0.55);
+  color: #e6d6ff;
+}
+
+.fx-card__owned {
+  background: #29e490;
+  color: #03251a;
+}
+
+.fx-card__crest {
+  width: 2.75rem;
+  height: auto;
+  margin: 0.6rem 0 0.4rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.fx-card__city {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.fx-card__name {
+  max-width: 100%;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 850;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  overflow-wrap: anywhere;
+}
+
+.fx-card__titles {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #ffd36b;
+}
+
+.fx-card__price {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.fx-card__price em {
+  font-style: normal;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.fx-card__price b {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-card__price small {
+  font-size: 0.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #9dffd0;
+}
+
+.fx-carousel__nav {
+  display: none;
+}
+
+/* Mouse and trackpad: arrows beside the carousel. Touch swipes. */
+@media (hover: hover) and (pointer: fine) {
+  .fx-carousel__nav {
+    appearance: none;
+    position: absolute;
+    top: calc(50% - 1.2rem);
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: rgba(6, 16, 40, 0.86);
+    color: #ffffff;
+    font: inherit;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .fx-carousel__nav.is-prev {
+    left: 0.6rem;
+  }
+
+  .fx-carousel__nav.is-next {
+    right: 0.6rem;
+  }
+
+  .fx-carousel__nav:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* ── Buy panel ── */
+.fx-buy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 4.6rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 16, 38, 0.78);
+  box-sizing: border-box;
+}
+
+.fx-buy__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 3.2rem;
+}
+
+.fx-buy__note {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(214, 228, 255, 0.75);
+}
+
+.fx-buy__note.is-yours {
+  color: #3cf09c;
+}
+
+.fx-buy__prompt {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  color: #f2f6ff;
+}
+
+.fx-buy__fine {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 650;
+  text-align: center;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.fx-buy__row,
+.fx-sell__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 0.5rem;
+}
+
+/* ── Owned franchise dashboard ── */
+.fx-own {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.95rem 0.85rem 0.55rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(130% 55% at 0% 0%, color-mix(in srgb, var(--team) 34%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(14, 28, 58, 0.97) 0%, rgba(4, 11, 26, 0.98) 100%);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.fx-own__glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--team), var(--team-accent));
+}
+
+.fx-own.is-new {
+  animation: fx-owned 1.8s ease-out 1;
+}
+
+.fx-own__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.fx-own__crest {
+  width: 3rem;
+  height: auto;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+
+.fx-own__id {
+  min-width: 0;
+}
+
+.fx-own__city {
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.fx-own__name {
+  margin: 0.05rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.fx-own__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.55rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.fx-own__titles {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  font-weight: 850;
+  color: #ffd36b;
+}
+
+.fx-own__paid {
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+/* Hourly paycheck — top right, green */
+.fx-pay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 3.9rem;
+}
+
+.fx-pay__ring {
+  width: 3.2rem;
+  height: 3.2rem;
+  transform: rotate(-90deg);
+}
+
+.fx-pay__track,
+.fx-pay__fill {
+  fill: none;
+  stroke-width: 3;
+}
+
+.fx-pay__track {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.fx-pay__fill {
+  stroke: rgba(214, 228, 255, 0.25);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.fx-pay.is-live .fx-pay__fill {
+  stroke: #3cf09c;
+  filter: drop-shadow(0 0 3px rgba(60, 240, 156, 0.55));
+}
+
+.fx-pay__time {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  height: 3.2rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(214, 228, 255, 0.45);
+}
+
+.fx-pay.is-live .fx-pay__time {
+  color: #eafff4;
+}
+
+.fx-pay__label {
+  margin-top: 0.22rem;
+  font-size: 0.42rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.fx-pay.is-live .fx-pay__label {
+  color: #3cf09c;
+}
+
+/* Total fans — the headline */
+.fx-fans {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 0.75rem 0.75rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(41, 228, 144, 0.2);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(41, 228, 144, 0.12) 0%, transparent 70%),
+    rgba(3, 14, 32, 0.55);
+}
+
+.fx-fans__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0;
+  max-width: 100%;
+}
+
+.fx-fans__icon {
+  flex: 0 0 auto;
+  width: 1.7rem;
+  height: 1.7rem;
+  color: #3cf09c;
+}
+
+.fx-fans.is-live .fx-fans__icon {
+  animation: fx-fans 2.8s ease-in-out infinite;
+}
+
+.fx-fans__num {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.75rem, 9vw, 2.55rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(41, 228, 144, 0.22);
+}
+
+.fx-fans__word {
+  align-self: flex-end;
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #3cf09c;
+}
+
+.fx-fans__rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.24rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(41, 228, 144, 0.14);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.12rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+}
+
+.fx-fans__per {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.fx-fans__hint {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.fx-fans:not(.is-live) .fx-fans__num {
+  color: rgba(234, 242, 255, 0.55);
+  text-shadow: none;
+}
+
+.fx-fans.is-expired .fx-fans__hint {
+  color: #ffb0a8;
+}
+
+/* Starting five — every row in the owned franchise's colors */
+.fx-own__five {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fx-five {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fx-five__row {
+  display: grid;
+  grid-template-columns: 1.85rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.3rem;
+  padding: 0.3rem 0.65rem 0.3rem 0.7rem;
+  border-radius: 0.6rem;
+  background: linear-gradient(100deg, var(--team) 0%, var(--team) 45%, var(--team-row-end) 100%);
+  box-shadow:
+    inset 3px 0 0 var(--team-accent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  color: var(--team-ink);
+  box-sizing: border-box;
+  animation: fx-row-in 0.42s cubic-bezier(0.22, 0.7, 0.25, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+.fx-five__pos {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+.fx-five__name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fx-five__fans {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.fx-five__fans-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.fx-five__row.is-empty {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(214, 228, 255, 0.14);
+  color: rgba(214, 228, 255, 0.42);
+}
+
+.fx-five__row.is-empty .fx-five__name {
+  font-weight: 650;
+  font-size: 0.82rem;
+}
+
+.fx-five.is-faded .fx-five__row {
+  filter: saturate(0.4) brightness(0.72);
+}
+
+.fx-own__cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fx-own__note {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 650;
+  text-align: center;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+/* Operations */
+.fx-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(3, 12, 30, 0.6);
+}
+
+.fx-ops__grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.fx-ops__grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.1rem 0.15rem;
+}
+
+.fx-ops__grid dt {
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.fx-ops__grid dd {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #f2f6ff;
+}
+
+.fx-ops__grid dd.is-money {
+  color: #3cf09c;
+}
+
+.fx-ops__grid dd small {
+  font-size: 0.78rem;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+/* 48-hour roster clock — near the bottom, orange, reads in hours */
+.fx-roster {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem 0.45rem;
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 138, 31, 0.3);
+  background: rgba(255, 128, 20, 0.07);
+  color: #ffc48f;
+}
+
+.fx-roster__icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.fx-roster__label {
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+}
+
+.fx-roster__time {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #ffe1c4;
+}
+
+.fx-roster__bar {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.fx-roster__bar i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8a1f, #ffb35c);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+
+.fx-roster__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.fx-roster.is-expired {
+  border-color: rgba(255, 100, 90, 0.35);
+  background: rgba(255, 80, 70, 0.07);
+  color: #ffb0a8;
+}
+
+/* Sell — secondary, always reachable */
+.fx-own__sell {
+  appearance: none;
+  align-self: center;
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  color: rgba(214, 228, 255, 0.55);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.fx-own__sell:disabled {
+  opacity: 0.45;
+}
+
+.fx-sell {
+  overflow: hidden;
+}
+
+.fx-sell__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.4rem;
+  padding: 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 138, 31, 0.4);
+  background: rgba(40, 16, 4, 0.5);
+}
+
+.fx-sell__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 850;
+  color: #ffe2c8;
+}
+
+.fx-sell__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.fx-sell__rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.fx-sell__rows dt {
+  font-size: 0.72rem;
+  color: rgba(255, 226, 200, 0.75);
+}
+
+.fx-sell__rows dd {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.fx-sell__total {
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fx-sell__total dd {
+  font-size: 1rem;
+  color: var(--money-green);
+}
+
+.fx-sell__effect {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #ffc28a;
+}
+
+/* ── Draft: roster preview ── */
+.frd-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: 0.85rem 0.8rem 0.9rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(130% 50% at 0% 0%, color-mix(in srgb, var(--team) 32%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(14, 28, 58, 0.97) 0%, rgba(4, 11, 26, 0.98) 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+}
+
+.frd-review__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.frd-review__crest {
+  width: 2.4rem;
+  height: auto;
+}
+
+.frd-review__kicker {
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.22em;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.frd-review__team {
+  margin: 0.1rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 850;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.frd-review__fans {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.6rem 0.65rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(41, 228, 144, 0.2);
+  background: rgba(3, 14, 32, 0.55);
+}
+
+.frd-review__count {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.6rem, 8vw, 2.15rem);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.frd-review__word {
+  align-self: flex-end;
+  margin-bottom: 0.2rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: #3cf09c;
+}
+
+.frd-review__icon {
+  width: 1.45rem;
+  height: 1.45rem;
+  color: #3cf09c;
+}
+
+.frd-review__rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(41, 228, 144, 0.14);
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.02rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+}
+
+.frd-review__note {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(214, 228, 255, 0.62);
+}
+
+.frd-review__lock {
+  appearance: none;
+  min-height: 3.15rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4ff5ab 0%, #22d886 55%, #12b46c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(220, 255, 236, 0.55),
+    0 8px 22px rgba(41, 228, 144, 0.3);
+  color: #03251a;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, filter 0.14s ease;
+}
+
+.frd-review__lock:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(1.06);
+}
+
+.frd-review__lock:disabled {
+  opacity: 0.6;
+}
+
+/* ── Motion ── */
+@keyframes fx-row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+}
+
+@keyframes fx-fans {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.06);
+  }
+}
+
+@keyframes fx-live {
+  0% {
+    box-shadow: 0 0 0 0 rgba(60, 240, 156, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 6px rgba(60, 240, 156, 0);
+  }
+}
+
+@keyframes fx-owned {
+  0% {
+    box-shadow: 0 0 0 0 rgba(41, 228, 144, 0.55), 0 18px 40px rgba(0, 0, 0, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(41, 228, 144, 0), 0 18px 40px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .fx-five__row,
+  html:not([data-full-motion]) .fx-fans__icon,
+  html:not([data-full-motion]) .fx-chip.is-live::before,
+  html:not([data-full-motion]) .fx-own.is-new {
+    animation: none;
+  }
+}
+
+/* ── Small phones ── */
+@media (max-width: 360px) {
+  .fx-carousel__track {
+    --fx-card-w: 72vw;
+  }
+
+  .fx-own {
+    padding-inline: 0.7rem;
+  }
+
+  .fx-own__top {
+    gap: 0.5rem;
+  }
+
+  .fx-own__crest {
+    width: 2.5rem;
+  }
+
+  .fx-own__name {
+    font-size: 1.3rem;
+  }
+
+  .fx-five__name {
+    font-size: 0.86rem;
+  }
+
+  .fx-five__fans {
+    font-size: 0.66rem;
+  }
+}

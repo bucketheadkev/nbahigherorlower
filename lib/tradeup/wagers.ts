@@ -14,10 +14,8 @@ export const WAGER_MAX_TEAM_TARGET = 1_025_000_000;
  * so High Roller uses the highest target that is realistically attainable (~0.7% of runs).
  */
 export const HIGH_ROLLER_TARGET = 1_010_000_000;
-/** No single wager can return more than this, so long shots carry smaller maximum stakes. */
-export const MAX_WAGER_RETURN = 50_000_000;
 export const MAX_WAGERS_PER_RUN = 3;
-export const STAKE_STEPS = [100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000] as const;
+export const STAKE_STEPS = [100_000, 250_000, 500_000, 1_000_000, 2_500_000, 5_000_000, 10_000_000] as const;
 export const MAX_STAKE = STAKE_STEPS[STAKE_STEPS.length - 1]!;
 
 export type WagerId =
@@ -25,7 +23,6 @@ export type WagerId =
   | 'star_hunter'
   | 'dynamic_duo'
   | 'no_rerolls'
-  | 'clutch_pick'
   | 'superteam'
   | 'triple_threat'
   | 'high_roller';
@@ -49,7 +46,9 @@ export interface WagerDef {
   target: string;
   /** Multiplier in hundredths (2.5× = 250). Total return = stake × multiplier. */
   multiplierX100: number;
-  icon: 'billion' | 'star' | 'duo' | 'lock' | 'clutch' | 'team' | 'triple' | 'crown';
+  /** Largest stake step allowed (mirrors wager_catalog.max_stake). */
+  maxStake: number;
+  icon: 'billion' | 'star' | 'duo' | 'lock' | 'team' | 'triple' | 'crown';
   wins: (facts: WagerRunFacts) => boolean;
 }
 
@@ -61,14 +60,13 @@ const count = (values: number[], min: number) => values.filter((v) => v >= min).
  * prices; best of six draft strategies per wager), priced at about a 10% house edge:
  * multiplier ≈ 0.9 / P(win). The two long shots are capped below their fair price.
  *
- *   Billion or Bust  ~2.2%  → 20×  (fair ≈ 40×, capped)
+ *   Billion or Bust  ~2.2%  → 20×  (fair ≈ 40×, capped) · stakes up to $10,000,000
  *   Star Hunter      ~78%   → 1.15×
  *   Dynamic Duo      ~88%   → 1.05×
- *   No Rerolls       ~54%   → 1.6×
- *   Clutch Pick      ~33%   → 2.7×
- *   Superteam        ~61%   → 1.45×
+ *   No Rerolls       ~54%   → 1.3×  (cut from 1.6×)
+ *   Superteam        5 × $190,000,000 → 1.45× (bar raised from $170,000,000, multiplier kept)
  *   Triple Threat    ~90%   → 1.05× (rounded up from 1.0×; ~95% return)
- *   High Roller      ~0.7%  → 40×  (fair ≈ 120×, capped)
+ *   High Roller      ~0.7%  → 40×  (fair ≈ 120×, capped) · stakes up to $1,000,000
  */
 export const WAGERS: readonly WagerDef[] = [
   {
@@ -77,6 +75,7 @@ export const WAGERS: readonly WagerDef[] = [
     rule: 'Finish with a team worth $1,000,000,000 or more.',
     target: '$1,000,000,000',
     multiplierX100: 2000,
+    maxStake: 10_000_000,
     icon: 'billion',
     wins: (f) => f.total >= 1_000 * M,
   },
@@ -86,6 +85,7 @@ export const WAGERS: readonly WagerDef[] = [
     rule: 'Draft at least one player worth $200,000,000 or more.',
     target: '1 × $200,000,000',
     multiplierX100: 115,
+    maxStake: 5_000_000,
     icon: 'star',
     wins: (f) => count(f.draftValues, 200 * M) >= 1,
   },
@@ -95,6 +95,7 @@ export const WAGERS: readonly WagerDef[] = [
     rule: 'Draft two players worth $190,000,000 or more each.',
     target: '2 × $190,000,000',
     multiplierX100: 105,
+    maxStake: 5_000_000,
     icon: 'duo',
     wins: (f) => count(f.draftValues, 190 * M) >= 2,
   },
@@ -103,27 +104,20 @@ export const WAGERS: readonly WagerDef[] = [
     name: 'No Rerolls',
     rule: 'Reach $900,000,000 without using a team or era reroll.',
     target: '$900,000,000 · no rerolls',
-    multiplierX100: 160,
+    multiplierX100: 130,
+    maxStake: 5_000_000,
     icon: 'lock',
     wins: (f) => !f.rerollsUsed && f.total >= 900 * M,
   },
   {
-    id: 'clutch_pick',
-    name: 'Clutch Pick',
-    rule: 'Your fifth and final pick is worth $190,000,000 or more.',
-    target: '5th pick ≥ $190,000,000',
-    multiplierX100: 270,
-    icon: 'clutch',
-    wins: (f) => f.draftValues.length >= 5 && f.draftValues[4]! >= 190 * M,
-  },
-  {
     id: 'superteam',
     name: 'Superteam',
-    rule: 'All five players are worth $170,000,000 or more.',
-    target: '5 × $170,000,000',
+    rule: 'All five players are worth $190,000,000 or more.',
+    target: '5 × $190,000,000',
     multiplierX100: 145,
+    maxStake: 5_000_000,
     icon: 'team',
-    wins: (f) => f.draftValues.length >= 5 && count(f.draftValues, 170 * M) >= 5,
+    wins: (f) => f.draftValues.length >= 5 && count(f.draftValues, 190 * M) >= 5,
   },
   {
     id: 'triple_threat',
@@ -131,6 +125,7 @@ export const WAGERS: readonly WagerDef[] = [
     rule: 'Draft three players worth $185,000,000 or more each.',
     target: '3 × $185,000,000',
     multiplierX100: 105,
+    maxStake: 5_000_000,
     icon: 'triple',
     wins: (f) => count(f.draftValues, 185 * M) >= 3,
   },
@@ -140,6 +135,7 @@ export const WAGERS: readonly WagerDef[] = [
     rule: 'Finish with a team worth $1,010,000,000 or more.',
     target: '$1,010,000,000',
     multiplierX100: 4000,
+    maxStake: 1_000_000,
     icon: 'crown',
     wins: (f) => f.total >= HIGH_ROLLER_TARGET,
   },
@@ -151,11 +147,9 @@ export function isWagerId(value: unknown): value is WagerId {
   return typeof value === 'string' && value in WAGER_BY_ID;
 }
 
-/** Largest allowed stake for a wager (its return can't exceed MAX_WAGER_RETURN). */
+/** Largest allowed stake for a wager. */
 export function maxStakeFor(id: WagerId): number {
-  const mult = WAGER_BY_ID[id].multiplierX100;
-  const allowed = STAKE_STEPS.filter((stake) => wagerReturn(stake, mult) <= MAX_WAGER_RETURN);
-  return allowed.length > 0 ? allowed[allowed.length - 1]! : STAKE_STEPS[0];
+  return WAGER_BY_ID[id].maxStake;
 }
 
 /** Total return (stake included) in whole dollars. */

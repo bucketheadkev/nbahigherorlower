@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     '192.168.1.232:3000',
   ],
   outputFileTracingRoot: process.cwd(),
+  // The floating dev-tools badge sits over the tab bar; it is not part of the game UI.
+  devIndicators: false,
   images: {
     // Required for static export / Capacitor; fine for local web play too.
     unoptimized: true,

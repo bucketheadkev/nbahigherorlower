@@ -26078,7 +26078,7 @@ body:has(.oneb-intro) {
   bottom: 0;
   z-index: 70;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
   justify-items: center;
   gap: 0;

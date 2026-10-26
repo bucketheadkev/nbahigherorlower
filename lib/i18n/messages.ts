@@ -5,6 +5,7 @@ export type MessageKey =
   | 'nav.play'
   | 'nav.challenges'
   | 'nav.leaderboard'
+  | 'nav.rank'
   | 'nav.main'
   | 'lang.switchToEn'
   | 'lang.switchToEs'
@@ -37,15 +38,11 @@ export type MessageKey =
   | 'home.nextMilestone'
   | 'home.wallReached'
   | 'home.circuit'
+  | 'home.circuitDesc'
+  | 'home.franchises'
+  | 'home.franchisesDesc'
+  | 'home.myFranchise'
   | 'home.playButton'
-  | 'bank.kicker'
-  | 'bank.heading'
-  | 'bank.newBalance'
-  | 'bank.collect'
-  | 'bank.more'
-  | 'bank.gameCash'
-  | 'bank.runBonusTier'
-  | 'bank.runBonusLine'
   | 'splash.loading'
   | 'game.home'
   | 'game.goal'
@@ -142,6 +139,7 @@ const EN: Record<MessageKey, string> = {
   'nav.play': 'Play',
   'nav.challenges': 'Achievements',
   'nav.leaderboard': 'Leaderboard',
+  'nav.rank': 'My Rank',
   'nav.main': 'Main',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -173,16 +171,12 @@ const EN: Record<MessageKey, string> = {
   'home.wallOfFame': 'Wall of Fame',
   'home.nextMilestone': 'Next milestone {amount}',
   'home.wallReached': 'Wall of Fame unlocked',
-  'home.circuit': 'Cash Leagues',
+  'home.circuit': 'Cash Cups',
+  'home.circuitDesc': 'Every 2 hours',
+  'home.franchises': 'Franchises',
+  'home.franchisesDesc': 'Own a team',
+  'home.myFranchise': 'My Franchise',
   'home.playButton': 'PLAY',
-  'bank.kicker': 'CASH EARNED',
-  'bank.heading': 'Deposited to your Bank',
-  'bank.newBalance': 'New balance',
-  'bank.collect': 'Collect',
-  'bank.more': '+{count} more achievements',
-  'bank.gameCash': 'Game cash · not real money',
-  'bank.runBonusTier': 'RUN BONUS',
-  'bank.runBonusLine': '{total} run',
   'splash.loading': 'LOADING',
   'game.home': '← Home',
   'game.goal': 'GOAL',
@@ -301,6 +295,7 @@ const ES: Record<MessageKey, string> = {
   'nav.play': 'Jugar',
   'nav.challenges': 'Logros',
   'nav.leaderboard': 'Clasificación',
+  'nav.rank': 'Mi Rango',
   'nav.main': 'Principal',
   'lang.switchToEn': 'Switch to English',
   'lang.switchToEs': 'Cambiar a español',
@@ -332,16 +327,12 @@ const ES: Record<MessageKey, string> = {
   'home.wallOfFame': 'Muro de la Fama',
   'home.nextMilestone': 'Próxima meta {amount}',
   'home.wallReached': 'Muro de la Fama desbloqueado',
-  'home.circuit': 'Ligas de efectivo',
+  'home.circuit': 'Copas de efectivo',
+  'home.circuitDesc': 'Cada 2 horas',
+  'home.franchises': 'Franquicias',
+  'home.franchisesDesc': 'Ten tu equipo',
+  'home.myFranchise': 'Mi franquicia',
   'home.playButton': 'JUGAR',
-  'bank.kicker': 'EFECTIVO GANADO',
-  'bank.heading': 'Depositado en tu Banco',
-  'bank.newBalance': 'Nuevo saldo',
-  'bank.collect': 'Cobrar',
-  'bank.more': '+{count} logros más',
-  'bank.gameCash': 'Dinero del juego · no es dinero real',
-  'bank.runBonusTier': 'BONO DE CORRIDA',
-  'bank.runBonusLine': 'Corrida de {total}',
   'splash.loading': 'CARGANDO',
   'game.home': '← Inicio',
   'game.goal': 'META',
