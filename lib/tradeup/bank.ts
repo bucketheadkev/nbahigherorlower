@@ -2,8 +2,8 @@
  * In-game Bank. Game cash only — not real money.
  *
  * The balance is achievement rewards (derived from the local + cloud achievement save,
- * so one challenge never pays twice) plus an on-device ledger for Classic run bonuses
- * and guest Cash Table bets.
+ * so one challenge never pays twice) plus an on-device ledger for guest Rollover, Run Bonuses
+ * and rank rewards.
  */
 
 import { getBillionRuns } from './billionRuns';
@@ -80,15 +80,22 @@ function completedIds(list: ChallengeProgress[] = buildChallengeProgressList()):
 }
 
 /**
- * On-device Cash movements beyond achievements (surplus, guest Bet on Yourself slips).
- * Signed-in players' authoritative balance is the server ledger.
+ * On-device Cash movements beyond achievements (Rollover, Run Bonuses, rank rewards). The
+ * cash_table_* kinds are history from the retired guest wagers. Signed-in players'
+ * authoritative balance is the server ledger.
  */
 export const LOCAL_LEDGER_STORAGE_KEY = 'oneb_bank_ledger_v1';
 
 export interface LocalLedgerEntry {
   ref: string;
   amount: number;
-  kind: 'classic_run_bonus' | 'cash_table_wager' | 'cash_table_payout' | 'cash_table_refund' | 'rank_reward';
+  kind:
+    | 'classic_run_bonus'
+    | 'run_bonus'
+    | 'rank_reward'
+    | 'cash_table_wager'
+    | 'cash_table_payout'
+    | 'cash_table_refund';
   at: number;
 }
 

@@ -69,7 +69,7 @@ const HOW_VALUES_EN: GuidePageContent = {
   title: 'How Values Work',
   tagline: 'Every player has a tier. Higher tier, higher dollars.',
   pricing:
-    'In 1B Run, a player’s value is based on their peak in that decade. At their primary position they keep full value; anywhere else, they’re worth 6% less.',
+    'In 1B Run, a player’s value is based on their peak in that decade. At their primary position they keep full value; anywhere else, they’re worth 3% less.',
   tiers: [
     { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Bench' },
     { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotation' },
@@ -110,7 +110,7 @@ const HOW_VALUES_ES: GuidePageContent = {
   title: 'Cómo funcionan los valores',
   tagline: 'Cada jugador tiene un tier. Más alto = más dólares.',
   pricing:
-    'En 1B Run, el valor de un jugador se basa en su pico en esa década. En su posición principal conserva el valor completo; en cualquier otra, vale un 6% menos.',
+    'En 1B Run, el valor de un jugador se basa en su pico en esa década. En su posición principal conserva el valor completo; en cualquier otra, vale un 3% menos.',
   tiers: [
     { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Banquillo' },
     { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotación' },

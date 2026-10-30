@@ -1,17 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Locale } from '@/lib/i18n/messages';
-import { hapticLight, hapticTap } from '@/lib/tradeup/haptics';
-import {
-  payoutFor,
-  rollMultiplier,
-  type SurplusChoice,
-  type SurplusState,
-} from '@/lib/tradeup/surplusSpin';
+import { hapticTap } from '@/lib/tradeup/haptics';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
-import { SurplusDecision } from '../surplus/SurplusDecision';
+import { RolloverPanel } from '../run/RolloverPanel';
 import { FINISH, topLegends, WELCOME, type ShowcaseLegend } from './introData';
 import { pick } from './onboardingCopy';
 import { EASE_OUT, TickerNumber } from './ticker';
@@ -138,43 +132,20 @@ export function WelcomeScene({
 }
 
 /**
- * Draft tray after the demo crosses $1B: practice Bank-or-Risk on the real Classic odds
- * (`rollMultiplier`), then Get Started. Nothing is stored, credited, or debited.
+ * Draft tray after the demo crosses $1B: the Rollover every Classic Run pays above $1B, then
+ * Get Started. Nothing is stored or credited.
  */
 export function DemoFinish({
-  surplus,
-  teamValue,
+  rollover,
   locale,
   reduceMotion,
   onFinish,
 }: {
-  surplus: number;
-  teamValue: number;
+  rollover: number;
   locale: Locale;
   reduceMotion: boolean;
   onFinish: () => void;
 }) {
-  const [state, setState] = useState<SurplusState | null>(null);
-  const [round, setRound] = useState(0);
-
-  const choose = useCallback(
-    async (choice: SurplusChoice): Promise<SurplusState> => {
-      const tenths = choice === 'spin' ? rollMultiplier() : 10;
-      const next: SurplusState = {
-        status: 'resolved',
-        runRef: `intro_demo_${round}`,
-        runValue: teamValue,
-        surplus,
-        choice,
-        multiplierTenths: tenths,
-        payout: choice === 'spin' ? payoutFor(surplus, tenths) : surplus,
-      };
-      setState(next);
-      return next;
-    },
-    [round, surplus, teamValue],
-  );
-
   return (
     <motion.div
       key="finish"
@@ -183,35 +154,11 @@ export function DemoFinish({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: EASE_OUT }}
     >
-      <SurplusDecision
-        key={round}
-        demo
-        surplus={surplus}
-        mode="local"
-        state={state}
-        busy={false}
-        error={null}
-        reduceMotion={reduceMotion}
-        onChoose={choose}
-        onRetry={() => undefined}
-      />
+      <RolloverPanel amount={rollover} reduceMotion={reduceMotion} />
       <div className="intro-finish__row">
-        {state ? (
-          <button
-            type="button"
-            className="intro-finish__again"
-            onClick={() => {
-              hapticLight();
-              setState(null);
-              setRound((r) => r + 1);
-            }}
-          >
-            {pick(FINISH.again, locale)}
-          </button>
-        ) : null}
         <button
           type="button"
-          className={`intro__cta intro-finish__start${state ? ' is-ready' : ''}`}
+          className="intro__cta intro-finish__start is-ready"
           onClick={() => {
             hapticTap();
             onFinish();

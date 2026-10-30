@@ -22,9 +22,15 @@ const COPY = {
     es: "El rango más alto de 1B Run.",
   },
   you: { en: "YOU", es: "TÚ" },
+  nextReward: { en: "NEXT RANK REWARD", es: "PREMIO DEL PRÓXIMO RANGO" },
+  rewardNote: {
+    en: "Paid to your Bank the moment you reach {rank}. Once per rank, forever.",
+    es: "Se paga a tu Banco en cuanto llegas a {rank}. Una vez por rango, para siempre.",
+  },
+  collected: { en: "Collected", es: "Cobrado" },
   note: {
-    en: "Your rank is set by the most money you’ve ever had in your Bank. Spending never lowers it.",
-    es: "Tu rango depende de lo máximo que has tenido en tu Banco. Gastar nunca lo baja.",
+    en: "Your rank is set by the most money you’ve ever had in your Bank. Spending never lowers it. Every new rank pays a one-time reward.",
+    es: "Tu rango depende de lo máximo que has tenido en tu Banco. Gastar nunca lo baja. Cada rango nuevo paga un premio único.",
   },
 } satisfies Record<string, Copy>;
 
@@ -82,6 +88,19 @@ export function RankScreen() {
                 {pick(COPY.best, locale)} <strong>{formatCash(peak)}</strong>
               </p>
             </section>
+
+            {next ? (
+              <section
+                className="rank2-reward"
+                style={{ "--next-color": next.color } as CSSProperties}
+              >
+                <p className="rank2-reward__label">{pick(COPY.nextReward, locale)}</p>
+                <p className="rank2-reward__amount">+{formatCash(next.reward)}</p>
+                <p className="rank2-reward__note">
+                  {pick(COPY.rewardNote, locale).replace("{rank}", rankName(next, locale))}
+                </p>
+              </section>
+            ) : null}
 
             {next ? (
               <section
@@ -145,6 +164,11 @@ export function RankScreen() {
                       {def.minBank === 0
                         ? "$0+"
                         : `${formatCash(def.minBank)}+`}
+                      {def.reward > 0 ? (
+                        <em className={`rank2-step__reward${reached ? " is-collected" : ""}`}>
+                          {reached ? `${pick(COPY.collected, locale)} · ` : ""}+{formatCash(def.reward)}
+                        </em>
+                      ) : null}
                     </span>
                     {current ? (
                       <em className="rank2-step__you">

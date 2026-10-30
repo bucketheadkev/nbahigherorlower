@@ -35,19 +35,14 @@ import {
   getWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
 import { submitVerifiedClassicLineup } from '@/lib/account/leaderboardCloud';
-import {
-  beginWagerRun,
-  getSlipState,
-  lockDraftForRun,
-  rememberServerSettle,
-  settleLocalSlip,
-  settleServerSlip,
-} from '@/lib/tradeup/wagerSlip';
-import type { WagerRunFacts } from '@/lib/tradeup/wagers';
 import { markPayoutsCelebrated } from '@/lib/tradeup/bank';
-import { openLocalSurplus } from '@/lib/tradeup/surplusSpin';
+import { payLocalRollover } from '@/lib/tradeup/rollover';
+import { runBonusFacts } from '@/lib/tradeup/runBonuses';
+import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
+import { settleRunBonus } from '@/lib/account/runBonusCloud';
+import { useRunBonus } from '@/hooks/useRunBonus';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
-import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
+import { contrastOnPrimary, getTeamColors, teamRingColor } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
 import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
 import { measureDraftSlam, measureDraftPlayerOrigin, measureDraftSlotTarget } from '@/lib/tradeup/draftSlamRects';
@@ -57,11 +52,10 @@ import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
 import { BallionTicketMachine } from './BallionTicketMachine';
-import { BetOnYourself } from './wagers/BetOnYourself';
-import type { RunWagers } from './wagers/WagerResults';
+import { RunBonusCard } from './run/RunBonusCard';
 import { CircuitRunCard } from './circuit/CircuitRunCard';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
-import { RunEarnings, type RunEarningsData } from './surplus/RunEarnings';
+import { RunEarnings, type RunEarningsData, type RunBonusOutcome } from './run/RunEarnings';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly';
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ClassicRosterReveal } from './ClassicRosterReveal';
@@ -234,7 +228,7 @@ export function BillionTradeEngine({
   const isFranchise = challengeMode === 'franchise' && Boolean(franchise);
   /** Picks and moves are saved by the parent (1V1 room or Franchise cycle). */
   const isSynced = isOnline || isFranchise;
-  /** A real Classic Run: wagers, run records, achievements, surplus. */
+  /** A real Classic Run: Run Bonus, run records, achievements, Rollover. */
   const isClassicRun = !isH2H && !isSynced;
   /** Classic Run draft chrome (vertical five + hub/pick) — also used for online 1v1. */
   const useClassicDraftChrome = !isH2H;
@@ -291,17 +285,17 @@ export function BillionTradeEngine({
   // Circuit entries submit under the server-issued attempt id.
   const runRefRef = useRef<string | null>(circuit?.attemptId ?? null);
   const runRecordedRef = useRef(false);
-  /** Player ids in the order they were drafted (moves don't reorder). */
-  const draftOrderRef = useRef<string[]>([]);
   const [runStarted, setRunStarted] = useState(false);
   const [earnings, setEarnings] = useState<RunEarningsData | null>(null);
   const { state: account } = useAccountAuth();
-  const accountStatusRef = useRef(account.status);
-  accountStatusRef.current = account.status;
 
-  useEffect(() => {
-    if (isClassicRun) beginWagerRun();
-  }, [isClassicRun]);
+  /** This run's one optional objective (Classic runs only — never Cash Cups). */
+  const runBonus = useRunBonus(
+    isClassicRun && !circuit,
+    account.status === 'loading' ? null : account.status === 'permanent',
+  );
+  const runBonusRef = useRef(runBonus);
+  runBonusRef.current = runBonus;
   const teamRerollUsedRef = useRef(false);
   const eraRerollUsedRef = useRef(false);
   /** Blocks select/reroll/slot commits until placement finishes or table resets. */
@@ -379,6 +373,10 @@ export function BillionTradeEngine({
   const filled = useMemo(() => rosterList(slots), [slots]);
   const teamValue = useMemo(() => sumTeamValue(filled), [filled]);
   const filledCount = filled.length;
+  const seatedValues = useMemo(
+    () => pricedLineup(slots).map((p) => ({ playerId: p.id, value: p.dollarValue })),
+    [slots],
+  );
 
   useEffect(() => {
     if (!isOnline || !onOnlineProgress) return;
@@ -409,10 +407,8 @@ export function BillionTradeEngine({
   const handleTicketPrint = useCallback(() => {
     if (phase !== 'draft' || evalStartedRef.current) return;
     if (!runStarted && isClassicRun && !circuit) {
-      // First spin of a Classic Run: lock any Bet on Yourself wagers before anything is revealed.
       setRunStarted(true);
       runRefRef.current ??= newRunRef();
-      void lockDraftForRun(runRefRef.current, accountStatusRef.current === 'permanent');
     }
     resume();
     // Keep AudioContext warm on the Print gesture (shared Classic + 1V1 path).
@@ -563,7 +559,6 @@ export function BillionTradeEngine({
 
       const nextSlots: RosterSlots = { ...slots, [targetSlot]: player };
       const full = LINEUP_POSITIONS.every((pos) => nextSlots[pos]);
-      if (!draftOrderRef.current.includes(player.id)) draftOrderRef.current.push(player.id);
       setSlots(nextSlots);
       setSelectedOfferId(null);
       setMovingFrom(null);
@@ -668,45 +663,46 @@ export function BillionTradeEngine({
     return runRefRef.current;
   }, []);
 
-  /** Wager facts from the final seats, in draft order, with the run's reroll use. */
-  const wagerFacts = useCallback((finalSlots: RosterSlots, total: number): WagerRunFacts => {
-    const seated = new Map(pricedLineup(finalSlots).map((p) => [p.id, p.dollarValue]));
-    return {
-      total,
-      draftValues: draftOrderRef.current
-        .map((id) => seated.get(id))
-        .filter((v): v is number => typeof v === 'number'),
-      rerollsUsed: teamRerollUsedRef.current || eraRerollUsedRef.current,
-    };
-  }, []);
+  const rerollsUsed = () => teamRerollUsedRef.current || eraRerollUsedRef.current;
 
-  /** Once per Classic run: open the surplus decision, settle a guest slip, collect earnings. */
+  /**
+   * Once per Classic run: Rollover (guests are paid here; the server pays signed-in runs when the
+   * run is recorded), the Run Bonus verdict for guests, and the earnings panel.
+   */
   const recordClassicRun = useCallback(
     (total: number, achievementIds: string[], finalSlots: RosterSlots) => {
       if (!isClassicRun || runRecordedRef.current) return;
       runRecordedRef.current = true;
       const runRef = runPayoutRef();
-      if (account.status !== 'permanent') openLocalSurplus(runRef, total);
-      const slip = getSlipState().current;
-      let wagers: RunWagers = { status: 'none' };
-      if (slip && slip.runRef === runRef) {
-        if (slip.mode === 'local') {
-          const results = settleLocalSlip(runRef, wagerFacts(finalSlots, total));
-          wagers = results ? { status: 'settled', results } : { status: 'error', picks: slip.picks };
-        } else {
-          wagers = { status: 'pending', picks: slip.picks };
-        }
+      const local = account.status !== 'permanent';
+      if (local) payLocalRollover(runRef, total);
+      const bonus = circuit ? null : runBonusRef.current;
+      let runBonusOutcome: RunBonusOutcome = { status: 'none', bonusId: null, payout: 0 };
+      if (bonus?.mode === 'local') {
+        const seats = LINEUP_POSITIONS.flatMap((pos) => {
+          const player = finalSlots[pos];
+          return player
+            ? [{ playerId: player.id, slot: pos, primary: player.primaryPosition, value: getDollarValueForSlot(player, pos) }]
+            : [];
+        });
+        const verdict = settleLocalRunBonus(runBonusFacts(seats, rerollsUsed()));
+        runBonusOutcome = verdict
+          ? { status: verdict.completed ? 'completed' : 'missed', bonusId: verdict.bonusId, payout: verdict.payout }
+          : runBonusOutcome;
+      } else if (bonus) {
+        runBonusOutcome = { status: 'pending', bonusId: bonus.bonusId, payout: 0 };
       }
       setEarnings({
         runRef,
         runValue: total,
         achievementIds,
-        wagers,
         submit: 'pending',
+        local,
+        runBonus: runBonusOutcome,
         circuit: circuit ? { name: circuit.name } : null,
       });
     },
-    [account.status, circuit, isClassicRun, runPayoutRef, wagerFacts],
+    [account.status, circuit, isClassicRun, runPayoutRef],
   );
 
   const finishRun = useCallback(
@@ -726,14 +722,6 @@ export function BillionTradeEngine({
       if (isClassicRun) {
         recordClassicRun(total, [], nextSlots);
         const runRef = runPayoutRef();
-        const lockedSlip = getSlipState().current;
-        if (lockedSlip?.mode === 'server' && lockedSlip.runRef === runRef) {
-          rememberServerSettle(
-            runRef,
-            draftOrderRef.current[4] ?? null,
-            teamRerollUsedRef.current || eraRerollUsedRef.current,
-          );
-        }
         // Server verifies lineup + computes value. Never blocks Classic UX.
         void withTimeout(submitVerifiedClassicLineup(lineup, runRef), SUBMIT_TIMEOUT_MS, {
           ok: false as const,
@@ -749,24 +737,20 @@ export function BillionTradeEngine({
                 }
               : current,
           );
-          const slip = getSlipState().current;
-          if (slip?.mode === 'server' && slip.runRef === runRef) {
-            const settle = result.ok
-              ? settleServerSlip(
-                  runRef,
-                  draftOrderRef.current[4] ?? null,
-                  teamRerollUsedRef.current || eraRerollUsedRef.current,
-                )
-              : Promise.resolve(null);
-            void settle.then((results) =>
-              setEarnings((current) =>
-                current
-                  ? {
-                      ...current,
-                      wagers: results ? { status: 'settled', results } : { status: 'error', picks: slip.picks },
-                    }
-                  : current,
-              ),
+          if (!circuit && runBonusRef.current?.mode === 'server') {
+            const verdict = result.ok ? settleRunBonus(runRef, rerollsUsed()) : Promise.resolve(null);
+            void verdict.then((res) =>
+              setEarnings((current) => {
+                if (!current) return current;
+                const a = res && res.ok ? res.assignment : null;
+                const mine = a && a.clientRunId === runRef && a.status !== 'open';
+                return {
+                  ...current,
+                  runBonus: mine
+                    ? { status: a!.status as 'completed' | 'missed', bonusId: a!.bonusId, payout: a!.payout }
+                    : { ...current.runBonus, status: 'error' },
+                };
+              }),
             );
           }
           if (!result.ok && !skipped) {
@@ -788,7 +772,7 @@ export function BillionTradeEngine({
 
       return { personalBest: best, isNewPersonalBest: isNewBest, worldRank: rank };
     },
-    [isClassicRun, onWin, recordClassicRun, runPayoutRef],
+    [circuit, isClassicRun, onWin, recordClassicRun, runPayoutRef],
   );
 
   const handleCourtAnalyzeComplete = useCallback(() => {
@@ -1274,7 +1258,7 @@ export function BillionTradeEngine({
                 {circuit ? (
                   <CircuitRunCard name={circuit.name} rerollsAllowed={circuit.rerollsAllowed} />
                 ) : isClassicRun ? (
-                  <BetOnYourself runStarted={runStarted} reduceMotion={reduceMotion} />
+                  <RunBonusCard bonus={runBonus} seated={seatedValues} reduceMotion={reduceMotion} />
                 ) : null}
               </div>
             ) : spunTeam && spunEra ? (
@@ -1391,6 +1375,7 @@ export function BillionTradeEngine({
                         '--dock-team': getTeamColors(
                           (selectedOffer?.teamId ?? movingPlayer?.teamId) as string,
                         ).primary,
+                        '--dock-ring': teamRingColor((selectedOffer?.teamId ?? movingPlayer?.teamId) as string),
                       } as CSSProperties)
                     : undefined
                 }
@@ -1410,6 +1395,8 @@ export function BillionTradeEngine({
                     !slamPayload &&
                     canMoveToSlot(movingPlayer!, movingFrom!, slot);
                   const canDrop = offerCanDrop || moveCanDrop;
+                  const isPrimary =
+                    canDrop && slot === (selectedOffer ?? movingPlayer)?.primaryPosition;
                   const choosing = Boolean(selectedOffer || (movingPlayer && movingFrom));
                   const isUnavailable = choosing && !player && !canDrop;
                   const isMovingSource = movingFrom === slot;
@@ -1422,7 +1409,7 @@ export function BillionTradeEngine({
                       data-draft-slot={slot}
                       className={`billion-court-dock__item${
                         player ? ' is-filled' : ''
-                      }${canDrop ? ' is-target' : ''}${
+                      }${canDrop ? ' is-target' : ''}${isPrimary ? ' is-primary' : ''}${
                         isUnavailable ? ' is-unavailable' : ''
                       }${
                         isMovingSource ? ' is-moving' : ''

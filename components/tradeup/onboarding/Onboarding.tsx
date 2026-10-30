@@ -464,7 +464,7 @@ export function Onboarding({ onDone }: OnboardingProps) {
     onDone();
   };
 
-  const surplus = Math.max(0, total - GOAL);
+  const rollover = Math.max(0, total - GOAL);
 
   /* ── View ─────────────────────────────────────────────────── */
 
@@ -607,7 +607,7 @@ export function Onboarding({ onDone }: OnboardingProps) {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ type: 'spring', stiffness: 380, damping: 24 }}
                         >
-                          {fill(FINISH.over, locale, { amount: `+${money(surplus)}` })}
+                          {fill(FINISH.over, locale, { amount: `+${money(rollover)}` })}
                         </motion.p>
                       ) : (
                         <motion.div
@@ -797,8 +797,7 @@ export function Onboarding({ onDone }: OnboardingProps) {
                     ) : finishReady ? (
                       <DemoFinish
                         key="finish"
-                        surplus={surplus}
-                        teamValue={total}
+                        rollover={rollover}
                         locale={locale}
                         reduceMotion={reduceMotion}
                         onFinish={finish}

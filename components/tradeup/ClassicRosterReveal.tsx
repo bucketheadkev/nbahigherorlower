@@ -74,7 +74,7 @@ interface ClassicRosterRevealProps {
    * (physically connected handoff — no fade between screens).
    */
   fromCourtBeam?: boolean;
-  /** Classic: run earnings (surplus decision, rewards, Bank change) shown above the actions. */
+  /** Classic: run earnings (Rollover, Run Bonus, rewards, Bank change) shown above the actions. */
   earnings?: ReactNode;
 }
 

@@ -6,7 +6,9 @@
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';
 
-export type CircuitFormat = 'open_run' | 'no_reroll' | 'high_stakes';
+export type CircuitFormat = 'open_run' | 'no_reroll';
+
+const FORMATS = new Set<string>(['open_run', 'no_reroll']);
 
 export interface CircuitStanding {
   rank: number;
@@ -45,30 +47,10 @@ export interface CircuitCompetition {
   me: CircuitEntry | null;
 }
 
-export interface CircuitResult {
-  competitionId: string;
-  format: CircuitFormat;
-  name: string;
-  status: 'settled' | 'cancelled';
-  cancelReason: string | null;
-  endsAt: string;
-  minRuns: number;
-  participants: number;
-  /** Submitted runs. */
-  entrants: number;
-  prizePool: number;
-  rank: number | null;
-  runValue: number | null;
-  entryFee: number;
-  payout: number;
-  podium: CircuitStanding[];
-}
-
 export interface CircuitSnapshot {
   /** Server clock minus device clock, so countdowns match the real deadline. */
   clockOffsetMs: number;
   competitions: CircuitCompetition[];
-  results: CircuitResult[];
 }
 
 /** Everything a client needs to play the official entry run. */
@@ -156,27 +138,6 @@ function mapCompetition(raw: Record<string, unknown>): CircuitCompetition {
   };
 }
 
-function mapResult(r: Record<string, unknown>): CircuitResult {
-  const podium = Array.isArray(r.podium) ? (r.podium as Array<Record<string, unknown>>) : [];
-  return {
-    competitionId: String(r.competition_id),
-    format: r.format as CircuitFormat,
-    name: String(r.name ?? ''),
-    status: r.status === 'cancelled' ? 'cancelled' : 'settled',
-    cancelReason: typeof r.cancel_reason === 'string' ? r.cancel_reason : null,
-    endsAt: String(r.ends_at),
-    minRuns: num(r.min_runs) || 3,
-    participants: num(r.participants),
-    entrants: num(r.entrants),
-    prizePool: num(r.prize_pool),
-    rank: r.rank == null ? null : num(r.rank),
-    runValue: r.run_value == null ? null : num(r.run_value),
-    entryFee: num(r.entry_fee),
-    payout: num(r.payout),
-    podium: podium.map(mapStanding),
-  };
-}
-
 export async function fetchCircuit(): Promise<
   { ok: true; snapshot: CircuitSnapshot } | { ok: false; reason: CircuitFailure }
 > {
@@ -187,18 +148,15 @@ export async function fetchCircuit(): Promise<
     const row = (data ?? {}) as Record<string, unknown>;
     const serverTime = Date.parse(String(row.server_time ?? ''));
     const midpoint = (requestedAt + Date.now()) / 2;
+    // Retired cups (High Stakes) are dropped even before the server stops listing them.
     const competitions = Array.isArray(row.competitions)
-      ? (row.competitions as Array<Record<string, unknown>>).map(mapCompetition)
-      : [];
-    const results = Array.isArray(row.results)
-      ? (row.results as Array<Record<string, unknown>>).map(mapResult)
+      ? (row.competitions as Array<Record<string, unknown>>).filter((c) => FORMATS.has(String(c.format))).map(mapCompetition)
       : [];
     return {
       ok: true,
       snapshot: {
         clockOffsetMs: Number.isFinite(serverTime) ? serverTime - midpoint : 0,
         competitions,
-        results,
       },
     };
   } catch (err) {
@@ -282,8 +240,6 @@ export function readCircuitPreview(): CircuitSnapshot | null {
   const fee = 25_000;
   const open = 7 * fee;
   const noReroll = 3 * fee;
-  const high = 5 * fee;
-  const settledPool = 6 * fee;
   return {
     clockOffsetMs: 0,
     competitions: [
@@ -299,27 +255,6 @@ export function readCircuitPreview(): CircuitSnapshot | null {
         startsAt: iso(now - 3_600_000 * 20), endsAt: iso(now + 2_400_000),
         participants: 3, submitted: 2, prizePool: noReroll, prizes: prizesFor(noReroll),
         standings: previewStandings(2, 1_018_000_000, null), me: null,
-      },
-      {
-        ...base, id: 'preview-high', format: 'high_stakes', name: 'High Stakes', entryFee: fee, rerollsAllowed: true,
-        startsAt: iso(now - 3_600_000 * 30), endsAt: iso(now + 3_600_000 * 41),
-        participants: 5, submitted: 3, prizePool: high, prizes: prizesFor(high),
-        standings: previewStandings(3, 1_082_000_000, null),
-        me: { attemptId: null, runValue: null, rank: null, payout: 0 },
-      },
-    ],
-    results: [
-      {
-        competitionId: 'preview-r1', format: 'open_run', name: 'Open Run', status: 'settled', cancelReason: null,
-        endsAt: iso(now - 3_600_000 * 20), minRuns: 3, participants: 6, entrants: 6, prizePool: settledPool,
-        rank: 2, runValue: 1_064_000_000, entryFee: fee, payout: prizesFor(settledPool)[1]!,
-        podium: previewStandings(3, 1_071_000_000, 2, settledPool),
-      },
-      {
-        competitionId: 'preview-r2', format: 'no_reroll', name: 'No Reroll', status: 'cancelled',
-        cancelReason: 'not_enough_runs', endsAt: iso(now - 3_600_000 * 44), minRuns: 3, participants: 2,
-        entrants: 2, prizePool: 2 * fee, rank: null, runValue: 962_000_000, entryFee: fee,
-        payout: fee, podium: [],
       },
     ],
   };
@@ -343,29 +278,5 @@ export async function fetchStandings(
     return { ok: true, competition: mapCompetition(raw), rows: rows.map(mapStanding) };
   } catch {
     return { ok: false, reason: 'error' };
-  }
-}
-
-/* ── Results the player has already viewed (display only; payouts are server-side) ── */
-
-const SEEN_RESULTS_KEY = 'oneb_circuit_results_seen_v1';
-
-export function readSeenResults(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SEEN_RESULTS_KEY) ?? '[]') as unknown;
-    return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []);
-  } catch {
-    return new Set();
-  }
-}
-
-export function markResultSeen(competitionId: string): void {
-  const seen = readSeenResults();
-  seen.add(competitionId);
-  try {
-    localStorage.setItem(SEEN_RESULTS_KEY, JSON.stringify([...seen].slice(-60)));
-  } catch {
-    /* private mode */
   }
 }

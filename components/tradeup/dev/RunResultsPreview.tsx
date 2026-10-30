@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getDollarValueForSlot, type ValuedPlayer } from '@/lib/tradeup/billionDollar';
 import type { Position } from '@/lib/tradeup/types';
-import { settleWagers } from '@/lib/tradeup/wagers';
 import { ClassicRosterReveal } from '../ClassicRosterReveal';
 import { DIRK, EWING, KOBE, LEBRON, MAGIC } from '../onboarding/introData';
-import { RunEarnings } from '../surplus/RunEarnings';
+import { RunEarnings } from '../run/RunEarnings';
 
 /**
- * Dev-only `?runResultsPreview=1`: the real end-of-run screen for a $1,005,000,000 lineup with a
- * settled sample slip. Surplus uses this account's normal path; nothing here is submitted.
+ * Dev-only `?runResultsPreview=1`: the real end-of-run screen for a lineup over $1B with its
+ * Rollover and a completed sample Run Bonus. Nothing here is submitted or credited.
  */
 export function RunResultsPreview() {
   const [show, setShow] = useState(false);
@@ -34,14 +33,6 @@ export function RunResultsPreview() {
     seatedSlot: slot,
   })) as Array<ValuedPlayer & { seatedSlot: Position }>;
   const total = roster.reduce((s, p) => s + p.dollarValue, 0);
-  const results = settleWagers(
-    [
-      { id: 'billion_or_bust', stake: 1_000_000 },
-      { id: 'star_hunter', stake: 500_000 },
-      { id: 'superteam', stake: 250_000 },
-    ],
-    { total, draftValues: roster.map((p) => p.dollarValue), rerollsUsed: true },
-  );
 
   return createPortal(
     <div
@@ -59,8 +50,9 @@ export function RunResultsPreview() {
               runRef: 'preview_run_results',
               runValue: total,
               achievementIds: ['hit-1b'],
-              wagers: { status: 'settled', results },
-              submit: 'skipped',
+              submit: 'ok',
+              local: false,
+              runBonus: { status: 'completed', bonusId: 'triple_threat', payout: 3_000_000 },
             }}
             reduceMotion={false}
           />

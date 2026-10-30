@@ -1,5 +1,6 @@
 'use client';
 
+import { LeaderboardBackdrop } from './LeaderboardBackdrop';
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
@@ -13,7 +14,6 @@ import {
 import { formatCash } from '@/lib/tradeup/bank';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { WALL_OF_FAME_GOAL } from '@/lib/tradeup/wallOfFame';
-import { ArenaAtmosphere } from './ArenaAtmosphere';
 import { AccountAuthSheet, type AccountSheetView } from './AccountAuthSheet';
 import { TickerNumber } from './onboarding/ticker';
 
@@ -166,7 +166,7 @@ export function LeaderboardScreen() {
 
   return (
     <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub lbx-screen">
-      <ArenaAtmosphere intensity="hub" />
+      <LeaderboardBackdrop />
       <header className="oneb-hub__header lb-head">
         <button
           type="button"

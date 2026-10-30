@@ -9,6 +9,8 @@ import './oneb-theme.css';
 import './oneb-economy.css';
 import './franchises.css';
 import './wall-of-fame.css';
+import './run-rewards.css';
+import './leaderboard.css';
 import './run-home-ipad-portrait.css';
 import './h2h-ipad-portrait.css';
 import './web-phone.css';

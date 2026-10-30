@@ -16,6 +16,7 @@ const APP_LOCAL_STORAGE_KEYS = [
   'oneb_wager_slip_v1',
   'oneb_run_bonus_catchup_v1',
   'oneb_surplus_v1',
+  'oneb_run_bonus_v1',
   'oneb_wall_of_fame_local_v1',
   'oneb_wall_signature_v1',
   'oneb_classic_cloud_owner_v1',

@@ -9,6 +9,8 @@ import { clearActiveRoom, readActiveRoom } from '@/lib/multiplayer/activeRoom';
 import { leaveRoom } from '@/lib/multiplayer/rooms';
 import { warmSpinPairIndex } from '@/lib/tradeup/billionDollar';
 import { initAdaptiveQuality } from '@/lib/tradeup/perf/adaptiveQuality';
+import { installWebHapticTargets } from '@/lib/tradeup/haptics';
+import { retireLocalGambling } from '@/lib/tradeup/rollover';
 import { installTapGuard } from '@/lib/tradeup/tapGuard';
 import { LocaleProvider } from '@/hooks/useLocale';
 import {
@@ -27,9 +29,7 @@ import {
 import { Onboarding } from './onboarding/Onboarding';
 import { EarningsSummaryHost } from './EarningsSummary';
 import { RankScreen } from './rank/RankScreen';
-import { PendingSurplusHost } from './surplus/PendingSurplusHost';
-import { CircuitResultsHost } from './circuit/CircuitResultsHost';
-import { WagerResultsPreview } from './wagers/WagerResultsPreview';
+import { RankRewardHost } from './rank/RankRewardHost';
 import { RunResultsPreview } from './dev/RunResultsPreview';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 import { ChallengesScreen } from './ChallengesScreen';
@@ -128,6 +128,7 @@ export function TradeUpApp() {
 
   useEffect(() => {
     initAdaptiveQuality();
+    retireLocalGambling();
     // Decode the home artwork once so returning to Play never waits on images; the intro's
     // load bar finishes only once it has (or after a short cap on slow networks).
     const artDecoded = Promise.all(
@@ -146,6 +147,7 @@ export function TradeUpApp() {
 
     let removeAudioUnlock = () => {};
     const removeTapGuard = installTapGuard();
+    const removeWebHaptics = installWebHapticTargets();
     let bootCancelled = false;
     void import('@/lib/tradeup/gameAudio').then((mod) => {
       mod.syncAudioSettings();
@@ -165,6 +167,7 @@ export function TradeUpApp() {
     return () => {
       bootCancelled = true;
       removeTapGuard();
+      removeWebHaptics();
       removeAudioUnlock();
       window.cancelAnimationFrame(readyId);
       if (typeof cancelIdleCallback === 'function' && typeof idle === 'number') {
@@ -374,14 +377,8 @@ export function TradeUpApp() {
       ) : null}
 
       <EarningsSummaryHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
-      <PendingSurplusHost
-        enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
-      />
-      <WagerResultsPreview />
+      <RankRewardHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
       <RunResultsPreview />
-      <CircuitResultsHost
-        enabled={screen === 'hub' && hubTab === 'home' && !showSplash && !showGuide && !invalidInvite}
-      />
     </LocaleProvider>
   );
 }

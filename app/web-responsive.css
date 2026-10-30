@@ -461,13 +461,6 @@ html[data-platform='web'] textarea:focus-visible {
 }
 
 @media (min-width: 768px) {
-  html[data-platform='web'] .bet-bar {
-    max-width: 22.5rem;
-    margin-inline: auto;
-  }
-}
-
-@media (min-width: 768px) {
   html[data-platform='web'] .circuit-run {
     max-width: 22.5rem;
     margin-inline: auto;

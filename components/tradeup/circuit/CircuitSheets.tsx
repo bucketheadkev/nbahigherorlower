@@ -8,11 +8,10 @@ import {
   isCircuitPreview,
   previewStandings,
   type CircuitCompetition,
-  type CircuitResult,
   type CircuitStanding,
 } from '@/lib/account/circuitCloud';
 import { formatCash } from '@/lib/tradeup/bank';
-import { hapticLight, hapticSuccess } from '@/lib/tradeup/haptics';
+import { hapticLight } from '@/lib/tradeup/haptics';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 
 type Copy = { en: string; es: string };
@@ -35,20 +34,6 @@ const COPY = {
     en: 'Ties go to the earlier run.',
     es: 'Los empates los gana la partida más temprana.',
   },
-  final: { en: 'FINAL RESULTS', es: 'RESULTADOS FINALES' },
-  ended: { en: 'Ended {date}', es: 'Terminó {date}' },
-  yourPlace: { en: 'You finished #{rank} of {count}', es: 'Terminaste #{rank} de {count}' },
-  credited: { en: '{amount} credited to your Bank', es: '{amount} acreditados a tu Banco' },
-  outside: { en: 'Outside the prizes this time.', es: 'Fuera de los premios esta vez.' },
-  noRun: { en: 'Your entry run wasn’t submitted.', es: 'No enviaste tu partida de entrada.' },
-  cancelled: { en: 'CUP CANCELLED', es: 'COPA CANCELADA' },
-  cancelledWhy: {
-    en: 'No runs were submitted, so every entry was refunded.',
-    es: 'No se envió ninguna partida, así que se reembolsaron todas las entradas.',
-  },
-  cancelledOther: { en: 'This cup was cancelled.', es: 'Esta copa fue cancelada.' },
-  refunded: { en: '{amount} refunded to your Bank', es: '{amount} reembolsados a tu Banco' },
-  done: { en: 'Done', es: 'Listo' },
   gameCash: { en: 'Game cash · not real money', es: 'Dinero del juego · no es dinero real' },
 } satisfies Record<string, Copy | string[]>;
 
@@ -58,13 +43,6 @@ function pick(copy: Copy, locale: string): string {
 
 function fill(text: string, vars: Record<string, string | number>): string {
   return Object.entries(vars).reduce((out, [k, v]) => out.replace(`{${k}}`, String(v)), text);
-}
-
-function formatDate(iso: string, locale: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime())
-    ? ''
-    : d.toLocaleDateString(locale === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' });
 }
 
 function Sheet({
@@ -263,93 +241,6 @@ export function StandingsSheet({
         </ol>
       )}
       <p className="circuit__cash">{pick(COPY.tie, locale)}</p>
-    </Sheet>
-  );
-}
-
-export function ResultsSheet({ result, onClose }: { result: CircuitResult; onClose: () => void }) {
-  const { locale } = useLocale();
-  const reduceMotion = getPrefersReducedMotion();
-  const cancelled = result.status === 'cancelled';
-  const won = !cancelled && result.payout > 0;
-
-  useEffect(() => {
-    if (won) hapticSuccess();
-  }, [won]);
-
-  // Podium order on screen: 2nd, 1st, 3rd.
-  const byRank = (r: number) => result.podium.find((p) => p.rank === r);
-  const podium = [2, 1, 3].map((r) => ({ rank: r, row: byRank(r) }));
-
-  return (
-    <Sheet label={pick(COPY.final, locale)} onClose={onClose} layer="results">
-      <div className="circuit-sheet__head circuit-final__head">
-        <p className="circuit__eyebrow">{pick(cancelled ? COPY.cancelled : COPY.final, locale)}</p>
-        <h2 className={`circuit-sheet__title circuit-sheet__title--${result.format}`}>{result.name}</h2>
-        <p className="circuit-sheet__note">{fill(pick(COPY.ended, locale), { date: formatDate(result.endsAt, locale) })}</p>
-      </div>
-
-      {cancelled ? (
-        <div className="circuit-final__cancel">
-          <p>
-            {result.cancelReason === 'not_enough_runs' || result.cancelReason === 'no_runs'
-              ? pick(COPY.cancelledWhy, locale)
-              : pick(COPY.cancelledOther, locale)}
-          </p>
-          <strong>{fill(pick(COPY.refunded, locale), { amount: formatCash(result.payout || result.entryFee) })}</strong>
-        </div>
-      ) : (
-        <>
-          <ol className="circuit-podium">
-            {podium.map(({ rank, row }, i) => (
-              <motion.li
-                key={rank}
-                className={`circuit-podium__step circuit-podium__step--${rank}${row?.isMe ? ' is-me' : ''}`}
-                initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1], delay: 0.15 + [0.25, 0, 0.4][i]! }}
-              >
-                <span className="circuit-podium__user">{row?.username ?? '—'}</span>
-                <span className="circuit-podium__value">{row ? formatCash(row.runValue) : ''}</span>
-                <div className="circuit-podium__block">
-                  <span className="circuit-podium__place">{COPY.places[rank - 1]}</span>
-                  <strong className="circuit-podium__prize">{row?.payout ? `+${formatCash(row.payout)}` : ''}</strong>
-                </div>
-              </motion.li>
-            ))}
-          </ol>
-
-          <motion.div
-            className={`circuit-final__you${won ? ' is-won' : ''}`}
-            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.75 }}
-          >
-            {result.rank != null ? (
-              <>
-                <p className="circuit-final__place">
-                  {fill(pick(COPY.yourPlace, locale), { rank: result.rank, count: result.entrants })}
-                </p>
-                {result.runValue != null ? (
-                  <p className="circuit-final__run">{formatCash(result.runValue)}</p>
-                ) : null}
-                <p className="circuit-final__reward">
-                  {won
-                    ? fill(pick(COPY.credited, locale), { amount: `+${formatCash(result.payout)}` })
-                    : pick(COPY.outside, locale)}
-                </p>
-              </>
-            ) : (
-              <p className="circuit-final__reward">{pick(COPY.noRun, locale)}</p>
-            )}
-          </motion.div>
-        </>
-      )}
-
-      <button type="button" className="circuit-card__btn circuit-card__btn--play circuit-final__done" onClick={onClose}>
-        {pick(COPY.done, locale)}
-      </button>
-      <p className="circuit__cash">{pick(COPY.gameCash, locale)}</p>
     </Sheet>
   );
 }

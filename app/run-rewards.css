@@ -1,0 +1,609 @@
+/* =========================================================
+   Rollover · Run Bonus · Rank-up rewards
+   ========================================================= */
+
+/* ── Rollover (results + intro) ── */
+.rollover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.95rem 0.9rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(41, 228, 144, 0.45);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(41, 228, 144, 0.2) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(6, 34, 26, 0.92) 0%, rgba(3, 16, 18, 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(160, 255, 210, 0.12),
+    0 0 26px rgba(41, 228, 144, 0.16);
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.rollover__shine {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 30%, rgba(160, 255, 210, 0.16) 48%, transparent 66%);
+  transform: translateX(-120%);
+  animation: rollover-shine 1.6s cubic-bezier(0.25, 1, 0.5, 1) 0.6s 1 forwards;
+}
+
+.rollover__label {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.26em;
+  color: #8dffc9;
+}
+
+.rollover__amount {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(2rem, 10vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+  text-shadow: 0 0 22px rgba(41, 228, 144, 0.45);
+  animation: rollover-pop 0.7s cubic-bezier(0.22, 1.4, 0.36, 1) 1.5s 1 both;
+}
+
+.rollover__rule {
+  max-width: 18rem;
+  margin: 0.1rem 0 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: rgba(222, 255, 240, 0.85);
+}
+
+.rollover__status {
+  margin: 0.15rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 650;
+  color: rgba(180, 230, 210, 0.6);
+}
+
+@keyframes rollover-shine {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes rollover-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+    text-shadow: 0 0 32px rgba(41, 228, 144, 0.7);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Run Bonus card (under the Spin button) ── */
+.rb-card {
+  --rb: #3cf09c;
+  align-self: center;
+  width: min(100%, 22rem);
+  margin: var(--classic-hub-spin-gap, 0.45rem) auto 0;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--rb) 38%, transparent);
+  background: linear-gradient(180deg, rgba(10, 24, 46, 0.92) 0%, rgba(5, 13, 28, 0.94) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 14px color-mix(in srgb, var(--rb) 12%, transparent);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.rb-card--t2 {
+  --rb: #5aa8ff;
+}
+
+.rb-card--t3 {
+  --rb: #b48bff;
+}
+
+.rb-card--t4 {
+  --rb: #ffcf5c;
+}
+
+.rb-card.is-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+}
+
+.rb-card__loading {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: rgba(214, 228, 255, 0.5);
+}
+
+.rb-card__bar {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.45rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rb-card__gem {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rb, #3cf09c) 18%, transparent);
+  color: var(--rb, #3cf09c);
+}
+
+.rb-card__gem svg {
+  width: 0.72rem;
+  height: 0.72rem;
+  fill: currentColor;
+}
+
+.rb-card.is-loading .rb-card__gem {
+  animation: rb-pulse 1.2s ease-in-out infinite;
+}
+
+.rb-card__label {
+  flex: 0 0 auto;
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: var(--rb);
+}
+
+.rb-card__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #f2f6ff;
+}
+
+.rb-card__progress {
+  flex: 0 0 auto;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.6rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: rgba(222, 232, 250, 0.8);
+}
+
+.rb-card.is-complete .rb-card__progress {
+  background: rgba(41, 228, 144, 0.2);
+  color: #3cf09c;
+}
+
+.rb-card__reward {
+  flex: 0 0 auto;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+}
+
+.rb-card__chevron {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 0.7rem;
+  fill: none;
+  stroke: rgba(214, 228, 255, 0.55);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.rb-card.is-open .rb-card__chevron {
+  transform: rotate(180deg);
+}
+
+.rb-card__detail {
+  overflow: hidden;
+}
+
+.rb-card__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0 0.75rem 0.65rem 2.25rem;
+}
+
+.rb-card__rule {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #eaf2ff;
+}
+
+.rb-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.rb-tier {
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--rb) 45%, transparent);
+  font-size: 0.52rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rb);
+}
+
+.rb-card__ontrack {
+  font-size: 0.58rem;
+  font-weight: 850;
+  color: #3cf09c;
+}
+
+.rb-card__free {
+  margin: 0;
+  font-size: 0.6rem;
+  line-height: 1.4;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+@keyframes rb-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── Run Bonus result (results screen) ── */
+.rb-result {
+  --rb: #3cf09c;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--rb) 55%, transparent);
+  background:
+    radial-gradient(120% 140% at 0% 50%, color-mix(in srgb, var(--rb) 18%, transparent) 0%, transparent 60%),
+    rgba(6, 16, 34, 0.9);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--rb) 18%, transparent);
+}
+
+.rb-result--t2 {
+  --rb: #5aa8ff;
+}
+
+.rb-result--t3 {
+  --rb: #b48bff;
+}
+
+.rb-result--t4 {
+  --rb: #ffcf5c;
+}
+
+.rb-result__gem {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rb) 22%, transparent);
+  color: var(--rb);
+}
+
+.rb-result__gem svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.rb-result__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.rb-result__kicker {
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: var(--rb);
+}
+
+.rb-result__copy strong {
+  font-size: 0.86rem;
+  font-weight: 850;
+  color: #f2f6ff;
+}
+
+.rb-result__copy em {
+  font-style: normal;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.rb-result__amount {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+}
+
+.rb-result-note {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-align: center;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+/* ── Rank-up notification ── */
+.rankup {
+  position: fixed;
+  inset: 0;
+  z-index: 230;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) 1.2rem max(1rem, env(safe-area-inset-bottom));
+  background: rgba(1, 5, 14, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.rankup__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: min(100%, 21rem);
+  padding: 1.4rem 1.2rem 1.1rem;
+  border-radius: 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--rank-color) 55%, transparent);
+  background:
+    radial-gradient(80% 55% at 50% 22%, color-mix(in srgb, var(--rank-color) 30%, transparent) 0%, transparent 70%),
+    linear-gradient(175deg, color-mix(in srgb, var(--rank-deep) 60%, #07142b) 0%, #050c1c 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 50px color-mix(in srgb, var(--rank-color) 22%, transparent);
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.rankup__halo {
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  z-index: -1;
+  width: 140%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--rank-color) 18%, transparent) 50deg,
+    transparent 120deg,
+    transparent 180deg,
+    color-mix(in srgb, var(--rank-color) 18%, transparent) 230deg,
+    transparent 300deg
+  );
+  filter: blur(22px);
+  -webkit-mask-image: radial-gradient(closest-side, #000 35%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 35%, transparent 100%);
+  transform: translateX(-50%);
+  animation: rankup-turn 6s linear infinite;
+}
+
+.rankup__emblem {
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--rank-color) 55%, transparent));
+}
+
+.rankup__kicker {
+  margin: 0.4rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  color: rgba(222, 232, 250, 0.7);
+}
+
+.rankup__name {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rank-color);
+}
+
+.rankup__amount {
+  margin: 0.35rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+  text-shadow: 0 0 22px rgba(41, 228, 144, 0.45);
+}
+
+.rankup__added {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(222, 255, 240, 0.75);
+}
+
+.rankup__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rankup__list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--step-color);
+  text-align: left;
+}
+
+.rankup__list b {
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+}
+
+.rankup__next {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: rgba(214, 228, 255, 0.65);
+}
+
+.rankup__next span {
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(214, 228, 255, 0.45);
+}
+
+.rankup__cta {
+  appearance: none;
+  width: 100%;
+  min-height: 2.9rem;
+  margin-top: 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4ff5ab 0%, #22d886 55%, #12b46c 100%);
+  box-shadow: inset 0 1px 0 rgba(220, 255, 236, 0.55), 0 0 18px rgba(41, 228, 144, 0.3);
+  color: #03251a;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.rankup__cta:active {
+  transform: scale(0.97);
+}
+
+@keyframes rankup-turn {
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+/* ── My Rank: next rank reward ── */
+.rank2-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem 0.8rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(41, 228, 144, 0.3);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(41, 228, 144, 0.12) 0%, transparent 70%),
+    rgba(5, 14, 32, 0.78);
+  text-align: center;
+}
+
+.rank2-reward__label {
+  margin: 0;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  color: rgba(214, 228, 255, 0.6);
+}
+
+.rank2-reward__amount {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.9rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+  text-shadow: 0 0 18px rgba(41, 228, 144, 0.35);
+}
+
+.rank2-reward__note {
+  margin: 0;
+  font-size: 0.64rem;
+  line-height: 1.4;
+  color: rgba(214, 228, 255, 0.55);
+}
+
+.rank2-step__min {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.rank2-step__reward {
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #3cf09c;
+}
+
+.rank2-step__reward.is-collected {
+  color: rgba(160, 230, 200, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rollover__shine,
+  html:not([data-full-motion]) .rollover__amount,
+  html:not([data-full-motion]) .rankup__halo,
+  html:not([data-full-motion]) .rb-card.is-loading .rb-card__gem {
+    animation: none;
+  }
+}

@@ -387,3 +387,121 @@ export function stopTicketSpinHaptics(): void {
 export function triggerTicketStopHaptic(): void {
   hapticWheelStop();
 }
+
+const WEB_HAPTIC_ATTR = 'data-web-haptic';
+const WEB_HAPTIC_HOST = 'button, a[href], [role="button"]';
+
+function syncOverlay(sw: HTMLInputElement, host: HTMLElement): void {
+  const blocked =
+    !hapticsAllowed() || host.hasAttribute('disabled') || host.getAttribute('aria-disabled') === 'true';
+  sw.style.pointerEvents = blocked ? 'none' : 'auto';
+}
+
+/** Full-screen dismiss layers must not get a covering switch — it paints over the dialog. */
+function isScrimHost(host: HTMLElement): boolean {
+  if (/\bscrim\b/i.test(host.className)) return true;
+  const style = getComputedStyle(host);
+  if (style.position !== 'fixed' && style.position !== 'absolute') return false;
+  const rect = host.getBoundingClientRect();
+  return rect.width > window.innerWidth * 0.9 && rect.height > window.innerHeight * 0.7;
+}
+
+/**
+ * iPhone Safari cannot vibrate from script; a real tap on a native switch still ticks. Each control
+ * gets an invisible switch on top, and the tap is handed to the control as a click.
+ *
+ * Only the click is forwarded — never pointerdown. Safari fires no click after a scroll (and the
+ * tap guard swallows any that slip through), so dragging across a control scrolls without
+ * pressing it. Pointer events bubble to the control untouched for its :active state.
+ */
+export function installWebHapticTargets(): () => void {
+  if (!isIosWeb() || typeof document === 'undefined' || !document.body) return () => {};
+
+  const overlays = new Set<HTMLInputElement>();
+
+  const attach = (host: HTMLElement) => {
+    if (host.querySelector(`:scope > [${WEB_HAPTIC_ATTR}]`)) return;
+    if (host.closest(`[${WEB_HAPTIC_ATTR}]`)) return;
+    if (isScrimHost(host)) return;
+    const pos = getComputedStyle(host).position;
+    if (pos !== 'absolute' && pos !== 'relative' && pos !== 'fixed' && pos !== 'sticky') {
+      host.style.position = 'relative';
+    }
+    // Keep the switch's z-index inside the control so it can't cover a dialog above it.
+    host.style.isolation = 'isolate';
+
+    const sw = document.createElement('input');
+    sw.type = 'checkbox';
+    sw.setAttribute('switch', '');
+    sw.setAttribute(WEB_HAPTIC_ATTR, '');
+    sw.setAttribute('aria-hidden', 'true');
+    sw.tabIndex = -1;
+    sw.style.cssText = [
+      'position:absolute',
+      'inset:0',
+      'z-index:8',
+      'width:100%',
+      'height:100%',
+      'margin:0',
+      'padding:0',
+      'border:0',
+      'opacity:0',
+      'appearance:auto',
+      '-webkit-appearance:switch',
+      'font-size:16px',
+      'touch-action:manipulation',
+      '-webkit-tap-highlight-color:transparent',
+      'cursor:inherit',
+    ].join(';');
+
+    sw.addEventListener('click', (event) => {
+      // The control's own preventDefault must not cancel the switch tick, so it gets a fresh click.
+      event.stopPropagation();
+      sw.parentElement?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    host.appendChild(sw);
+    overlays.add(sw);
+    syncOverlay(sw, host);
+  };
+
+  const scan = (node: ParentNode) => {
+    if (node instanceof HTMLElement && node.matches(WEB_HAPTIC_HOST)) attach(node);
+    node.querySelectorAll(WEB_HAPTIC_HOST).forEach((el) => {
+      if (el instanceof HTMLElement) attach(el);
+    });
+  };
+
+  scan(document);
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes' && mutation.target instanceof HTMLElement) {
+        const sw = mutation.target.querySelector(`:scope > [${WEB_HAPTIC_ATTR}]`);
+        if (sw instanceof HTMLInputElement) syncOverlay(sw, mutation.target);
+      }
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) scan(node);
+      }
+    }
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['disabled', 'aria-disabled'],
+  });
+
+  const onSettings = () => {
+    overlays.forEach((sw) => {
+      if (sw.parentElement) syncOverlay(sw, sw.parentElement);
+    });
+  };
+  window.addEventListener('oneb-haptics-change', onSettings);
+
+  return () => {
+    observer.disconnect();
+    window.removeEventListener('oneb-haptics-change', onSettings);
+    overlays.forEach((sw) => sw.remove());
+    overlays.clear();
+  };
+}

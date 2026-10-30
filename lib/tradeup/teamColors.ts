@@ -36,6 +36,18 @@ export function getTeamColors(teamId: string) {
   return TEAM_COLORS[teamId] ?? { primary: '#333333', accent: '#888888' };
 }
 
+/** A team's primary, lightened just enough to read as a glowing ring on the app's dark navy. */
+export function teamRingColor(teamId: string): string {
+  const raw = getTeamColors(teamId).primary.replace('#', '');
+  if (raw.length !== 6) return '#ffffff';
+  const rgb = [0, 2, 4].map((i) => parseInt(raw.slice(i, i + 2), 16));
+  const lum = (0.299 * rgb[0]! + 0.587 * rgb[1]! + 0.114 * rgb[2]!) / 255;
+  if (lum >= 0.3) return `#${raw}`;
+  const lift = 0.58 - lum;
+  const [r, g, b] = rgb.map((c) => Math.round(c + (255 - c) * lift));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 /** Readable ink on a team primary fill. */
 export function contrastOnPrimary(hex: string): string {
   const raw = hex.replace('#', '');

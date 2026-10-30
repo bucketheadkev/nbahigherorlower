@@ -126,7 +126,7 @@ export function topLegends(count = 8): ShowcaseLegend[] {
 
 export type IntroPhase = 'welcome' | 'build' | 'position' | 'cross' | 'victory';
 
-/** Three moments: meet the legends → draft to $1B → bank or risk what's over. */
+/** Three moments: meet the legends → draft to $1B → bank everything over it. */
 export const MOMENT: Record<IntroPhase, number> = {
   welcome: 0,
   build: 1,
@@ -155,8 +155,8 @@ export const SUBLINES: Record<IntroPhase, Copy> = {
   },
   cross: { en: 'Five values add up. Finish the lineup.', es: 'Los cinco valores se suman. Completa el quinteto.' },
   victory: {
-    en: 'Bank what’s over $1B, or risk it for up to 10×.',
-    es: 'Guarda lo que pase de $1B o arriésgalo hasta por 10×.',
+    en: 'Every dollar above $1 billion goes straight to your Bank.',
+    es: 'Cada dólar por encima de $1,000 millones va directo a tu Banco.',
   },
 };
 
@@ -203,6 +203,5 @@ export const WELCOME = {
 /** After the demo crosses $1B. Practice only — nothing is credited or debited. */
 export const FINISH = {
   over: { en: '{amount} OVER $1B', es: '{amount} SOBRE $1B' },
-  again: { en: 'Try again', es: 'Otra vez' },
   start: { en: 'GET STARTED', es: 'EMPEZAR' },
 } satisfies Record<string, Copy>;

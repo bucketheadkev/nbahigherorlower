@@ -7,16 +7,14 @@ import { useLocale } from '@/hooks/useLocale';
 import {
   enterCircuit,
   fetchCircuit,
-  markResultSeen,
   readCircuitPreview,
   startCircuitRun,
   type CircuitCompetition,
   type CircuitFailure,
-  type CircuitResult,
   type CircuitRunConfig,
   type CircuitSnapshot,
 } from '@/lib/account/circuitCloud';
-import { PrizeLadder, ResultsSheet, StandingsSheet } from './CircuitSheets';
+import { PrizeLadder, StandingsSheet } from './CircuitSheets';
 import { formatCash } from '@/lib/tradeup/bank';
 import { hapticLight, hapticSuccess, hapticTap } from '@/lib/tradeup/haptics';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -55,11 +53,6 @@ const COPY = {
   yourEntry: { en: 'YOUR ENTRY', es: 'TU ENTRADA' },
   rankOf: { en: '#{rank} of {count}', es: '#{rank} de {count}' },
   standings: { en: 'View standings ›', es: 'Ver clasificación ›' },
-  results: { en: 'RECENT RESULTS', es: 'RESULTADOS RECIENTES' },
-  refunded: { en: 'Refunded', es: 'Reembolsado' },
-  cancelledShort: { en: 'Cancelled · no runs', es: 'Cancelada · sin partidas' },
-  noPrize: { en: 'No prize', es: 'Sin premio' },
-  noRun: { en: 'No run submitted', es: 'Sin partida' },
   offline: { en: 'CASH CUPS ARE COMING ONLINE', es: 'LAS COPAS DE EFECTIVO ESTÁN POR ABRIR' },
   offlineNote: {
     en: 'Cash Cups open as soon as the server is ready.',
@@ -78,7 +71,6 @@ const COPY = {
 const RULES: Record<CircuitCompetition['format'], Copy> = {
   open_run: { en: 'Classic rules · highest team value wins', es: 'Reglas clásicas · gana el mayor valor' },
   no_reroll: { en: 'Rerolls off · highest team value wins', es: 'Sin cambios · gana el mayor valor' },
-  high_stakes: { en: 'Classic rules · big entry, bigger pool', es: 'Reglas clásicas · entrada alta, bote mayor' },
 };
 
 /** Entries close 10 minutes before the deadline (mirrors enter_circuit). */
@@ -180,7 +172,6 @@ function Circuit({ permanent: signedIn, bankBalance, onClose, onPlay, onSignIn }
 
   const serverNow = now + (snapshot?.clockOffsetMs ?? 0);
   const [standingsId, setStandingsId] = useState<string | null>(null);
-  const [openResult, setOpenResult] = useState<CircuitResult | null>(null);
   const standingsFor = snapshot?.competitions.find((c) => c.id === standingsId) ?? null;
 
   // Refetch once a league passes its deadline so it settles and the next one opens.
@@ -294,45 +285,6 @@ function Circuit({ permanent: signedIn, bankBalance, onClose, onPlay, onSignIn }
               ))}
             </ul>
 
-            {snapshot.results.length > 0 ? (
-              <section className="circuit__results" aria-label={pick(COPY.results, locale)}>
-                <p className="circuit__section">{pick(COPY.results, locale)}</p>
-                <ul>
-                  {snapshot.results.map((r) => (
-                    <li key={r.competitionId}>
-                      <button
-                        type="button"
-                        className="circuit-result"
-                        onClick={() => {
-                          hapticLight();
-                          setOpenResult(r);
-                        }}
-                      >
-                        <div>
-                          <strong>{r.name}</strong>
-                          <span>
-                            {r.status === 'cancelled'
-                              ? pick(COPY.cancelledShort, locale)
-                              : r.rank != null
-                                ? pick(COPY.rankOf, locale)
-                                    .replace('{rank}', String(r.rank))
-                                    .replace('{count}', String(r.entrants))
-                                : pick(COPY.noRun, locale)}
-                          </span>
-                        </div>
-                        <em className={r.payout > 0 && r.status === 'settled' ? 'is-paid' : ''}>
-                          {r.status === 'cancelled'
-                            ? pick(COPY.refunded, locale)
-                            : r.payout > 0
-                              ? `+${formatCash(r.payout)}`
-                              : pick(COPY.noPrize, locale)}
-                        </em>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
             <p className="circuit__cash">{pick(COPY.gameCash, locale)}</p>
           </>
         )}
@@ -350,16 +302,6 @@ function Circuit({ permanent: signedIn, bankBalance, onClose, onPlay, onSignIn }
                 : countdown(Date.parse(standingsFor.endsAt) - serverNow)
             }
             onClose={() => setStandingsId(null)}
-          />
-        ) : null}
-        {openResult ? (
-          <ResultsSheet
-            key={`result-${openResult.competitionId}`}
-            result={openResult}
-            onClose={() => {
-              markResultSeen(openResult.competitionId);
-              setOpenResult(null);
-            }}
           />
         ) : null}
       </AnimatePresence>

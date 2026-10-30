@@ -17,7 +17,6 @@ import { formatCash, readBankPreview } from '@/lib/tradeup/bank';
 import { rankName } from '@/lib/tradeup/rank/config';
 import { recordLocalInduction } from '@/lib/tradeup/wallOfFame';
 import { hapticLight } from '@/lib/tradeup/haptics';
-import { settlePendingServerSlips } from '@/lib/tradeup/wagerSlip';
 import {
   AccountAuthSheet,
   type AccountSheetView,
@@ -85,10 +84,6 @@ export function TradeUpHome({
   useEffect(() => {
     if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
   }, [bank, permanent]);
-
-  useEffect(() => {
-    if (permanent) void settlePendingServerSlips();
-  }, [permanent]);
 
   // Bank card centers between the tiles and the tab bar; the bar's height varies by device.
   useEffect(() => {
