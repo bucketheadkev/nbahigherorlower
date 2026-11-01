@@ -307,10 +307,12 @@ function Franchises({ permanent: permanentProp, bankBalance: bankProp, onClose, 
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     const onBank = () => void load();
     window.addEventListener(BANK_CHANGED_EVENT, onBank);
+    window.addEventListener('online', onBank);
     return () => {
       window.clearInterval(refresh);
       window.clearInterval(tick);
       window.removeEventListener(BANK_CHANGED_EVENT, onBank);
+      window.removeEventListener('online', onBank);
     };
   }, [load, permanent]);
 

@@ -46,6 +46,8 @@ interface FranchisePickScreenProps {
   /** Spin one header box in place. The other result stays put. */
   rerolling?: TicketRerollKind | null;
   reduceMotion?: boolean;
+  /** The spin booth stays on screen (draft sheet), so the result boxes don't fly in from it. */
+  skipArrival?: boolean;
   hint: string;
   onSelect: (player: EraOfferPlayer) => void;
   onReroll: (kind: TicketRerollKind) => void;
@@ -102,6 +104,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   interactionLocked = false,
   rerolling = null,
   reduceMotion = false,
+  skipArrival = false,
   hint,
   onSelect,
   onReroll,
@@ -121,14 +124,14 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   const eraRef = useRef<HTMLDivElement | null>(null);
   const plannedRef = useRef<SpinPair | null>(null);
   const spinKeyRef = useRef('');
-  const [arriving, setArriving] = useState(() => peekSpinHandoff() != null);
+  const [arriving, setArriving] = useState(() => !skipArrival && peekSpinHandoff() != null);
   const [spinId, setSpinId] = useState(0);
   const [spinStrip, setSpinStrip] = useState<SpinStripItem[]>([]);
   const [freshAxis, setFreshAxis] = useState<TicketRerollKind | null>(null);
   const [nudgeSettle, setNudgeSettle] = useState(false);
 
   useLayoutEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || skipArrival) {
       consumeSpinHandoff();
       setArriving(false);
       return;
@@ -187,7 +190,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
       window.clearTimeout(done);
       nodes.forEach(clearFlight);
     };
-  }, [reduceMotion]);
+  }, [reduceMotion, skipArrival]);
 
   useLayoutEffect(() => {
     if (!rerolling) {

@@ -11,6 +11,8 @@ import './franchises.css';
 import './wall-of-fame.css';
 import './run-rewards.css';
 import './leaderboard.css';
+import './draft-court.css';
+import './draft-arena.css';
 import './run-home-ipad-portrait.css';
 import './h2h-ipad-portrait.css';
 import './web-phone.css';
@@ -53,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <link rel="preload" as="image" href="/images/1b-run-app-icon-squircle.png?v=1" />
+        <link rel="preload" as="image" href="/images/arena/draft-court.jpg" media="(max-width: 767px)" />
         <meta name="theme-color" content="#010814" />
         <style
           dangerouslySetInnerHTML={{

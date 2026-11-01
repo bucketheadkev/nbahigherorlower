@@ -1,0 +1,580 @@
+/* =========================================================
+   Draft court (jerseys) + player selection sheet
+   Shared by every mode that drafts on the court.
+   ========================================================= */
+
+.draft-hub-court {
+  --court-edge: 92, 200, 255;
+  --jersey-green: #3ee8a5;
+  --jersey-green-rgb: 62, 232, 165;
+  --jersey-w: clamp(2.7rem, 12.4vw, 3.3rem);
+}
+
+/* Jerseys scale with the court, which shrinks on short phones. */
+.draft-hub-court .draft-hub-court__stage {
+  container-type: inline-size;
+  --jersey-w: clamp(2.1rem, 13.6cqw, 3.3rem);
+}
+
+/* ── Court floor: flat navy, glowing edge, light from the baseline corners ── */
+.draft-hub-court .draft-hub-court__floor {
+  transform: none;
+  border-radius: 0.5rem;
+  background:
+    radial-gradient(circle at 0% 100%, rgba(120, 215, 255, 0.22), transparent 24%),
+    radial-gradient(circle at 100% 100%, rgba(120, 215, 255, 0.22), transparent 24%),
+    radial-gradient(ellipse 70% 55% at 50% 45%, rgba(40, 92, 172, 0.26), transparent 72%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, #0b1d3d 0%, #081733 55%, #06122a 100%);
+  box-shadow:
+    0 0 0 1px rgba(var(--court-edge), 0.6),
+    0 0 14px rgba(var(--court-edge), 0.42),
+    0 0 34px rgba(var(--court-edge), 0.16),
+    inset 0 0 24px rgba(var(--court-edge), 0.16),
+    0 14px 28px rgba(0, 0, 0, 0.4);
+}
+
+.draft-hub-court .draft-hub-court__floor::before {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 0;
+  height: 2px;
+  z-index: 1;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(130, 225, 255, 0.95) 22%, #c8f4ff 50%, rgba(130, 225, 255, 0.95) 78%, transparent);
+  box-shadow: 0 0 12px rgba(var(--court-edge), 0.9), 0 0 26px rgba(var(--court-edge), 0.45);
+  pointer-events: none;
+}
+
+.draft-hub-court .draft-hub-court__lines {
+  stroke-width: 1.5;
+}
+
+.draft-hub-court .draft-hub-court__lines path,
+.draft-hub-court .draft-hub-court__lines rect {
+  vector-effect: non-scaling-stroke;
+}
+
+.draft-hub-court .draft-hub-court__geo--boundary {
+  stroke: rgba(var(--court-edge), 0.95);
+  filter: drop-shadow(0 0 3px rgba(var(--court-edge), 0.8));
+}
+
+.draft-hub-court .draft-hub-court__geo--paint,
+.draft-hub-court .draft-hub-court__geo--key {
+  stroke: rgba(226, 238, 255, 0.82);
+}
+
+.draft-hub-court .draft-hub-court__geo--key path:first-child {
+  stroke-dasharray: 5 4;
+}
+
+.draft-hub-court .draft-hub-court__geo--arc {
+  stroke: rgba(160, 205, 255, 0.62);
+}
+
+.draft-hub-court .draft-hub-court__mark {
+  top: 52%;
+  font-size: 11.5cqw;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: rgba(130, 168, 225, 0.5);
+}
+
+/* Wing seats by percentage so they never collide when the court shrinks. */
+.draft-hub-court .draft-hub-court__seat--sg {
+  left: 16.5%;
+}
+
+.draft-hub-court .draft-hub-court__seat--sf {
+  left: 83.5%;
+}
+
+/* Keep the paint and point jerseys (with the PG caption) inside a short court. */
+.draft-hub-court .draft-hub-court__seat--pf,
+.draft-hub-court .draft-hub-court__seat--c {
+  top: max(16.5%, calc(var(--jersey-w) * 0.56 + 5px));
+}
+
+.draft-hub-court .draft-hub-court__seat--pg {
+  top: min(87%, calc(100% - var(--jersey-w) * 0.56 - 0.95rem));
+}
+
+/* ── Jersey seats ── */
+.draft-hub-court .draft-hub-court__slot.jersey-slot,
+.draft-hub-court .draft-hub-court__slot.jersey-slot.is-empty,
+.draft-hub-court .draft-hub-court__slot.jersey-slot.is-filled {
+  display: block;
+  width: var(--jersey-w);
+  height: calc(var(--jersey-w) * 1.12);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: none;
+  box-shadow: none;
+  container-type: normal;
+  perspective: 420px;
+  touch-action: manipulation;
+}
+
+.draft-hub-court .draft-hub-court__slot.jersey-slot .draft-hub-court__slot-ring {
+  display: none;
+}
+
+.draft-hub-court .draft-hub-court__slot.jersey-slot:focus-visible .jersey {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+  border-radius: 0.4rem;
+}
+
+.draft-hub-court.is-analyzing .draft-hub-court__slot.jersey-slot {
+  animation-name: jersey-finale;
+}
+
+@keyframes jersey-finale {
+  0%, 100% { filter: brightness(1); }
+  40% { filter: brightness(1.45); }
+}
+
+.jersey {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  container-type: inline-size;
+  /* Empty: one neutral gray for every open seat. Filled: the team's primary with its
+     alternate-color trim. */
+  --jersey-fill: #4a505b;
+  --jersey-trim: #a9b0bc;
+  --jersey-piping: rgba(255, 255, 255, 0);
+  --jersey-line: rgba(208, 213, 222, 0.85);
+  --jersey-line-w: 1.4px;
+  --jersey-ink: rgba(236, 239, 244, 0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.jersey__shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.jersey__body {
+  fill: var(--jersey-fill);
+  transition: fill 0.25s ease;
+}
+
+/* Trim band (alternate color) with a thin white piping just inside it. Strokes centered on the
+   edge and clipped to the body, so each shows as a band inside the neck and armholes. */
+.jersey__piping,
+.jersey__trim {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.jersey__piping {
+  stroke: var(--jersey-piping);
+  stroke-width: 15;
+}
+
+.jersey__trim {
+  stroke: var(--jersey-trim);
+  stroke-width: 10;
+}
+
+.jersey__edge {
+  fill: none;
+  stroke: var(--jersey-line);
+  stroke-width: var(--jersey-line-w);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.jersey__text {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 30%;
+  bottom: 9%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-weight: 850;
+  line-height: 1;
+  color: var(--jersey-ink);
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.jersey__text--pos {
+  font-size: 27cqw;
+  letter-spacing: 0.02em;
+}
+
+.jersey__text--initials {
+  font-size: 31cqw;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.jersey__surname {
+  display: block;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Filled: the drafted player's team colors light the jersey. */
+.jersey.is-filled {
+  --jersey-fill: var(--slot-primary, #122848);
+  --jersey-trim: var(--slot-accent, #ffffff);
+  --jersey-piping: rgba(255, 255, 255, 0.88);
+  --jersey-line: color-mix(in srgb, var(--slot-primary, #122848) 40%, white);
+  --jersey-line-w: 1.4px;
+  --jersey-ink: var(--slot-ink, #ffffff);
+}
+
+/* Flat turn: the card squeezes to its edge, the faces swap at the midpoint, it opens back out. */
+.jersey__card {
+  position: absolute;
+  inset: 0;
+}
+
+.jersey__face {
+  position: absolute;
+  inset: 0;
+}
+
+.jersey__face--back,
+.jersey.is-flipped .jersey__face--front {
+  visibility: hidden;
+}
+
+.jersey.is-flipped .jersey__face--back {
+  visibility: visible;
+}
+
+.jersey.is-turning .jersey__card {
+  animation: jersey-turn 0.38s cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.jersey.is-turning-to-back .jersey__face--front,
+.jersey.is-turning-to-front .jersey__face--back {
+  animation: jersey-face-out 0.38s step-end;
+}
+
+.jersey.is-turning-to-back .jersey__face--back,
+.jersey.is-turning-to-front .jersey__face--front {
+  animation: jersey-face-in 0.38s step-end;
+}
+
+@keyframes jersey-turn {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.04); }
+}
+
+@keyframes jersey-face-out {
+  0% { visibility: visible; }
+  50%, 100% { visibility: hidden; }
+}
+
+@keyframes jersey-face-in {
+  0% { visibility: hidden; }
+  50%, 100% { visibility: visible; }
+}
+
+/* Placing a player: seats he can't take step back to a darker solid gray (never see-through). */
+.draft-hub-court.is-choosing .jersey-slot.is-empty:not(.is-target) .jersey {
+  --jersey-fill: #353a43;
+  --jersey-trim: #6f7682;
+  --jersey-line: rgba(150, 157, 168, 0.6);
+}
+
+/* One tight glow, no outer bloom: a single static drop-shadow in the placing team's color
+   (drawn once, never animated), and the outline lit in the same color. Empty seats stay gray. */
+.draft-hub-court .jersey-slot.is-target .jersey {
+  --jersey-glow-color: var(--target-color, var(--target-primary, #7ec8ff));
+  --jersey-line: var(--jersey-glow-color);
+  --jersey-line-w: 2.4px;
+}
+
+.draft-hub-court .jersey-slot.is-moving .jersey {
+  --jersey-glow-color: var(--slot-glow, #9fd0ff);
+  --jersey-line: var(--jersey-glow-color);
+  --jersey-line-w: 2px;
+}
+
+.draft-hub-court .jersey-slot:is(.is-target, .is-moving) .jersey__shape {
+  filter: drop-shadow(0 0 5px var(--jersey-glow-color));
+}
+
+.draft-hub-court .jersey-slot.is-target.is-primary .jersey {
+  transform: scale(1.04);
+}
+
+.draft-hub-court .jersey-slot:active .jersey {
+  transform: scale(0.95);
+}
+
+/* Just drafted: the jersey powers on in its team colors at once — a quick snap and a ring
+   burst (transform and opacity only, so the jersey itself is never smeared or masked). */
+.jersey.is-landing {
+  z-index: 3;
+  animation: jersey-reveal 0.42s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.jersey.is-landing::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 140%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--slot-glow, #7ec8ff) 75%, white);
+  transform: translate(-50%, -50%) scale(0.55);
+  opacity: 0;
+  pointer-events: none;
+  animation: jersey-burst 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.jersey.is-landing .jersey__text--initials {
+  animation: jersey-ink-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.2) 0.06s both;
+}
+
+@keyframes jersey-reveal {
+  0% { transform: scale(0.82); }
+  55% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@keyframes jersey-burst {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.55); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes jersey-ink-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .jersey,
+  html:not([data-full-motion]) .jersey__body {
+    transition: none;
+  }
+
+  html:not([data-full-motion]) .jersey__card,
+  html:not([data-full-motion]) .jersey__face {
+    animation: none;
+  }
+}
+
+/* ── Goal: $1,000,000,000 above the spinner — scoreboard numerals, a hair of glow ── */
+.billion-shell .ter--goal .ter__goal-amount,
+.billion-shell--picking .ter--goal .ter__goal-amount {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif !important;
+  font-size: clamp(2.2rem, 10.6vw, 2.8rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+  color: var(--oneb-green, #29e490) !important;
+  text-shadow: 0 0 7px rgba(41, 228, 144, 0.22) !important;
+}
+
+/* ── Player selection sheet ── */
+.draft-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 30%;
+  bottom: 0;
+  z-index: 60;
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-radius: 1.35rem 1.35rem 0 0;
+  border: 1px solid rgba(120, 175, 255, 0.2);
+  border-bottom: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 3rem),
+    linear-gradient(180deg, #0a1938 0%, #071330 40%, #050e25 100%);
+  box-shadow:
+    0 -18px 40px rgba(0, 0, 0, 0.5),
+    0 -1px 0 rgba(255, 255, 255, 0.04) inset;
+  transform: translate3d(0, 110%, 0);
+  transition:
+    transform 0.38s cubic-bezier(0.22, 0.9, 0.24, 1),
+    visibility 0s linear 0s;
+  will-change: transform;
+  overscroll-behavior: contain;
+}
+
+.draft-sheet:not(.is-present) {
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 0.32s cubic-bezier(0.4, 0, 0.6, 1),
+    visibility 0s linear 0.32s;
+}
+
+.draft-sheet__grab {
+  position: relative;
+  flex: 0 0 auto;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.draft-sheet__grab:active {
+  cursor: grabbing;
+}
+
+.draft-sheet__handle {
+  display: grid;
+  place-items: center;
+  height: 1.6rem;
+  outline: none;
+}
+
+.draft-sheet__handle span {
+  width: 2.6rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: rgba(200, 220, 255, 0.38);
+}
+
+.draft-sheet__handle:focus-visible span {
+  background: rgba(62, 232, 165, 0.9);
+}
+
+/* Collapsed bar: overlays the top of the list, fades out as the sheet opens. */
+.draft-sheet__peek {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 2;
+  height: 3.1rem;
+  display: flex;
+  align-items: center;
+  padding: 0 1.1rem 0.35rem;
+  box-sizing: border-box;
+  background: #0a1938;
+  opacity: var(--sheet-collapse, 1);
+  pointer-events: none;
+}
+
+.draft-sheet:not(.is-open) .draft-sheet__peek {
+  pointer-events: auto;
+}
+
+.draft-sheet__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.85rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  opacity: calc(1 - var(--sheet-collapse, 0) * 0.6);
+}
+
+.draft-sheet__body .billion-pick-stage {
+  max-width: none;
+}
+
+.draft-sheet__safe {
+  position: absolute;
+  visibility: hidden;
+  height: env(safe-area-inset-bottom, 0px);
+  pointer-events: none;
+}
+
+.draft-sheet-peek {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.draft-sheet-peek__chip {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 900;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.draft-sheet-peek__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.draft-sheet-peek__copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f2f6ff;
+}
+
+.draft-sheet-peek__copy em {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(62, 232, 165, 0.9);
+}
+
+/* Room below the court for the collapsed sheet, so no jersey hides under it. */
+.billion-shell--draft820 .billion-draft-layout.billion-draft-layout--classic-hub {
+  padding-bottom: calc(4.9rem + env(safe-area-inset-bottom, 0px)) !important;
+  box-sizing: border-box;
+}
+
+/* Short phones: a slimmer collapsed bar leaves the court more height. */
+@media (max-height: 720px) {
+  .draft-sheet__handle {
+    height: 1.2rem;
+  }
+
+  .draft-sheet__peek {
+    height: 2.6rem;
+  }
+
+  .draft-sheet-peek__chip {
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 0.8rem;
+  }
+
+  .billion-shell--draft820 .billion-draft-layout.billion-draft-layout--classic-hub {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .draft-sheet {
+    transition-duration: 0.01s;
+  }
+}

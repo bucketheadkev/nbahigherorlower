@@ -116,8 +116,7 @@
 .rb-card.is-loading {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 2.25rem;
+  min-height: 2rem;
   padding: 0 0.75rem;
 }
 
@@ -125,155 +124,44 @@
   font-size: 0.66rem;
   font-weight: 700;
   color: rgba(214, 228, 255, 0.5);
-}
-
-.rb-card__bar {
-  appearance: none;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  min-height: 2.25rem;
-  padding: 0.2rem 0.6rem 0.2rem 0.45rem;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.rb-card__gem {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--rb, #3cf09c) 18%, transparent);
-  color: var(--rb, #3cf09c);
-}
-
-.rb-card__gem svg {
-  width: 0.72rem;
-  height: 0.72rem;
-  fill: currentColor;
-}
-
-.rb-card.is-loading .rb-card__gem {
   animation: rb-pulse 1.2s ease-in-out infinite;
 }
 
-.rb-card__label {
-  flex: 0 0 auto;
-  font-size: 0.5rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  color: var(--rb);
+/* One row: the challenge on the left, the reward on the right. */
+.rb-card__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.15rem 0.75rem;
+  box-sizing: border-box;
 }
 
 .rb-card__name {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 800;
+  line-height: 1.2;
   white-space: nowrap;
-  text-overflow: ellipsis;
   color: #f2f6ff;
 }
 
-.rb-card__progress {
-  flex: 0 0 auto;
-  padding: 0.08rem 0.4rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  font-size: 0.6rem;
-  font-weight: 850;
-  font-variant-numeric: tabular-nums;
-  color: rgba(222, 232, 250, 0.8);
-}
-
-.rb-card.is-complete .rb-card__progress {
-  background: rgba(41, 228, 144, 0.2);
+.rb-card.is-complete .rb-card__name {
   color: #3cf09c;
 }
 
 .rb-card__reward {
   flex: 0 0 auto;
   font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 850;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   color: #3cf09c;
-}
-
-.rb-card__chevron {
-  flex: 0 0 auto;
-  width: 0.7rem;
-  height: 0.7rem;
-  fill: none;
-  stroke: rgba(214, 228, 255, 0.55);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 0.2s ease;
-}
-
-.rb-card.is-open .rb-card__chevron {
-  transform: rotate(180deg);
-}
-
-.rb-card__detail {
-  overflow: hidden;
-}
-
-.rb-card__inner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0 0.75rem 0.65rem 2.25rem;
-}
-
-.rb-card__rule {
-  margin: 0;
-  font-size: 0.74rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: #eaf2ff;
-}
-
-.rb-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-}
-
-.rb-tier {
-  padding: 0.12rem 0.45rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--rb) 45%, transparent);
-  font-size: 0.52rem;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--rb);
-}
-
-.rb-card__ontrack {
-  font-size: 0.58rem;
-  font-weight: 850;
-  color: #3cf09c;
-}
-
-.rb-card__free {
-  margin: 0;
-  font-size: 0.6rem;
-  line-height: 1.4;
-  color: rgba(214, 228, 255, 0.55);
 }
 
 @keyframes rb-pulse {
@@ -603,7 +491,7 @@
   html:not([data-full-motion]) .rollover__shine,
   html:not([data-full-motion]) .rollover__amount,
   html:not([data-full-motion]) .rankup__halo,
-  html:not([data-full-motion]) .rb-card.is-loading .rb-card__gem {
+  html:not([data-full-motion]) .rb-card__loading {
     animation: none;
   }
 }

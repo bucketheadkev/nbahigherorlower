@@ -3,6 +3,7 @@
 import {
   type CSSProperties,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -10,11 +11,12 @@ import {
 import {
   POSITION_LABELS,
 } from '@/lib/tradeup/startingLineup';
-import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
+import { contrastOnPrimary, getTeamColors, teamGlowColor } from '@/lib/tradeup/teamColors';
 import { getTeam } from '@/lib/tradeup/teams';
 import { eraShortLabel, type DecadeEra, type ValuedPlayer } from '@/lib/tradeup/billionDollar';
-import { playerInitials } from '@/lib/tradeup/draftRun';
 import type { Position } from '@/lib/tradeup/types';
+import { ArenaCourtArt } from './draft/ArenaCourt';
+import { CourtJersey } from './draft/CourtJersey';
 
 export type HubCardPlayer = ValuedPlayer & { era?: DecadeEra };
 
@@ -25,6 +27,12 @@ type DraftHubCardsProps = {
   movingSlot?: Position | null;
   /** Highlight empty eligible seats while placing a pick. */
   targetSlots?: Partial<Record<Position, boolean>>;
+  /** The placing player's primary position — its jersey wears the heaviest outline. */
+  primarySlot?: Position | null;
+  /** Lightened team color for the moving light on eligible jerseys. */
+  targetColor?: string | null;
+  /** Team primary that rings the eligible jerseys while placing. */
+  targetPrimary?: string | null;
   /** Court weight-impact toward this seat (tilt + line ripple). */
   impactSlot?: Position | null;
   /** Team primary color for the impact flash (from player/team theme). */
@@ -38,6 +46,12 @@ type DraftHubCardsProps = {
   onSlotPress?: (slot: Position) => void;
   onAnalyzeComplete?: () => void;
 };
+
+/** A press that travels farther than this is a scroll or swipe, never a jersey tap. */
+const TAP_SLOP_PX = 10;
+
+/** Length of the placement reveal (see .jersey.is-landing). */
+const LANDING_MS = 650;
 
 /** Court slot order for a11y / DOM (paint → wings → point). */
 const COURT_SLOTS: Position[] = ['PF', 'C', 'SG', 'SF', 'PG'];
@@ -146,6 +160,9 @@ export function DraftHubCards({
   slots,
   movingSlot = null,
   targetSlots,
+  primarySlot = null,
+  targetColor = null,
+  targetPrimary = null,
   impactSlot = null,
   impactColor = null,
   concealSlot = null,
@@ -155,7 +172,12 @@ export function DraftHubCards({
   onAnalyzeComplete,
 }: DraftHubCardsProps) {
   const [detailSlot, setDetailSlot] = useState<Position | null>(null);
-  const [namedSlot, setNamedSlot] = useState<Position | null>(null);
+  const [flippedSlots, setFlippedSlots] = useState<ReadonlySet<Position>>(() => new Set());
+  const pressRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const [landingSlots, setLandingSlots] = useState<ReadonlySet<Position>>(() => new Set());
+  const prevSlotsRef = useRef(slots);
+  const landingTimersRef = useRef<number[]>([]);
+  const maskId = `court-mask-${useId().replace(/:/g, '')}`;
   const [analyzeStage, setAnalyzeStage] = useState<AnalyzeStage>('idle');
   const rootRef = useRef<HTMLElement | null>(null);
   const analyzeDoneRef = useRef(false);
@@ -174,9 +196,51 @@ export function DraftHubCards({
       ? getTeamColors(slots[impactSlot]!.teamId).primary
       : null);
 
+  // A newly drafted player lands on his jersey; a seated player moving seats does not.
+  // Layout effect so the first painted frame already starts from the empty jersey.
+  useLayoutEffect(() => {
+    const prev = prevSlotsRef.current;
+    prevSlotsRef.current = slots;
+    if (reduceMotion) return;
+    const seatedBefore = new Set(
+      COURT_SLOTS.flatMap((slot) => (prev[slot] ? [prev[slot]!.id] : [])),
+    );
+    const fresh = COURT_SLOTS.filter((slot) => {
+      const player = slots[slot];
+      return player && prev[slot]?.id !== player.id && !seatedBefore.has(player.id);
+    });
+    if (fresh.length === 0) return;
+    setLandingSlots((current) => new Set([...current, ...fresh]));
+    landingTimersRef.current.push(
+      window.setTimeout(() => {
+        setLandingSlots((current) => {
+          const next = new Set(current);
+          fresh.forEach((slot) => next.delete(slot));
+          return next;
+        });
+      }, LANDING_MS),
+    );
+  }, [reduceMotion, slots]);
+
+  useEffect(
+    () => () => {
+      landingTimersRef.current.forEach((id) => window.clearTimeout(id));
+    },
+    [],
+  );
+
+  // A turned jersey stays turned only while the same player wears it (moves and swaps reset it).
+  const flipOwnerRef = useRef<Partial<Record<Position, string>>>({});
   useEffect(() => {
-    if (namedSlot && !slots[namedSlot]) setNamedSlot(null);
-  }, [namedSlot, slots]);
+    const owners = flipOwnerRef.current;
+    setFlippedSlots((prev) => {
+      const kept = [...prev].filter((slot) => slots[slot] && owners[slot] === slots[slot]!.id);
+      return kept.length === prev.size ? prev : new Set(kept);
+    });
+    flipOwnerRef.current = Object.fromEntries(
+      COURT_SLOTS.flatMap((slot) => (slots[slot] ? [[slot, slots[slot]!.id]] : [])),
+    );
+  }, [slots]);
 
   useEffect(() => {
     if (!detailSlot) return;
@@ -196,7 +260,6 @@ export function DraftHubCards({
       if (target.closest('.draft-hub-court__pop')) return;
       if (target.closest('.draft-hub-court__slot')) return;
       setDetailSlot(null);
-      setNamedSlot(null);
     };
     document.addEventListener('click', onDoc);
     return () => document.removeEventListener('click', onDoc);
@@ -213,7 +276,7 @@ export function DraftHubCards({
     timersRef.current = [];
     analyzeDoneRef.current = false;
     setDetailSlot(null);
-    setNamedSlot(null);
+    setFlippedSlots(new Set());
 
     const arm = (ms: number, fn: () => void) => {
       timersRef.current.push(
@@ -267,14 +330,20 @@ export function DraftHubCards({
 
   const stageClass =
     analyzeStage === 'idle' ? '' : ` is-analyze-${analyzeStage}`;
+  const choosing = Boolean(targetSlots) && Object.values(targetSlots ?? {}).some(Boolean);
+  const courtStyle = {
+    ...impactStyle,
+    ...(targetColor ? { '--target-color': targetColor } : null),
+    ...(targetPrimary ? { '--target-primary': targetPrimary } : null),
+  } as CSSProperties;
 
   return (
     <aside
       ref={rootRef}
       className={`draft-hub-court${analyzing ? ' is-analyzing' : ''}${stageClass}${
         assignMode ? ' is-assigning' : ''
-      }${impact ? ' is-impacting' : ''}`}
-      style={impactStyle}
+      }${impact ? ' is-impacting' : ''}${choosing ? ' is-choosing' : ''}`}
+      style={courtStyle}
       aria-label={analyzing ? 'Activating lineup' : 'Your five'}
     >
       <div className="draft-hub-court__stage">
@@ -285,18 +354,30 @@ export function DraftHubCards({
               <span className="draft-hub-court__impact-bolt" aria-hidden="true" />
             </>
           ) : null}
+          <ArenaCourtArt />
           <svg
             className="draft-hub-court__lines"
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
           >
+            <defs>
+              {/* The free-throw line and circle fade out around the $1B mark instead of crossing it. */}
+              <radialGradient id={`${maskId}-fade`}>
+                <stop offset="0.55" stopColor="black" />
+                <stop offset="1" stopColor="white" />
+              </radialGradient>
+              <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+                <rect x="0" y="0" width="100" height="100" fill="white" />
+                <ellipse cx="50" cy="52.4" rx="17" ry="9.5" fill={`url(#${maskId}-fade)`} />
+              </mask>
+            </defs>
             <g className="draft-hub-court__geo draft-hub-court__geo--boundary">
               <rect x="1.2" y="1.2" width="97.6" height="97.6" rx="0.4" />
             </g>
-            <g className="draft-hub-court__geo draft-hub-court__geo--paint">
+            <g className="draft-hub-court__geo draft-hub-court__geo--paint" mask={`url(#${maskId})`}>
               <rect x="28" y="1.2" width="44" height="51.7" />
             </g>
-            <g className="draft-hub-court__geo draft-hub-court__geo--key">
+            <g className="draft-hub-court__geo draft-hub-court__geo--key" mask={`url(#${maskId})`}>
               <path
                 d="M 34 52.9 A 16 16 0 0 1 66 52.9"
                 strokeDasharray="2.4 2.2"
@@ -321,9 +402,9 @@ export function DraftHubCards({
           const filled = Boolean(player) && !concealed;
           const open = detailSlot === slot && filled && !analyzing && !assignMode;
           const showName =
-            filled && (movingSlot === slot || (namedSlot === slot && movingSlot == null));
-          const nameParts = player ? splitName(player.name) : null;
+            filled && (movingSlot === slot || (flippedSlots.has(slot) && movingSlot == null));
           const isTarget = Boolean(targetSlots?.[slot]);
+          const isPrimary = isTarget && primarySlot === slot;
           const isMoving = movingSlot === slot;
 
           return (
@@ -341,14 +422,15 @@ export function DraftHubCards({
                 className={`draft-hub-court__slot${
                   filled ? ' is-filled' : ' is-empty'
                 }${open ? ' is-open' : ''}${isTarget ? ' is-target' : ''}${
-                  isMoving ? ' is-moving' : ''
-                }`}
+                  isPrimary ? ' is-primary' : ''
+                }${isMoving ? ' is-moving' : ''} jersey-slot`}
                 style={
-                  filled && colors
+                  filled && colors && player
                     ? ({
                         '--slot-primary': colors.primary,
                         '--slot-accent': colors.accent,
                         '--slot-ink': ink,
+                        '--slot-glow': teamGlowColor(player.teamId),
                       } as CSSProperties)
                     : undefined
                 }
@@ -359,11 +441,32 @@ export function DraftHubCards({
                 }
                 aria-expanded={open || undefined}
                 disabled={analyzing}
+                onPointerDown={(event) => {
+                  pressRef.current = { x: event.clientX, y: event.clientY, moved: false };
+                }}
+                onPointerMove={(event) => {
+                  const press = pressRef.current;
+                  if (
+                    press &&
+                    (Math.abs(event.clientX - press.x) > TAP_SLOP_PX ||
+                      Math.abs(event.clientY - press.y) > TAP_SLOP_PX)
+                  ) {
+                    press.moved = true;
+                  }
+                }}
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (analyzing) return;
-                  if (filled && player) {
-                    setNamedSlot((prev) => (prev === slot ? null : slot));
+                  const dragged = pressRef.current?.moved;
+                  pressRef.current = null;
+                  if (analyzing || dragged) return;
+                  // A glowing seat is a destination (swap), not a jersey to turn over.
+                  if (filled && player && !isTarget) {
+                    setFlippedSlots((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(slot)) next.delete(slot);
+                      else next.add(slot);
+                      return next;
+                    });
                   }
                   if (onSlotPress) {
                     onSlotPress(slot);
@@ -376,29 +479,16 @@ export function DraftHubCards({
                   setDetailSlot((prev) => (prev === slot ? null : slot));
                 }}
               >
-                <span className="draft-hub-court__slot-ring" aria-hidden="true" />
-                {filled && player && nameParts ? (
-                  <span className={`draft-hub-court__chip${showName ? ' is-flipped' : ''}`}>
-                    <span className="draft-hub-court__face draft-hub-court__face--front">
-                      <span className="draft-hub-court__chip-name">
-                        {playerInitials(player.name)}
-                      </span>
-                    </span>
-                    <span className="draft-hub-court__face draft-hub-court__face--back">
-                      <CircleName
-                        pos={slot}
-                        first={nameParts.first}
-                        last={nameParts.last}
-                      />
-                    </span>
-                  </span>
-                ) : (
-                  <span className="draft-hub-court__slot-mark">{slot}</span>
-                )}
+                <CourtJersey
+                  position={slot}
+                  playerName={filled && player ? player.name : null}
+                  flipped={showName}
+                  landing={filled && landingSlots.has(slot)}
+                />
               </button>
-              {filled && player ? (
-                <span className="draft-hub-court__seat-pos">{slot}</span>
-              ) : null}
+              <span className={`draft-hub-court__seat-pos${filled && player ? '' : ' is-empty'}`}>
+                {slot}
+              </span>
             </div>
           );
         })}

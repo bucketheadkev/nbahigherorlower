@@ -5,3 +5,5 @@ wheel-spin.mp3     — Spin (victorabdo)
                    https://pixabay.com/sound-effects/film-special-effects-spin-232536/
 cash-register.mp3  — Cash Register 1 (ksjsbwuil)
                    https://pixabay.com/sound-effects/film-special-effects-cash-register-1-481216/
+spin-click.wav     — Digital Click 3 (ksjsbwuil), Pixabay #513897 (leading silence trimmed)
+place-click.mp3    — Click (666herohero), Pixabay #21156

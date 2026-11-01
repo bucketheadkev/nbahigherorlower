@@ -199,6 +199,15 @@ function failureFrom(error: { code?: string; message?: string }): FranchiseFailu
   return 'error';
 }
 
+/** No response at all (offline, sleep/wake, Wi-Fi switch). Transient; the screen retries on its timer. */
+const NETWORK_FAILURE = /failed to fetch|load failed|networkerror|network request failed/i;
+
+function logFailure(fn: string, detail: unknown) {
+  const text = detail instanceof Error ? detail.message : String(detail ?? '');
+  if (NETWORK_FAILURE.test(text)) console.warn(`[franchise] ${fn} offline`, text);
+  else console.error(`[franchise] ${fn} failed`, text);
+}
+
 export async function franchiseRpc<T>(
   fn: string,
   args: Record<string, unknown> | undefined,
@@ -212,13 +221,13 @@ export async function franchiseRpc<T>(
     const { data, error } = await getSupabaseBrowserClient().rpc(fn, args);
     if (error) {
       const reason = failureFrom(error);
-      if (reason === 'error') console.error(`[franchise] ${fn} failed`, error.message);
+      if (reason === 'error') logFailure(fn, error.message);
       return { ok: false, reason };
     }
     return { ok: true, data: map(data) };
   } catch (err) {
     if (err instanceof OutdatedServerError) return { ok: false, reason: 'unavailable' };
-    console.error(`[franchise] ${fn} error`, err);
+    logFailure(fn, err);
     return { ok: false, reason: 'error' };
   }
 }

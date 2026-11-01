@@ -2323,7 +2323,8 @@
 .franchise-pick__reroll::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 0 auto 0 0;
+  width: 220%;
   pointer-events: none;
   z-index: 1;
   background: linear-gradient(
@@ -2334,8 +2335,8 @@
     rgba(255, 244, 220, 0.18) 56%,
     transparent 68%
   );
-  background-size: 220% 100%;
   opacity: 0.95;
+  will-change: transform;
   animation: ter-roll-flow 1.7s linear infinite;
 }
 
@@ -4307,6 +4308,10 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   overflow: hidden !important;
   isolation: isolate;
   cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.44) inset,
+    0 0 13px rgba(255, 124, 52, 0.55),
+    0 8px 18px rgba(229, 86, 34, 0.35);
   animation: ter-roll-pulse 1.7s ease-in-out infinite;
 }
 
@@ -4324,7 +4329,10 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   z-index: 1;
 }
 
+/* The sheen layer is 220% wide and slides (transform only, so it never repaints the button). */
 .ter__roll::before {
+  right: auto;
+  width: 220%;
   background: linear-gradient(
     100deg,
     transparent 32%,
@@ -4333,8 +4341,8 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
     rgba(255, 244, 220, 0.18) 56%,
     transparent 68%
   );
-  background-size: 220% 100%;
   opacity: 0.95;
+  will-change: transform;
   animation: ter-roll-flow 1.7s linear infinite;
 }
 
@@ -4344,26 +4352,15 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 @keyframes ter-roll-flow {
-  0% { background-position: 100% 0; }
-  100% { background-position: 0% 0; }
+  from { transform: translateX(-54.5455%); }
+  to { transform: translateX(0); }
 }
 
+/* Breathing is scale only: an animated box-shadow repaints the whole button every frame. */
 @keyframes ter-roll-pulse {
   0%,
-  100% {
-    transform: scale(1);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.38) inset,
-      0 0 8px rgba(255, 109, 40, 0.38),
-      0 6px 14px rgba(229, 86, 34, 0.28);
-  }
-  50% {
-    transform: scale(1.028);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.5) inset,
-      0 0 18px rgba(255, 140, 64, 0.72),
-      0 10px 22px rgba(229, 86, 34, 0.42);
-  }
+  100% { transform: scale(1); }
+  50% { transform: scale(1.028); }
 }
 
 @keyframes ter-roll-sheen {
@@ -4388,6 +4385,11 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 .ter__roll:disabled .ter__roll-sheen,
 .ter__roll:disabled::before {
   animation: none;
+}
+
+.ter__roll--placeholder,
+.ter__roll--placeholder::before {
+  animation: none !important;
 }
 
 .ter__roll--placeholder {
@@ -10031,6 +10033,7 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 .barrel-reel.is-ready .barrel-reel__frame {
+  border-color: rgba(255, 255, 255, 0.95);
   animation: barrel-frame-pulse 1.8s ease-in-out infinite;
 }
 
@@ -10208,13 +10211,14 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   to { opacity: 0; }
 }
 
+/* Opacity, not border-color: it pulses on the compositor instead of repainting. */
 @keyframes barrel-frame-pulse {
   0%,
   100% {
-    border-color: rgba(255, 255, 255, 0.38);
+    opacity: 0.4;
   }
   50% {
-    border-color: rgba(255, 255, 255, 0.95);
+    opacity: 1;
   }
 }
 

@@ -48,6 +48,36 @@ export function teamRingColor(teamId: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+function hexToHsl(hex: string): [number, number, number] | null {
+  const raw = hex.replace('#', '');
+  if (raw.length !== 6) return null;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(raw.slice(i, i + 2), 16) / 255) as [number, number, number];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h =
+    max === r ? ((g - b) / d + (g < b ? 6 : 0)) / 6 : max === g ? ((b - r) / d + 2) / 6 : ((r - g) / d + 4) / 6;
+  return [h, s, l];
+}
+
+/**
+ * The team's own hue as a vivid, bright glow for the dark court (dark navies, maroons and
+ * purples keep their color instead of fading toward white). Black / gray primaries use the
+ * team's accent, or silver if that is neutral too.
+ */
+export function teamGlowColor(teamId: string): string {
+  const colors = getTeamColors(teamId);
+  const pick = [colors.primary, colors.accent]
+    .map(hexToHsl)
+    .find((hsl): hsl is [number, number, number] => hsl != null && hsl[1] >= 0.18 && hsl[2] >= 0.08 && hsl[2] <= 0.92);
+  if (!pick) return '#dfe6f2';
+  const [h, s] = pick;
+  return `hsl(${Math.round(h * 360)} ${Math.round(Math.max(s, 0.8) * 100)}% 58%)`;
+}
+
 /** Readable ink on a team primary fill. */
 export function contrastOnPrimary(hex: string): string {
   const raw = hex.replace('#', '');

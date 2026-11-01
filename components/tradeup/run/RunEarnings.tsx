@@ -121,8 +121,7 @@ export function RunEarnings({ data, reduceMotion }: { data: RunEarningsData; red
             </span>
             <div className="rb-result__copy">
               <span className="rb-result__kicker">{pick(COPY.bonusDone, locale)}</span>
-              <strong>{pick(bonusDef!.name, locale)}</strong>
-              <em>{pick(bonusDef!.rule, locale)}</em>
+              <strong>{pick(bonusDef!.short, locale)}</strong>
             </div>
             <strong className="rb-result__amount">+{formatCash(bonus.payout)}</strong>
           </motion.div>
@@ -131,7 +130,7 @@ export function RunEarnings({ data, reduceMotion }: { data: RunEarningsData; red
             {bonus.status === 'pending'
               ? pick(COPY.bonusChecking, locale)
               : bonus.status === 'missed'
-                ? `${pick(COPY.bonusMissed, locale)} — ${pick(bonusDef!.name, locale)}`
+                ? `${pick(COPY.bonusMissed, locale)} — ${pick(bonusDef!.short, locale)}`
                 : pick(COPY.bonusError, locale)}
           </p>
         )

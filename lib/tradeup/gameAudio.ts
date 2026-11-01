@@ -70,6 +70,8 @@ type SoundId =
   | 'ticket_release'
   | 'wheel_spin'
   | 'wheel_stop'
+  | 'spin_click'
+  | 'place_click'
   | 'success_peak'
   | 'success_soft'
   | 'results_cheer'
@@ -91,6 +93,13 @@ export const TICKET_PRINT_SOUND_PATH = '/sounds/ticket-print.mp3';
 export const WHEEL_SPIN_SOUND_PATH = '/sounds/wheel-spin.mp3';
 /** Pixabay: film-special-effects-cash-register-1-481216 (ksjsbwuil). */
 export const CASH_REGISTER_SOUND_PATH = '/sounds/cash-register.mp3';
+/** Pixabay: digital-click-3-513897 (ksjsbwuil). Only on SPIN, Reroll Team and Reroll Era. */
+export const SPIN_CLICK_SOUND_PATH = '/sounds/spin-click.wav';
+/** The click file peaks about twice as loud as the spin sample. */
+const SPIN_CLICK_VOLUME = 0.35;
+/** Pixabay: click-21156 (666herohero). In-game only: picking a player, placing or moving him. */
+export const PLACE_CLICK_SOUND_PATH = '/sounds/place-click.mp3';
+const PLACE_CLICK_VOLUME = 0.6;
 
 /**
  * Wheel spin loudness.
@@ -116,6 +125,8 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
     loop: false,
   },
   wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.36, debounceMs: 140 },
+  spin_click: { path: SPIN_CLICK_SOUND_PATH, volume: SPIN_CLICK_VOLUME, debounceMs: 0 },
+  place_click: { path: PLACE_CLICK_SOUND_PATH, volume: PLACE_CLICK_VOLUME, debounceMs: 0 },
   success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
   success_soft: { path: '/sounds/success-soft.mp3', volume: 0.4, debounceMs: 400, maxPlayMs: 1800 },
   /** Legacy alias — final total uses cash_register. */
@@ -165,6 +176,9 @@ let cashRegisterBufferPromise: Promise<AudioBuffer | null> | null = null;
 let cashRegisterSource: AudioBufferSourceNode | null = null;
 let cashRegisterGain: GainNode | null = null;
 let cashRegisterToken = 0;
+/** Decoded short UI samples (clicks), keyed by sound id. */
+const clickBuffers = new Map<SoundId, AudioBuffer>();
+const clickBufferPromises = new Map<SoundId, Promise<AudioBuffer | null>>();
 
 /** Phone browsers block HTMLAudioElement.play() once the tap's task has ended. */
 function isPhoneBrowser(): boolean {
@@ -283,6 +297,76 @@ function ensureWheelSpinBuffer(): Promise<AudioBuffer | null> {
   return wheelSpinBufferPromise;
 }
 
+function ensureClickBuffer(id: SoundId): Promise<AudioBuffer | null> {
+  const ready = clickBuffers.get(id);
+  if (ready) return Promise.resolve(ready);
+  const pending = clickBufferPromises.get(id);
+  if (pending) return pending;
+
+  const audio = getCtx();
+  if (!audio) return Promise.resolve(null);
+
+  const promise = (async () => {
+    try {
+      const res = await fetch(SOUND_DEFS[id].path);
+      if (!res.ok) return null;
+      const raw = await res.arrayBuffer();
+      const decoded = await audio.decodeAudioData(raw.slice(0));
+      clickBuffers.set(id, decoded);
+      return decoded;
+    } catch {
+      return null;
+    }
+  })();
+  clickBufferPromises.set(id, promise);
+  return promise;
+}
+
+/**
+ * Play a short click from its decoded buffer (own GainNode, so it layers over other game audio
+ * and honours the SFX volume on iOS). Before the buffer is warm, the element plays instead.
+ */
+function playClick(id: SoundId): void {
+  if (typeof window === 'undefined') return;
+  if (getAudioSettings().sfxMuted) return;
+
+  unlockGameAudio();
+  const audio = getCtx();
+  if (audio?.state === 'suspended') {
+    try {
+      void audio.resume();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const buf = clickBuffers.get(id);
+  if (buf && audio?.state === 'running') {
+    const gain = audio.createGain();
+    gain.gain.value = Math.min(1, SOUND_DEFS[id].volume * masterScale());
+    gain.connect(audio.destination);
+    const src = audio.createBufferSource();
+    src.buffer = buf;
+    src.connect(gain);
+    src.onended = () => {
+      try {
+        src.disconnect();
+        gain.disconnect();
+      } catch {
+        /* ignore */
+      }
+    };
+    try {
+      src.start(0);
+      return;
+    } catch {
+      /* fall through to the element */
+    }
+  }
+
+  playSound(id, { force: true });
+}
+
 function canPlay(key: string, debounceMs: number): boolean {
   if (debounceMs <= 0) return true;
   const now = performance.now();
@@ -397,6 +481,8 @@ export function unlockGameAudio(): void {
   primeAudioContext(audio);
   void ensureWheelSpinBuffer();
   void ensureCashRegisterBuffer();
+  void ensureClickBuffer('spin_click');
+  void ensureClickBuffer('place_click');
   // Do not call element.load() here. Every spin used to reload the sample
   // immediately before play(), which aborts the tap on iPhone Safari so the
   // spin is silent or starts late. Preload warms the file once.
@@ -700,6 +786,19 @@ export function startWheelSpinSound(
       stopSound('wheel_spin');
     }
   });
+}
+
+/** Digital click for the SPIN, Reroll Team and Reroll Era presses. Call from the tap. */
+export function playSpinClickSound(): void {
+  playClick('spin_click');
+}
+
+/**
+ * In-game placement click: picking a player from the list, placing him on a jersey, or moving /
+ * swapping him to another jersey. Never for menus or navigation. Call from the tap.
+ */
+export function playPlaceClickSound(): void {
+  playClick('place_click');
 }
 
 /** Stop team/era spin audio (leave screen / new spin / unmount). */

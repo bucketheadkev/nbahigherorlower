@@ -19,6 +19,7 @@ import { DECADE_ERAS } from '@/lib/tradeup/decadeRosters';
 import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import {
   WHEEL_SPIN_DURATION_MS,
+  playSpinClickSound,
   startWheelSpinSound,
   stopWheelSpinSound,
 } from '@/lib/tradeup/gameAudio';
@@ -284,7 +285,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         });
         onResult(pair);
       },
-      reduceMotion ? 40 : 280,
+      reduceMotion ? 40 : 120,
     );
   }, [onResult, reduceMotion]);
 
@@ -299,7 +300,11 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   }, []);
 
   const beginSpin = useCallback(
-    (pair: SpinPair, axes: { team: boolean; era: boolean }, opts?: { playSound?: boolean }) => {
+    (
+      pair: SpinPair,
+      axes: { team: boolean; era: boolean },
+      opts?: { playSound?: boolean; keepLanded?: boolean },
+    ) => {
       reportedRef.current = false;
       busyRef.current = true;
       pendingRef.current = pair;
@@ -321,6 +326,10 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         setSpinTeam(true);
         teamDoneRef.current = false;
         setTeamSpinId((n) => n + 1);
+      } else if (opts?.keepLanded) {
+        // Reroll of the other reel: this one keeps its landed card exactly as it is.
+        teamDoneRef.current = true;
+        setTeamLanded(true);
       } else {
         setTeamStrip([]);
         setSpinTeam(false);
@@ -333,6 +342,8 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         setSpinEra(true);
         eraDoneRef.current = false;
         setEraSpinId((n) => n + 1);
+      } else if (opts?.keepLanded) {
+        eraDoneRef.current = true;
       } else {
         setEraStrip([]);
         setSpinEra(false);
@@ -348,6 +359,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     busyRef.current = true;
     // Unlock + arm spin audio in this tap (WKWebView userActivation is unreliable).
     // Audio is not gated by reduced-motion — only reel timing is.
+    playSpinClickSound();
     startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     onPrint();
     if (resolveRoll) {
@@ -364,9 +376,14 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     beginSpin(pair, { team: true, era: true }, { playSound: false });
   }, [allPairs, beginSpin, mode, onPrint, resolveRoll, rollLocked]);
 
-  // One-sided auto-reroll from pick screen.
+  // One-sided auto-reroll from pick screen. Re-arms once consumed so a later reroll of the
+  // other reel runs on this same (already landed) board.
   useEffect(() => {
-    if (!autoReroll || autoDoneRef.current) return;
+    if (!autoReroll) {
+      autoDoneRef.current = false;
+      return;
+    }
+    if (autoDoneRef.current) return;
     const baseline = rerollFrom;
     if (!baseline) {
       onAutoRerollConsumed?.();
@@ -377,11 +394,15 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
     onAutoRerollConsumed?.();
     hapticLight();
     // Sound already started in the reroll tap (iOS gesture).
-    if (autoReroll === 'team') {
-      beginSpin(next, { team: true, era: false }, { playSound: false });
-    } else {
-      beginSpin(next, { team: false, era: true }, { playSound: false });
-    }
+    // Spin the rerolled reel, plus the other one only if its value changed too.
+    beginSpin(
+      next,
+      {
+        team: autoReroll === 'team' || next.team.id !== baseline.team.id,
+        era: autoReroll === 'era' || next.era !== baseline.era,
+      },
+      { playSound: false, keepLanded: true },
+    );
   }, [allPairs, autoReroll, beginSpin, onAutoRerollConsumed, rerollFrom]);
 
   const onTeamLocked = useCallback(() => {

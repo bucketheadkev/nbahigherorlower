@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import {
   BILLION_GOAL,
   buildEraRoster,
+  eraShortLabel,
   formatDollarsExact,
   getDollarValue,
   getDollarValueForSlot,
@@ -42,11 +43,10 @@ import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
 import { settleRunBonus } from '@/lib/account/runBonusCloud';
 import { useRunBonus } from '@/hooks/useRunBonus';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
-import { contrastOnPrimary, getTeamColors, teamRingColor } from '@/lib/tradeup/teamColors';
+import { contrastOnPrimary, getTeamColors, teamGlowColor, teamRingColor } from '@/lib/tradeup/teamColors';
 import { hapticSelection, hapticSlam, hapticSlotConfirm, hapticTap } from '@/lib/tradeup/haptics';
-import { schedulePlayerSlotSound } from '@/lib/tradeup/h2hEmojiSound';
-import { measureDraftSlam, measureDraftPlayerOrigin, measureDraftSlotTarget } from '@/lib/tradeup/draftSlamRects';
-import { preloadGameAudio, startWheelSpinSound, stopWheelSpinSound, unlockGameAudio, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
+import { measureDraftSlam } from '@/lib/tradeup/draftSlamRects';
+import { playPlaceClickSound, playSpinClickSound, preloadGameAudio, startWheelSpinSound, stopWheelSpinSound, unlockGameAudio, WHEEL_SPIN_DURATION_MS } from '@/lib/tradeup/gameAudio';
 import { useSound } from '@/hooks/useSound';
 import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
@@ -71,6 +71,7 @@ import {
   type SyncedH2HPick,
 } from '@/lib/tradeup/h2hDraftBridge';
 import { CircleName, DraftHubCards } from './DraftHubCards';
+import { DraftSheet } from './draft/DraftSheet';
 
 /**
  * Experimental: replace classic five position rows with half-court roster.
@@ -228,6 +229,12 @@ export function BillionTradeEngine({
   const isFranchise = challengeMode === 'franchise' && Boolean(franchise);
   /** Picks and moves are saved by the parent (1V1 room or Franchise cycle). */
   const isSynced = isOnline || isFranchise;
+  /** Two seated players trade seats when each can play the other's spot (synced picks move one seat at a time). */
+  const canSwapSeats = useCallback(
+    (a: ValuedPlayer, aSlot: Position, b: ValuedPlayer, bSlot: Position) =>
+      !isSynced && aSlot !== bSlot && playerFitsSlot(a, bSlot) && playerFitsSlot(b, aSlot),
+    [isSynced],
+  );
   /** A real Classic Run: Run Bonus, run records, achievements, Rollover. */
   const isClassicRun = !isH2H && !isSynced;
   /** Classic Run draft chrome (vertical five + hub/pick) — also used for online 1v1. */
@@ -270,9 +277,19 @@ export function BillionTradeEngine({
   const [teamRerolls, setTeamRerolls] = useState(rerollsAllowed ? 1 : 0);
   const [eraRerolls, setEraRerolls] = useState(rerollsAllowed ? 1 : 0);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);
+  const clearBoothReroll = useCallback(() => setBoothReroll(null), []);
   /** Reroll spinning inside the selection header — the other result stays put. */
   const [headerReroll, setHeaderReroll] = useState<TicketRerollKind | null>(null);
   const [rerollFrom, setRerollFrom] = useState<SpinPair | null>(null);
+  /** Classic draft sheet: expanded (player list) vs collapsed (court). */
+  const [sheetOpen, setSheetOpen] = useState(true);
+  const sheetTimerRef = useRef(0);
+  /** Remounts the spin booth so it returns to SPIN after each pick (it stays mounted behind the sheet). */
+  const [boothKey, setBoothKey] = useState(0);
+  /** Pick just placed: the sheet leaves at once while the heavier table reset waits a beat. */
+  const [sheetDismissed, setSheetDismissed] = useState(false);
+  /** A reroll is spinning on the booth reels; the sheet stays down until it lands. */
+  const [boothRerolling, setBoothRerolling] = useState(false);
   /** UI mirror of interactionLockRef — disables pick/reroll during commit. */
   const [pickInteractionLocked, setPickInteractionLocked] = useState(false);
   const [status, setStatus] = useState<string | null>(
@@ -367,6 +384,7 @@ export function BillionTradeEngine({
     return () => {
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
       if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
+      if (sheetTimerRef.current) window.clearTimeout(sheetTimerRef.current);
       stopWheelSpinSound();
     };
   }, [resume]);
@@ -383,7 +401,22 @@ export function BillionTradeEngine({
     onOnlineProgress(filledCount);
   }, [filledCount, isOnline, onOnlineProgress]);
 
-  const readyToDraft = Boolean(spunTeam && spunEra) && !ticketPrinting;
+  const readyToDraft = Boolean(spunTeam && spunEra) && !ticketPrinting && !boothRerolling;
+
+  // Every landed spin opens the player list.
+  useEffect(() => {
+    if (readyToDraft) setSheetOpen(true);
+  }, [readyToDraft]);
+
+  // The booth keeps its landed reels until remounted: refresh it once the table clears
+  // after a pick — never on its own landing.
+  const boothHadPairRef = useRef(false);
+  useEffect(() => {
+    const hasPair = Boolean(spunTeam && spunEra);
+    const had = boothHadPairRef.current;
+    boothHadPairRef.current = hasPair;
+    if (had && !hasPair && !ticketPrinting) setBoothKey((k) => k + 1);
+  }, [spunTeam, spunEra, ticketPrinting]);
   const lockedPair = useMemo<SpinPair | null>(
     () => (spunTeam && spunEra ? { team: spunTeam, era: spunEra } : null),
     [spunTeam, spunEra],
@@ -427,6 +460,7 @@ export function BillionTradeEngine({
     setSpunTeam(pair.team);
     setSpunEra(pair.era);
     setTicketPrinting(false);
+    setBoothRerolling(false);
     setRerollFrom(null);
     setHeaderReroll(null);
     setStatus(
@@ -460,13 +494,21 @@ export function BillionTradeEngine({
     if (!spunTeam || !spunEra) return;
     resume();
     // Start in this tap. The header reel begins in an effect, after iPhone drops HTML play().
+    playSpinClickSound();
     startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     lockInteractions();
     setSelectedOfferId(null);
     setMovingFrom(null);
-    setHeaderReroll(kind);
+    if (useClassicDraftChrome) {
+      // The list slides away and the booth reels spin the reroll; the list returns on landing.
+      setRerollFrom({ team: spunTeam, era: spunEra });
+      setBoothRerolling(true);
+      setBoothReroll(kind);
+    } else {
+      setHeaderReroll(kind);
+    }
     setStatus(kind === 'team' ? 'Rerolling team…' : 'Rerolling era…');
-  }, [phase, ticketPrinting, teamRerolls, eraRerolls, reduceMotion, resume, spunTeam, spunEra, slamPayload, lockInteractions]);
+  }, [phase, ticketPrinting, teamRerolls, eraRerolls, reduceMotion, resume, spunTeam, spunEra, slamPayload, lockInteractions, useClassicDraftChrome]);
 
   // Load era board AFTER spin completes — never during reel frames.
   useEffect(() => {
@@ -531,6 +573,7 @@ export function BillionTradeEngine({
 
   const resetTableForNextPick = useCallback(() => {
     unlockInteractions();
+    setSheetDismissed(false);
     setSpunTeam(null);
     setSpunEra(null);
     setTicketPrinting(false);
@@ -629,10 +672,12 @@ export function BillionTradeEngine({
       setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
       if (opts?.skipReset) return;
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+      // Classic: paint the filled jersey first; remount the booth once that frame is out.
+      if (useClassicDraftChrome) setSheetDismissed(true);
       const resetMs = useClassicDraftChrome
         ? reduceMotion
           ? 0
-          : 40
+          : 260
         : reduceMotion
           ? 40
           : 220;
@@ -834,12 +879,19 @@ export function BillionTradeEngine({
       }
       resume();
       hapticSelection();
+      playPlaceClickSound();
       setMovingFrom(null);
-      setSelectedOfferId((id) => (id === player.id ? null : player.id));
+      const selecting = selectedOfferId !== player.id;
+      setSelectedOfferId(selecting ? player.id : null);
       const alts = formatEligiblePositions(player);
-      setStatus(`Selected ${player.name} (${alts}) — tap an open matching circle below.`);
+      setStatus(`Selected ${player.name} (${alts}) — tap an open matching jersey.`);
+      if (selecting && useClassicDraftChrome) {
+        // Reveal the court in the same frame; the check mark shows while the sheet slides down.
+        if (sheetTimerRef.current) window.clearTimeout(sheetTimerRef.current);
+        setSheetOpen(false);
+      }
     },
-    [phase, readyToDraft, resume, slamPayload, ticketPrinting],
+    [phase, readyToDraft, resume, selectedOfferId, slamPayload, ticketPrinting, useClassicDraftChrome],
   );
 
   const handleSlotClick = useCallback(
@@ -859,8 +911,23 @@ export function BillionTradeEngine({
           return;
         }
         if (occupant) {
-          playReject();
-          setStatus('That slot is locked — you cannot replace a placed player.');
+          if (!canSwapSeats(movingPlayer, movingFrom, occupant, slot)) {
+            playReject();
+            setStatus(
+              `${movingPlayer.name} and ${occupant.name} can't trade ${movingFrom} and ${slot}.`,
+            );
+            return;
+          }
+          const fromSlot = movingFrom;
+          setSlots({
+            ...slots,
+            [fromSlot]: { ...occupant, dollarValue: getDollarValueForSlot(occupant, fromSlot) },
+            [slot]: { ...movingPlayer, dollarValue: getDollarValueForSlot(movingPlayer, slot) },
+          });
+          setMovingFrom(null);
+          hapticSlotConfirm();
+          playPlaceClickSound();
+          setStatus(`${movingPlayer.name} and ${occupant.name} swapped ${fromSlot} and ${slot}.`);
           return;
         }
         if (!canMoveToSlot(movingPlayer, movingFrom, slot)) {
@@ -884,6 +951,7 @@ export function BillionTradeEngine({
         const moveFrom = movingFrom;
         setMovingFrom(null);
         hapticSlotConfirm();
+        playPlaceClickSound();
         if (isSynced && onPickMove && syncedSlotSetRef.current.has(moveFrom)) {
           const era = (spunEra ?? '2020s') as DecadeEra;
           const { selection, rawValue } = playerToH2HPick(
@@ -933,8 +1001,13 @@ export function BillionTradeEngine({
         if (!movingFrom) {
           const alts = getEligiblePositions(occupant);
           const hasOpenAlt = alts.some((pos) => pos !== slot && !slots[pos]);
-          if (!hasOpenAlt) {
-            playReject();
+          const hasSwap = LINEUP_POSITIONS.some((pos) => {
+            const other = slots[pos];
+            return Boolean(other) && canSwapSeats(occupant, slot, other!, pos);
+          });
+          if (!hasOpenAlt && !hasSwap) {
+            // Without a pick in hand this tap just flips the jersey — not a mistake.
+            if (selectedOffer) playReject();
             setStatus(
               selectedOffer
                 ? `${occupant.name} has no open alternate slots — cannot free ${POSITION_LABELS[slot]}.`
@@ -985,49 +1058,12 @@ export function BillionTradeEngine({
 
       // Lock immediately so fast re-taps cannot select/reroll mid-place.
       lockInteractions();
+      playPlaceClickSound();
 
-      // Classic hub court: fly to the seat, then weight-impact the floor (~600ms).
-      if (useClassicDraftChrome && EXPERIMENTAL_DRAFT_HUB_CARDS && !reduceMotion) {
-        const from = measureDraftPlayerOrigin(selectedOffer.id);
-        pendingAssignRef.current = { slot, valued };
-        setConcealSlot(slot);
-        setSlamSlot(slot);
-        setSpunTeam(null);
-        setSpunEra(null);
-        setOffers([]);
-        setSelectedOfferId(null);
-        setMovingFrom(null);
-        setTicketPrinting(false);
-        setStatus(`Seating ${valued.name} at ${POSITION_LABELS[slot]}…`);
-        schedulePlayerSlotSound(280);
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            if (!pendingAssignRef.current) return;
-            const to = measureDraftSlotTarget(slot);
-            if (from && to) {
-              setSlamPayload({
-                id: `${valued.id}-${slot}-${Date.now()}`,
-                from,
-                to,
-                initials: playerInitials(valued.name),
-                primary: colors.primary,
-                ink,
-                premium: true,
-              });
-              return;
-            }
-            const pending = pendingAssignRef.current;
-            pendingAssignRef.current = null;
-            setConcealSlot(null);
-            setCourtImpactSlot(slot);
-            setCourtImpactColor(colors.primary);
-            window.setTimeout(() => {
-              setCourtImpactSlot((current) => (current === slot ? null : current));
-              setCourtImpactColor(null);
-            }, COURT_COLOR_WASH_MS);
-            void finishPickPlacement(pending.slot, pending.valued);
-          });
-        });
+      // Classic court: the jersey itself pulses, shakes and fades into the team colors.
+      if (useClassicDraftChrome && EXPERIMENTAL_DRAFT_HUB_CARDS) {
+        hapticSlam();
+        void finishPickPlacement(slot, valued);
         return;
       }
 
@@ -1051,7 +1087,6 @@ export function BillionTradeEngine({
       }
 
       pendingAssignRef.current = { slot, valued };
-      schedulePlayerSlotSound(400);
       setSlamSlot(slot);
       setSlamPayload({
         id: `${selectedOffer.id}-${slot}-${Date.now()}`,
@@ -1063,6 +1098,7 @@ export function BillionTradeEngine({
       });
     },
     [
+      canSwapSeats,
       finishPickPlacement,
       lockInteractions,
       movingFrom,
@@ -1118,7 +1154,32 @@ export function BillionTradeEngine({
   const showReveal = phase === 'reveal';
   const lineupLocked = isSynced && deferOnlineReveal && filledCount >= 5;
   /** Once five are seated, Franchise shows its own roster preview in place of the court. */
-  const showHubCourt = !readyToDraft && !lineupLocked;
+  const showHubCourt = useClassicDraftChrome ? !lineupLocked : !readyToDraft && !lineupLocked;
+  /** Who is being placed right now: a moving seated player wins over the list pick. */
+  const placingPlayer = movingFrom && movingPlayer ? movingPlayer : selectedOffer;
+  const courtTargets =
+    placingPlayer && !courtAnalyze
+      ? (Object.fromEntries(
+          LINEUP_POSITIONS.map((slot) => {
+            if (evalStartedRef.current || slamPayload) return [slot, false];
+            const occupant = slots[slot];
+            if (movingFrom && movingPlayer) {
+              return [
+                slot,
+                occupant
+                  ? canSwapSeats(movingPlayer, movingFrom, occupant, slot)
+                  : canMoveToSlot(movingPlayer, movingFrom, slot),
+              ];
+            }
+            return [slot, !occupant && playerFitsSlot(selectedOffer!, slot)];
+          }),
+        ) as Partial<Record<Position, boolean>>)
+      : undefined;
+  const pickHint = selectedOffer
+    ? `Tap an open ${formatEligiblePositions(selectedOffer)} jersey.`
+    : movingPlayer
+      ? `Moving ${movingPlayer.name} — tap an open eligible jersey.`
+      : 'Pick a player, then tap an open jersey.';
   const playerTeamValue = teamValue;
 
   return (
@@ -1197,10 +1258,6 @@ export function BillionTradeEngine({
             useClassicDraftChrome && showHubCourt
               ? ' billion-draft-layout--classic-hub'
               : ''
-          }${
-            useClassicDraftChrome && readyToDraft && !lineupLocked
-              ? ' billion-draft-layout--classic-pick'
-              : ''
           }`}
         >
           <main className="billion-main billion-main--draft">
@@ -1225,11 +1282,12 @@ export function BillionTradeEngine({
                   Waiting for opponent ({oppProgress}/5)…
                 </p>
               </div>
-            ) : !readyToDraft ? (
+            ) : useClassicDraftChrome || !readyToDraft ? (
               <div
                 className={`billion-booth-stage${ticketPrinting ? ' is-printing' : ''}`}
               >
                 <BallionTicketMachine
+                  key={boothKey}
                   locked={lockedPair}
                   printing={ticketPrinting}
                   canRerollTeam={false}
@@ -1248,9 +1306,9 @@ export function BillionTradeEngine({
                         ? franchise!.goal
                         : null
                   }
-                  rollLocked={filledCount >= 5 || courtAnalyze}
+                  rollLocked={filledCount >= 5 || courtAnalyze || readyToDraft}
                   resolveRoll={franchise?.resolveRoll}
-                  onAutoRerollConsumed={() => setBoothReroll(null)}
+                  onAutoRerollConsumed={clearBoothReroll}
                   onPrint={handleTicketPrint}
                   onResult={handleTicketResult}
                   onReroll={handleTicketReroll}
@@ -1275,13 +1333,7 @@ export function BillionTradeEngine({
                   interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
                   rerolling={headerReroll}
                   reduceMotion={reduceMotion}
-                  hint={
-                    selectedOffer
-                      ? `Tap an open ${formatEligiblePositions(selectedOffer)} circle below.`
-                      : movingPlayer
-                        ? `Moving ${movingPlayer.name} — tap an open eligible circle.`
-                        : 'Pick a player, then tap an open circle below.'
-                  }
+                  hint={pickHint}
                   onSelect={handleSelectOffer}
                   onReroll={handleTicketReroll}
                   onRerollSettled={handleHeaderRerollSettled}
@@ -1303,20 +1355,10 @@ export function BillionTradeEngine({
                 reduceMotion={reduceMotion}
                 onAnalyzeComplete={handleCourtAnalyzeComplete}
                 onSlotPress={!courtAnalyze ? handleSlotClick : undefined}
-                targetSlots={
-                  !courtAnalyze && movingFrom && movingPlayer
-                    ? Object.fromEntries(
-                        LINEUP_POSITIONS.map((slot) => {
-                          const player = slots[slot];
-                          const moveCanDrop =
-                            !player &&
-                            !evalStartedRef.current &&
-                            canMoveToSlot(movingPlayer, movingFrom, slot);
-                          return [slot, moveCanDrop];
-                        }),
-                      )
-                    : undefined
-                }
+                targetSlots={courtTargets}
+                primarySlot={placingPlayer?.primaryPosition ?? null}
+                targetColor={placingPlayer ? teamGlowColor(placingPlayer.teamId) : null}
+                targetPrimary={placingPlayer ? getTeamColors(placingPlayer.teamId).primary : null}
               />
             ) : (
               <aside className="classic-lineup-board" aria-label="Your five">
@@ -1469,6 +1511,66 @@ export function BillionTradeEngine({
                 })}
               </div>
             </aside>
+          ) : null}
+          {useClassicDraftChrome && !lineupLocked ? (
+            <DraftSheet
+              present={readyToDraft && Boolean(spunTeam && spunEra) && !courtAnalyze && !sheetDismissed}
+              open={sheetOpen}
+              onOpenChange={setSheetOpen}
+              anchorSelectors={['.billion-booth-stage .ter__goal-block', '.billion-h2h-bar--draft', '.billion-top']}
+              label="Player selection"
+              peek={
+                selectedOffer ? (
+                  <span className="draft-sheet-peek">
+                    <span
+                      className="draft-sheet-peek__chip"
+                      style={{
+                        background: getTeamColors(selectedOffer.teamId).primary,
+                        color: contrastOnPrimary(getTeamColors(selectedOffer.teamId).primary),
+                      }}
+                    >
+                      {playerInitials(selectedOffer.name)}
+                    </span>
+                    <span className="draft-sheet-peek__copy">
+                      <strong>{selectedOffer.name}</strong>
+                      <em>Tap a glowing {formatEligiblePositions(selectedOffer)} jersey</em>
+                    </span>
+                  </span>
+                ) : spunTeam && spunEra ? (
+                  <span className="draft-sheet-peek">
+                    <span className="draft-sheet-peek__copy">
+                      <strong>
+                        {spunTeam.name} · {eraShortLabel(spunEra)}
+                      </strong>
+                      <em>Swipe up to pick a player</em>
+                    </span>
+                  </span>
+                ) : null
+              }
+            >
+              {spunTeam && spunEra ? (
+                <div className="billion-pick-stage">
+                  <FranchisePickScreen
+                    team={spunTeam}
+                    era={spunEra}
+                    offers={availableOffers}
+                    openPositions={openPositions}
+                    selectedId={selectedOfferId}
+                    canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
+                    canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                    rerollsOff={!rerollsAllowed}
+                    interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
+                    rerolling={headerReroll}
+                    reduceMotion={reduceMotion}
+                    skipArrival
+                    hint={pickHint}
+                    onSelect={handleSelectOffer}
+                    onReroll={handleTicketReroll}
+                    onRerollSettled={handleHeaderRerollSettled}
+                  />
+                </div>
+              ) : null}
+            </DraftSheet>
           ) : null}
         </div>
       ) : null}

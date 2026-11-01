@@ -12,7 +12,6 @@
  */
 
 import { getAudioSettings } from './audioSettings';
-import { playPlayerSlotSound } from './h2hEmojiSound';
 
 type ImpactStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
 type NotificationType = 'success' | 'warning' | 'error';
@@ -303,9 +302,8 @@ export function hapticSlotConfirm(): void {
   void hapticImpact('light');
 }
 
-/** Pick-up then slam when a player locks into a roster circle. */
+/** Heavy impact when a player locks into a roster seat (the click plays from the tap). */
 export function hapticSlam(): void {
-  playPlayerSlotSound();
   void hapticImpact('heavy');
 }
 
