@@ -32,7 +32,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     toggleHaptics,
     resume,
   } = useSound();
-  const { locale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   const guideNav = GUIDE_NAV[locale] ?? GUIDE_NAV.en;
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState('');
@@ -190,9 +190,9 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     <>
       <section
         className="settings-drawer__section settings-drawer__section--feedback"
-        aria-label="Feedback"
+        aria-label="Preferences"
       >
-        <p className="settings-drawer__section-label">Feedback</p>
+        <p className="settings-drawer__section-label">Preferences</p>
         <div className="settings-drawer__card settings-drawer__card--feedback">
           <label className="sound-settings__row sound-settings__row--toggle sound-settings__row--sfx">
             <span className="sound-settings__row-icon sound-settings__row-icon--sfx" aria-hidden>
@@ -268,6 +268,44 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
               <span className="sound-settings__toggle-knob" aria-hidden />
             </button>
           </label>
+
+          <div className="sound-settings__row sound-settings__row--toggle sound-settings__row--lang">
+            <span className="sound-settings__row-icon sound-settings__row-icon--lang" aria-hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.7" />
+                <path
+                  d="M3.5 12h17M12 3.5c-2.4 2.3-2.4 14.7 0 17M12 3.5c2.4 2.3 2.4 14.7 0 17"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <span className="sound-settings__row-copy">
+              <strong>{t('settings.language')}</strong>
+              <em>{t('settings.languageHint')}</em>
+            </span>
+            <div className="settings-lang" role="radiogroup" aria-label={t('settings.language')}>
+              {(['en', 'es'] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  role="radio"
+                  aria-checked={locale === code}
+                  aria-label={code === 'en' ? 'English' : 'Español'}
+                  className={`settings-ctrl settings-lang__opt${locale === code ? ' is-active' : ''}`}
+                  onClick={press(() => {
+                    if (locale === code) return;
+                    resume();
+                    hapticTap();
+                    setLocale(code);
+                  })}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -342,7 +380,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           </button>
           <button
             type="button"
-            className="settings-ctrl settings-tile settings-tile--guide"
+            className="settings-ctrl settings-tile settings-tile--guide settings-tile--wide"
             onClick={press(() => {
               resume();
               hapticTap();

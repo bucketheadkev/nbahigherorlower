@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { fetchFranchises } from '@/lib/account/franchiseCloud';
 import { isFranchisePreview } from '@/lib/account/franchisePreview';
+import { fetchFranchiseState } from '@/lib/account/franchiseV5Cloud';
 import { BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';
 
 const CACHE_KEY = 'oneb_owned_franchise_v1';
@@ -42,7 +43,8 @@ export function useOwnedFranchise(userId: string | null, refreshKey?: unknown): 
     let cancelled = false;
     if (!preview) setTeamId(readCache(key));
     const pull = async () => {
-      const result = await fetchFranchises();
+      // The dev preview keeps v5 state in the browser; the live server answers the cheap read.
+      const result = preview ? await fetchFranchiseState() : await fetchFranchises();
       if (cancelled || result.ok === false) return;
       const owned = result.data.owned?.teamId ?? null;
       setTeamId(owned);

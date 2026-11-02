@@ -56,7 +56,8 @@ const HOME_ART = [
   '/images/home-v2/classic.jpg',
   '/images/home-v2/1v1.jpg',
   '/images/home-v2/money.png',
-  '/images/home-v2/trophy.png',
+  '/images/home-v2/trophy-gold.png',
+  '/images/home-v2/arena-exterior.png',
 ];
 
 /** Survives Strict Mode remounts — intro plays once per page load. */
@@ -355,6 +356,11 @@ export function TradeUpApp() {
           onDone={() => {
             markHowItWorksSeen();
             setShowGuide(false);
+          }}
+          onPlay={() => {
+            markHowItWorksSeen();
+            setShowGuide(false);
+            handlePlay();
           }}
         />
       ) : null}

@@ -15,7 +15,7 @@ const BACK_PATH =
 const FRONT_TRIM = 'M38 3C40 17 45 24 50 24C55 24 60 17 62 3M24 3C23 22 16 36 7 40M76 3C77 22 84 36 93 40';
 const BACK_TRIM = 'M38 3C40 10 45 13 50 13C55 13 60 10 62 3M24 3C23 22 16 36 7 40M76 3C77 22 84 36 93 40';
 
-function JerseyShape({ back = false }: { back?: boolean }) {
+export function JerseyShape({ back = false }: { back?: boolean }) {
   const uid = useId().replace(/:/g, '');
   const d = back ? BACK_PATH : FRONT_PATH;
   const trim = back ? BACK_TRIM : FRONT_TRIM;

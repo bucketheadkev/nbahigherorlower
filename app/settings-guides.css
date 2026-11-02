@@ -1,0 +1,647 @@
+/* ══ Settings drawer: compact rhythm so Account & Legal is always reachable ══ */
+/* The home tab bar paints over the drawer; keep the scroll area clear of it. */
+.settings-drawer__panel {
+  --settings-gap: 1.05rem;
+  padding-bottom: calc(var(--home-tabbar-h, 0px) + 0.4rem);
+}
+
+.settings-drawer__header {
+  align-items: center;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+}
+
+.settings-drawer__header h2 {
+  font-size: 1.5rem;
+}
+
+.settings-drawer__close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-color: rgba(90, 150, 255, 0.45);
+  background: linear-gradient(180deg, #11295c 0%, #08183b 100%);
+}
+
+/* The body is the scroller; it must be allowed to shrink inside the panel. */
+.settings-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+  padding-bottom: 1.25rem;
+}
+
+.settings-drawer__section,
+.settings-drawer__section--guides,
+.settings-drawer__section--legal {
+  gap: 0.5rem;
+}
+
+.settings-drawer__section-label {
+  font-size: 0.6rem;
+  color: rgba(126, 182, 255, 0.85);
+}
+
+.settings-drawer__card {
+  border-color: rgba(60, 120, 255, 0.3);
+  background: linear-gradient(180deg, rgba(12, 28, 64, 0.94) 0%, rgba(6, 16, 40, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 16px rgba(26, 110, 255, 0.12);
+}
+
+.settings-drawer__body .sound-settings__row {
+  gap: 0.7rem;
+  padding: 0.62rem 0.85rem;
+}
+
+.sound-settings__row-icon {
+  width: 1.95rem;
+  height: 1.95rem;
+  border-radius: 0.6rem;
+}
+
+.sound-settings__row-copy {
+  gap: 0.1rem;
+}
+
+.sound-settings__row-copy strong {
+  font-size: 0.84rem;
+}
+
+.sound-settings__row-copy em {
+  font-size: 0.64rem;
+}
+
+.sound-settings__row-icon--lang {
+  color: #ffb56b;
+  background: linear-gradient(160deg, rgba(255, 140, 50, 0.22) 0%, rgba(255, 140, 50, 0.06) 100%);
+  border: 1px solid rgba(255, 140, 50, 0.32);
+}
+
+.sound-settings__row--lang::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.65rem;
+  bottom: 0.65rem;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, #ffb56b 0%, #ff7a1a 100%);
+  box-shadow: 0 0 12px rgba(255, 122, 26, 0.35);
+}
+
+.settings-drawer__card .sound-settings__row--lang {
+  border-top: 1px solid var(--settings-line);
+}
+
+/* EN / ES segmented control */
+.settings-lang {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 0.16rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 8, 16, 0.95);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.settings-lang__opt {
+  appearance: none;
+  min-width: 2.2rem;
+  height: 1.4rem;
+  margin: 0;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(190, 204, 228, 0.7);
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.settings-lang__opt.is-active {
+  background: linear-gradient(180deg, #2f7bff 0%, #1857d6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 10px rgba(40, 120, 255, 0.45);
+  color: #ffffff;
+}
+
+.sound-settings__nav-link {
+  padding: 0.65rem 0.85rem;
+  border-color: rgba(60, 120, 255, 0.3);
+}
+
+.sound-settings__nav-copy em {
+  font-size: 0.54rem;
+}
+
+.sound-settings__nav-copy strong {
+  font-size: 0.9rem;
+}
+
+/* Guides: compact horizontal tiles; Replay Intro spans the row. */
+.settings-drawer__tile-grid {
+  gap: 0.5rem;
+}
+
+.settings-tile {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  min-height: 3.1rem;
+  padding: 0.5rem 0.65rem;
+  border-color: rgba(60, 120, 255, 0.3);
+  background: linear-gradient(180deg, rgba(12, 28, 64, 0.94) 0%, rgba(6, 16, 40, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 14px rgba(26, 110, 255, 0.1);
+}
+
+.settings-tile--wide {
+  grid-column: 1 / -1;
+  min-height: 2.75rem;
+}
+
+.settings-tile__icon {
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.55rem;
+}
+
+.settings-tile__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.settings-tile__icon--replay {
+  color: #ffb56b;
+  background: linear-gradient(160deg, rgba(255, 140, 50, 0.22) 0%, rgba(255, 140, 50, 0.06) 100%);
+  border: 1px solid rgba(255, 140, 50, 0.32);
+}
+
+.settings-tile__label {
+  min-width: 0;
+  font-size: 0.74rem;
+  line-height: 1.2;
+}
+
+/* Account & Legal: real tap targets, still compact. */
+.settings-drawer__section--legal {
+  margin-top: 0;
+  padding-top: 0.8rem;
+}
+
+.settings-drawer__link-row {
+  gap: 0 0.25rem;
+}
+
+.settings-mini-link {
+  min-height: 2rem;
+  padding: 0.3rem 0.2rem;
+  font-size: 0.72rem;
+}
+
+.settings-mini-link--danger {
+  min-height: 2rem;
+  margin-top: 0;
+  font-size: 0.7rem;
+}
+
+/* ══ Guide pages (How to Play / How Values Work) ══ */
+.sgx {
+  background:
+    radial-gradient(90% 45% at 50% -6%, rgba(26, 110, 255, 0.24), transparent 62%),
+    linear-gradient(180deg, #071a46 0%, #031030 40%, #010814 100%);
+}
+
+.sgx-head {
+  gap: 0;
+  padding: 0.25rem 1.1rem 0.95rem;
+  border-bottom: 1px solid rgba(60, 120, 255, 0.2);
+}
+
+.sgx-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  height: 2rem;
+  margin: 0 0 0.85rem;
+  padding: 0 0.75rem 0 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(90, 150, 255, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, #11295c 0%, #08183b 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 12px rgba(30, 110, 255, 0.3);
+  color: #f2f6ff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.sgx-back:active {
+  transform: scale(0.96);
+}
+
+.sgx-head__kicker {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  color: #ff8d33;
+}
+
+.sgx-head__title {
+  margin: 0.3rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.5rem, 7vw, 1.85rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.sgx-head__tagline {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: rgba(190, 208, 236, 0.88);
+}
+
+.sgx-scroll {
+  gap: 1.15rem;
+  padding: 1rem 1.1rem 0;
+}
+
+.sgx-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sgx-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sgx-label {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(126, 182, 255, 0.9);
+}
+
+.sgx-note {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(150, 170, 195, 0.7);
+}
+
+.sgx-panel,
+.sgx-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(60, 120, 255, 0.3);
+  background: linear-gradient(180deg, rgba(12, 28, 64, 0.92) 0%, rgba(6, 16, 40, 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(26, 110, 255, 0.12);
+  overflow: hidden;
+}
+
+/* Steps: numbered icon rail */
+.sgx-step,
+.sgx-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.62rem 0.85rem;
+}
+
+.sgx-step + .sgx-step,
+.sgx-row + .sgx-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sgx-step__icon,
+.sgx-row__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(90, 150, 255, 0.5);
+  background: radial-gradient(circle at 35% 28%, #24427f 0%, #12285a 55%, #0a1838 100%);
+  box-shadow: 0 0 10px rgba(30, 110, 255, 0.25);
+  color: #cfe0ff;
+}
+
+.sgx-step__n {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  display: grid;
+  place-items: center;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff8d33 0%, #db4a0e 100%);
+  box-shadow: 0 0 8px rgba(255, 110, 30, 0.45);
+  color: #ffffff;
+  font-size: 0.54rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sgx-row__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.sgx-row__copy strong {
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.sgx-row__copy span {
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(180, 198, 228, 0.88);
+}
+
+/* Bank rows: money earned in green, spending/status in gold. */
+.sgx-row--rollover .sgx-row__icon,
+.sgx-row--bonus .sgx-row__icon,
+.sgx-row--achievement .sgx-row__icon {
+  border-color: rgba(41, 228, 144, 0.45);
+  background: linear-gradient(160deg, rgba(41, 228, 144, 0.22) 0%, rgba(41, 228, 144, 0.06) 100%);
+  box-shadow: 0 0 10px rgba(41, 228, 144, 0.18);
+  color: #4dffb8;
+}
+
+.sgx-row--wall .sgx-row__icon {
+  border-color: rgba(255, 196, 60, 0.5);
+  background: linear-gradient(160deg, rgba(255, 196, 60, 0.22) 0%, rgba(255, 196, 60, 0.06) 100%);
+  box-shadow: 0 0 10px rgba(255, 196, 60, 0.2);
+  color: #ffd36b;
+}
+
+/* Worked examples */
+.sgx-panel--example {
+  padding: 0.8rem 0.85rem 0.85rem;
+}
+
+.sgx-example__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.sgx-example__line {
+  margin: 0.25rem 0 0.7rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: rgba(180, 198, 228, 0.88);
+}
+
+.sgx-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sgx-card__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.12rem;
+}
+
+.sgx-card__tag {
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.sgx-card__tag--good {
+  background: rgba(16, 150, 90, 0.92);
+}
+
+.sgx-card__tag--warn {
+  background: rgba(214, 70, 20, 0.95);
+}
+
+.sgx-ledger {
+  margin: 0;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(1, 8, 20, 0.55);
+  overflow: hidden;
+}
+
+.sgx-ledger__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.sgx-ledger__row + .sgx-ledger__row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sgx-ledger__row dt {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(160, 176, 206, 0.9);
+}
+
+.sgx-ledger__row dd {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.sgx-ledger__row--bank {
+  background: linear-gradient(90deg, rgba(41, 228, 144, 0.1), transparent 70%);
+}
+
+.sgx-ledger__row--bank dd {
+  color: #3cf09c;
+  text-shadow: 0 0 12px rgba(41, 228, 144, 0.3);
+}
+
+/* Modes */
+.sgx-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.sgx-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.75rem 0.75rem 0.8rem;
+  border-radius: 0.95rem;
+  border: 1.5px solid rgba(52, 122, 255, 0.7);
+  background: linear-gradient(180deg, #0b1d45 0%, #071535 55%, #050e26 100%);
+  box-shadow:
+    0 0 12px rgba(44, 116, 255, 0.24),
+    inset 0 0 18px rgba(44, 116, 255, 0.08);
+}
+
+.sgx-mode__mark {
+  font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffd98a 0%, #ffab3d 45%, #ff7414 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.sgx-mode strong {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.sgx-mode span:last-child {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: rgba(180, 198, 228, 0.86);
+}
+
+/* Tier ladder */
+.sgx-tiers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sgx-tier {
+  --tier: #8aa0b8;
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.45rem 0.75rem 0.45rem 0.5rem;
+  border-radius: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--tier) 30%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tier) 14%, transparent), transparent 55%),
+    rgba(6, 16, 40, 0.92);
+}
+
+.sgx-tier__badge {
+  display: grid;
+  place-items: center;
+  height: 2rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--tier) 60%, transparent);
+  background: color-mix(in srgb, var(--tier) 18%, rgba(4, 14, 36, 0.9));
+  font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #f4f8ff;
+}
+
+.sgx-tier__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.sgx-tier__blurb {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--tier) 70%, #ffffff);
+}
+
+.sgx-tier__range {
+  font-size: 0.8rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.sgx-tier--d { --tier: #7eb0d8; }
+.sgx-tier--c { --tier: #5ec4a8; }
+.sgx-tier--b { --tier: #4aa0ff; }
+.sgx-tier--a { --tier: #9b6dff; }
+.sgx-tier--s { --tier: #ff3b4a; }
+.sgx-tier--goat { --tier: #e8c45a; }
+
+.sgx-tier--goat .sgx-tier__badge {
+  color: #1a1406;
+  background: linear-gradient(160deg, #f0dd9a, #c9a227);
+}
+
+@media (max-width: 350px) {
+  .sgx-modes {
+    grid-template-columns: 1fr;
+  }
+}

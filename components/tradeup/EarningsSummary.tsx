@@ -35,6 +35,7 @@ const COPY = {
   totalLabel: { en: 'Total earned', es: 'Total ganado' },
   income: { en: 'Franchise income · {hours} hours', es: 'Ingreso de franquicia · {hours} horas' },
   income1: { en: 'Franchise income · 1 hour', es: 'Ingreso de franquicia · 1 hora' },
+  paycheck: { en: 'Franchise paycheck · {hours} hours', es: 'Sueldo de franquicia · {hours} horas' },
   bonus: { en: '48-hour completion bonus', es: 'Bono de 48 horas completas' },
   refund: { en: 'Franchise refund · {team}', es: 'Reembolso de franquicia · {team}' },
   refundNote: {
@@ -93,7 +94,7 @@ function hasHeadline(p: Pending): boolean {
   return (
     p.achievements.length > 0 ||
     p.extras.length > 0 ||
-    p.server.some((i) => i.kind !== 'franchise_income')
+    p.server.some((i) => i.kind !== 'franchise_income' && i.kind !== 'franchise_paycheck')
   );
 }
 
@@ -107,7 +108,16 @@ function buildRows(p: Pending, locale: string, t: (key: MessageKey) => string): 
   const rows: Row[] = [];
   for (const item of p.server) {
     const accent = item.teamId ? getTeamColors(item.teamId).primary : null;
-    if (item.kind === 'franchise_income') {
+    if (item.kind === 'franchise_paycheck') {
+      rows.push({
+        key: `pay:${item.ref}`,
+        label: fill(pick(COPY.paycheck, locale), { hours: item.hours }),
+        detail: teamName(item.teamId),
+        amount: item.amount,
+        collectable: true,
+        accent,
+      });
+    } else if (item.kind === 'franchise_income') {
       rows.push({
         key: `inc:${item.ref}`,
         label: item.hours === 1 ? pick(COPY.income1, locale) : fill(pick(COPY.income, locale), { hours: item.hours }),

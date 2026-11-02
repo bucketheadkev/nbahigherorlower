@@ -13,11 +13,16 @@ import './run-rewards.css';
 import './leaderboard.css';
 import './draft-court.css';
 import './draft-arena.css';
+import './onboarding.css';
 import './run-home-ipad-portrait.css';
 import './h2h-ipad-portrait.css';
 import './web-phone.css';
 import './web-responsive.css';
 import './home-v2.css';
+import './my-runs.css';
+import './settings-guides.css';
+import './franchise-opening.css';
+import './franchise-v5.css';
 
 export const metadata: Metadata = {
   title: '1B Run',

@@ -1,12 +1,11 @@
 'use client';
 
-import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
 import { useBankBalance } from '@/hooks/useBankBalance';
 import { useLocale } from '@/hooks/useLocale';
 import { useOwnedFranchise } from '@/hooks/useOwnedFranchise';
-import { useRank } from '@/hooks/useRank';
 import { useSound } from '@/hooks/useSound';
 import {
   hasSeenAccountPrompt,
@@ -14,7 +13,6 @@ import {
   resetAccountPromptSeen,
 } from '@/lib/account/accountPromptStorage';
 import { formatCash, readBankPreview } from '@/lib/tradeup/bank';
-import { rankName } from '@/lib/tradeup/rank/config';
 import { recordLocalInduction } from '@/lib/tradeup/wallOfFame';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import {
@@ -22,25 +20,20 @@ import {
   type AccountSheetView,
 } from './AccountAuthSheet';
 import { AccountProgressPrompt } from './AccountProgressPrompt';
-import { ArenaIcon } from './ArenaIcon';
 import { HomeAccountEntry } from './HomeAccountEntry';
-import { LanguageToggle } from './LanguageToggle';
 import { MoneyRain } from './MoneyRain';
 import { BallionLogo } from './TradeUpLogo';
 import { SoundSettings } from './SoundSettings';
 import { WallOfFameScreen } from './WallOfFameScreen';
 import { TickerNumber } from './onboarding/ticker';
 import { CircuitScreen } from './circuit/CircuitScreen';
-import { FranchisesScreen } from './ownership/FranchisesScreen';
+import { FranchiseMode } from './franchise/FranchiseMode';
 import { teamTheme } from './ownership/FranchiseParts';
-import { RankEmblem } from './rank/RankEmblem';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 
 /** home-v2/arena.jpg: where the net ends (share of the photo's height), and the gap above the title. */
 const NET_BOTTOM = 0.303;
 const NET_GAP_PX = 18;
-/** Highest data-fit step defined in home-v2.css for the Bank bar. */
-const BANK_FIT_LEVELS = 5;
 
 function Chevron() {
   return (
@@ -67,11 +60,10 @@ export function TradeUpHome({
   allowAccountPrompt = true,
 }: TradeUpHomeProps) {
   const { resume } = useSound();
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
   useAchievementCloudSync(accountState);
   const bank = useBankBalance(accountState.status === 'permanent');
-  const rank = useRank(accountState.status === 'permanent' ? accountState.user.id : null, bank);
   const [promptOpen, setPromptOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
@@ -84,6 +76,14 @@ export function TradeUpHome({
   useEffect(() => {
     if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
   }, [bank, permanent]);
+
+  // Franchise arena art, warmed up so the mode opens on a ready background.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      new Image().src = '/images/pack/arena-bg.jpg';
+    }, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   // Bank card centers between the tiles and the tab bar; the bar's height varies by device.
   useEffect(() => {
@@ -117,17 +117,15 @@ export function TradeUpHome({
       window.removeEventListener('resize', place);
     };
   }, []);
-  // Fit the Bank bar to the real balance: step down only as far as this figure needs.
+  // Shrink the balance only when a very long figure would not fit the bar.
   const bankBarRef = useRef<HTMLElement | null>(null);
-  const rankKey = `${rank.ready ? rank.rank.id : ''}:${locale}`;
   useLayoutEffect(() => {
     const bar = bankBarRef.current;
     if (!bar) return;
     const fit = () => {
       const amount = bar.querySelector<HTMLElement>('.rh2-bank__amount');
       const value = bar.querySelector<HTMLElement>('.rh2-bank__value');
-      const wof = bar.querySelector<HTMLElement>('.rh2-wof');
-      if (!amount || !value || !wof) return;
+      if (!amount || !value) return;
       // Measure the final figure on a hidden twin: the live node belongs to TickerNumber,
       // and replacing its text would detach the count-up from the screen.
       value.style.removeProperty('font-size');
@@ -137,16 +135,6 @@ export function TradeUpHome({
       probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;left:0;top:0';
       probe.textContent = bank == null ? t('home.bestRunEmpty') : formatCash(bank);
       amount.appendChild(probe);
-      const room = () => {
-        const inner = bar.getBoundingClientRect().right - parseFloat(getComputedStyle(bar).paddingRight);
-        return wof.getBoundingClientRect().right <= inner + 0.5;
-      };
-      const figureFits = () => probe.getBoundingClientRect().width <= amount.clientWidth + 0.5;
-      for (let level = 0; level <= BANK_FIT_LEVELS; level++) {
-        bar.dataset.fit = String(level);
-        if (room() && figureFits()) break;
-      }
-      // Last resort: shrink the figure itself until every digit shows.
       const width = probe.getBoundingClientRect().width;
       if (width > amount.clientWidth + 0.5) {
         const size = parseFloat(getComputedStyle(probe).fontSize);
@@ -159,7 +147,7 @@ export function TradeUpHome({
     const observer = new ResizeObserver(() => fit());
     observer.observe(bar);
     return () => observer.disconnect();
-  }, [bank, rankKey, t]);
+  }, [bank, t]);
 
   const navLockRef = useRef(false);
 
@@ -249,7 +237,30 @@ export function TradeUpHome({
           </div>
           <div className="rh2-toolbar">
             <HomeAccountEntry state={accountState} onOpen={() => openSheet('menu')} />
-            <LanguageToggle />
+            <button
+              type="button"
+              className="rh2-wof"
+              aria-label={t('home.wallOfFame')}
+              title={t('home.wallOfFame')}
+              onClick={() => {
+                hapticLight();
+                setWallOpen(true);
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden>
+                <defs>
+                  <linearGradient id="rh2-wof-gold" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#fff1b8" />
+                    <stop offset="0.45" stopColor="#ffc93d" />
+                    <stop offset="1" stopColor="#c47a0c" />
+                  </linearGradient>
+                </defs>
+                <path
+                  fill="url(#rh2-wof-gold)"
+                  d="M7 3h10v1.2h3.3v2.3a4.3 4.3 0 0 1-4.1 4.3A5.2 5.2 0 0 1 13 13.9V16h2.6a1.4 1.4 0 0 1 1.4 1.4V19H7v-1.6A1.4 1.4 0 0 1 8.4 16H11v-2.1a5.2 5.2 0 0 1-3.2-3.1 4.3 4.3 0 0 1-4.1-4.3V4.2H7V3Zm0 3H5.5v.5a2.5 2.5 0 0 0 1.8 2.4A5.4 5.4 0 0 1 7 7.2V6Zm10 0v1.2c0 .6-.1 1.2-.3 1.7a2.5 2.5 0 0 0 1.8-2.4V6H17ZM6 20h12v1.4H6V20Z"
+                />
+              </svg>
+            </button>
             <SoundSettings variant="gear" />
           </div>
         </header>
@@ -313,40 +324,6 @@ export function TradeUpHome({
               {bank == null ? t('home.bestRunEmpty') : <TickerNumber value={bank} duration={900} />}
             </strong>
           </div>
-          <span className="rh2-bank__divider" aria-hidden />
-          <span
-            className="rh2-bank__rank"
-            style={bank != null && rank.ready ? ({ '--rank-color': rank.rank.color } as CSSProperties) : undefined}
-            aria-label={bank != null && rank.ready ? rankName(rank.rank, locale) : undefined}
-          >
-            {bank != null && rank.ready ? (
-              <>
-                <RankEmblem rank={rank.rank} size={22} />
-                <span className="rh2-bank__rank-name">{rankName(rank.rank, locale)}</span>
-              </>
-            ) : null}
-          </span>
-          <button
-            type="button"
-            className="rh2-wof"
-            aria-label={t('home.wallOfFame')}
-            onClick={() => {
-              hapticLight();
-              setWallOpen(true);
-            }}
-          >
-            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden>
-              <path
-                d="M4.5 2.5h7v3.2a3.5 3.5 0 0 1-7 0V2.5ZM4.5 3.6H2.6v1.1a2 2 0 0 0 2.1 2M11.5 3.6h1.9v1.1a2 2 0 0 1-2.1 2M8 9.2v2.4M5.6 13.5h4.8M6.4 11.6h3.2"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="rh2-wof__text">{t('home.wallOfFame')}</span>
-            <Chevron />
-          </button>
         </section>
 
         <div className="rh2-dest" role="group">
@@ -359,7 +336,8 @@ export function TradeUpHome({
               setFranchisesOpen(true);
             }}
           >
-            <ArenaIcon className="rh2-dest__icon" tone={ownedTeam ? 'ink' : 'gold'} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="rh2-dest__icon rh2-dest__icon--arena" src="/images/home-v2/arena-exterior.png" alt="" aria-hidden />
             <span className="rh2-dest__text">
               <strong>{ownedTeam ? t('home.myFranchise') : t('home.franchises')}</strong>
               {ownedTeam ? null : <em>{t('home.franchisesDesc')}</em>}
@@ -375,7 +353,7 @@ export function TradeUpHome({
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="rh2-dest__icon" src="/images/home-v2/trophy.png" alt="" aria-hidden />
+            <img className="rh2-dest__icon" src="/images/home-v2/trophy-gold.png" alt="" aria-hidden />
             <span className="rh2-dest__text">
               <strong>{t('home.circuit')}</strong>
               <em>{t('home.circuitDesc')}</em>
@@ -407,14 +385,19 @@ export function TradeUpHome({
         }}
       />
 
-      <FranchisesScreen
+      <FranchiseMode
         open={franchisesOpen}
         permanent={permanent}
-        bankBalance={bank}
+        userId={permanent ? accountState.user.id : null}
+        guestBank={bank ?? 0}
         onClose={() => setFranchisesOpen(false)}
         onSignIn={() => {
           setFranchisesOpen(false);
           openSheet('signup');
+        }}
+        onPlayClassic={() => {
+          setFranchisesOpen(false);
+          onPlay();
         }}
       />
 

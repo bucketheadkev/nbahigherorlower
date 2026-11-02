@@ -1,0 +1,630 @@
+/* =========================================================
+   First-run tutorial on the real Classic arena.
+   Top: progress + one heading + one sentence (always in the same place).
+   Middle: the immersive court (or one overlay on top of it).
+   Bottom: the one orange button, floating over the arena.
+   ========================================================= */
+
+.tut.billion-shell--picking {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: radial-gradient(ellipse 110% 50% at 50% 22%, #00183f 0%, #00122c 70%, #000e24 100%) !important;
+  color: #f2f6ff;
+  overflow: hidden;
+}
+
+.tut__shell {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top: instructions (above the arena art that rises behind them) ── */
+.tut__top {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
+  padding: 0.5rem 1.1rem 0.35rem;
+  text-align: center;
+}
+
+.tut__bar {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 4.5rem;
+  align-items: center;
+  min-height: 2rem;
+}
+
+.tut__dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.tut__dots i {
+  width: 1.45rem;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(120, 160, 230, 0.22);
+}
+
+.tut__dots i.is-done {
+  background: rgba(77, 155, 255, 0.6);
+}
+
+.tut__dots i.is-on {
+  background: #4d9bff;
+  box-shadow: 0 0 6px rgba(77, 155, 255, 0.6);
+}
+
+.tut__skip {
+  justify-self: end;
+  appearance: none;
+  margin: 0;
+  padding: 0.5rem 0.2rem;
+  border: 0;
+  background: none;
+  color: rgba(196, 210, 238, 0.82);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fixed two-line slots: the heading and sentence always start in the same spot. */
+.tut__words {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
+.tut__words-in {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(2 * 1.06 * clamp(1.3rem, 6.2vw, 1.65rem));
+}
+
+.tut__title {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.3rem, 6.2vw, 1.65rem);
+  font-weight: 900;
+  line-height: 1.06;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  text-wrap: balance;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+.tut__line {
+  margin: 0.45rem 0 0;
+  min-height: calc(2 * 1.3 * clamp(0.95rem, 4.2vw, 1.08rem));
+  max-width: 24rem;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(0.95rem, 4.2vw, 1.08rem);
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(214, 226, 248, 0.92);
+  text-wrap: balance;
+}
+
+.tut__line.is-nudge {
+  color: #ffcf5c;
+}
+
+.tut__chip-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.95rem;
+  margin-top: 0.2rem;
+}
+
+.tut__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.24rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.tut__value b {
+  font-weight: 850;
+  letter-spacing: 0.06em;
+}
+
+.tut__value strong {
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.tut__value em {
+  font-style: normal;
+  font-weight: 800;
+}
+
+.tut__value.is-off {
+  color: #ffb054;
+  background: rgba(255, 140, 40, 0.12);
+}
+
+.tut__value.is-full {
+  color: #3cf09c;
+  background: rgba(41, 228, 144, 0.12);
+}
+
+/* ── Middle: the Classic arena, full bleed ── */
+.tut__center {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tut__play.billion-draft-layout--classic-hub {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+/* The court keeps every jersey and label above the floating button (and above the sheet's
+   peek while drafting); the half-court art runs on underneath the button. */
+.tut .billion-draft-layout--classic-hub .draft-hub-court {
+  --peek-reserve: calc(var(--tut-dock-h, 5rem) + 0.4rem);
+}
+
+.tut--stage-2 .billion-draft-layout--classic-hub .draft-hub-court {
+  --peek-reserve: calc(var(--tut-dock-h, 5rem) + 4.9rem);
+}
+
+/* The orange button runs the spin; the booth's own SPIN stays hidden. */
+.tut .ter__roll {
+  display: none !important;
+}
+
+.tut__goal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem 0 0.4rem;
+}
+
+.tut__goal-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: rgba(196, 210, 238, 0.82);
+}
+
+.tut__goal-amount {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(2rem, 9.6vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: -0.012em;
+  color: #05e679;
+  text-shadow:
+    0 0 8px rgba(5, 230, 121, 0.5),
+    0 0 22px rgba(5, 230, 121, 0.2);
+}
+
+/* ── Overlays on the arena (LeBron, valuation, Bank) ── */
+.tut__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem calc(var(--tut-dock-h, 5rem) + 0.5rem);
+  background: linear-gradient(180deg, rgba(0, 14, 36, 0.55) 0%, rgba(0, 10, 28, 0.82) 60%, rgba(0, 8, 22, 0.9) 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tut__overlay--reveal {
+  justify-content: flex-start;
+  padding-left: 0;
+  padding-right: 0;
+  background: rgba(0, 10, 28, 0.94);
+}
+
+.tut__overlay--reveal .classic-val {
+  flex: 0 0 auto;
+  padding-bottom: 0.4rem;
+}
+
+.tut.has-overlay .draft-hub-court__seat,
+.tut.has-overlay .tut__play .billion-main--draft {
+  opacity: 0;
+}
+
+/* ── Bottom: the one orange button ── */
+.tut__dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 62;
+  display: flex;
+  justify-content: center;
+  padding: 1.6rem 1.15rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(0, 10, 26, 0) 0%, rgba(0, 9, 24, 0.82) 45%, rgba(0, 8, 22, 0.96) 100%);
+  pointer-events: none;
+}
+
+.tut__cta {
+  pointer-events: auto;
+  appearance: none;
+  width: min(100%, 21rem);
+  height: 3.1rem;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9a08 0%, #ff7405 55%, #fd5400 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 180, 0.55),
+    0 0 14px rgba(255, 112, 10, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.2s ease;
+}
+
+.tut__cta:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(1.06);
+}
+
+/* Waiting on a tap on the court or list: same button, same place, resting. */
+.tut__cta:disabled {
+  cursor: default;
+  opacity: 0.38;
+  filter: saturate(0.6);
+  box-shadow: none;
+}
+
+/* ── LeBron: one player, two versions ── */
+.tut__lebron {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.tut__lebron-jersey {
+  display: block;
+  width: clamp(6.5rem, 32vw, 8.5rem);
+  aspect-ratio: 100 / 130;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
+}
+
+.tut__lebron-name {
+  margin-top: 0.85rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.tut__toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(60, 120, 255, 0.38);
+  background: rgba(6, 16, 40, 0.9);
+  box-sizing: border-box;
+}
+
+.tut__toggle-option {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  padding: 0.42rem 0.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(190, 205, 235, 0.75);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tut__toggle-option span {
+  font-size: 0.86rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tut__toggle-option em {
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.tut__toggle-option.is-on {
+  background: var(--opt);
+  color: #ffffff;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--opt) 60%, transparent);
+}
+
+.tut__lebron-value {
+  margin-top: 0.9rem;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.9rem, 9vw, 2.4rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #3cf09c;
+  text-shadow: 0 0 14px rgba(41, 228, 144, 0.35);
+}
+
+.tut__lebron-note {
+  margin: 0.45rem 0 0;
+  max-width: 19rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: rgba(180, 196, 228, 0.85);
+}
+
+/* ── Bank ── */
+.tut__bank {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.tut__bank-sum {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  border: 1px solid rgba(60, 120, 255, 0.38);
+  background: linear-gradient(180deg, rgba(12, 28, 64, 0.94) 0%, rgba(6, 16, 40, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(26, 110, 255, 0.16);
+  overflow: hidden;
+}
+
+.tut__bank-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tut__bank-row:first-child {
+  border-top: 0;
+}
+
+.tut__bank-row span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(170, 188, 222, 0.9);
+}
+
+.tut__bank-row strong {
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.tut__bank-row.is-earned {
+  background: rgba(41, 228, 144, 0.08);
+}
+
+.tut__bank-row.is-earned span {
+  color: #3cf09c;
+}
+
+.tut__bank-row.is-earned strong {
+  font-size: 1.5rem;
+  color: #3cf09c;
+  text-shadow: 0 0 14px rgba(41, 228, 144, 0.35);
+}
+
+.tut__bank-heading {
+  margin: 1.2rem 0 0.55rem;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(170, 188, 222, 0.85);
+}
+
+.tut__bank-uses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tut__bank-uses li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(60, 120, 255, 0.25);
+  background: rgba(8, 20, 48, 0.85);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #f2f6ff;
+}
+
+.tut__bank-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(77, 155, 255, 0.14);
+  color: #7fb4ff;
+}
+
+.tut__bank-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* ── The real player sheet, stopped on top of the button ── */
+.tut .draft-sheet {
+  bottom: var(--tut-dock-h, 0px);
+}
+
+.tut .draft-sheet__safe,
+.tut .franchise-pick__reroll,
+.tut .franchise-pick__hint {
+  display: none;
+}
+
+.tut .franchise-pick__head {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Desktop: the framed court, centered, sized to the room above the button ── */
+@media (min-width: 768px) {
+  .tut .tut__play.billion-draft-layout--classic-hub {
+    padding-bottom: calc(var(--tut-dock-h, 5rem) + 0.4rem) !important;
+    box-sizing: border-box;
+  }
+
+  .tut--stage-2 .tut__play.billion-draft-layout--classic-hub {
+    padding-bottom: calc(var(--tut-dock-h, 5rem) + 4.9rem) !important;
+  }
+
+  .tut .tut__play .draft-hub-court {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: auto !important;
+    max-width: min(26rem, 100%) !important;
+    max-height: calc(26rem * 0.82);
+    aspect-ratio: 1 / 0.82 !important;
+    margin-top: 0.6rem;
+  }
+
+  .tut__dock {
+    background: linear-gradient(180deg, rgba(0, 10, 26, 0) 0%, rgba(0, 10, 26, 0.75) 50%, rgba(0, 10, 26, 0.9) 100%);
+  }
+}
+
+/* Short phones (SE class): every heading fits one line and the chrome slims down, so the
+   arena still runs the full width while drafting. */
+@media (max-height: 720px) {
+  .tut__top {
+    padding: 0.2rem 1rem 0.2rem;
+  }
+
+  .tut__bar {
+    min-height: 1.5rem;
+  }
+
+  .tut__skip {
+    padding: 0.25rem 0.2rem;
+  }
+
+  .tut__words {
+    margin-top: 0;
+  }
+
+  .tut__title {
+    font-size: clamp(1.05rem, 5vw, 1.2rem);
+    white-space: nowrap;
+  }
+
+  .tut__words-in {
+    min-height: calc(1.06 * clamp(1.05rem, 5vw, 1.2rem));
+  }
+
+  .tut__line {
+    margin-top: 0.3rem;
+    font-size: 0.9rem;
+    min-height: calc(2 * 1.3 * 0.9rem);
+  }
+
+  .tut__chip-row {
+    min-height: 1.6rem;
+    margin-top: 0.1rem;
+  }
+
+  .tut__value {
+    padding: 0.14rem 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .tut .tut__play .billion-main--draft {
+    padding-bottom: 0 !important;
+  }
+
+  .tut .billion-draft-layout--classic-hub .draft-hub-court {
+    margin-top: 0 !important;
+  }
+
+  .tut--stage-2 .billion-draft-layout--classic-hub .draft-hub-court {
+    --peek-reserve: calc(var(--tut-dock-h, 4.5rem) + 4rem);
+  }
+
+  .tut__cta {
+    height: 2.7rem;
+  }
+
+  .tut__dock {
+    padding-top: 0.6rem;
+  }
+
+  .tut__goal-amount {
+    font-size: clamp(1.8rem, 8.6vw, 2.2rem);
+  }
+
+  .tut__lebron-jersey {
+    width: clamp(5.5rem, 27vw, 7rem);
+  }
+}

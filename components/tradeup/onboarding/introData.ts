@@ -1,207 +1,197 @@
 import {
-  OFF_PRIMARY_SLOT_VALUE_FACTOR,
+  BILLION_GOAL,
+  getDollarValueForSlot,
+  listValidSpinPairs,
   resolveAuthoritativePlayerValue,
   type DecadeEra,
+  type EraOfferPlayer,
+  type SpinPair,
+  type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
-import {
-  DECADE_ERAS,
-  decadePlayerToTradePlayer,
-  getDecadeRoster,
-  getHistPlayerById,
-  teamsForEra,
-} from '@/lib/tradeup/decadeRosters';
+import { getHistPlayerById } from '@/lib/tradeup/decadeRosters';
 import type { Position, TradePlayer } from '@/lib/tradeup/types';
-import type { HubCardPlayer } from '../DraftHubCards';
 import type { Copy } from './onboardingCopy';
 
-export const GOAL = 1_000_000_000;
-/** Meter runs a little past the goal so the $1B tick sits inside the track. */
-export const METER_SCALE = 1_100_000_000;
+/**
+ * Tutorial data: real database cards and the game's own pricing. Nothing here is saved,
+ * credited or counted — the tutorial is a practice demo.
+ */
 
-/** A real database card used in the guided demo. Never touches saved runs, Bank, or achievements. */
+export const GOAL = BILLION_GOAL;
+
 export interface IntroPlayer extends TradePlayer {
   era: DecadeEra;
   /** Authoritative price at the primary position. */
   base: number;
-  statLine: string;
-}
-
-function statLineOf(stats: TradePlayer['stats']): string {
-  return `${stats.ppg.toFixed(1)} PTS · ${stats.rpg.toFixed(1)} REB · ${stats.apg.toFixed(1)} AST`;
 }
 
 function eraOf(id: string): DecadeEra {
   return (/^hist_(\d{4}s)_/.exec(id)?.[1] ?? '2000s') as DecadeEra;
 }
 
-/** Real card + real price. The demo lineup is chosen so these land on exactly $1,005,000,000. */
 function legend(id: string): IntroPlayer {
   const card = getHistPlayerById(id);
   if (!card) throw new Error(`[intro] missing demo card ${id}`);
-  return {
-    ...card,
-    era: eraOf(id),
-    base: resolveAuthoritativePlayerValue(card),
-    statLine: statLineOf(card.stats),
-  };
+  return { ...card, era: eraOf(id), base: resolveAuthoritativePlayerValue(card) };
 }
+
+/** Same player, two team/era versions — the valuation example. */
+export const LEBRON = legend('hist_2000s_CLE_lebron_james');
+export const LEBRON_LAL = legend('hist_2020s_LAL_lebron_james');
+
+/** The interactive pick: primary SG, can also play SF. */
+export const KOBE = legend('hist_2000s_LAL_kobe_bryant');
 
 export const MAGIC = legend('hist_1980s_LAL_magic_johnson');
-export const DIRK = legend('hist_2010s_DAL_dirk_nowitzki');
+export const DIRK = legend('hist_2000s_DAL_dirk_nowitzki');
 export const EWING = legend('hist_1990s_NYK_patrick_ewing');
-/** SG primary, SF alternate — the position lesson. */
-export const KOBE = legend('hist_2000s_LAL_kobe_bryant');
-/** Closes the lineup at SF. */
-export const LEBRON = legend('hist_2000s_CLE_lebron_james');
 
-/** Same seated-price rule as Classic: full price at primary, 3% off at an eligible alternate. */
-export function seatedValue(player: IntroPlayer, slot: Position): number {
-  if (player.primaryPosition === slot) return player.base;
-  return Math.round((player.base * OFF_PRIMARY_SLOT_VALUE_FACTOR) / 1_000_000) * 1_000_000;
+/** The game's seated price: full at the primary position, 3% off anywhere else. */
+export function seatedValue(player: TradePlayer, slot: Position): number {
+  return getDollarValueForSlot(player, slot);
 }
 
-export function seat(player: IntroPlayer, slot: Position): HubCardPlayer {
+export function seat(player: IntroPlayer, slot: Position): ValuedPlayer & { era: DecadeEra } {
   return { ...player, dollarValue: seatedValue(player, slot), era: player.era };
 }
 
-export type IntroSlots = Record<Position, HubCardPlayer | null>;
+export type IntroSlots = Record<Position, (ValuedPlayer & { era?: DecadeEra }) | null>;
 
-export const INITIAL_SLOTS: IntroSlots = {
-  PG: seat(MAGIC, 'PG'),
-  SG: null,
-  SF: null,
-  PF: seat(DIRK, 'PF'),
-  C: seat(EWING, 'C'),
-};
+export const EMPTY_SLOTS: IntroSlots = { PG: null, SG: null, SF: null, PF: null, C: null };
 
-/** Final demo team value: preset three + Kobe at SG + LeBron at SF. */
-export const DEMO_TEAM_VALUE =
-  MAGIC.base + DIRK.base + EWING.base + seatedValue(KOBE, 'SG') + seatedValue(LEBRON, 'SF');
+/** The practice five for the final stage — Kobe at his primary position. */
+export const FINAL_FIVE: Array<[IntroPlayer, Position]> = [
+  [MAGIC, 'PG'],
+  [KOBE, 'SG'],
+  [LEBRON, 'SF'],
+  [DIRK, 'PF'],
+  [EWING, 'C'],
+];
 
-export const DRAWS: Record<'kobe' | 'lebron', { teamLabel: string; teamId: string; era: string }> = {
-  kobe: { teamLabel: 'LAKERS', teamId: 'LAL', era: '00s' },
-  lebron: { teamLabel: 'CAVALIERS', teamId: 'CLE', era: '00s' },
-};
+export const FINAL_SLOTS: IntroSlots = Object.fromEntries(
+  FINAL_FIVE.map(([player, slot]) => [slot, seat(player, slot)]),
+) as IntroSlots;
 
-export interface ShowcaseLegend {
-  id: string;
-  name: string;
-  teamId: string;
-  era: DecadeEra;
-  position: Position;
-  value: number;
+export const FINAL_TOTAL = FINAL_FIVE.reduce((sum, [player, slot]) => sum + seatedValue(player, slot), 0);
+
+/** The spin always lands on Kobe's Lakers decade. */
+export function kobeSpinPair(): SpinPair {
+  const pair = listValidSpinPairs().find((p) => p.team.id === 'LAL' && p.era === KOBE.era);
+  if (!pair) throw new Error('[intro] missing LAL spin pair');
+  return pair;
 }
 
-let showcaseCache: ShowcaseLegend[] | null = null;
-
-/** The highest-priced legends in the live database — one card per player. */
-export function topLegends(count = 8): ShowcaseLegend[] {
-  if (showcaseCache && showcaseCache.length >= count) return showcaseCache.slice(0, count);
-  const best = new Map<string, ShowcaseLegend & { rating: number }>();
-  for (const era of DECADE_ERAS) {
-    for (const team of teamsForEra(era)) {
-      for (const row of getDecadeRoster(team.id, era)) {
-        const card = decadePlayerToTradePlayer(row, team.id, era);
-        const value = resolveAuthoritativePlayerValue(card);
-        const prev = best.get(card.name);
-        if (prev && (prev.value > value || (prev.value === value && prev.rating >= card.tradeValue))) continue;
-        best.set(card.name, {
-          id: card.id,
-          name: card.name,
-          teamId: team.id,
-          era,
-          position: card.primaryPosition,
-          value,
-          rating: card.tradeValue,
-        });
-      }
-    }
-  }
-  showcaseCache = [...best.values()]
-    .sort((a, b) => b.value - a.value || b.rating - a.rating || a.name.localeCompare(b.name))
-    .slice(0, Math.max(count, 8))
-    .map(({ rating: _rating, ...legendRow }) => legendRow);
-  return showcaseCache.slice(0, count);
+/** Kobe first, then a few real teammates from the same board so the list looks like Classic. */
+export function kobeBoard(board: EraOfferPlayer[]): EraOfferPlayer[] {
+  const kobe = board.find((p) => p.id === KOBE.id);
+  if (!kobe) return board.slice(0, 5);
+  return [kobe, ...board.filter((p) => p.id !== KOBE.id).slice(0, 4)];
 }
 
-export type IntroPhase = 'welcome' | 'build' | 'position' | 'cross' | 'victory';
-
-/** Three moments: meet the legends → draft to $1B → bank everything over it. */
-export const MOMENT: Record<IntroPhase, number> = {
-  welcome: 0,
-  build: 1,
-  position: 1,
-  cross: 1,
-  victory: 2,
-};
-
-export const HEADLINES: Record<IntroPhase, Copy> = {
-  welcome: { en: 'WELCOME TO 1B RUN', es: 'BIENVENIDO A 1B RUN' },
-  build: { en: 'BUILD YOUR FIVE', es: 'ARMA TU QUINTETO' },
-  position: { en: 'POSITION MATTERS', es: 'LA POSICIÓN IMPORTA' },
-  cross: { en: 'CROSS $1 BILLION', es: 'SUPERA LOS $1,000 MILLONES' },
-  victory: { en: 'YOU BUILT A $1B TEAM', es: 'ARMASTE UN EQUIPO DE $1B' },
-};
-
-export const SUBLINES: Record<IntroPhase, Copy> = {
-  welcome: {
-    en: 'Each player has their own unique value.',
-    es: 'Cada jugador tiene su propio valor único.',
-  },
-  build: { en: 'Draft five legends. Cross $1,000,000,000.', es: 'Elige cinco leyendas. Supera $1,000,000,000.' },
-  position: {
-    en: 'Off-position players lose 3% of their value.',
-    es: 'Fuera de su posición, un jugador pierde 3% de su valor.',
-  },
-  cross: { en: 'Five values add up. Finish the lineup.', es: 'Los cinco valores se suman. Completa el quinteto.' },
-  victory: {
-    en: 'Every dollar above $1 billion goes straight to your Bank.',
-    es: 'Cada dólar por encima de $1,000 millones va directo a tu Banco.',
-  },
-};
-
-/** Big on-court direction: lead text + highlighted destination. */
-export interface Direction {
-  lead: Copy;
-  to: Copy;
+/** Top of the screen: one heading and one supporting sentence per step. */
+export interface Instruction {
+  title: Copy;
+  line: Copy;
 }
 
-export const DIRECTIONS: Record<'kobeSf' | 'kobeSg' | 'lebronSf', Direction> = {
-  kobeSf: {
-    lead: { en: 'Drag or tap Kobe to', es: 'Arrastra o toca a Kobe hacia' },
-    to: { en: 'small forward', es: 'alero (SF)' },
+export const STEPS = {
+  goal: {
+    title: { en: 'CAN YOU BUILD A $1 BILLION TEAM?', es: '¿PUEDES ARMAR UN EQUIPO DE $1,000 MILLONES?' },
+    line: { en: 'Draft 5 NBA players. Reach $1 billion.', es: 'Elige 5 jugadores de la NBA. Llega a $1,000 millones.' },
   },
-  kobeSg: {
-    lead: { en: 'Now move Kobe to', es: 'Ahora mueve a Kobe a' },
-    to: { en: 'shooting guard', es: 'escolta (SG)' },
+  values: {
+    title: { en: 'SAME PLAYER. DIFFERENT VALUE.', es: 'MISMO JUGADOR. OTRO VALOR.' },
+    line: {
+      en: 'Every team and era gives a player his own in-game value.',
+      es: 'Cada equipo y época le da a un jugador su propio valor en el juego.',
+    },
   },
-  lebronSf: {
-    lead: { en: 'Drag or tap LeBron to', es: 'Arrastra o toca a LeBron hacia' },
-    to: { en: 'small forward', es: 'alero (SF)' },
+  spin: {
+    title: { en: 'SPIN FOR YOUR PLAYERS', es: 'GIRA POR TUS JUGADORES' },
+    line: {
+      en: 'Spin for a team and era to discover your available players.',
+      es: 'Gira por un equipo y una época para descubrir tus jugadores.',
+    },
   },
-};
+  place: {
+    title: { en: 'PLACE YOUR PLAYER', es: 'COLOCA A TU JUGADOR' },
+    line: {
+      en: 'Select Kobe Bryant and place him at small forward.',
+      es: 'Elige a Kobe Bryant y colócalo de alero (SF).',
+    },
+  },
+  penalty: {
+    title: { en: 'POSITION MATTERS', es: 'LA POSICIÓN IMPORTA' },
+    line: {
+      en: 'Playing outside a primary position reduces a player’s value by 3%.',
+      es: 'Jugar fuera de su posición principal reduce el valor de un jugador un 3%.',
+    },
+  },
+  moveSg: {
+    title: { en: 'POSITION MATTERS', es: 'LA POSICIÓN IMPORTA' },
+    line: {
+      en: 'Move Kobe to shooting guard to restore his full value.',
+      es: 'Mueve a Kobe a escolta (SG) para recuperar su valor completo.',
+    },
+  },
+  restored: {
+    title: { en: 'FULL VALUE', es: 'VALOR COMPLETO' },
+    line: { en: 'At his primary position, Kobe is worth 100%.', es: 'En su posición principal, Kobe vale el 100%.' },
+  },
+  fill: {
+    title: { en: 'LET’S COMPLETE YOUR TEAM.', es: 'COMPLETEMOS TU EQUIPO.' },
+    line: {
+      en: 'We’ve filled the other four positions for this practice run.',
+      es: 'Llenamos las otras cuatro posiciones para esta práctica.',
+    },
+  },
+  result: {
+    title: { en: 'BEAT $1B. BUILD YOUR BANK.', es: 'SUPERA $1B. HAZ CRECER TU BANCO.' },
+    line: { en: 'Every dollar above $1B goes into your Bank.', es: 'Cada dólar por encima de $1B va a tu Banco.' },
+  },
+  bank: {
+    title: { en: 'BEAT $1B. BUILD YOUR BANK.', es: 'SUPERA $1B. HAZ CRECER TU BANCO.' },
+    line: { en: 'Earn more through Run Bonuses and achievements.', es: 'Gana más con Bonos de partida y logros.' },
+  },
+  done: {
+    title: { en: 'PRACTICE COMPLETE!', es: '¡PRÁCTICA COMPLETA!' },
+    line: {
+      en: 'You’ve learned the basics. Now build your own $1 billion team.',
+      es: 'Ya sabes lo básico. Ahora arma tu propio equipo de $1,000 millones.',
+    },
+  },
+} satisfies Record<string, Instruction>;
 
-export const HINTS = {
-  startAtSf: { en: 'Start him at small forward', es: 'Empieza en alero (SF)' },
-  notEligible: { en: 'He can’t play there', es: 'No puede jugar ahí' },
+/** Brief replacements for the supporting sentence after a wrong tap. */
+export const NUDGES = {
+  pickKobe: { en: 'For this practice, select Kobe Bryant.', es: 'En esta práctica, elige a Kobe Bryant.' },
+  tapSf: { en: 'Tap the glowing SF jersey.', es: 'Toca la camiseta SF que brilla.' },
+  tapKobe: { en: 'Tap Kobe’s jersey to pick him up.', es: 'Toca la camiseta de Kobe para moverlo.' },
+  tapSg: { en: 'Now tap the glowing SG jersey.', es: 'Ahora toca la camiseta SG que brilla.' },
+} satisfies Record<string, Copy>;
+
+export const BUTTONS = {
+  showMe: { en: 'SHOW ME HOW', es: 'MUÉSTRAME' },
+  continue: { en: 'CONTINUE', es: 'CONTINUAR' },
+  spin: { en: 'SPIN', es: 'GIRAR' },
+  evaluate: { en: 'SEE TEAM VALUE', es: 'VER VALOR DEL EQUIPO' },
+  start: { en: 'START MY FIRST RUN', es: 'EMPEZAR MI PRIMERA PARTIDA' },
 } satisfies Record<string, Copy>;
 
 export const LABELS = {
-  teamValue: { en: 'Team value', es: 'Valor del equipo' },
-  billionTeam: { en: '$1B TEAM', es: 'EQUIPO $1B' },
-  primary: { en: 'PRIMARY · 100%', es: 'PRINCIPAL · 100%' },
-  alternate: { en: 'ALTERNATE · −3%', es: 'ALTERNA · −3%' },
-  place: { en: 'Place {name} at {slot}', es: 'Colocar a {name} en {slot}' },
-} satisfies Record<string, Copy>;
-
-export const WELCOME = {
-  heading: { en: 'MOST VALUABLE LEGENDS', es: 'LEYENDAS MÁS VALIOSAS' },
-  line: { en: 'Draft five. Cross $1,000,000,000.', es: 'Elige cinco. Supera $1,000,000,000.' },
-  cta: { en: 'DRAFT YOUR FIVE', es: 'ARMA TU QUINTETO' },
-} satisfies Record<string, Copy>;
-
-/** After the demo crosses $1B. Practice only — nothing is credited or debited. */
-export const FINISH = {
-  over: { en: '{amount} OVER $1B', es: '{amount} SOBRE $1B' },
-  start: { en: 'GET STARTED', es: 'EMPEZAR' },
+  goal: { en: 'GOAL', es: 'META' },
+  fullValue: { en: 'FULL VALUE', es: 'VALOR COMPLETO' },
+  valueNote: {
+    en: 'Set by how he performed for that team in that era — not his real salary.',
+    es: 'Según cómo rindió con ese equipo en esa época — no es su salario real.',
+  },
+  teamValue: { en: 'TEAM VALUE', es: 'VALOR DEL EQUIPO' },
+  bankEarned: { en: 'BANK EARNED', es: 'GANADO PARA EL BANCO' },
+  yourBank: { en: 'WHAT YOUR BANK DOES', es: 'PARA QUÉ SIRVE TU BANCO' },
+  franchises: { en: 'Own Franchises', es: 'Compra Franquicias' },
+  leaderboard: { en: 'Climb the leaderboard', es: 'Sube en la clasificación' },
+  wall: {
+    en: 'Reach $1,000,000,000 in Bank to join the Wall of Fame',
+    es: 'Llega a $1,000,000,000 en tu Banco para entrar al Muro de la Fama',
+  },
 } satisfies Record<string, Copy>;

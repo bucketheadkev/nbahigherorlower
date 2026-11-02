@@ -405,12 +405,22 @@ function isScrimHost(host: HTMLElement): boolean {
 }
 
 /**
- * iPhone Safari cannot vibrate from script; a real tap on a native switch still ticks. Each control
- * gets an invisible switch on top, and the tap is handed to the control as a click.
- *
- * Only the click is forwarded — never pointerdown. Safari fires no click after a scroll (and the
- * tap guard swallows any that slip through), so dragging across a control scrolls without
- * pressing it. Pointer events bubble to the control untouched for its :active state.
+ * A native switch claims every touch that starts on it (iOS treats the drag as sliding the
+ * switch), so a list could not be scrolled from on top of one and the release "clicked" the
+ * control. Controls inside anything scrollable therefore never get a switch.
+ */
+function insideScroller(host: HTMLElement): boolean {
+  for (let el = host.parentElement; el && el !== document.body; el = el.parentElement) {
+    const style = getComputedStyle(el);
+    if (/auto|scroll/.test(`${style.overflowY} ${style.overflowX}`)) return true;
+  }
+  return false;
+}
+
+/**
+ * iPhone Safari cannot vibrate from script; a real tap on a native switch still ticks. Controls
+ * outside scrolling areas get an invisible switch on top, and the tap is handed to the control
+ * as a click (never pointerdown). Pointer events bubble to the control untouched for :active.
  */
 export function installWebHapticTargets(): () => void {
   if (!isIosWeb() || typeof document === 'undefined' || !document.body) return () => {};
@@ -421,6 +431,7 @@ export function installWebHapticTargets(): () => void {
     if (host.querySelector(`:scope > [${WEB_HAPTIC_ATTR}]`)) return;
     if (host.closest(`[${WEB_HAPTIC_ATTR}]`)) return;
     if (isScrimHost(host)) return;
+    if (insideScroller(host)) return;
     const pos = getComputedStyle(host).position;
     if (pos !== 'absolute' && pos !== 'relative' && pos !== 'fixed' && pos !== 'sticky') {
       host.style.position = 'relative';

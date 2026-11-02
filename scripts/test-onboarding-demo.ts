@@ -1,19 +1,18 @@
 /**
- * Guards the guided onboarding demo: real cards, real prices, exactly $1,005,000,000.
+ * Guards the tutorial: real cards, the game's own prices and position rule, a $1B+ practice five.
  * Run: npx tsx --tsconfig tsconfig.json scripts/test-onboarding-demo.ts
  */
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { getDollarValueForSlot } from '@/lib/tradeup/billionDollar';
+import { getDollarValueForSlot, OFF_PRIMARY_SLOT_VALUE_FACTOR } from '@/lib/tradeup/billionDollar';
 import {
-  DEMO_TEAM_VALUE,
-  DIRK,
-  EWING,
+  FINAL_FIVE,
+  FINAL_TOTAL,
   GOAL,
   KOBE,
+  kobeSpinPair,
   LEBRON,
-  MAGIC,
+  LEBRON_LAL,
   seatedValue,
-  topLegends,
 } from '@/components/tradeup/onboarding/introData';
 
 let failed = 0;
@@ -24,42 +23,37 @@ function check(label: string, ok: boolean, detail = ''): void {
 
 const money = (n: number) => `$${n.toLocaleString('en-US')}`;
 
-console.log('demo lineup:');
-check('team value is exactly $1,005,000,000', DEMO_TEAM_VALUE === 1_005_000_000, money(DEMO_TEAM_VALUE));
-check('surplus is exactly $5,000,000', DEMO_TEAM_VALUE - GOAL === 5_000_000, money(DEMO_TEAM_VALUE - GOAL));
+console.log('valuation example:');
+check('LeBron (Cavaliers) and LeBron (Lakers) are different cards', LEBRON.id !== LEBRON_LAL.id);
+check(
+  'their values differ',
+  LEBRON.base !== LEBRON_LAL.base,
+  `${LEBRON.teamId} ${LEBRON.era} ${money(LEBRON.base)} · ${LEBRON_LAL.teamId} ${LEBRON_LAL.era} ${money(LEBRON_LAL.base)}`,
+);
+check('values are real (no $0)', LEBRON.base > 0 && LEBRON_LAL.base > 0);
 
-for (const [player, slot] of [
-  [MAGIC, 'PG'],
-  [DIRK, 'PF'],
-  [EWING, 'C'],
-  [KOBE, 'SG'],
-  [LEBRON, 'SF'],
-] as const) {
-  check(
-    `${player.name} at ${slot} matches Classic pricing`,
-    seatedValue(player, slot) === getDollarValueForSlot(player, slot),
-    money(seatedValue(player, slot)),
-  );
+console.log('spin + position lesson:');
+const spin = kobeSpinPair();
+check('spin lands on Kobe’s team and decade', spin.team.id === KOBE.teamId && spin.era === KOBE.era, `${spin.team.id} ${spin.era}`);
+check('Kobe is a SG who can play SF', KOBE.primaryPosition === 'SG' && playerFitsSlot(KOBE, 'SF'));
+const sg = seatedValue(KOBE, 'SG');
+const sf = seatedValue(KOBE, 'SF');
+check('SG price is his full value', sg === KOBE.base, money(sg));
+check(
+  'SF price is the game’s 3% rule',
+  sf === getDollarValueForSlot(KOBE, 'SF') && sf === Math.round((sg * OFF_PRIMARY_SLOT_VALUE_FACTOR) / 1e6) * 1e6,
+  `${money(sf)} (−${money(sg - sf)})`,
+);
+
+console.log('practice five:');
+for (const [player, slot] of FINAL_FIVE) {
+  check(`${player.name} can play ${slot}`, playerFitsSlot(player, slot), money(seatedValue(player, slot)));
 }
-
-console.log('position lesson:');
-check('Kobe can play SF (alternate)', playerFitsSlot(KOBE, 'SF') && KOBE.primaryPosition === 'SG');
-check(
-  'Kobe at SF costs 3% less than at SG',
-  seatedValue(KOBE, 'SF') < seatedValue(KOBE, 'SG'),
-  `${money(seatedValue(KOBE, 'SF'))} vs ${money(seatedValue(KOBE, 'SG'))}`,
-);
-check('LeBron fits SF', playerFitsSlot(LEBRON, 'SF'));
-
-console.log('showcase:');
-const legends = topLegends(5);
-check('five distinct legends', legends.length === 5 && new Set(legends.map((l) => l.name)).size === 5);
-check(
-  'Duncan, Magic, and Embiid are not shown',
-  !legends.some((l) => ['Tim Duncan', 'Magic Johnson', 'Joel Embiid'].includes(l.name)),
-);
-check('sorted by value', legends.every((l, i) => i === 0 || legends[i - 1]!.value >= l.value));
-for (const l of legends) console.log(`       ${l.name.padEnd(22)} ${l.teamId} ${l.era}  ${money(l.value)}`);
+check('Kobe is at his primary position', FINAL_FIVE.some(([p, slot]) => p.id === KOBE.id && slot === 'SG'));
+check('five different seats', new Set(FINAL_FIVE.map(([, slot]) => slot)).size === 5);
+const sum = FINAL_FIVE.reduce((s, [p, slot]) => s + getDollarValueForSlot(p, slot), 0);
+check('total matches the valuation sum', sum === FINAL_TOTAL, money(FINAL_TOTAL));
+check('total reaches $1,000,000,000', FINAL_TOTAL >= GOAL, `${money(FINAL_TOTAL)} (+${money(FINAL_TOTAL - GOAL)})`);
 
 if (failed > 0) {
   console.log(`\n${failed} check(s) failed`);

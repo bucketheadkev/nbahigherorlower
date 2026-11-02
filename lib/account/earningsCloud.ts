@@ -5,7 +5,7 @@
 
 import { franchiseRpc } from './franchiseCloud';
 
-export type EarningsKind = 'franchise_income' | 'franchise_bonus' | 'franchise_refund';
+export type EarningsKind = 'franchise_paycheck' | 'franchise_income' | 'franchise_bonus' | 'franchise_refund';
 
 export interface EarningsItem {
   kind: EarningsKind;
@@ -17,7 +17,7 @@ export interface EarningsItem {
   credited: boolean;
 }
 
-const KINDS = new Set<EarningsKind>(['franchise_income', 'franchise_bonus', 'franchise_refund']);
+const KINDS = new Set<EarningsKind>(['franchise_paycheck', 'franchise_income', 'franchise_bonus', 'franchise_refund']);
 const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 
 function toItems(raw: unknown): EarningsItem[] {

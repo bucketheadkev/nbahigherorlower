@@ -1,0 +1,542 @@
+/* ══ Chest opening stage (Franchises) ══
+   Phases (class on .pk): idle → shake → open → rise → mystery → flip → reveal.
+   Everything animates with transform / opacity; glows are static filters. */
+.pk {
+  /* One scale unit: as wide as the phone allows, but short phones scale by height. */
+  --s: min(92vw, 27rem, 54dvh);
+  --chest-w: calc(var(--s) * 0.68);
+  --chest-h: calc(var(--chest-w) * 0.7692);
+  --chest-y: 52dvh;
+  --chest-drop: 13dvh;
+  --jersey-w: calc(var(--s) * 0.46);
+  --jersey-h: calc(var(--jersey-w) * 1.3);
+  --jersey-y: 44dvh;
+  --reveal-y: 32dvh;
+  --reveal-scale: 1.08;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: #020a1c;
+  color: #ffffff;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: pk-enter 0.35s ease-out both;
+}
+
+@keyframes pk-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Chest ── */
+.pk-chest {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: var(--chest-y);
+  width: var(--chest-w);
+  height: var(--chest-h);
+  transform: translate(-50%, -50%);
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.pk-chest--front {
+  z-index: 4;
+}
+
+.pk-chest__body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 92%;
+}
+
+.chest-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pk-chest__ring {
+  position: absolute;
+  left: 50%;
+  top: 91%;
+  width: 168%;
+  aspect-ratio: 4.6;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(236, 243, 255, 0.92);
+  background: radial-gradient(closest-side, rgba(2, 8, 24, 0.8), rgba(2, 8, 24, 0.4) 70%, rgba(2, 8, 24, 0.1));
+  box-shadow:
+    0 0 14px rgba(120, 180, 255, 0.6),
+    inset 0 0 14px rgba(120, 180, 255, 0.4);
+}
+
+.pk-chest__pulse {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 165%;
+  aspect-ratio: 1.5;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(45, 135, 255, 0.55), rgba(45, 135, 255, 0.16) 55%, transparent);
+  transition: opacity 0.3s ease;
+}
+
+.pk--idle .pk-chest__pulse {
+  animation: pk-pulse 2.2s ease-in-out infinite;
+}
+
+.pk--idle .pk-chest__body {
+  animation: pk-breathe 2.2s ease-in-out infinite;
+}
+
+.pk:not(.pk--idle) .pk-chest__pulse {
+  opacity: 0;
+}
+
+@keyframes pk-pulse {
+  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(0.94); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+@keyframes pk-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018); }
+}
+
+.pk--shake .pk-chest__body {
+  animation: pk-shake 0.46s linear;
+}
+
+@keyframes pk-shake {
+  0% { transform: none; }
+  12% { transform: translateX(-1.6%) rotate(-2.4deg); }
+  25% { transform: translateX(1.6%) rotate(2.4deg); }
+  38% { transform: translateX(-1.3%) rotate(-1.9deg); }
+  50% { transform: translateX(1.2%) rotate(1.6deg); }
+  62% { transform: translateX(-0.8%) rotate(-1.1deg); }
+  75% { transform: translateX(0.5%) rotate(0.7deg); }
+  88% { transform: rotate(-0.3deg); }
+  100% { transform: none; }
+}
+
+/* Lid lifts, lit from inside */
+.chest-layer--lid {
+  transition:
+    transform 0.7s cubic-bezier(0.2, 1.25, 0.35, 1),
+    opacity 0.4s ease;
+}
+
+.chest-lid__lit,
+.chest-layer--mouth,
+.chest-base__rim-lit {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.pk--open .chest-layer--lid {
+  transform: translateY(-27%) scale(1.05);
+}
+
+.pk--open .chest-lid__lit,
+.pk--open .chest-layer--mouth,
+.pk--open .chest-base__rim-lit {
+  opacity: 1;
+}
+
+.pk:is(.pk--rise, .pk--mystery, .pk--flip, .pk--reveal) .chest-layer--lid {
+  transform: translateY(-70%) scale(1.1);
+  opacity: 0;
+  transition:
+    transform 0.6s cubic-bezier(0.5, 0, 0.75, 0.4),
+    opacity 0.35s ease;
+}
+
+/* Blue light once the jersey comes out */
+.pk:is(.pk--rise, .pk--mystery, .pk--flip) .chest-layer--mouth {
+  opacity: 1;
+  filter: hue-rotate(178deg) saturate(1.5);
+}
+
+/* Light rays from the opening */
+.pk-rays {
+  --ray: 255, 196, 70;
+  position: absolute;
+  left: 50%;
+  bottom: 60%;
+  width: 330%;
+  height: 290%;
+  transform: translateX(-50%) scaleY(0.35);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  pointer-events: none;
+  /* Soft beams: blurred once, then only moved/faded on the compositor. */
+  filter: blur(5px);
+  will-change: transform, opacity;
+  background:
+    radial-gradient(ellipse 34% 30% at 50% 100%, rgba(255, 250, 230, 0.95), rgba(var(--ray), 0.75) 30%, rgba(var(--ray), 0.25) 65%, transparent),
+    conic-gradient(
+      from -78deg at 50% 100%,
+      transparent 0deg,
+      rgba(var(--ray), 0.5) 5deg,
+      transparent 10deg 16deg,
+      rgba(var(--ray), 0.35) 20deg,
+      transparent 25deg 31deg,
+      rgba(var(--ray), 0.6) 37deg,
+      transparent 43deg 50deg,
+      rgba(var(--ray), 0.45) 55deg,
+      transparent 60deg 66deg,
+      rgba(var(--ray), 0.7) 72deg,
+      rgba(var(--ray), 0.7) 84deg,
+      transparent 90deg 96deg,
+      rgba(var(--ray), 0.45) 101deg,
+      transparent 106deg 112deg,
+      rgba(var(--ray), 0.6) 119deg,
+      transparent 125deg 132deg,
+      rgba(var(--ray), 0.35) 136deg,
+      transparent 141deg 146deg,
+      rgba(var(--ray), 0.5) 151deg,
+      transparent 156deg 360deg
+    );
+  -webkit-mask-image: radial-gradient(ellipse 50% 100% at 50% 100%, #000 14%, rgba(0, 0, 0, 0.55) 42%, transparent 76%);
+  mask-image: radial-gradient(ellipse 50% 100% at 50% 100%, #000 14%, rgba(0, 0, 0, 0.55) 42%, transparent 76%);
+  transition:
+    opacity 0.5s ease,
+    transform 0.8s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.pk-rays--blue {
+  --ray: 70, 150, 255;
+}
+
+.pk--open .pk-rays--gold,
+.pk:is(.pk--rise, .pk--mystery, .pk--flip) .pk-rays--blue {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1);
+}
+
+.pk:is(.pk--mystery, .pk--flip) .fx-arena__beam {
+  opacity: 1;
+}
+
+/* Chest steps down while the jersey rises, then leaves for the reveal */
+.pk:is(.pk--rise, .pk--mystery, .pk--flip) .pk-chest {
+  transform: translate(-50%, calc(-50% + var(--chest-drop)));
+}
+
+.pk:is(.pk--reveal, .pk--exit) .pk-chest {
+  transform: translate(-50%, calc(-50% + var(--chest-drop) + 22dvh));
+  opacity: 0;
+  transition:
+    transform 0.7s cubic-bezier(0.5, 0, 0.75, 0.4),
+    opacity 0.4s ease;
+}
+
+/* ── Jersey ── */
+.pk-jersey {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: var(--jersey-y);
+  width: var(--jersey-w);
+  height: var(--jersey-h);
+  transform: translate(-50%, calc(-50% + 16dvh)) scale(0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.3s ease;
+}
+
+.pk:is(.pk--rise, .pk--mystery, .pk--flip) .pk-jersey {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.pk--reveal .pk-jersey {
+  transform: translate(-50%, calc(-50% + var(--reveal-y) - var(--jersey-y))) scale(var(--reveal-scale));
+  opacity: 1;
+  transition: transform 0.75s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.pk-jersey__flip {
+  position: absolute;
+  inset: 0;
+}
+
+.pk--mystery .pk-jersey__flip {
+  animation: pk-float 2.4s ease-in-out infinite;
+}
+
+/* Flat turn, as in Classic: squeeze to the edge, swap to the team colors, open back out. */
+.pk--flip .pk-jersey__flip {
+  animation: pk-squeeze 0.19s ease-in forwards;
+}
+
+.pk--reveal .pk-jersey__flip {
+  animation: pk-unsqueeze 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+@keyframes pk-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3%); }
+}
+
+@keyframes pk-squeeze {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.04); }
+}
+
+@keyframes pk-unsqueeze {
+  from { transform: scaleX(0.04); }
+  to { transform: scaleX(1); }
+}
+
+.pk-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 230%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 220, 140, 0.55) 35%, transparent 70%);
+  opacity: 0;
+}
+
+.pk:is(.pk--flip, .pk--reveal) .pk-flash {
+  animation: pk-flash 0.65s ease-out forwards;
+}
+
+@keyframes pk-flash {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(0.85); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* Classic Run's jersey, at its own 100×130 proportions */
+.pk-shirt {
+  position: absolute;
+  inset: 0;
+}
+
+.pk-shirt .jersey__body {
+  transition: none;
+}
+
+.pk-shirt--mystery {
+  --jersey-fill: #0d1c42;
+  --jersey-trim: #173266;
+  --jersey-piping: rgba(255, 255, 255, 0);
+  --jersey-line: #9ad6ff;
+  --jersey-line-w: 2.6px;
+}
+
+.pk-shirt--mystery .jersey__shape {
+  filter: drop-shadow(0 0 6px rgba(70, 160, 255, 0.95)) drop-shadow(0 0 18px rgba(40, 120, 255, 0.55));
+}
+
+.fx-jersey__mark {
+  position: absolute;
+  inset: 24% 0 8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 58cqw;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.pk-shirt--team {
+  --jersey-line: #ffd36b;
+  --jersey-line-w: 2.2px;
+}
+
+.pk-shirt--team .jersey__shape {
+  filter: drop-shadow(0 0 5px rgba(255, 200, 80, 0.95)) drop-shadow(0 0 20px rgba(255, 165, 40, 0.6));
+}
+
+/* Gold light behind the revealed jersey */
+.pk-halo {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: var(--reveal-y);
+  width: calc(var(--s) * 1.5);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.6);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 190, 70, 0.6), rgba(255, 150, 40, 0.22) 45%, transparent 72%);
+  opacity: 0;
+  transition:
+    opacity 0.6s ease,
+    transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1);
+  pointer-events: none;
+}
+
+.pk--reveal .pk-halo {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── Tap to open ── */
+.pk-tap {
+  appearance: none;
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: calc(var(--chest-y) - var(--chest-h) * 0.5);
+  width: calc(var(--chest-w) * 1.2);
+  height: calc(var(--chest-h) + 7rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 0.25s ease;
+}
+
+.pk-tap:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pk-tap__label {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.3rem, 6.2vw, 1.6rem);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(70, 150, 255, 0.95),
+    0 0 26px rgba(40, 120, 255, 0.6);
+  animation: pk-tap-glow 1.6s ease-in-out infinite;
+}
+
+.pk-tap__icon {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+
+.pk-tap__hand {
+  display: block;
+  color: #ffffff;
+  filter: drop-shadow(0 0 5px rgba(70, 160, 255, 0.95));
+  animation: pk-tap-hand 1.6s ease-in-out infinite;
+}
+
+/* Ring from the fingertip on each tap of the loop. */
+.pk-tap__ripple {
+  position: absolute;
+  left: 48%;
+  top: 30%;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(140, 200, 255, 0.95);
+  box-shadow: 0 0 8px rgba(70, 160, 255, 0.8);
+  transform: translate(-50%, -50%) scale(0.3);
+  opacity: 0;
+  animation: pk-tap-ripple 1.6s ease-out infinite;
+}
+
+@keyframes pk-tap-ripple {
+  0%, 40% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  48% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+@keyframes pk-tap-glow {
+  0%, 100% { opacity: 0.78; }
+  50% { opacity: 1; }
+}
+
+@keyframes pk-tap-hand {
+  0%, 100% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(3px) scale(0.92); }
+}
+
+/* ── Reveal info ── */
+.pk-info {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: calc(var(--reveal-y) + var(--jersey-h) * var(--reveal-scale) * 0.5 + 1.5rem);
+  width: min(92vw, 24rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pk-info > * {
+  animation: pk-info-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.pk-info__name { animation-delay: 0.25s; }
+.pk-info__team { animation-delay: 0.35s; }
+.fx-info__meta { animation-delay: 0.45s; }
+.fx-info__btn,
+.fx-info__actions { animation-delay: 0.65s; }
+
+@keyframes pk-info-in {
+  from { opacity: 0; transform: translateY(0.6rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pk-info__name {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(1.65rem, 8.6vw, 2.25rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 190, 80, 0.25);
+}
+
+.pk-info__team {
+  margin: 0.5rem 0 0;
+  font-size: clamp(0.68rem, 3.3vw, 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(210, 220, 238, 0.88);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .pk--idle .pk-chest__body,
+  html:not([data-full-motion]) .pk--shake .pk-chest__body,
+  html:not([data-full-motion]) .pk--mystery .pk-jersey__flip {
+    animation: none;
+  }
+}

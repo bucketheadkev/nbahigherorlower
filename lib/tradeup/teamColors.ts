@@ -88,3 +88,10 @@ export function contrastOnPrimary(hex: string): string {
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return lum > 0.62 ? '#0c0a09' : '#ffffff';
 }
+
+/** Team-primary fill + readable ink for a player row (My Runs, guides). */
+export function teamRowStyle(teamId: string | undefined): Record<string, string> {
+  const primary = teamId ? getTeamColors(teamId).primary : '#333333';
+  const ink = contrastOnPrimary(primary);
+  return { '--row-accent': primary, '--row-ink': ink, backgroundColor: primary, color: ink };
+}

@@ -1,65 +1,75 @@
+import type { PlayerTier } from '@/lib/tradeup/tiers';
 import type { Locale } from './messages';
 
 export type GuideId = 'how-to-play' | 'how-values-work';
 
-export type GuideStep = {
-  n: string;
-  title: string;
-  line: string;
-};
+export type GuideIcon =
+  | 'spin'
+  | 'pick'
+  | 'place'
+  | 'move'
+  | 'value'
+  | 'rollover'
+  | 'bonus'
+  | 'achievement'
+  | 'franchise'
+  | 'leaderboard'
+  | 'wall';
 
-export type GuideMode = {
-  mark: string;
-  title: string;
-  line: string;
-};
+export type GuideRow = { icon: GuideIcon; title: string; line: string };
 
-export type GuideFact = {
-  title: string;
-  line: string;
-};
+/** Worked examples drawn from real cards and the game's own pricing. */
+export type GuideExample = 'versions' | 'position' | 'rollover';
 
-export type TierRow = {
-  tier: string;
-  label: string;
-  range: string;
-  blurb: string;
-};
+export type GuideSection =
+  | { kind: 'steps'; label: string; items: GuideRow[] }
+  | { kind: 'list'; label: string; items: GuideRow[] }
+  | { kind: 'example'; label: string; title: string; line: string; example: GuideExample }
+  | { kind: 'modes'; label: string; items: { mark: string; title: string; line: string }[] }
+  | { kind: 'tiers'; label: string; note: string; blurbs: Record<PlayerTier, string> };
 
 export type GuidePageContent = {
-  title: string;
   kicker: string;
+  title: string;
   tagline: string;
-  steps?: GuideStep[];
-  modes?: GuideMode[];
-  tips?: string[];
-  /** Short pricing copy for How Values Work (replaces fact cards). */
-  pricing?: string;
-  facts?: GuideFact[];
-  tiers?: TierRow[];
-  closing?: string;
+  sections: GuideSection[];
 };
 
 const HOW_TO_PLAY_EN: GuidePageContent = {
   kicker: 'GUIDE',
   title: 'How to Play',
-  tagline: 'Fill five seats. Stack value. Clear $1 billion.',
-  steps: [
-    { n: '01', title: 'Roll', line: 'Spin a franchise and decade.' },
-    { n: '02', title: 'Pick', line: 'Choose one player from that roster.' },
-    { n: '03', title: 'Seat', line: 'Tap an open circle they can play.' },
-    { n: '04', title: 'Hit $1B', line: 'Lock five. Values reveal and add up.' },
-  ],
-  modes: [
+  tagline: 'Draft 5 NBA players. Reach $1,000,000,000.',
+  sections: [
     {
-      mark: '$1B',
-      title: 'Classic',
-      line: 'Solo run — draft five and chase the billion.',
+      kind: 'steps',
+      label: 'The draft',
+      items: [
+        { icon: 'spin', title: 'Spin', line: 'Tap SPIN. The reels land on an NBA team and an era.' },
+        { icon: 'pick', title: 'Pick a player', line: 'Choose one player from that roster in the player sheet.' },
+        { icon: 'place', title: 'Tap a jersey', line: 'Seat your player at an open position on the court.' },
+        { icon: 'move', title: 'Move or swap', line: 'Tap a placed player, then another jersey to move or swap.' },
+        { icon: 'value', title: 'See your value', line: 'Fill all five seats and your team value adds up.' },
+      ],
     },
     {
-      mark: '1v1',
-      title: 'Head to Head',
-      line: 'Draft against a rival. Higher total wins.',
+      kind: 'list',
+      label: 'Build your Bank',
+      items: [
+        { icon: 'rollover', title: 'Rollover', line: 'Every dollar above $1,000,000,000 goes into your Bank.' },
+        { icon: 'bonus', title: 'Run Bonuses', line: 'Complete the bonus challenge on a run for extra cash.' },
+        { icon: 'achievement', title: 'Achievements', line: 'Hit milestones to earn more.' },
+        { icon: 'franchise', title: 'Franchises', line: 'Spend your Bank to own an NBA team.' },
+        { icon: 'leaderboard', title: 'Leaderboard', line: 'Players are ranked by Bank balance.' },
+        { icon: 'wall', title: 'Wall of Fame', line: 'Reach a $1,000,000,000 Bank to join it.' },
+      ],
+    },
+    {
+      kind: 'modes',
+      label: 'Modes',
+      items: [
+        { mark: '$1B', title: 'Classic Run', line: 'Solo draft. Reach $1,000,000,000.' },
+        { mark: '1V1', title: 'Head to Head', line: 'Draft against a rival. Higher total wins.' },
+      ],
     },
   ],
 };
@@ -67,40 +77,81 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
 const HOW_VALUES_EN: GuidePageContent = {
   kicker: 'ECONOMY',
   title: 'How Values Work',
-  tagline: 'Every player has a tier. Higher tier, higher dollars.',
-  pricing:
-    'In 1B Run, a player’s value is based on their peak in that decade. At their primary position they keep full value; anywhere else, they’re worth 3% less.',
-  tiers: [
-    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Bench' },
-    { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotation' },
-    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Starter' },
-    { tier: 'B', label: 'B', range: '$73M – $110M', blurb: 'Strong starter' },
-    { tier: 'A', label: 'A', range: '$111M – $165M', blurb: 'Star' },
-    { tier: 'S', label: 'S', range: '$166M – $199M', blurb: 'Superstar' },
-    { tier: 'GOAT', label: 'GOAT', range: '$200M – $210M', blurb: 'All-time peaks' },
+  tagline: 'Every player is priced by who they were on that team, in that era.',
+  sections: [
+    {
+      kind: 'example',
+      label: 'Team + era',
+      title: 'Same player. Different value.',
+      line: 'Each team and era gives a player his own price, set by how he performed there.',
+      example: 'versions',
+    },
+    {
+      kind: 'example',
+      label: 'Position',
+      title: 'Primary position = full value.',
+      line: 'Seat a player anywhere else and he is worth 3% less. Move him back to restore it.',
+      example: 'position',
+    },
+    {
+      kind: 'example',
+      label: 'Team value',
+      title: 'Five values. One total.',
+      line: 'Clear $1,000,000,000 and everything above it rolls into your Bank.',
+      example: 'rollover',
+    },
+    {
+      kind: 'tiers',
+      label: 'Tier ranges',
+      note: 'Low to high',
+      blurbs: {
+        F: 'Bench',
+        D: 'Rotation',
+        C: 'Starter',
+        B: 'Strong starter',
+        A: 'Star',
+        S: 'Superstar',
+        GOAT: 'All-time peaks',
+      },
+    },
   ],
 };
 
 const HOW_TO_PLAY_ES: GuidePageContent = {
   kicker: 'GUÍA',
   title: 'Cómo jugar',
-  tagline: 'Llena cinco asientos. Suma valor. Llega a mil millones.',
-  steps: [
-    { n: '01', title: 'Gira', line: 'Gira una franquicia y una década.' },
-    { n: '02', title: 'Elige', line: 'Escoge un jugador de ese roster.' },
-    { n: '03', title: 'Sienta', line: 'Toca un círculo abierto que pueda jugar.' },
-    { n: '04', title: 'Llega a $1B', line: 'Cierra cinco. Los valores se revelan y suman.' },
-  ],
-  modes: [
+  tagline: 'Draftea 5 jugadores NBA. Llega a $1,000,000,000.',
+  sections: [
     {
-      mark: '$1B',
-      title: 'Clásica',
-      line: 'Carrera en solitario — draftea cinco y apunta al billón.',
+      kind: 'steps',
+      label: 'El draft',
+      items: [
+        { icon: 'spin', title: 'Gira', line: 'Toca GIRAR. Los rodillos marcan un equipo NBA y una era.' },
+        { icon: 'pick', title: 'Elige un jugador', line: 'Escoge un jugador de ese roster en la lista.' },
+        { icon: 'place', title: 'Toca una camiseta', line: 'Coloca a tu jugador en una posición libre de la cancha.' },
+        { icon: 'move', title: 'Mueve o cambia', line: 'Toca un jugador colocado y luego otra camiseta para moverlo o cambiarlo.' },
+        { icon: 'value', title: 'Mira tu valor', line: 'Llena los cinco puestos y se suma el valor del equipo.' },
+      ],
     },
     {
-      mark: '1v1',
-      title: 'Cara a cara',
-      line: 'Draftea contra un rival. Gana el total más alto.',
+      kind: 'list',
+      label: 'Haz crecer tu Banco',
+      items: [
+        { icon: 'rollover', title: 'Excedente', line: 'Cada dólar por encima de $1,000,000,000 va a tu Banco.' },
+        { icon: 'bonus', title: 'Bonos de partida', line: 'Cumple el reto de bono de una partida para ganar más.' },
+        { icon: 'achievement', title: 'Logros', line: 'Alcanza hitos para ganar más.' },
+        { icon: 'franchise', title: 'Franquicias', line: 'Usa tu Banco para ser dueño de un equipo NBA.' },
+        { icon: 'leaderboard', title: 'Clasificación', line: 'Los jugadores se ordenan por saldo del Banco.' },
+        { icon: 'wall', title: 'Muro de la Fama', line: 'Llega a $1,000,000,000 en tu Banco para entrar.' },
+      ],
+    },
+    {
+      kind: 'modes',
+      label: 'Modos',
+      items: [
+        { mark: '$1B', title: 'Partida clásica', line: 'Draft en solitario. Llega a $1,000,000,000.' },
+        { mark: '1V1', title: 'Cara a cara', line: 'Draftea contra un rival. Gana el total más alto.' },
+      ],
     },
   ],
 };
@@ -108,17 +159,43 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
 const HOW_VALUES_ES: GuidePageContent = {
   kicker: 'ECONOMÍA',
   title: 'Cómo funcionan los valores',
-  tagline: 'Cada jugador tiene un tier. Más alto = más dólares.',
-  pricing:
-    'En 1B Run, el valor de un jugador se basa en su pico en esa década. En su posición principal conserva el valor completo; en cualquier otra, vale un 3% menos.',
-  tiers: [
-    { tier: 'F', label: 'F', range: '$3M – $12M', blurb: 'Banquillo' },
-    { tier: 'D', label: 'D', range: '$13M – $28M', blurb: 'Rotación' },
-    { tier: 'C', label: 'C', range: '$29M – $72M', blurb: 'Titular' },
-    { tier: 'B', label: 'B', range: '$73M – $110M', blurb: 'Titular fuerte' },
-    { tier: 'A', label: 'A', range: '$111M – $165M', blurb: 'Estrella' },
-    { tier: 'S', label: 'S', range: '$166M – $199M', blurb: 'Superestrella' },
-    { tier: 'GOAT', label: 'GOAT', range: '$200M – $210M', blurb: 'Picos históricos' },
+  tagline: 'Cada jugador vale según quién fue en ese equipo y en esa era.',
+  sections: [
+    {
+      kind: 'example',
+      label: 'Equipo + era',
+      title: 'Mismo jugador. Distinto valor.',
+      line: 'Cada equipo y era le da a un jugador su propio precio, según cómo rindió allí.',
+      example: 'versions',
+    },
+    {
+      kind: 'example',
+      label: 'Posición',
+      title: 'Posición principal = valor completo.',
+      line: 'En cualquier otra posición vale un 3% menos. Devuélvelo a su posición para recuperarlo.',
+      example: 'position',
+    },
+    {
+      kind: 'example',
+      label: 'Valor del equipo',
+      title: 'Cinco valores. Un total.',
+      line: 'Supera $1,000,000,000 y todo lo que pase de ahí va a tu Banco.',
+      example: 'rollover',
+    },
+    {
+      kind: 'tiers',
+      label: 'Rangos por tier',
+      note: 'De menor a mayor',
+      blurbs: {
+        F: 'Banquillo',
+        D: 'Rotación',
+        C: 'Titular',
+        B: 'Titular fuerte',
+        A: 'Estrella',
+        S: 'Superestrella',
+        GOAT: 'Picos históricos',
+      },
+    },
   ],
 };
 
@@ -145,11 +222,10 @@ export const GUIDE_NAV: Record<
     replayIntro: string;
     back: string;
     guidesLabel: string;
-    tierRanges: string;
-    stepsLabel: string;
-    modesLabel: string;
-    tipsLabel: string;
-    factsLabel: string;
+    teamValue: string;
+    goal: string;
+    toBank: string;
+    fullValue: string;
   }
 > = {
   en: {
@@ -158,11 +234,10 @@ export const GUIDE_NAV: Record<
     replayIntro: 'Replay Intro',
     back: 'Back',
     guidesLabel: 'Guides',
-    tierRanges: 'Tier ranges',
-    stepsLabel: 'The run',
-    modesLabel: 'Modes',
-    tipsLabel: 'Keep in mind',
-    factsLabel: 'Pricing',
+    teamValue: 'Team value',
+    goal: 'Goal',
+    toBank: 'To your Bank',
+    fullValue: 'Full value',
   },
   es: {
     howToPlay: 'Cómo jugar',
@@ -170,10 +245,9 @@ export const GUIDE_NAV: Record<
     replayIntro: 'Ver la intro',
     back: 'Atrás',
     guidesLabel: 'Guías',
-    tierRanges: 'Rangos por tier',
-    stepsLabel: 'La carrera',
-    modesLabel: 'Modos',
-    tipsLabel: 'Ten en cuenta',
-    factsLabel: 'Precios',
+    teamValue: 'Valor del equipo',
+    goal: 'Meta',
+    toBank: 'A tu Banco',
+    fullValue: 'Valor completo',
   },
 };

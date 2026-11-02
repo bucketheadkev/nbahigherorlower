@@ -114,8 +114,46 @@ export function franchiseTier(teamId: string): FranchiseTier {
   return FRANCHISE_TIER[teamId] ?? 'small';
 }
 
+/**
+ * Purchase price per franchise ($20M–$200M), ordered by legacy: championships first, then
+ * dynasties, Finals history and worldwide following. Boston (18 titles) tops the market,
+ * then the Lakers (17). Owners keep the price they paid; resale always uses price_paid.
+ */
+export const FRANCHISE_PRICES: Record<string, number> = {
+  BOS: 200_000_000,
+  LAL: 190_000_000,
+  CHI: 170_000_000,
+  GSW: 165_000_000,
+  SAS: 140_000_000,
+  NYK: 125_000_000,
+  MIA: 120_000_000,
+  PHI: 110_000_000,
+  DET: 105_000_000,
+  HOU: 95_000_000,
+  MIL: 90_000_000,
+  OKC: 85_000_000,
+  DAL: 80_000_000,
+  CLE: 75_000_000,
+  DEN: 75_000_000,
+  TOR: 70_000_000,
+  PHX: 65_000_000,
+  ATL: 60_000_000,
+  POR: 60_000_000,
+  SAC: 55_000_000,
+  WAS: 55_000_000,
+  UTA: 50_000_000,
+  IND: 45_000_000,
+  BKN: 45_000_000,
+  ORL: 40_000_000,
+  LAC: 40_000_000,
+  MEM: 30_000_000,
+  MIN: 25_000_000,
+  CHA: 25_000_000,
+  NOP: 20_000_000,
+};
+
 export function franchisePrice(teamId: string): number {
-  return TIERS[franchiseTier(teamId)].price;
+  return FRANCHISE_PRICES[teamId] ?? TIERS[franchiseTier(teamId)].price;
 }
 
 export function resaleValue(pricePaid: number): number {
@@ -146,13 +184,13 @@ export function formatFanPower(milli: number): string {
   return (milli / 1000).toFixed(3);
 }
 
-/** Catalog order: most prestigious tier first, then titles, then name. */
+/** Catalog order: most valuable franchise first, then titles, then name. */
 export function compareFranchises(
   a: { teamId: string; championships: number; name: string },
   b: { teamId: string; championships: number; name: string },
 ): number {
   return (
-    TIER_ORDER.indexOf(franchiseTier(a.teamId)) - TIER_ORDER.indexOf(franchiseTier(b.teamId)) ||
+    franchisePrice(b.teamId) - franchisePrice(a.teamId) ||
     b.championships - a.championships ||
     a.name.localeCompare(b.name)
   );

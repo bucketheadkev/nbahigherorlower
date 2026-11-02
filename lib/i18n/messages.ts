@@ -68,6 +68,12 @@ export type MessageKey =
   | 'runs.emptyCopy'
   | 'runs.bestBadge'
   | 'runs.valueLabel'
+  | 'runs.statBest'
+  | 'runs.statCount'
+  | 'runs.aboveGoal'
+  | 'runs.emptyTitle'
+  | 'settings.language'
+  | 'settings.languageHint'
   | 'challenges.eyebrow'
   | 'challenges.title'
   | 'challenges.completeLabel'
@@ -202,6 +208,12 @@ const EN: Record<MessageKey, string> = {
   'runs.emptyCopy': 'Hit $1,000,000,000 or more to bank a squad here.',
   'runs.bestBadge': 'Best',
   'runs.valueLabel': 'Team value',
+  'runs.statBest': 'Best run',
+  'runs.statCount': 'Billion runs',
+  'runs.aboveGoal': '{amount} above goal',
+  'runs.emptyTitle': 'No billion runs yet',
+  'settings.language': 'Language',
+  'settings.languageHint': 'Game text and guides',
   'challenges.eyebrow': 'SEASON GOALS',
   'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
@@ -359,6 +371,12 @@ const ES: Record<MessageKey, string> = {
     'Alcanza $1,000,000,000 o más para guardar un quinteto aquí.',
   'runs.bestBadge': 'Mejor',
   'runs.valueLabel': 'Valor del equipo',
+  'runs.statBest': 'Mejor partida',
+  'runs.statCount': 'Partidas de mil millones',
+  'runs.aboveGoal': '{amount} sobre la meta',
+  'runs.emptyTitle': 'Aún no hay partidas de mil millones',
+  'settings.language': 'Idioma',
+  'settings.languageHint': 'Textos del juego y guías',
   'challenges.eyebrow': 'METAS DE TEMPORADA',
   'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',
