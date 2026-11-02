@@ -18,6 +18,7 @@ import {
   type FState,
 } from '@/lib/account/franchiseV5Cloud';
 import { BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';
+import { preloadPackSounds } from '@/lib/tradeup/gameAudio';
 import { CHESTS, SHOP_CHESTS, PAYCHECK, type ChestId, type Slot } from '@/lib/tradeup/franchise/config';
 import { FC, tx } from '@/lib/tradeup/franchise/copy';
 import { fmtCash } from '@/lib/tradeup/franchise/format';
@@ -151,6 +152,9 @@ function Mode({
   useEffect(() => {
     void load(true);
   }, [load]);
+
+  // Decode the pack sounds now so the first pack lands with its impact on time.
+  useEffect(() => preloadPackSounds(), []);
 
   useEffect(() => {
     if (!toast) return;

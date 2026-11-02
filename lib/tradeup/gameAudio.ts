@@ -77,7 +77,11 @@ type SoundId =
   | 'results_cheer'
   | 'cash_register'
   | 'billion_celebration'
-  | 'defeat';
+  | 'defeat'
+  | PackSoundId;
+
+/** Franchise pack opening (Pixabay; see public/sounds/CREDITS.txt). */
+export type PackSoundId = 'pack_appear' | 'pack_tap' | 'pack_riser' | 'pack_whoosh' | 'pack_goat';
 
 type SoundDef = {
   path: string;
@@ -146,7 +150,25 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
     debounceMs: 600,
   },
   defeat: { path: '/sounds/reject.mp3', volume: 0.22, debounceMs: 280 },
+  pack_appear: { path: '/sounds/pack-appear.mp3', volume: 0.5, debounceMs: 300 },
+  pack_tap: { path: '/sounds/pack-tap.mp3', volume: 0.6, debounceMs: 150 },
+  pack_riser: { path: '/sounds/pack-riser.mp3', volume: 0.7, debounceMs: 150 },
+  pack_whoosh: { path: '/sounds/pack-whoosh.mp3', volume: 0.8, debounceMs: 150 },
+  pack_goat: { path: '/sounds/pack-goat.mp3', volume: 0.6, debounceMs: 600 },
 };
+
+/**
+ * Where each pack sound actually starts (its files open with silence), in seconds. The riser's
+ * impact lands PACK_RISER_PEAK_MS after its trimmed start.
+ */
+const PACK_TRIM: Record<PackSoundId, number> = {
+  pack_appear: 0.03,
+  pack_tap: 0.08,
+  pack_riser: 0.2,
+  pack_whoosh: 0.28,
+  pack_goat: 0,
+};
+export const PACK_RISER_PEAK_MS = 1600;
 
 /** Only major moments map to audio. Everything else is intentionally silent. */
 const EVENT_TO_SOUND: Partial<Record<GameSoundEvent, SoundId>> = {
@@ -365,6 +387,112 @@ function playClick(id: SoundId): void {
   }
 
   playSound(id, { force: true });
+}
+
+const packSources = new Set<AudioBufferSourceNode>();
+const packElements = new Set<HTMLAudioElement>();
+
+/** Decode the pack sounds ahead of the opening so each plays on its exact frame. */
+export function preloadPackSounds(): void {
+  (Object.keys(PACK_TRIM) as PackSoundId[]).forEach((id) => void ensureClickBuffer(id));
+}
+
+function startPackBuffer(audio: AudioContext, id: PackSoundId, buf: AudioBuffer, offsetSec: number): void {
+  if (offsetSec >= buf.duration) return;
+  const gain = audio.createGain();
+  gain.gain.value = Math.min(1, SOUND_DEFS[id].volume * masterScale());
+  gain.connect(audio.destination);
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  src.connect(gain);
+  packSources.add(src);
+  src.onended = () => {
+    packSources.delete(src);
+    try {
+      src.disconnect();
+      gain.disconnect();
+    } catch {
+      /* ignore */
+    }
+  };
+  try {
+    src.start(0, offsetSec);
+  } catch {
+    packSources.delete(src);
+  }
+}
+
+/** Last resort (no Web Audio): a plain element, still trimmed and still stoppable. */
+function startPackElement(id: PackSoundId, offsetSec: number): void {
+  const el = new Audio(SOUND_DEFS[id].path);
+  el.volume = Math.min(1, SOUND_DEFS[id].volume * masterScale());
+  const seek = () => {
+    try {
+      el.currentTime = offsetSec;
+    } catch {
+      /* seek before metadata */
+    }
+  };
+  if (el.readyState >= 1) seek();
+  else el.addEventListener('loadedmetadata', seek, { once: true });
+  packElements.add(el);
+  el.addEventListener('ended', () => packElements.delete(el), { once: true });
+  void el.play().catch(() => packElements.delete(el));
+}
+
+/**
+ * Play a pack-opening sound, skipping its leading silence (plus `skipMs` more, to join a sound
+ * already in progress). Honours SFX mute. If the audio engine is still waking or the sample is
+ * still decoding, it starts as soon as both are ready and skips the time it waited, so hits
+ * stay on their beats. Stopped by stopPackSounds().
+ */
+export function playPackSound(id: PackSoundId, skipMs = 0): void {
+  if (typeof window === 'undefined') return;
+  if (getAudioSettings().sfxMuted) return;
+  const audio = getCtx();
+  const offset = PACK_TRIM[id] + Math.max(0, skipMs) / 1000;
+  const buf = clickBuffers.get(id);
+  if (audio && buf && audio.state === 'running') {
+    startPackBuffer(audio, id, buf, offset);
+    return;
+  }
+  if (!audio) {
+    startPackElement(id, offset);
+    return;
+  }
+  const askedAt = performance.now();
+  const generation = packGeneration;
+  void Promise.all([audio.state === 'running' ? Promise.resolve() : audio.resume().catch(() => {}), ensureClickBuffer(id)]).then(
+    ([, ready]) => {
+      if (generation !== packGeneration) return; // stopped while waiting
+      const late = (performance.now() - askedAt) / 1000;
+      if (ready && audio.state === 'running') startPackBuffer(audio, id, ready, offset + late);
+      else startPackElement(id, offset + late);
+    },
+  );
+}
+
+let packGeneration = 0;
+
+/** Leaving the opening cuts any riser or GOAT tail still playing (and anything about to start). */
+export function stopPackSounds(): void {
+  packGeneration += 1;
+  packSources.forEach((src) => {
+    try {
+      src.stop();
+    } catch {
+      /* already ended */
+    }
+  });
+  packSources.clear();
+  packElements.forEach((el) => {
+    try {
+      el.pause();
+    } catch {
+      /* ignore */
+    }
+  });
+  packElements.clear();
 }
 
 function canPlay(key: string, debounceMs: number): boolean {

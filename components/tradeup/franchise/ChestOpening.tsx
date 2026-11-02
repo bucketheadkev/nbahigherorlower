@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { FOpen, FOpenCard } from '@/lib/account/franchiseV5Cloud';
+import {
+  PACK_RISER_PEAK_MS,
+  playPackSound,
+  preloadPackSounds,
+  stopPackSounds,
+} from '@/lib/tradeup/gameAudio';
 import { hapticLight, hapticTap } from '@/lib/tradeup/haptics';
 import { CHEST_NAME, FC, SLOT_NAME, TIER_COLOR, TIER_NAME, tx } from '@/lib/tradeup/franchise/copy';
 import { fmtCash, fmtFans } from '@/lib/tradeup/franchise/format';
@@ -80,17 +86,33 @@ export function ChestOpening({
     timers.current.forEach((t) => window.clearTimeout(t));
     timers.current = [];
   };
-  useEffect(() => clear, []);
 
-  const run = useCallback((steps: [Phase, number][], before?: () => void) => {
+  // The pack lands on the court; leaving cuts any riser or GOAT tail still ringing.
+  useEffect(() => {
+    preloadPackSounds();
+    playPackSound('pack_appear');
+    return () => {
+      clear();
+      stopPackSounds();
+    };
+  }, []);
+
+  /** Runs the phases; the riser starts early enough that its impact hits as the jersey flips. */
+  const run = useCallback((steps: [Phase, number][], tier: CardTier, before?: () => void) => {
     clear();
+    const flipAt = steps.find(([p]) => p === 'flip')?.[1] ?? 0;
+    const riserAt = flipAt - PACK_RISER_PEAK_MS;
+    if (riserAt <= 0) playPackSound('pack_riser', -riserAt);
+    else timers.current.push(window.setTimeout(() => playPackSound('pack_riser'), riserAt));
     for (const [next, at] of steps) {
       timers.current.push(
         window.setTimeout(() => {
           if (next === 'prep') before?.();
           setPhase(next);
+          if (next === 'flip') playPackSound('pack_whoosh');
           if (next === 'reveal') {
             hapticTap();
+            if (tier === 'goat') playPackSound('pack_goat');
             busy.current = false;
           }
         }, at),
@@ -102,7 +124,8 @@ export function ChestOpening({
     if (phase !== 'idle' || busy.current) return;
     busy.current = true;
     hapticLight();
-    run(withSuspense(FIRST, open.cards[0]!.tier));
+    playPackSound('pack_tap');
+    run(withSuspense(FIRST, open.cards[0]!.tier), open.cards[0]!.tier);
   };
 
   const next = () => {
@@ -114,7 +137,9 @@ export function ChestOpening({
     }
     busy.current = true;
     hapticLight();
-    run(withSuspense(NEXT, open.cards[index + 1]!.tier), () => setIndex((i) => i + 1));
+    stopPackSounds();
+    const nextTier = open.cards[index + 1]!.tier;
+    run(withSuspense(NEXT, nextTier), nextTier, () => setIndex((i) => i + 1));
   };
 
   const once = (fn: () => void) => () => {

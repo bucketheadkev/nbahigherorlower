@@ -4,6 +4,7 @@
  * The public leaderboard now ranks Bank totals (see bankLeaderboardCloud).
  */
 
+import { BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { isAnonymousUser } from '@/lib/account/userKind';
 import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
@@ -120,6 +121,8 @@ export async function submitVerifiedClassicLineup(
       isNewBest: payload.is_new_best,
       verifiedBest: payload.verified_best,
     });
+    // Recording the run is what pays its rollover on the server: every Bank display re-reads now.
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(BANK_CHANGED_EVENT));
     return {
       ok: true,
       verifiedValue: Math.max(0, Math.round(Number(payload.verified_value) || 0)),
