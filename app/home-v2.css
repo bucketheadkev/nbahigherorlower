@@ -1,6 +1,12 @@
 /* =========================================================
-   Home v2 — main menu (approved reference design, 390pt-wide iPhone baseline)
+   Home — main menu (approved mockup, 390pt-wide iPhone baseline)
+   PLAY first, MY FRANCHISE second, MODES third; the arena hoop fills the space above.
    ========================================================= */
+
+:root {
+  /* Floating tab bar: its inset plus the raised active tile. */
+  --hub-tab-bar-h: 4.85rem;
+}
 
 .rh2 {
   position: relative;
@@ -12,7 +18,7 @@
   color: #ffffff;
 }
 
-/* ── Background: arena photo, positioned by TradeUpHome so the net sits above the title ── */
+/* ── Background: arena photo, positioned by TradeUpHome so the hoop sits above PLAY ── */
 .rh2-bg {
   position: absolute;
   inset: 0;
@@ -21,39 +27,102 @@
   pointer-events: none;
 }
 
-.rh2-bg__photo {
+/* Photo + its light ribbons move together; phones crop in so the hoop reads at mockup scale. */
+.rh2-bg__frame {
   position: absolute;
   top: 0;
   left: 50%;
-  width: max(100%, calc(100dvh * 0.5625 * 1.15));
-  height: auto;
+  width: max(100%, min(132vw, calc(100dvh * 0.5625 * 1.32)));
+  max-width: none;
   transform: translateX(-50%);
-  opacity: 0.86;
+}
+
+.rh2-bg__photo {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  opacity: 0.95;
   user-select: none;
+}
+
+/* Orange LED ribbons along the stands, bright at the edges and fading toward the hoop. */
+.rh3-ribbon {
+  position: absolute;
+  top: 41.2%;
+  width: 34%;
+  height: 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(255, 120, 30, 0.65), 0 0 2px rgba(255, 170, 90, 0.9);
+  opacity: 0.8;
+}
+
+.rh3-ribbon--left {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255, 150, 60, 0.95), rgba(255, 110, 20, 0));
+  transform: rotate(3deg);
+  transform-origin: 0 50%;
+}
+
+.rh3-ribbon--right {
+  right: 0;
+  background: linear-gradient(270deg, rgba(255, 150, 60, 0.95), rgba(255, 110, 20, 0));
+  transform: rotate(-3deg);
+  transform-origin: 100% 50%;
 }
 
 .rh2-bg__shade {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 85% 30% at 50% 26%, rgba(30, 90, 220, 0.16), transparent 70%),
+    radial-gradient(ellipse 80% 26% at 50% 22%, rgba(40, 110, 255, 0.2), transparent 70%),
     linear-gradient(
       180deg,
-      rgba(2, 8, 23, 0.6) 0%,
-      rgba(2, 8, 23, 0.12) 14%,
+      rgba(2, 8, 23, 0.7) 0%,
+      rgba(2, 8, 23, 0.1) 13%,
       rgba(2, 8, 23, 0) 34%,
-      rgba(2, 8, 23, 0.45) 52%,
-      rgba(2, 8, 23, 0.92) 70%,
-      #020817 88%
+      rgba(2, 8, 23, 0.28) 55%,
+      rgba(2, 8, 23, 0.7) 78%,
+      #020817 100%
     );
 }
 
-.rh2 .money-rain,
+/* Warm light pooling on the floor under PLAY, and a cool rim from the arena lights. */
+.rh3-floor-glow {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 150%;
+  height: 46%;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 34% 26% at 50% 30%, rgba(255, 120, 30, 0.2), transparent 72%),
+    radial-gradient(ellipse 50% 40% at 50% 62%, rgba(40, 110, 255, 0.14), transparent 75%);
+}
+
+/* Half-court arc glowing on the floor just above the tab bar. */
+.rh3-arc {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--home-tabbar-h, 6rem) - 5.6rem);
+  width: 175%;
+  height: 11rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border-top: 2px solid rgba(110, 175, 255, 0.55);
+  box-shadow:
+    0 -1px 14px rgba(40, 130, 255, 0.45),
+    inset 0 2px 18px rgba(40, 130, 255, 0.22);
+  -webkit-mask-image: linear-gradient(90deg, transparent 6%, #000 30%, #000 70%, transparent 94%);
+  mask-image: linear-gradient(90deg, transparent 6%, #000 30%, #000 70%, transparent 94%);
+  opacity: 0.85;
+}
+
 .rh2 > .money-rain {
   z-index: 1;
 }
 
-/* ── Scrolling column ── */
+/* ── Column ── */
 .rh2-ui {
   position: relative;
   z-index: 2;
@@ -64,35 +133,39 @@
   height: 100%;
   margin: 0 auto;
   padding:
-    calc(env(safe-area-inset-top, 0px) + 0.9rem)
+    calc(env(safe-area-inset-top, 0px) + 0.85rem)
     max(1rem, env(safe-area-inset-right, 0px))
-    calc(var(--home-tabbar-h, 5.25rem) + 1.1rem)
+    calc(var(--home-tabbar-h, 6rem) + 1.1rem)
     max(1rem, env(safe-area-inset-left, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   box-sizing: border-box;
+}
+
+.rh2-ui::-webkit-scrollbar {
+  display: none;
 }
 
 .rh2-ui > * {
   flex-shrink: 0;
 }
 
-/* ── Header ── */
+/* ── Header: logo · 1B RUN · cash · menu ── */
 .rh2-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.6rem;
   min-height: 2.85rem;
 }
 
 .rh2-brand {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  min-width: 0;
+  gap: 0.7rem;
+  flex: 0 0 auto;
 }
 
 .rh2 .rh2-logo {
@@ -105,578 +178,521 @@
     0 6px 16px rgba(0, 0, 0, 0.45);
 }
 
+.rh3-brand-rule {
+  width: 1px;
+  height: 1.7rem;
+  background: linear-gradient(180deg, transparent, rgba(140, 180, 255, 0.55), transparent);
+}
+
 .rh2-wordmark {
   margin: 0;
   font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1rem;
+  font-size: 1.3rem;
+  font-style: normal;
   font-weight: 900;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+  line-height: 1;
   white-space: nowrap;
   color: #ffffff;
+  text-shadow: 0 1px 10px rgba(30, 110, 255, 0.35);
 }
 
 .rh2-toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.rh2 .home-account-chip {
-  height: 1.95rem;
-  max-width: 8.25rem;
-  padding: 0 0.72rem 0 0.2rem;
-  gap: 0.42rem;
+.rh3-cash {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 11.5rem;
+  height: 2.75rem;
+  padding: 0 0.9rem 0 0.55rem;
+  box-sizing: border-box;
+  border: 1.5px solid rgba(80, 155, 255, 0.8);
   border-radius: 999px;
-  font-size: 0.66rem;
-  font-weight: 850;
-  letter-spacing: 0.07em;
-  color: #f2f6ff;
-  border: 1px solid rgba(90, 150, 255, 0.55);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 52%),
-    linear-gradient(180deg, #11295c 0%, #08183b 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #0f2556 0%, #081638 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 12px rgba(30, 110, 255, 0.3),
-    0 4px 10px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 14px rgba(30, 110, 255, 0.38),
+    0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
-/* Navy avatar badge, for guests and signed-in players alike. */
-.rh2 .home-account-chip__icon {
-  display: grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  opacity: 1;
-  color: #cfe0ff;
-  background: radial-gradient(circle at 35% 28%, #24427f 0%, #12285a 50%, #0a1838 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 1px rgba(110, 160, 255, 0.55);
+.rh3-cash__icon {
+  flex: 0 0 auto;
+  width: 1.85rem;
+  height: 1.85rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
 }
 
-.rh2 .home-account-chip__icon svg {
-  width: 0.85rem;
-  height: 0.85rem;
+.rh3-cash__slot {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.rh2 .home-account-chip.is-signed-in {
-  border-color: rgba(90, 150, 255, 0.55);
-  color: #f2f6ff;
+.rh3-cash__value {
+  display: block;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  color: #3cf08f;
+  text-shadow: 0 0 10px rgba(40, 230, 130, 0.45);
 }
-
 
 .rh2 .sound-settings__gear {
-  width: 1.95rem !important;
-  height: 1.95rem !important;
-  border-radius: 0.55rem !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  border-radius: 0.85rem !important;
+  border: 1.5px solid rgba(80, 155, 255, 0.8) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 14px rgba(30, 110, 255, 0.38),
+    0 6px 14px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Wall of Fame: compact trophy button in the same navy chrome as the gear. */
-.rh2-wof {
-  appearance: none;
-  position: relative;
-  display: grid;
-  place-items: center;
+.rh2 .sound-settings--gear {
   flex: 0 0 auto;
-  width: 1.95rem;
-  height: 1.95rem;
-  margin: 0;
-  padding: 0;
-  border: 1px solid rgba(90, 150, 255, 0.55);
-  border-radius: 0.55rem;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 52%),
-    linear-gradient(180deg, #11295c 0%, #08183b 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 12px rgba(30, 110, 255, 0.3),
-    0 4px 10px rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: filter 0.14s ease, transform 0.12s ease;
 }
 
-.rh2-wof svg {
-  filter: drop-shadow(0 0 4px rgba(255, 196, 60, 0.45));
+/* ── Stage (hoop) and actions ── */
+.rh3-stage {
+  flex: 1 1 0 !important;
+  min-height: 7rem;
 }
 
-/* 44pt touch target without a bigger button. */
-.rh2-wof::after {
-  content: "";
-  position: absolute;
-  inset: -0.35rem -0.2rem;
+.rh3-foot {
+  flex: 0.42 1 0 !important;
+  min-height: 0.5rem;
 }
 
-.rh2-wof:active {
-  transform: scale(0.94);
-  filter: brightness(1.12);
-}
-
-/* ── Hero ── */
-.rh2-spacer {
-  flex: 1 1 auto !important;
-  min-height: 1.25rem;
-  max-height: clamp(6.5rem, calc(6.5rem + (100dvh - 844px) * 0.6), 10rem);
-}
-
-.rh2-hero {
+.rh3-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  pointer-events: none;
+  gap: clamp(0.7rem, 1.6dvh, 1rem);
 }
 
-.rh2-hero__title {
-  margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(1.2rem, 5.95vw, 1.48rem);
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
-}
-
-.rh2-hero__sub {
-  margin: 0.75rem 0 calc(0.45rem + 3px);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(196, 210, 236, 0.78);
-}
-
-/* ── Mode cards ── */
-.rh2-modes {
-  display: grid;
-  grid-template-columns: 1.12fr 1fr;
-  gap: 0.7rem;
-  margin-top: 1.85rem;
-  /* Both PLAY buttons take the narrower card's width so they match exactly. */
-  --play-w: calc((min(100vw, 30rem) - 2rem - 0.7rem) / 2.12 - 2.1rem);
-}
-
-.rh2-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  min-height: 13.5rem;
-  padding: 1.25rem 0 0.85rem;
-  border-radius: 1rem;
-  overflow: hidden;
-  isolation: isolate;
-  box-sizing: border-box;
-}
-
-.rh2-card--classic {
-  aspect-ratio: 0.743 / 1;
-  border: 1.5px solid rgba(52, 122, 255, 0.82);
-  background: linear-gradient(180deg, #0b1d45 0%, #071535 55%, #050e26 100%);
-  box-shadow:
-    0 0 12px rgba(44, 116, 255, 0.28),
-    inset 0 0 18px rgba(44, 116, 255, 0.08);
-}
-
-.rh2-card--h2h {
-  border: 1.5px solid rgba(52, 122, 255, 0.82);
-  background: linear-gradient(180deg, #0b1a3e 0%, #071331 55%, #050d24 100%);
-  box-shadow:
-    0 0 12px rgba(44, 116, 255, 0.28),
-    inset 0 0 18px rgba(44, 116, 255, 0.08);
-}
-
-.rh2-card__title {
-  position: relative;
-  z-index: 2;
-  margin: 0;
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(1.15rem, 5.75vw, 1.42rem);
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: #ffffff;
-}
-
-.rh2-card__desc {
-  position: relative;
-  z-index: 2;
-  margin: 0.5rem 0 0;
-  padding: 0 0.35rem;
-  font-size: clamp(0.5rem, 2.45vw, 0.6rem);
-  white-space: nowrap;
-  font-weight: 500;
-  line-height: 1.3;
-  color: rgba(190, 204, 230, 0.85);
-  text-align: center;
-}
-
-.rh2-card__art {
-  position: relative;
-  z-index: 0;
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 0;
-  margin: 0.35rem 0 0.55rem;
-}
-
-.rh2-card__art img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 55% 60%;
-  -webkit-mask-image:
-    linear-gradient(180deg, transparent 0%, #000 26%, #000 70%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(180deg, transparent 0%, #000 26%, #000 70%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  mask-composite: intersect;
-}
-
-.rh2-card--h2h .rh2-card__art img {
-  object-position: 50% 22%;
-  transform: scale(1.08);
-  transform-origin: 50% 30%;
-}
-
-.rh2-card--classic .rh2-card__art img {
-  object-position: 54% 66%;
-}
-
-.rh2-vs {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -42%) skewX(-8deg);
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(1.8rem, 9vw, 2.3rem);
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: -0.02em;
-  background: linear-gradient(180deg, #ffd98a 0%, #ffab3d 45%, #ff7414 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 8px rgba(255, 130, 30, 0.85)) drop-shadow(0 0 2px rgba(255, 190, 90, 0.9));
-}
-
-.rh2-play {
+.rh3-play,
+.rh3-franchise,
+.rh3-modes {
   appearance: none;
   position: relative;
-  z-index: 2;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
-  width: var(--play-w, calc(100% - 2.1rem));
-  height: 2.25rem;
   margin: 0;
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ff8d33 0%, #f5661c 52%, #db4a0e 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 220, 190, 0.5),
-    0 0 14px rgba(255, 110, 30, 0.32),
-    0 4px 10px rgba(0, 0, 0, 0.35);
+  padding: 0;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
   color: #ffffff;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 850;
-  letter-spacing: 0.16em;
   cursor: pointer;
+  isolation: isolate;
+  overflow: hidden;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: filter 0.14s ease, transform 0.12s ease;
+  transition: transform 0.14s ease-out, filter 0.14s ease-out;
 }
 
-.rh2-play span {
-  margin-left: 0.16em;
+.rh3-play:active,
+.rh3-franchise:active,
+.rh3-modes:active {
+  transform: scale(0.965);
+  filter: brightness(1.1);
 }
 
-.rh2-play:active {
-  transform: scale(0.97);
-  filter: brightness(1.08);
-}
-
-.rh2-play:focus-visible,
-.rh2-wof:focus-visible,
-.rh2-dest__card:focus-visible {
+.rh3-play:focus-visible,
+.rh3-franchise:focus-visible,
+.rh3-modes:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 3px;
 }
 
-.rh2-chev {
-  flex: 0 0 auto;
-}
-
-/* ── My Bank bar: the balance and nothing else ── */
-.rh2-bank {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  min-height: 3.6rem;
-  margin-top: 1.45rem;
-  padding: 0.45rem 1rem 0.45rem 0.85rem;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(60, 120, 255, 0.38);
+/* PLAY — the hero */
+.rh3-play {
+  width: 100%;
+  height: clamp(5rem, 12dvh, 6.4rem);
+  gap: clamp(1rem, 5vw, 1.5rem);
+  border: 2px solid #ffb764;
+  border-radius: 1.75rem;
   background:
-    radial-gradient(120% 140% at 100% 50%, rgba(41, 228, 144, 0.07), transparent 55%),
-    linear-gradient(180deg, rgba(12, 28, 64, 0.94) 0%, rgba(6, 16, 40, 0.96) 100%);
+    radial-gradient(ellipse 42% 70% at 88% 108%, rgba(255, 214, 150, 0.42), transparent 70%),
+    radial-gradient(ellipse 60% 90% at 18% -20%, rgba(255, 190, 110, 0.35), transparent 65%),
+    linear-gradient(180deg, #ff9d33 0%, #ff6d0c 50%, #e04b00 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 18px rgba(26, 110, 255, 0.16);
-  box-sizing: border-box;
+    inset 0 2px 0 rgba(255, 236, 200, 0.6),
+    inset 0 -8px 16px rgba(150, 36, 0, 0.45),
+    0 0 0 1px rgba(255, 140, 40, 0.45),
+    0 0 28px rgba(255, 110, 20, 0.55),
+    0 16px 32px rgba(0, 0, 0, 0.5);
 }
 
-.rh2-bank__icon {
-  flex: 0 0 auto;
-  width: 2.45rem;
-  height: 2.45rem;
+/* Glass highlight across the top half. */
+.rh3-play::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 52% 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+/* A slow light sweep — transform only, so it stays on the compositor. */
+.rh3-play::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 38%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 245, 225, 0.28) 50%, transparent 100%);
+  transform: translate3d(-120%, 0, 0) skewX(-18deg);
+  animation: rh3-sweep 5.2s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes rh3-sweep {
+  0%,
+  62% {
+    transform: translate3d(-120%, 0, 0) skewX(-18deg);
+  }
+  100% {
+    transform: translate3d(330%, 0, 0) skewX(-18deg);
+  }
+}
+
+.rh3-play__icon {
+  display: grid;
+  place-items: center;
+  width: clamp(2.3rem, 11vw, 2.9rem);
+  height: clamp(2.3rem, 11vw, 2.9rem);
+  color: #ffffff;
+  filter: drop-shadow(0 2px 4px rgba(120, 30, 0, 0.5));
+}
+
+.rh3-play__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rh3-play__rule {
+  width: 2px;
+  height: 42%;
+  border-radius: 2px;
+  background: rgba(255, 240, 220, 0.5);
+  transform: skewX(-14deg);
+}
+
+.rh3-play__label {
+  font-size: clamp(2.6rem, 13.5vw, 3.35rem);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding-right: 0.15em;
+  text-shadow:
+    0 2px 0 rgba(150, 40, 0, 0.35),
+    0 4px 14px rgba(120, 30, 0, 0.35);
+}
+
+/* MY FRANCHISE — second */
+.rh3-franchise {
+  width: 90%;
+  height: clamp(3.9rem, 8.6dvh, 4.6rem);
+  gap: clamp(0.8rem, 4vw, 1.1rem);
+  border: 1.5px solid rgba(95, 165, 255, 0.92);
+  border-radius: 1.4rem;
+  background:
+    radial-gradient(ellipse 36% 80% at 94% 110%, rgba(70, 150, 255, 0.38), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #14306b 0%, #0b1c47 55%, #071337 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 18px rgba(40, 110, 255, 0.22),
+    0 0 20px rgba(30, 115, 255, 0.42),
+    0 12px 26px rgba(0, 0, 0, 0.45);
+}
+
+.rh3-franchise__icon {
+  width: clamp(2.7rem, 12vw, 3.2rem);
+  height: auto;
+  aspect-ratio: 264 / 153;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
 }
 
-.rh2-bank__amount {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 0.18rem;
-  min-width: 0;
+.rh3-franchise__rule,
+.rh3-modes__rule {
+  width: 1.5px;
+  height: 44%;
+  border-radius: 2px;
+  background: rgba(150, 190, 255, 0.45);
 }
 
-.rh2-bank__label {
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(160, 176, 206, 0.9);
-}
-
-.rh2-bank__value {
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+.rh3-franchise__label {
   font-size: clamp(1.2rem, 6vw, 1.5rem);
   font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.015em;
+  line-height: 1;
   white-space: nowrap;
-  color: #3cf09c;
-  text-shadow: 0 0 16px rgba(41, 228, 144, 0.32);
+  text-shadow: 0 2px 10px rgba(0, 20, 70, 0.6);
 }
 
-/* ── Franchises / Cash Cups ── */
-.rh2-dest {
+/* MODES — third */
+.rh3-modes {
+  width: 56%;
+  min-width: 11.5rem;
+  height: clamp(3rem, 6.4dvh, 3.5rem);
+  gap: 0.75rem;
+  border: 1.5px solid rgba(90, 155, 255, 0.62);
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #0f2556 0%, #091839 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 14px rgba(30, 110, 255, 0.28),
+    0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.rh3-modes__icon {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
-  margin-top: 0.75rem;
+  place-items: center;
+  color: #6fb2ff;
+  filter: drop-shadow(0 0 6px rgba(60, 140, 255, 0.55));
 }
 
-.rh2-dest__card {
-  --dest: #5b9bff;
+.rh3-modes__label {
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  padding-right: 0.1em;
+}
+
+/* ── Modes sheet ── */
+.rh3-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rh3-sheet__scrim {
   appearance: none;
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 4, 14, 0.62);
+  animation: rh3-fade 0.22s ease-out both;
+  cursor: default;
+}
+
+.rh3-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  padding:
+    0.55rem
+    max(1rem, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 1.1rem)
+    max(1rem, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  border: 1px solid rgba(90, 155, 255, 0.45);
+  border-bottom: 0;
+  border-radius: 1.6rem 1.6rem 0 0;
+  background: linear-gradient(180deg, #0f2453 0%, #071534 60%, #050f27 100%);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55), 0 -1px 24px rgba(30, 110, 255, 0.2);
+  animation: rh3-rise 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.rh3-sheet__grip {
+  display: block;
+  width: 2.4rem;
+  height: 0.28rem;
+  margin: 0 auto 0.6rem;
+  border-radius: 999px;
+  background: rgba(160, 190, 240, 0.35);
+}
+
+.rh3-sheet__head {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
-  min-height: 3.65rem;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.rh3-sheet__head h2 {
   margin: 0;
-  padding: 0.45rem 0.75rem 0.45rem 0.85rem;
-  border-radius: 0.9rem;
-  /* Same navy as the My Bank panel and the other home buttons. */
-  border: 1px solid rgba(60, 120, 255, 0.38);
-  background: linear-gradient(180deg, rgba(12, 28, 64, 0.94) 0%, rgba(6, 16, 40, 0.96) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 18px rgba(26, 110, 255, 0.16);
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   color: #ffffff;
-  font: inherit;
-  text-align: left;
+}
+
+.rh3-sheet__close {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(90, 155, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(10, 26, 62, 0.9);
+  color: #cfe0ff;
   cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: filter 0.14s ease, transform 0.12s ease;
+}
+
+.rh3-sheet__list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.rh3-mode {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 4.6rem 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 5.1rem;
+  margin: 0;
+  padding: 0.45rem 1rem 0.45rem 0.45rem;
   box-sizing: border-box;
-}
-
-/* Owned: the same card in the franchise's colors (team theme vars come from teamTheme()). */
-.rh2-dest__card--franchises.is-owned {
-  --dest: var(--team-accent);
-  border-color: color-mix(in srgb, var(--team-accent) 70%, transparent);
+  border: 1.5px solid rgba(90, 155, 255, 0.6);
+  border-radius: 1.15rem;
   background:
-    radial-gradient(circle at 18% 50%, rgba(255, 255, 255, 0.14), transparent 58%),
-    linear-gradient(180deg, var(--team) 0%, var(--team-row-end) 100%);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--team) 35%, transparent);
-  color: var(--team-ink);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #12295e 0%, #0a1a40 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 14px rgba(30, 110, 255, 0.22);
+  color: #ffffff;
+  text-align: left;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.14s ease-out, filter 0.14s ease-out;
 }
 
-.rh2-dest__card--franchises.is-owned .rh2-chev {
-  color: var(--team-ink);
+.rh3-mode:active {
+  transform: scale(0.975);
+  filter: brightness(1.1);
 }
 
-.rh2-dest__card--franchises.is-owned .rh2-dest__icon {
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+.rh3-mode__art {
+  width: 4.6rem;
+  height: 4.2rem;
+  border-radius: 0.8rem;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(120, 170, 255, 0.35);
 }
 
-.rh2-dest__card:active {
-  transform: scale(0.98);
-  filter: brightness(1.12);
+.rh3-mode--h2h .rh3-mode__art {
+  object-position: 50% 40%;
 }
 
-.rh2-dest__icon {
-  flex: 0 0 auto;
-  width: 2.35rem;
-  height: 2.35rem;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
-}
-
-/* The arena is wide: same optical weight as the trophy, sized by width. */
-.rh2 .rh2-dest__icon--arena {
-  width: 2.55rem;
-  height: 1.5rem;
-  margin: 0 -0.1rem 0 -0.25rem;
-}
-
-.rh2-dest__card--franchises {
-  gap: 0.55rem;
-  padding-right: 0.65rem;
-}
-
-.rh2-dest__text {
+.rh3-mode__copy {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.3rem;
   min-width: 0;
 }
 
-.rh2-dest__text strong {
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(0.76rem, 3.55vw, 0.88rem);
+.rh3-mode__copy strong {
+  font-size: 1.15rem;
   font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  /* Longer names (Spanish) take a second line at a word break instead of being cut off. */
-  overflow-wrap: break-word;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
 }
 
-.rh2-dest__text em {
-  overflow: hidden;
+.rh3-mode__copy em {
+  font-size: 0.78rem;
   font-style: normal;
-  font-size: 0.62rem;
-  font-weight: 500;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: rgba(170, 184, 212, 0.85);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #a9b9d8;
 }
 
-.rh2-dest__card .rh2-chev {
-  color: var(--dest);
+.rh3-mode__chev {
+  color: #6fb2ff;
 }
 
-/* ── Narrow phones (SE / mini): keep every label on one line, nothing squeezed ── */
+@keyframes rh3-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rh3-rise {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+/* ── Small and short screens ── */
 @media (max-width: 380px) {
-  .rh2-dest__card {
-    gap: 0.5rem;
-    padding: 0.45rem 0.6rem 0.45rem 0.6rem;
-  }
-
-  .rh2-dest__icon {
-    width: 2.05rem;
-    height: 2.05rem;
-  }
-
-  .rh2 .rh2-dest__icon--arena {
-    width: 2.3rem;
-    height: 1.35rem;
-  }
-
-  .rh2-dest__card--franchises {
-    gap: 0.45rem;
-  }
-
-  .rh2-wordmark {
-    font-size: 1.05rem;
-  }
-
   .rh2-brand {
-    gap: 0.6rem;
-  }
-}
-
-@media (max-width: 350px) {
-  .rh2-toolbar {
-    gap: 0.35rem;
-  }
-
-  .rh2 .home-account-chip {
-    max-width: 6.25rem;
-  }
-
-  .rh2-wordmark {
-    display: none;
-  }
-
-  .rh2-modes,
-  .rh2-dest {
     gap: 0.55rem;
   }
 
-  .rh2-dest__icon {
-    width: 2.2rem;
-    height: 2.2rem;
+  .rh2-wordmark {
+    font-size: 1.15rem;
   }
 
-  .rh2-dest__card {
-    gap: 0.45rem;
-    padding-right: 0.5rem;
-  }
-
-  .rh2 .rh2-dest__icon--arena {
-    width: 1.95rem;
-    height: 1.15rem;
-  }
-
-  .rh2-dest__card--franchises {
-    gap: 0.35rem;
+  .rh3-cash {
+    padding-right: 0.75rem;
   }
 }
 
-/* Short screens: tighter rhythm so the whole menu fits before scrolling is needed. */
+@media (max-width: 340px) {
+  .rh2-wordmark,
+  .rh3-brand-rule {
+    display: none;
+  }
+}
+
 @media (max-height: 700px) {
-  .rh2-modes {
-    margin-top: 1.4rem;
-  }
-
-  .rh2-card--classic {
-    aspect-ratio: 0.82 / 1;
-  }
-
-  .rh2-card {
-    min-height: 12rem;
-  }
-
-  .rh2-bank {
-    margin-top: 1rem;
+  .rh3-stage {
+    min-height: 5.5rem;
   }
 }
 
-/* Desktop web: logo far left, account controls far right (site-style header). */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rh3-play::after {
+    animation: none;
+    opacity: 0;
+  }
+
+  html:not([data-full-motion]) .rh3-sheet__panel,
+  html:not([data-full-motion]) .rh3-sheet__scrim {
+    animation: none;
+  }
+}
+
+/* Desktop web: logo far left, cash and menu far right (site-style header). */
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
   html[data-platform='web'] .rh2-brand,
   html[data-platform='web'] .rh2-toolbar {
@@ -692,83 +708,262 @@
 
   html[data-platform='web'] .rh2-toolbar {
     right: max(clamp(1.25rem, 2.5vw, 2.5rem), env(safe-area-inset-right));
+    width: 16rem;
   }
 }
 
-/* ── Bottom navigation ── */
-.oneb-tabbar {
+/* Menu drawer shortcuts (Account, My Rank, Wall of Fame). */
+.settings-drawer__links {
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* ── Calm money rain (home): slow paper bills, two transform-only layers each ── */
+.money-rain--calm {
+  perspective: none;
+}
+
+.money-rain__drop {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: money-rain-drop;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.money-rain__note {
+  display: block;
+  border-radius: 1.5px;
+  background:
+    radial-gradient(ellipse 17% 34% at 50% 50%, rgba(28, 72, 44, 0.55) 0 62%, transparent 68%),
+    radial-gradient(circle at 12% 24%, rgba(28, 72, 44, 0.45) 0 7%, transparent 9%),
+    radial-gradient(circle at 88% 76%, rgba(28, 72, 44, 0.45) 0 7%, transparent 9%),
+    linear-gradient(115deg, #a7d3a4 0%, #7fb784 38%, #5f9c6a 72%, #4d875a 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 60, 34, 0.55),
+    inset 0 0 0 2.5px rgba(225, 250, 225, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.35);
+  will-change: transform;
+  backface-visibility: visible;
+  animation-name: money-rain-flutter;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes money-rain-drop {
+  0% {
+    transform: translate3d(0, -8vh, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--bill-opacity, 0.35);
+  }
+  90% {
+    opacity: var(--bill-opacity, 0.35);
+  }
+  100% {
+    transform: translate3d(0, 108dvh, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes money-rain-flutter {
+  0% {
+    transform: perspective(240px) translate3d(calc(var(--bill-sway, 16px) * -1), 0, 0)
+      rotateZ(calc(var(--bill-tilt, 18deg) * -1)) rotateX(18deg) rotateY(-24deg);
+  }
+  50% {
+    transform: perspective(240px) translate3d(0, 0, 0) rotateZ(0deg) rotateX(62deg) rotateY(6deg);
+  }
+  100% {
+    transform: perspective(240px) translate3d(var(--bill-sway, 16px), 0, 0)
+      rotateZ(var(--bill-tilt, 18deg)) rotateX(14deg) rotateY(24deg);
+  }
+}
+
+/* ── Bottom navigation: floating dock, one orange tile glides to the active tab ── */
+.oneb-tabbar-host::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 69;
+  height: calc(var(--hub-tab-bar-h) + env(safe-area-inset-bottom, 0px) + 1rem);
+  background: linear-gradient(180deg, rgba(2, 8, 23, 0) 0%, rgba(2, 8, 23, 0.82) 50%, #020817 100%);
+  pointer-events: none;
+}
+
+.oneb-tabbar-host.is-under-splash::before {
+  display: none;
+}
+
+/* The menu drawer is modal and lives inside the home column's stacking context, below the bar. */
+body:has(.settings-drawer) .oneb-tabbar-host {
+  visibility: hidden;
+}
+
+.oneb-tabbar-host .oneb-tabbar {
+  position: fixed !important;
+  left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+  right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+  bottom: max(0.7rem, calc(env(safe-area-inset-bottom, 0px) - 0.3rem)) !important;
+  z-index: 70;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   align-items: stretch !important;
-  min-height: calc(5.1rem + env(safe-area-inset-bottom, 0px)) !important;
-  padding-top: 0 !important;
-  background: rgba(3, 10, 25, 0.98) !important;
-  border-top: 1px solid rgba(70, 120, 230, 0.28) !important;
+  justify-items: stretch !important;
+  width: auto !important;
+  max-width: 30rem !important;
+  height: 4rem;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 0.3rem !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(80, 140, 255, 0.4) !important;
+  border-radius: 1.3rem !important;
+  background: linear-gradient(180deg, rgba(15, 30, 66, 0.97) 0%, rgba(5, 12, 31, 0.98) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 30px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(30, 100, 255, 0.16) !important;
   /* A live blur under the animated money rain repaints every frame on iPhone; the bar is opaque anyway. */
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+  overflow: visible;
 }
 
-/* Each tab's tap target runs the full height of the bar's content area. */
-.oneb-tabbar__item {
-  justify-content: flex-start !important;
-  min-height: 3.75rem !important;
-  padding-top: 0.6rem !important;
-  color: #97a2b8 !important;
+.oneb-tabbar__divider {
+  position: absolute;
+  z-index: 0;
+  top: 30%;
+  bottom: 30%;
+  width: 1px;
+  background: rgba(120, 160, 230, 0.2);
+  pointer-events: none;
+}
+
+.oneb-tabbar__divider:nth-child(1) {
+  left: calc(0.3rem + (100% - 0.6rem) * 0.25);
+}
+
+.oneb-tabbar__divider:nth-child(2) {
+  left: calc(0.3rem + (100% - 0.6rem) * 0.5);
+}
+
+.oneb-tabbar__divider:nth-child(3) {
+  left: calc(0.3rem + (100% - 0.6rem) * 0.75);
+}
+
+.oneb-tabbar__glider {
+  position: absolute;
+  z-index: 1;
+  top: -0.6rem;
+  bottom: 0.3rem;
+  left: 0.3rem;
+  width: calc((100% - 0.6rem) / 4);
+  transform: translate3d(calc(var(--tab-index, 2) * 100%), 0, 0);
+  transition:
+    transform 0.42s cubic-bezier(0.3, 1.25, 0.45, 1),
+    opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.oneb-tabbar__glider::before {
+  content: "";
+  position: absolute;
+  inset: 0 0.15rem;
+  border: 1.5px solid #ffc07a;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #ffa23a 0%, #ff6d0a 55%, #e25200 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 236, 200, 0.6),
+    inset 0 -4px 10px rgba(150, 40, 0, 0.4),
+    0 0 18px rgba(255, 115, 20, 0.6),
+    0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+.oneb-tabbar.is-idle .oneb-tabbar__glider {
+  opacity: 0;
+}
+
+.oneb-tabbar-host .oneb-tabbar__item {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center !important;
+  gap: 0.3rem;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100%;
+  min-height: 0 !important;
+  padding: 0 0 0.1rem !important;
+  color: #7f8ba3 !important;
   filter: none !important;
+  transition:
+    color 0.22s ease,
+    transform 0.42s cubic-bezier(0.3, 1.25, 0.45, 1);
 }
 
-.oneb-tabbar__item .oneb-tabbar__icon {
-  transition: transform 0.08s ease-out;
+.oneb-tabbar-host .oneb-tabbar__item:active:not(.is-active) {
+  color: #c9d6ef !important;
 }
 
-.oneb-tabbar__item:active {
-  color: #d9e6ff !important;
+.oneb-tabbar-host .oneb-tabbar__item.is-active {
+  color: #ffffff !important;
+  transform: translate3d(0, -0.3rem, 0);
 }
 
-.oneb-tabbar__item:active .oneb-tabbar__icon {
-  transform: scale(0.88);
-}
-
-.oneb-tabbar__item.is-active {
-  color: #1f74ff !important;
-  filter: none !important;
-}
-
-.oneb-tabbar__item.is-active .oneb-tabbar__icon {
-  filter: drop-shadow(0 0 6px rgba(31, 116, 255, 0.75));
-}
-
-.oneb-tabbar__icon {
+.oneb-tabbar-host .oneb-tabbar__icon {
   width: 1.45rem !important;
   height: 1.45rem !important;
+  transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.45, 1);
 }
 
-.oneb-tabbar__icon svg {
+.oneb-tabbar-host .oneb-tabbar__icon svg {
   width: 1.3rem;
   height: 1.3rem;
 }
 
-.oneb-tabbar__label {
-  font-size: 0.54rem !important;
-  font-weight: 750 !important;
-  letter-spacing: 0.06em !important;
+.oneb-tabbar-host .oneb-tabbar__item.is-active .oneb-tabbar__icon {
+  transform: scale(1.22);
+  filter: drop-shadow(0 1px 2px rgba(120, 30, 0, 0.45));
 }
 
-.oneb-tabbar__item.is-play .oneb-tabbar__icon {
-  transform: scale(1.35);
+.oneb-tabbar-host .oneb-tabbar__label {
+  font-size: 0.56rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  transition: transform 0.42s cubic-bezier(0.3, 1.25, 0.45, 1);
 }
 
-.oneb-tabbar__item.is-play:active .oneb-tabbar__icon {
-  transform: scale(1.2);
+.oneb-tabbar-host .oneb-tabbar__item.is-active .oneb-tabbar__label {
+  transform: scale(1.06);
+  text-shadow: 0 1px 2px rgba(120, 30, 0, 0.45);
 }
 
-.oneb-tabbar__item.is-play .oneb-tabbar__label {
-  font-size: 0.74rem !important;
-  font-weight: 850 !important;
-  letter-spacing: 0.08em !important;
+@media (max-width: 360px) {
+  .oneb-tabbar-host .oneb-tabbar__label {
+    font-size: 0.5rem !important;
+    letter-spacing: 0.01em !important;
+  }
 }
 
-@media (max-width: 400px) {
-  .oneb-tabbar__item.is-play .oneb-tabbar__label {
-    font-size: 0.68rem !important;
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .oneb-tabbar__glider,
+  html:not([data-full-motion]) .oneb-tabbar-host .oneb-tabbar__item,
+  html:not([data-full-motion]) .oneb-tabbar-host .oneb-tabbar__icon,
+  html:not([data-full-motion]) .oneb-tabbar-host .oneb-tabbar__label {
+    transition-duration: 0.01s;
   }
 }

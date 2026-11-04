@@ -43,6 +43,13 @@ export type MessageKey =
   | 'home.franchisesDesc'
   | 'home.myFranchise'
   | 'home.playButton'
+  | 'home.modes'
+  | 'home.modesClose'
+  | 'home.menuPlayer'
+  | 'home.menuAccount'
+  | 'home.menuGuest'
+  | 'home.menuProgress'
+  | 'home.menuLegends'
   | 'splash.loading'
   | 'game.home'
   | 'game.goal'
@@ -183,6 +190,13 @@ const EN: Record<MessageKey, string> = {
   'home.franchisesDesc': 'Own a team',
   'home.myFranchise': 'My Franchise',
   'home.playButton': 'PLAY',
+  'home.modes': 'MODES',
+  'home.modesClose': 'Close',
+  'home.menuPlayer': 'Player',
+  'home.menuAccount': 'Account',
+  'home.menuGuest': 'Guest · Sign in',
+  'home.menuProgress': 'Progress',
+  'home.menuLegends': 'Legends',
   'splash.loading': 'LOADING',
   'game.home': '← Home',
   'game.goal': 'GOAL',
@@ -345,6 +359,13 @@ const ES: Record<MessageKey, string> = {
   'home.franchisesDesc': 'Ten tu equipo',
   'home.myFranchise': 'Mi franquicia',
   'home.playButton': 'JUGAR',
+  'home.modes': 'MODOS',
+  'home.modesClose': 'Cerrar',
+  'home.menuPlayer': 'Jugador',
+  'home.menuAccount': 'Cuenta',
+  'home.menuGuest': 'Invitado · Inicia sesión',
+  'home.menuProgress': 'Progreso',
+  'home.menuLegends': 'Leyendas',
   'splash.loading': 'CARGANDO',
   'game.home': '← Inicio',
   'game.goal': 'META',

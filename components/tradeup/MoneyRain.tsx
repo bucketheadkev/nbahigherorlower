@@ -96,18 +96,92 @@ function buildBills(count: number, burst: boolean): BillSeed[] {
   return out;
 }
 
-/** Simple $1B green bills with a centered $. */
+type CalmSeed = {
+  left: number;
+  width: number;
+  fall: number;
+  delay: number;
+  flutter: number;
+  flutterDelay: number;
+  sway: number;
+  tilt: number;
+  opacity: number;
+};
+
+const CALM_COUNT = 22;
+
+/** Sparse, slow, paper-like bills. Three depth layers: far ones are smaller, dimmer and slower. */
+function buildCalmBills(): CalmSeed[] {
+  const rand = mulberry32(0x1b5eed);
+  const lanes = shuffledLanePercents(CALM_COUNT, rand);
+  return lanes.map((left, i) => {
+    const depth = i % 3;
+    const u = rand();
+    const fall = (depth === 0 ? 15 : depth === 1 ? 19 : 24) + rand() * 6;
+    return {
+      left,
+      width: (depth === 0 ? 30 : depth === 1 ? 24 : 18) + u * 6,
+      fall,
+      delay: -((i / CALM_COUNT) * fall + rand() * 2),
+      flutter: 2.4 + rand() * 2,
+      flutterDelay: -rand() * 4,
+      sway: 10 + rand() * 18,
+      tilt: 8 + rand() * 22,
+      opacity: depth === 0 ? 0.5 + u * 0.12 : depth === 1 ? 0.34 + u * 0.1 : 0.2 + u * 0.08,
+    };
+  });
+}
+
+/** Simple $1B green bills with a centered $. `calm` is the slow home-screen drift. */
 export function MoneyRain({
   intense = false,
   mega = false,
+  calm = false,
 }: {
   intense?: boolean;
   /** Extra-dense pour (1v1 win celebration). */
   mega?: boolean;
+  calm?: boolean;
   durationMs?: number;
 }) {
   const count = mega ? 140 : intense ? 70 : 60;
-  const bills = useMemo(() => buildBills(count, intense || mega), [count, intense, mega]);
+  const bills = useMemo(() => (calm ? [] : buildBills(count, intense || mega)), [calm, count, intense, mega]);
+  const calmBills = useMemo(() => (calm ? buildCalmBills() : []), [calm]);
+
+  if (calm) {
+    return (
+      <div className="money-rain money-rain--calm" aria-hidden>
+        {calmBills.map((bill, i) => (
+          <span
+            key={i}
+            className="money-rain__drop"
+            style={
+              {
+                left: `${bill.left}%`,
+                animationDuration: `${bill.fall}s`,
+                animationDelay: `${bill.delay}s`,
+                ['--bill-opacity' as string]: String(bill.opacity),
+              } as CSSProperties
+            }
+          >
+            <span
+              className="money-rain__note"
+              style={
+                {
+                  width: `${bill.width}px`,
+                  height: `${bill.width / BILL_RATIO}px`,
+                  animationDuration: `${bill.flutter}s`,
+                  animationDelay: `${bill.flutterDelay}s`,
+                  ['--bill-sway' as string]: `${bill.sway}px`,
+                  ['--bill-tilt' as string]: `${bill.tilt}deg`,
+                } as CSSProperties
+              }
+            />
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div

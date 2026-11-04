@@ -15,16 +15,26 @@ import { requestIntroReplay } from '@/lib/account/howItWorksStorage';
 import { SettingsGuidePage } from './SettingsGuidePage';
 import { SettingsLegalPage, type LegalPageId } from './SettingsLegalPage';
 
+export interface SettingsLink {
+  id: string;
+  label: string;
+  value: string;
+  onSelect: () => void;
+}
+
 interface SoundSettingsProps {
   /** Compact gear on redesigned home; text toggle elsewhere. */
   variant?: 'gear' | 'text';
+  /** Shortcuts listed above Preferences; the drawer closes before `onSelect` runs. */
+  links?: SettingsLink[];
+  linksLabel?: string;
 }
 
 /**
  * Feedback settings — Sound Effects + Haptics (+ H2H username).
  * Gear variant opens a right-edge drawer.
  */
-export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
+export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSettingsProps) {
   const {
     muted,
     hapticsEnabled,
@@ -188,6 +198,34 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
 
   const settingsBody = (
     <>
+      {links?.length ? (
+        <section className="settings-drawer__section settings-drawer__section--links" aria-label={linksLabel}>
+          {linksLabel ? <p className="settings-drawer__section-label">{linksLabel}</p> : null}
+          <div className="settings-drawer__links">
+            {links.map((link) => (
+              <button
+                key={link.id}
+                type="button"
+                className="settings-ctrl sound-settings__nav-link"
+                onClick={press(() => {
+                  resume();
+                  hapticTap();
+                  close();
+                  link.onSelect();
+                })}
+              >
+                <span className="sound-settings__nav-copy">
+                  <em>{link.label}</em>
+                  <strong>{link.value}</strong>
+                </span>
+                <span className="sound-settings__nav-chevron" aria-hidden>
+                  ›
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section
         className="settings-drawer__section settings-drawer__section--feedback"
         aria-label="Preferences"

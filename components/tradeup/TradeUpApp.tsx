@@ -189,12 +189,6 @@ export function TradeUpApp() {
     setScreen('engine');
   }, []);
 
-  const handlePlayCircuit = useCallback((config: CircuitRunConfig) => {
-    setCircuitRun(config);
-    setEngineKey((k) => k + 1);
-    setScreen('engine');
-  }, []);
-
   const releaseStickyH2HRoom = useCallback(() => {
     const saved = readActiveRoom();
     clearActiveRoom();
@@ -291,6 +285,8 @@ export function TradeUpApp() {
     if (tab === 'runs') setRunsKey((k) => k + 1);
   }, []);
 
+  const handleOpenRank = useCallback(() => handleHubChange('rank'), [handleHubChange]);
+
   // Mount hub tab bar under the splash so it crossfades in with home (not after).
   const showTabs = screen === 'hub' && !invalidInvite;
 
@@ -345,8 +341,8 @@ export function TradeUpApp() {
       ) : (
         <TradeUpHome
           onPlay={handlePlay}
-          onPlayCircuit={handlePlayCircuit}
           onHeadToHead={handleHeadToHead}
+          onOpenRank={handleOpenRank}
           allowAccountPrompt={!showSplash && !showGuide}
         />
       )}
