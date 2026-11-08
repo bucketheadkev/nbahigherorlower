@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useLayoutEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import type { ActiveRunBonus } from '@/hooks/useRunBonus';
 import { formatCash } from '@/lib/tradeup/bank';
@@ -77,6 +77,54 @@ export const RunBonusCard = memo(function RunBonusCard({
         </span>
         <span className="rb-card__reward">{reward}</span>
       </div>
+    </div>
+  );
+});
+
+/**
+ * The same Run Bonus as a compact chip for the Classic arena's top bar (the arena has no room
+ * under SPIN). Shows the reward; a tap opens the challenge, a second tap or 5 s closes it.
+ */
+export const RunBonusChip = memo(function RunBonusChip({
+  bonus,
+  seated,
+}: {
+  bonus: ActiveRunBonus | null;
+  seated: { playerId: string; value: number }[];
+}) {
+  const { locale } = useLocale();
+  const [open, setOpen] = useState(false);
+  const def = bonus ? RUN_BONUS_BY_ID[bonus.bonusId] : null;
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => setOpen(false), 5000);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
+  if (!def) return null;
+  const progress = runBonusProgress(def.id, seated);
+  const complete = progress != null && progress.have >= progress.need;
+  const challenge = pick(def.short, locale);
+  const reward = `+${formatCash(def.reward)}`;
+
+  return (
+    <div className={`rb-chip rb-chip--t${def.tier}${complete ? ' is-complete' : ''}${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="rb-chip__pill"
+        aria-expanded={open}
+        aria-label={`${pick(COPY.label, locale)}: ${challenge}, ${reward}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="rb-chip__label">{pick(COPY.label, locale)}</span>
+        <span className="rb-chip__reward">{reward}</span>
+      </button>
+      {open ? (
+        <p className="rb-chip__pop" role="note">
+          {challenge}
+        </p>
+      ) : null}
     </div>
   );
 });

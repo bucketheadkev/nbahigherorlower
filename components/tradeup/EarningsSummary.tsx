@@ -58,6 +58,8 @@ const COPY = {
   gameCash: { en: 'Game cash · not real money', es: 'Dinero del juego · no es dinero real' },
 } satisfies Record<string, Copy>;
 
+const FRANCHISE_EARNINGS_ENABLED = false;
+
 /** Lets a just-finished run land its total before the summary takes over. */
 const EVENT_DELAY_MS = 650;
 /** Server earnings poll while the hub is open (hourly income keeps accruing). */
@@ -187,7 +189,9 @@ function buildRows(p: Pending, locale: string, t: (key: MessageKey) => string): 
 export function EarningsSummaryHost({ enabled }: { enabled: boolean }) {
   const { state: account } = useAccountAuth();
   const { locale, t } = useLocale();
-  const serverEnabled = account.status === 'permanent' || isFranchisePreview();
+  // Every server item is a Franchise paycheck; Franchises left the app with Dynasty Road, so only
+  // on-device payouts (achievements, run bonuses) show here. Server rows stay untouched.
+  const serverEnabled = FRANCHISE_EARNINGS_ENABLED && (account.status === 'permanent' || isFranchisePreview());
   const [open, setOpen] = useState<Pending | null>(null);
   const [mounted, setMounted] = useState(false);
   const enabledRef = useRef(enabled);

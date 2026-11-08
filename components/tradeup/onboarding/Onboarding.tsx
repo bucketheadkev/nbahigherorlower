@@ -108,7 +108,7 @@ interface OnboardingProps {
 
 /**
  * First-run tutorial on the real Classic arena: the $1B challenge, how a player's value changes
- * between team/era versions, a real spin → pick → place → move with the 3% rule, the practice
+ * between team/era versions, a real spin → pick → place → move between eligible positions, the practice
  * five's real valuation and the Bank. Instructions always sit at the top, the one orange button
  * at the bottom. A demo only — nothing is saved, credited or counted.
  */
@@ -279,10 +279,10 @@ export function Onboarding({ onDone, onPlay }: OnboardingProps) {
 
   const chip =
     step === 'penalty' || step === 'moveSg' || step === 'moving' ? (
-      <span className="tut__value is-off">
+      <span className="tut__value is-full">
         <b>KOBE · SF</b>
         <strong>{formatCash(kobeSf)}</strong>
-        <em>−3% · −{formatCash(kobeSg - kobeSf)}</em>
+        <em>✓ {t(LABELS.fullValue)}</em>
       </span>
     ) : step === 'restored' || step === 'fill' ? (
       <span className="tut__value is-full">
@@ -599,10 +599,6 @@ function BankPanel({ locale, earned }: { locale: string; earned: number }) {
       <p className="tut__bank-heading">{t(LABELS.yourBank)}</p>
       <ul className="tut__bank-uses">
         <li>
-          <BankIcon kind="franchise" />
-          <span>{t(LABELS.franchises)}</span>
-        </li>
-        <li>
           <BankIcon kind="board" />
           <span>{t(LABELS.leaderboard)}</span>
         </li>
@@ -615,13 +611,11 @@ function BankPanel({ locale, earned }: { locale: string; earned: number }) {
   );
 }
 
-function BankIcon({ kind }: { kind: 'franchise' | 'board' | 'wall' }) {
+function BankIcon({ kind }: { kind: 'board' | 'wall' }) {
   return (
     <span className="tut__bank-icon" aria-hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        {kind === 'franchise' ? (
-          <path d="M3 20h18M5 20V10l7-5 7 5v10M9 20v-5h6v5" />
-        ) : kind === 'board' ? (
+        {kind === 'board' ? (
           <path d="M5 20V12M12 20V5M19 20v-9" />
         ) : (
           <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3" />

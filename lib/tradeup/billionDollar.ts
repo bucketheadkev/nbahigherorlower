@@ -144,9 +144,6 @@ export const MAX_ERA_BOARD_SIZE = 100;
 /** Hard ceiling — high GOAT max ($225M). */
 export const MAX_PLAYER_DOLLARS = 225_000_000;
 
-/** Off-primary lineup slot — 3% haircut, same in Classic and 1v1. */
-export const OFF_PRIMARY_SLOT_VALUE_FACTOR = 0.97;
-
 export type DollarBand = {
   minTv: number;
   maxTv: number;
@@ -577,16 +574,11 @@ export function getDollarValue(player: TradePlayer): number {
 }
 
 /**
- * Seated price. Primary slot keeps the shared card price.
- * Off-primary uses the same 3% haircut in Classic and 1v1, then rounds to the nearest million.
+ * Seated price: the player's full fixed value at every position he is eligible for, same in
+ * Classic and 1v1. Eligibility itself is enforced where players are placed.
  */
-export function getDollarValueForSlot(player: TradePlayer, slot: Position): number {
-  const source = canonicalTradePlayer(player);
-  const base = resolveAuthoritativePlayerValue(source);
-  if (source.primaryPosition === slot) {
-    return base;
-  }
-  return toCleanMillions(base * OFF_PRIMARY_SLOT_VALUE_FACTOR);
+export function getDollarValueForSlot(player: TradePlayer, _slot: Position): number {
+  return resolveAuthoritativePlayerValue(canonicalTradePlayer(player));
 }
 
 export function sumTeamValue(players: TradePlayer[]): number {

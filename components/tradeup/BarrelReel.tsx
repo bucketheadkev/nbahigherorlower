@@ -30,6 +30,10 @@ interface BarrelReelProps {
    * short slide into the white window after the reel has nearly stopped.
    */
   nudgeSettle?: boolean;
+  /** Team tiles in their flat primary color (the Classic arena panel adds its own lighting). */
+  flat?: boolean;
+  /** Space between tiles (px). 0 makes a vertical reel one continuous band of tiles. */
+  gap?: number;
   onLocked?: () => void;
 }
 
@@ -58,6 +62,8 @@ export const BarrelReel = memo(function BarrelReel({
   columns = COLS,
   landIndex,
   nudgeSettle = false,
+  flat = false,
+  gap = GAP,
   onLocked,
 }: BarrelReelProps) {
   const viewRef = useRef<HTMLDivElement | null>(null);
@@ -80,14 +86,15 @@ export const BarrelReel = memo(function BarrelReel({
       const viewSize =
         axis === 'y' ? view.clientHeight || itemHeight : view.clientWidth || 320;
       const cols = Math.max(1, columns);
-      const tile = cols <= 1 ? viewSize : (viewSize - GAP * (cols - 1)) / cols;
+      const tile = cols <= 1 ? viewSize : (viewSize - gap * (cols - 1)) / cols;
       view.style.setProperty('--barrel-tile', `${tile}px`);
+      view.style.setProperty('--barrel-gap', `${gap}px`);
     };
     apply();
     const observer = new ResizeObserver(apply);
     observer.observe(view);
     return () => observer.disconnect();
-  }, [axis, columns, itemHeight]);
+  }, [axis, columns, gap, itemHeight]);
 
   useLayoutEffect(() => {
     const el = stripRef.current;
@@ -98,8 +105,8 @@ export const BarrelReel = memo(function BarrelReel({
     const viewSize =
       axis === 'y' ? view.clientHeight || itemHeight : view.clientWidth || 320;
     const cols = Math.max(1, columns);
-    const tile = cols <= 1 ? viewSize : (viewSize - GAP * (cols - 1)) / cols;
-    const stride = tile + GAP;
+    const tile = cols <= 1 ? viewSize : (viewSize - gap * (cols - 1)) / cols;
+    const stride = tile + gap;
     const centerPad = (viewSize - tile) / 2;
     const landAt = Math.min(
       Math.max(0, landIndex ?? strip.length - 1),
@@ -171,7 +178,7 @@ export const BarrelReel = memo(function BarrelReel({
       el.removeEventListener('animationend', onEnd);
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [axis, columns, durationMs, itemHeight, landIndex, nudgeSettle, reduceMotion, spinId, strip.length]);
+  }, [axis, columns, durationMs, gap, itemHeight, landIndex, nudgeSettle, reduceMotion, spinId, strip.length]);
 
   const spinning = spinId > 0 && strip.length > 1;
   const holding = !spinning && Boolean(holdLabel);
@@ -209,11 +216,14 @@ export const BarrelReel = memo(function BarrelReel({
               style={tileStyle(
                 variant === 'team' && item.background
                   ? {
-                      background: `linear-gradient(180deg, ${item.background} 0%, color-mix(in srgb, ${item.background} 72%, #041018) 100%)`,
+                      background: flat
+                        ? item.background
+                        : `linear-gradient(180deg, ${item.background} 0%, color-mix(in srgb, ${item.background} 72%, #041018) 100%)`,
                       color: item.color,
                     }
                   : undefined,
               )}
+              data-len={item.label.length}
             >
               {item.label}
             </div>
@@ -226,6 +236,7 @@ export const BarrelReel = memo(function BarrelReel({
           <div
             className={`barrel-card barrel-card--${variant} ${holding ? 'is-hold' : 'is-ready'}`}
             style={tileStyle(holding ? holdStyle : undefined)}
+            data-len={(holding ? holdLabel : readyLabel)?.length ?? 0}
           >
             {holding ? holdLabel : readyLabel}
           </div>

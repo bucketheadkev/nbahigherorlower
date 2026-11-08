@@ -1,0 +1,2097 @@
+/* =========================================================
+   Dynasty Road — championship collection ladder + the Classic signing section
+   ========================================================= */
+
+.dyn-root,
+.dyn-offer,
+.dyn-run,
+.dyn-run-note,
+.dyn-open-root {
+  --dyn-font: "Avenir Next", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --dyn-display: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  --dyn-line: rgba(100, 150, 255, 0.26);
+  --dyn-line-strong: rgba(110, 165, 255, 0.5);
+  --dyn-muted: rgba(178, 194, 224, 0.84);
+  --dyn-dim: rgba(150, 168, 200, 0.62);
+  --dyn-green: #3cf08f;
+  --dyn-orange: #ff8a2a;
+  --dyn-blue: #4d9bff;
+  --dyn-ease: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.dyn-root {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #020a1c;
+  color: #ffffff;
+  font-family: var(--dyn-font);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  animation: dyn-fade 0.2s ease-out both;
+}
+
+.dyn-root button {
+  -webkit-touch-callout: none;
+  font-family: inherit;
+}
+
+.dyn-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 34% at 50% 0%, rgba(40, 110, 255, 0.24), transparent 70%),
+    radial-gradient(ellipse 70% 30% at 50% 100%, rgba(30, 90, 220, 0.12), transparent 70%),
+    linear-gradient(180deg, #04102a 0%, #020a1c 46%, #020817 100%);
+}
+
+/* ── Top bar ── */
+.dyn-top {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 2.6rem 1fr 2.6rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 0.7rem)
+    max(1rem, env(safe-area-inset-right, 0px))
+    0.6rem
+    max(1rem, env(safe-area-inset-left, 0px));
+  border-bottom: 1px solid rgba(80, 130, 230, 0.16);
+  background: linear-gradient(180deg, rgba(3, 12, 32, 0.96), rgba(3, 12, 32, 0.82));
+}
+
+.dyn-back {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--dyn-line-strong);
+  border-radius: 0.8rem;
+  background: linear-gradient(180deg, #11295c 0%, #08183b 100%);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 12px rgba(30, 110, 255, 0.25);
+}
+
+.dyn-back:active {
+  transform: scale(0.94);
+}
+
+.dyn-top__title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+/* ── Scroll column ── */
+.dyn-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding:
+    1.1rem
+    max(1rem, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 2rem)
+    max(1rem, env(safe-area-inset-left, 0px));
+}
+
+.dyn-scroll > * {
+  max-width: 30rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Hero: overall progress ── */
+.dyn-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.dyn-hero__kicker {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--dyn-blue);
+}
+
+.dyn-hero__count {
+  margin: 0.35rem 0 0;
+  font-family: var(--dyn-display);
+  line-height: 1;
+}
+
+.dyn-hero__count strong {
+  font-size: 3.1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.dyn-hero__count span {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--dyn-dim);
+}
+
+.dyn-hero__sub {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--dyn-muted);
+}
+
+.dyn-hero__bar {
+  position: relative;
+  display: block;
+  width: min(15rem, 80%);
+  height: 4px;
+  margin-top: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(120, 150, 210, 0.18);
+}
+
+.dyn-hero__bar span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2bd67b, var(--dyn-green));
+  box-shadow: 0 0 10px rgba(60, 240, 143, 0.5);
+  transform-origin: left center;
+  transition: transform 0.6s var(--dyn-ease);
+}
+
+.dyn-hero__intro {
+  max-width: 21rem;
+  margin: 0.85rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dyn-muted);
+}
+
+/* ── Panels (guest, errors) ── */
+.dyn-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.1rem;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid var(--dyn-line);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(14, 30, 66, 0.92) 0%, rgba(7, 16, 40, 0.95) 100%);
+}
+
+.dyn-panel strong {
+  font-size: 0.98rem;
+  font-weight: 850;
+}
+
+.dyn-panel p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--dyn-muted);
+}
+
+.dyn-loading {
+  margin: 0 auto 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--dyn-dim);
+}
+
+/* ── Buttons ── */
+.dyn-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.9rem;
+  margin: 0;
+  padding: 0 1.3rem;
+  border-radius: 0.95rem;
+  font-family: var(--dyn-font);
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform 0.12s ease-out, filter 0.12s ease-out, opacity 0.2s ease;
+}
+
+.dyn-btn:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(1.08);
+}
+
+.dyn-btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.dyn-btn--primary {
+  width: 100%;
+  border: 1px solid rgba(140, 255, 196, 0.7);
+  background: linear-gradient(180deg, #43f29a 0%, #1fc978 55%, #12a862 100%);
+  color: #04261a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 18px rgba(40, 220, 130, 0.32), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.dyn-btn--primary:disabled {
+  border-color: rgba(120, 160, 230, 0.35);
+  background: linear-gradient(180deg, #16295a 0%, #0d1c42 100%);
+  color: rgba(200, 215, 245, 0.8);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.dyn-btn--ghost {
+  border: 1px solid var(--dyn-line-strong);
+  background: rgba(10, 26, 62, 0.9);
+  color: #ffffff;
+}
+
+/* ── Unsigned runs ── */
+.dyn-pending {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1.1rem;
+}
+
+.dyn-pending__run {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgba(255, 150, 60, 0.55);
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse 60% 120% at 0% 50%, rgba(255, 130, 40, 0.16), transparent 70%),
+    linear-gradient(180deg, #102654 0%, #0a1a40 100%);
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(255, 120, 30, 0.14);
+}
+
+.dyn-pending__run:active {
+  transform: scale(0.985);
+}
+
+.dyn-pending__dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--dyn-orange);
+  box-shadow: 0 0 10px rgba(255, 138, 42, 0.8);
+}
+
+.dyn-pending__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dyn-pending__copy strong {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #ffb36b;
+}
+
+.dyn-pending__copy em {
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 650;
+  color: var(--dyn-muted);
+}
+
+.dyn-pending__run svg {
+  flex: 0 0 auto;
+  color: #ffb36b;
+}
+
+/* ── The road ── */
+.dyn-road {
+  position: relative;
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0 0 0 2.15rem;
+  list-style: none;
+}
+
+/* The road line linking each dynasty, fading out at the sealed finale. */
+.dyn-road::before {
+  content: "";
+  position: absolute;
+  left: 0.85rem;
+  top: 1.2rem;
+  bottom: 2rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(77, 155, 255, 0.55), rgba(77, 155, 255, 0.25) 80%, rgba(60, 240, 143, 0.35));
+}
+
+.dyn-card {
+  position: relative;
+}
+
+.dyn-card__node {
+  position: absolute;
+  left: -2.15rem;
+  top: 0.95rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1.5px solid var(--dyn-line-strong);
+  border-radius: 50%;
+  background: #071534;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #cfe0ff;
+  box-shadow: 0 0 0 4px #020a1c;
+}
+
+.dyn-card.is-complete .dyn-card__node {
+  border-color: var(--dyn-green);
+  background: #0a2a20;
+  color: var(--dyn-green);
+  box-shadow: 0 0 0 4px #020a1c, 0 0 12px rgba(60, 240, 143, 0.45);
+}
+
+.dyn-card__body {
+  position: relative;
+  overflow: hidden;
+  padding: 0.85rem 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-primary) 42%, rgba(100, 150, 255, 0.35));
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(ellipse 80% 70% at 100% 0%, color-mix(in srgb, var(--dyn-primary) 28%, transparent), transparent 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--dyn-deep) 75%, #0a1736) 0%, #081430 52%, #061029 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.32);
+}
+
+/* Team-color band across the top edge. */
+.dyn-card__body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--dyn-primary), color-mix(in srgb, var(--dyn-accent) 80%, var(--dyn-primary)));
+}
+
+.dyn-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.dyn-card__id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dyn-card__year {
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--dyn-primary) 45%, #ffffff);
+}
+
+.dyn-card__team {
+  margin: 0.12rem 0 0;
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.dyn-card__game {
+  margin-top: 0.15rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--dyn-dim);
+}
+
+.dyn-card__count {
+  flex: 0 0 auto;
+  font-family: var(--dyn-display);
+  line-height: 1;
+}
+
+.dyn-card__count strong {
+  font-size: 1.55rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.dyn-card__count span {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--dyn-dim);
+}
+
+.dyn-card.is-complete .dyn-card__count strong {
+  color: var(--dyn-green);
+}
+
+/* Segmented progress */
+.dyn-pips {
+  display: flex;
+  gap: 4px;
+}
+
+.dyn-card .dyn-pips {
+  margin: 0.6rem 0 0.75rem;
+}
+
+.dyn-pips > span {
+  flex: 1 1 0;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(120, 150, 210, 0.2);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dyn-pips > span.is-on {
+  background: var(--dyn-green);
+  box-shadow: 0 0 8px rgba(60, 240, 143, 0.45);
+}
+
+/* Five slots */
+.dyn-card__five {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-slot {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.dyn-slot__jersey {
+  width: min(100%, 3.3rem) !important;
+  height: auto !important;
+  aspect-ratio: 100 / 130;
+}
+
+.dyn-slot__pos {
+  margin-top: 0.3rem;
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--dyn-dim);
+}
+
+.dyn-slot__name {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 0.12rem;
+  line-height: 1.15;
+}
+
+.dyn-slot__name em,
+.dyn-slot__name strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dyn-slot__name em {
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--dyn-muted);
+}
+
+/* Scales with the slot so an eight-letter surname (Thompson, Nowitzki) fits a 375pt screen. */
+.dyn-slot__name strong {
+  font-size: min(0.66rem, 16.5cqw);
+  font-weight: 850;
+  letter-spacing: -0.015em;
+}
+
+.dyn-slot.is-missing .dyn-slot__name {
+  opacity: 0.5;
+}
+
+.dyn-slot__note {
+  margin-top: 0.15rem;
+  font-size: 0.48rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(255, 179, 107, 0.85);
+}
+
+.dyn-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Completed: a controlled accent glow, a check on the road, one quiet sheen the first time. */
+.dyn-card.is-complete .dyn-card__body {
+  border-color: color-mix(in srgb, var(--dyn-accent) 55%, var(--dyn-primary));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px color-mix(in srgb, var(--dyn-primary) 40%, transparent),
+    0 0 22px color-mix(in srgb, var(--dyn-primary) 42%, transparent),
+    0 10px 24px rgba(0, 0, 0, 0.32);
+}
+
+.dyn-card__done {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(120, 160, 230, 0.16);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--dyn-green);
+}
+
+.dyn-card__done span {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--dyn-dim);
+}
+
+.dyn-card.is-fresh .dyn-card__body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  transform: translate3d(-120%, 0, 0) skewX(-16deg);
+  animation: dyn-sheen 1.3s var(--dyn-ease) 0.35s 1 both;
+  pointer-events: none;
+}
+
+.dyn-card.is-fresh .dyn-card__done {
+  animation: dyn-rise 0.5s var(--dyn-ease) 0.2s both;
+}
+
+/* Sealed finale */
+.dyn-card--final .dyn-card__body {
+  border-style: dashed;
+  border-color: rgba(110, 165, 255, 0.4);
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 0%, rgba(31, 107, 255, 0.18), transparent 70%),
+    linear-gradient(170deg, #071535 0%, #061029 100%);
+}
+
+.dyn-card--final .dyn-card__body::before {
+  background: linear-gradient(90deg, rgba(31, 107, 255, 0.7), rgba(60, 240, 143, 0.55));
+}
+
+.dyn-card--final .dyn-card__node {
+  border-style: dashed;
+}
+
+.dyn-card--final .dyn-card__five {
+  margin-top: 0.8rem;
+  opacity: 0.85;
+}
+
+.dyn-card__seal {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgba(110, 165, 255, 0.45);
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #9cc4ff;
+}
+
+/* ── Jerseys (Classic's tank top) ── */
+.dyn-jersey {
+  display: block;
+}
+
+.dyn-jersey .dyn-jersey__initials {
+  font-size: 33cqw;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.dyn-jersey--missing,
+.dyn-jersey--sealed {
+  --jersey-fill: #111b33;
+  --jersey-trim: #1b2948;
+  --jersey-piping: rgba(255, 255, 255, 0);
+  --jersey-line: rgba(140, 165, 215, 0.38);
+  --jersey-line-w: 1.2px;
+}
+
+.dyn-jersey--sealed {
+  --jersey-fill: #0b1a40;
+  --jersey-trim: #16306a;
+  --jersey-line: rgba(130, 185, 255, 0.55);
+}
+
+.dyn-jersey__mark {
+  position: absolute;
+  inset: 30% 0 12%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(165, 185, 225, 0.55);
+}
+
+.dyn-jersey__mark svg {
+  width: 34%;
+  height: auto;
+}
+
+.dyn-jersey__mark--sealed {
+  font-size: 46cqw;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(170, 205, 255, 0.85);
+}
+
+/* ── Unsigned run sheet ── */
+.dyn-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dyn-sheet__scrim {
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 4, 14, 0.62);
+  animation: dyn-fade 0.2s ease-out both;
+}
+
+.dyn-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  max-height: 88%;
+  overflow-y: auto;
+  padding:
+    0.55rem
+    max(1rem, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 1.1rem)
+    max(1rem, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  border: 1px solid rgba(90, 155, 255, 0.45);
+  border-bottom: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: linear-gradient(180deg, #0f2453 0%, #071534 60%, #050f27 100%);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  animation: dyn-up 0.32s var(--dyn-ease) both;
+}
+
+.dyn-sheet__grip {
+  display: block;
+  width: 2.4rem;
+  height: 0.28rem;
+  margin: 0 auto 0.6rem;
+  border-radius: 999px;
+  background: rgba(160, 190, 240, 0.35);
+}
+
+.dyn-sheet__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.dyn-sheet__head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dyn-sheet__value {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--dyn-green);
+}
+
+.dyn-sheet__close {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(90, 155, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(10, 26, 62, 0.9);
+  color: #cfe0ff;
+  cursor: pointer;
+}
+
+.dyn-sheet__done {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+/* ── Signing section (Classic results and the sheet) ── */
+.dyn-offer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: #ffffff;
+  font-family: var(--dyn-font);
+  text-align: left;
+}
+
+.dyn-offer--results {
+  margin-top: 0.85rem;
+  padding: 0.95rem 0.9rem 0.9rem;
+  border: 1px solid rgba(90, 155, 255, 0.45);
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%, rgba(40, 110, 255, 0.2), transparent 70%),
+    linear-gradient(180deg, rgba(14, 30, 66, 0.96) 0%, rgba(7, 16, 40, 0.97) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 18px rgba(30, 110, 255, 0.16);
+  animation: dyn-rise 0.4s var(--dyn-ease) 0.15s both;
+}
+
+.dyn-offer__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dyn-offer__kicker {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--dyn-blue);
+}
+
+.dyn-offer__title {
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.dyn-offer__line {
+  margin: 0.1rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--dyn-muted);
+}
+
+.dyn-offer__note {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--dyn-muted);
+}
+
+.dyn-offer__note.is-warn {
+  color: #ffc58f;
+}
+
+/* Up to four per row, centered, so one or two eligible players never sit off to the side. */
+.dyn-offer__options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-offer__options > li {
+  flex: 0 1 calc((100% - 1.5rem) / 4);
+  min-width: 4.4rem;
+  max-width: 6.5rem;
+}
+
+.dyn-opt {
+  appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.6rem 0.35rem 0.55rem;
+  border: 1.5px solid color-mix(in srgb, var(--dyn-primary) 45%, rgba(100, 150, 255, 0.35));
+  border-radius: 0.95rem;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, color-mix(in srgb, var(--dyn-primary) 26%, transparent), transparent 75%),
+    linear-gradient(180deg, #0f2453 0%, #0a1a40 100%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.14s ease-out, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dyn-opt:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.dyn-opt:disabled {
+  cursor: default;
+}
+
+.dyn-opt.is-picked {
+  border-color: var(--dyn-green);
+  box-shadow: 0 0 0 1px rgba(60, 240, 143, 0.45), 0 0 16px rgba(60, 240, 143, 0.3);
+}
+
+.dyn-opt.is-owned {
+  opacity: 0.5;
+}
+
+.dyn-opt__jersey {
+  width: 2.9rem !important;
+  height: auto !important;
+  aspect-ratio: 100 / 130;
+}
+
+.dyn-opt__name {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 0.35rem;
+  line-height: 1.15;
+}
+
+.dyn-opt__name em,
+.dyn-opt__name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dyn-opt__name em {
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--dyn-muted);
+}
+
+.dyn-opt__name strong {
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.dyn-opt__team {
+  margin-top: 0.2rem;
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--dyn-primary) 40%, #ffffff);
+}
+
+.dyn-opt__tag {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(4, 12, 32, 0.92);
+  border: 1px solid rgba(150, 175, 220, 0.4);
+  font-size: 0.48rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: #d9e4fa;
+}
+
+.dyn-opt__check {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--dyn-green);
+  color: #04261a;
+}
+
+/* Signed confirmation */
+.dyn-signed {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-primary) 50%, rgba(100, 150, 255, 0.4));
+  border-radius: 0.95rem;
+  background:
+    radial-gradient(ellipse 70% 90% at 0% 50%, color-mix(in srgb, var(--dyn-primary) 30%, transparent), transparent 72%),
+    linear-gradient(180deg, #0f2453 0%, #0a1a40 100%);
+}
+
+.dyn-signed.is-complete {
+  border-color: color-mix(in srgb, var(--dyn-accent) 55%, var(--dyn-primary));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--dyn-primary) 45%, transparent);
+}
+
+.dyn-signed__jersey {
+  flex: 0 0 auto;
+  width: 3.4rem !important;
+  height: auto !important;
+  aspect-ratio: 100 / 130;
+}
+
+.dyn-signed__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.dyn-signed__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--dyn-green);
+}
+
+.dyn-signed__copy strong {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.dyn-signed__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--dyn-muted);
+}
+
+.dyn-signed__progress .dyn-pips {
+  width: 6.5rem;
+}
+
+.dyn-signed__complete {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--dyn-green);
+}
+
+/* ── Motion ── */
+@keyframes dyn-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dyn-up {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes dyn-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+}
+
+@keyframes dyn-sheen {
+  to {
+    transform: translate3d(330%, 0, 0) skewX(-16deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .dyn-root,
+  html:not([data-full-motion]) .dyn-sheet__panel,
+  html:not([data-full-motion]) .dyn-sheet__scrim,
+  html:not([data-full-motion]) .dyn-offer--results,
+  html:not([data-full-motion]) .dyn-card.is-fresh .dyn-card__done {
+    animation: none;
+  }
+
+  html:not([data-full-motion]) .dyn-card.is-fresh .dyn-card__body::after {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .dyn-road {
+    padding-left: 1.9rem;
+  }
+
+  .dyn-card__node {
+    left: -1.9rem;
+  }
+
+}
+
+/* =========================================================
+   Phase 2 — tabs, chests, focus, collection, keys
+   ========================================================= */
+
+/* ── Tabs ── */
+.dyn-tabs {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.3rem;
+  width: min(30rem, calc(100% - 2rem));
+  margin: 0.65rem auto 0;
+  padding: 0.25rem;
+  border: 1px solid var(--dyn-line);
+  border-radius: 0.95rem;
+  background: rgba(6, 16, 40, 0.92);
+}
+
+.dyn-tabs__btn {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  margin: 0;
+  padding: 0 0.4rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--dyn-muted);
+  font-family: var(--dyn-font);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.dyn-tabs__btn.is-active {
+  background: linear-gradient(180deg, #1c3f8c 0%, #13306f 100%);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0 12px rgba(40, 110, 255, 0.3);
+}
+
+.dyn-tabs__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--dyn-orange);
+  color: #2a1000;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.dyn-section-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--dyn-dim);
+}
+
+.dyn-guest-note {
+  text-align: center;
+}
+
+/* ── Next chest progress ── */
+.dyn-chests {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dyn-next {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--dyn-line);
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse 70% 80% at 0% 0%, rgba(60, 240, 143, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(14, 30, 66, 0.92) 0%, rgba(7, 16, 40, 0.95) 100%);
+}
+
+.dyn-next__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dyn-next__copy {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.dyn-next__kicker {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--dyn-green);
+}
+
+.dyn-next__copy strong {
+  font-family: var(--dyn-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.dyn-next__bar {
+  display: flex;
+  gap: 5px;
+  margin-top: 0.6rem;
+}
+
+.dyn-next__bar > span {
+  flex: 1 1 0;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(120, 150, 210, 0.2);
+  transition: background 0.35s ease, box-shadow 0.35s ease;
+}
+
+.dyn-next__bar > span.is-on {
+  background: linear-gradient(90deg, #2bd67b, var(--dyn-green));
+  box-shadow: 0 0 9px rgba(60, 240, 143, 0.5);
+}
+
+.dyn-next__line {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--dyn-muted);
+}
+
+.dyn-keys {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0 0.7rem;
+  border: 1px solid rgba(255, 170, 90, 0.55);
+  border-radius: 999px;
+  background: rgba(40, 20, 6, 0.6);
+  color: #ffc58f;
+  font-family: var(--dyn-font);
+  font-size: 0.8rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dyn-keys:disabled {
+  cursor: default;
+}
+
+.dyn-keys em {
+  margin-left: 0.15rem;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.dyn-key-icon {
+  flex: 0 0 auto;
+}
+
+/* ── Chest rows ── */
+.dyn-chest-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-chest {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--tier) 38%, rgba(100, 150, 255, 0.3));
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse 50% 90% at 0% 50%, color-mix(in srgb, var(--tier) 18%, transparent), transparent 75%),
+    linear-gradient(180deg, rgba(14, 30, 66, 0.94) 0%, rgba(7, 16, 40, 0.96) 100%);
+}
+
+.dyn-chest--ready {
+  border-color: color-mix(in srgb, var(--tier) 75%, white 5%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--tier) 30%, transparent);
+}
+
+.dyn-chest__art {
+  flex: 0 0 auto;
+  width: 4.6rem;
+  height: 3.55rem;
+}
+
+.dyn-chest__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.dyn-chest__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dyn-chest__name {
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.dyn-chest__status {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(150, 175, 220, 0.35);
+  color: #cfdcf5;
+}
+
+.dyn-chest__status--unlocking {
+  border-color: rgba(77, 155, 255, 0.6);
+  color: #9cc8ff;
+}
+
+.dyn-chest__status--ready {
+  border-color: rgba(60, 240, 143, 0.7);
+  color: var(--dyn-green);
+}
+
+.dyn-chest__timer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dyn-chest__time {
+  font-family: var(--dyn-display);
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #9cc8ff;
+}
+
+.dyn-chest__bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(120, 150, 210, 0.2);
+}
+
+.dyn-chest__bar > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f7bff, #6fb2ff);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+
+.dyn-chest__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.dyn-chest__error {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #ffc58f;
+}
+
+.dyn-btn--free,
+.dyn-btn--key,
+.dyn-btn--small {
+  min-height: 2.35rem;
+  padding: 0 0.8rem;
+  border-radius: 0.8rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.dyn-btn--free {
+  flex: 1 1 auto;
+  border: 1px solid rgba(77, 155, 255, 0.65);
+  background: linear-gradient(180deg, #17346f 0%, #0e2252 100%);
+  color: #ffffff;
+}
+
+.dyn-btn--key {
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  border: 1px solid rgba(255, 170, 90, 0.65);
+  background: linear-gradient(180deg, #4a2408 0%, #2c1405 100%);
+  color: #ffd2a6;
+}
+
+.dyn-chest__open {
+  width: auto;
+  flex: 1 1 auto;
+  min-height: 2.45rem;
+}
+
+.dyn-chests__empty {
+  margin-bottom: 0;
+}
+
+/* Duplicate protection meter */
+.dyn-protect {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--dyn-muted);
+}
+
+.dyn-protect__meter {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 3px;
+}
+
+.dyn-protect__meter > span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid rgba(150, 175, 220, 0.45);
+}
+
+.dyn-protect__meter > span.is-on {
+  border-color: var(--dyn-orange);
+  background: var(--dyn-orange);
+  box-shadow: 0 0 6px rgba(255, 138, 42, 0.6);
+}
+
+/* Recently opened */
+.dyn-opened ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-opened li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(100, 150, 255, 0.18);
+  border-radius: 0.8rem;
+  background: rgba(7, 16, 40, 0.8);
+}
+
+.dyn-opened__dot {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--tier);
+  box-shadow: 0 0 6px var(--tier);
+}
+
+.dyn-opened__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dyn-opened__copy strong {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.dyn-opened__copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.64rem;
+  font-style: normal;
+  color: var(--dyn-dim);
+}
+
+.dyn-tag {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.dyn-tag--new {
+  border: 1px solid rgba(60, 240, 143, 0.7);
+  background: rgba(10, 50, 32, 0.85);
+  color: var(--dyn-green);
+}
+
+.dyn-tag--dup {
+  border: 1px solid rgba(160, 180, 220, 0.45);
+  background: rgba(14, 24, 48, 0.85);
+  color: #cdd8ee;
+}
+
+.dyn-tag--focus {
+  border: 1px solid rgba(255, 170, 90, 0.7);
+  background: rgba(50, 24, 6, 0.85);
+  color: #ffc58f;
+}
+
+.dyn-chests__fine {
+  margin: 0.2rem 0 0;
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--dyn-dim);
+}
+
+/* ── Focus Dynasty ── */
+.dyn-focus {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  margin: 0 0 1.1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-primary, #4d9bff) 60%, rgba(255, 170, 90, 0.4));
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse 60% 120% at 0% 50%, color-mix(in srgb, var(--dyn-primary, #4d9bff) 32%, transparent), transparent 75%),
+    linear-gradient(180deg, #10264f 0%, #091a3c 100%);
+  color: #ffffff;
+  text-align: left;
+  font-family: var(--dyn-font);
+  cursor: pointer;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--dyn-primary, #4d9bff) 22%, transparent);
+}
+
+.dyn-focus--empty {
+  border-style: dashed;
+  border-color: rgba(110, 165, 255, 0.45);
+  box-shadow: none;
+}
+
+.dyn-focus__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: rgba(255, 138, 42, 0.14);
+  color: #ffb36b;
+}
+
+.dyn-focus__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dyn-focus__kicker {
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #ffb36b;
+}
+
+.dyn-focus__copy strong {
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.dyn-focus__copy em {
+  font-size: 0.68rem;
+  font-style: normal;
+  line-height: 1.35;
+  color: var(--dyn-muted);
+}
+
+.dyn-focus__side {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.dyn-focus__count {
+  font-family: var(--dyn-display);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.dyn-focus__cta {
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #9cc8ff;
+}
+
+.dyn-card.is-focus .dyn-card__body {
+  border-color: rgba(255, 170, 90, 0.7);
+}
+
+.dyn-card__focus {
+  margin-left: 0.5rem;
+  padding: 0.08rem 0.4rem;
+  border: 1px solid rgba(255, 170, 90, 0.7);
+  border-radius: 999px;
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  color: #ffc58f;
+}
+
+.dyn-focus-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-focus-opt {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-primary) 45%, rgba(100, 150, 255, 0.3));
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #10264f 0%, #0a1a40 100%);
+  color: #ffffff;
+  text-align: left;
+  font-family: var(--dyn-font);
+  cursor: pointer;
+}
+
+.dyn-focus-opt.is-active {
+  border-color: rgba(255, 170, 90, 0.85);
+  box-shadow: 0 0 14px rgba(255, 138, 42, 0.25);
+}
+
+.dyn-focus-opt:disabled {
+  cursor: default;
+}
+
+.dyn-focus-opt.is-complete {
+  opacity: 0.55;
+}
+
+.dyn-focus-opt__swatch {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 2rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, var(--dyn-primary), var(--dyn-accent));
+}
+
+.dyn-focus-opt__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.dyn-focus-opt__copy strong {
+  font-size: 0.85rem;
+  font-weight: 850;
+}
+
+.dyn-focus-opt__copy .dyn-pips {
+  max-width: 7rem;
+}
+
+.dyn-focus-opt__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #9cc8ff;
+}
+
+.dyn-focus-opt.is-active .dyn-focus-opt__state {
+  color: #ffc58f;
+}
+
+.dyn-focus-opt.is-complete .dyn-focus-opt__state {
+  color: var(--dyn-green);
+}
+
+.dyn-sheet__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.dyn-sheet__line {
+  margin: 0.3rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--dyn-muted);
+}
+
+/* ── My Collection ── */
+.dyn-collection__summary {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--dyn-muted);
+}
+
+.dyn-collection__list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-collection__row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-primary) 40%, rgba(100, 150, 255, 0.25));
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(ellipse 50% 100% at 0% 50%, color-mix(in srgb, var(--dyn-primary) 22%, transparent), transparent 75%),
+    rgba(8, 18, 44, 0.92);
+}
+
+.dyn-collection__jersey {
+  flex: 0 0 auto;
+  width: 2.3rem !important;
+  height: auto !important;
+  aspect-ratio: 100 / 130;
+}
+
+.dyn-collection__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.dyn-collection__copy strong {
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.dyn-collection__copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.66rem;
+  font-style: normal;
+  color: var(--dyn-dim);
+}
+
+.dyn-collection__how {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  border: 1px solid rgba(60, 240, 143, 0.55);
+  color: var(--dyn-green);
+}
+
+.dyn-collection__how--chest {
+  border-color: color-mix(in srgb, var(--tier) 70%, transparent);
+  color: color-mix(in srgb, var(--tier) 80%, white);
+}
+
+.dyn-collection__how--grant {
+  border-color: rgba(150, 175, 220, 0.45);
+  color: #cdd8ee;
+}
+
+/* ── Classic results: chest progress ── */
+.dyn-run {
+  margin-top: 0.85rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(60, 240, 143, 0.35);
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(ellipse 70% 80% at 0% 0%, rgba(60, 240, 143, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(14, 30, 66, 0.96) 0%, rgba(7, 16, 40, 0.97) 100%);
+  color: #ffffff;
+  font-family: var(--dyn-font);
+  text-align: left;
+  animation: dyn-rise 0.4s var(--dyn-ease) 0.25s both;
+}
+
+.dyn-run__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dyn-run__kicker {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--dyn-green);
+}
+
+.dyn-run__gain {
+  font-family: var(--dyn-display);
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--dyn-green);
+}
+
+.dyn-run__line {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--dyn-muted);
+}
+
+.dyn-run__earned {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.dyn-run__chest {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--tier) 60%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--tier) 12%, rgba(6, 14, 34, 0.9));
+}
+
+.dyn-run__art {
+  flex: 0 0 auto;
+  width: 3.2rem;
+  height: 2.5rem;
+}
+
+.dyn-run__chest > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dyn-run__chest strong {
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--tier) 80%, white);
+}
+
+.dyn-run__chest em {
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.dyn-run-note {
+  margin: 0.75rem 0 0;
+  font-family: var(--dyn-font);
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--dyn-muted);
+}
+
+/* ── Chest opening (shared stage from the earlier chest work) ── */
+.dyn-open-root {
+  z-index: 240 !important;
+}
+
+.dyn-open__close {
+  appearance: none;
+  position: absolute;
+  z-index: 9;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(14px, env(safe-area-inset-right, 0px));
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(110, 165, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(4, 12, 32, 0.85);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.dyn-open__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+  animation-delay: 0.45s;
+}
+
+.dyn-open__note {
+  max-width: min(86vw, 21rem);
+  margin: 0.55rem auto 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--dyn-muted);
+  animation-delay: 0.55s;
+}
+
+.dyn-open__actions {
+  margin-top: 0.9rem;
+}
+
+.dyn-open__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(86vw, 21rem);
+  margin: 0 auto;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #ffc58f;
+}
+
+/* Completion: the five in full team colors, a controlled glow, one staggered rise. */
+.dyn-complete {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(2, 8, 24, 0.82);
+  animation: dyn-fade 0.25s ease-out both;
+}
+
+.dyn-complete__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(100%, 24rem);
+  padding: 1.2rem 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--dyn-accent) 60%, var(--dyn-primary));
+  border-radius: 1.3rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--dyn-primary) 40%, transparent), transparent 75%),
+    linear-gradient(180deg, #0f2453 0%, #071534 100%);
+  box-shadow: 0 0 34px color-mix(in srgb, var(--dyn-primary) 45%, transparent), 0 20px 40px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: dyn-rise 0.45s var(--dyn-ease) both;
+}
+
+.dyn-complete__kicker {
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: var(--dyn-green);
+}
+
+.dyn-complete__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.dyn-complete__five {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-complete__five li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  font-weight: 850;
+  animation: dyn-rise 0.45s var(--dyn-ease) both;
+  animation-delay: calc(0.15s + var(--i) * 0.08s);
+}
+
+.dyn-complete__jersey {
+  width: 100% !important;
+  max-width: 3.4rem;
+  height: auto !important;
+  aspect-ratio: 100 / 130;
+}
+
+.dyn-complete__line {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--dyn-muted);
+}
+
+/* ── Key shop ── */
+.dyn-shop {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dyn-shop__item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3.2rem;
+  margin: 0;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 170, 90, 0.55);
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, #3a1d07 0%, #241204 100%);
+  color: #ffffff;
+  font-family: var(--dyn-font);
+  cursor: pointer;
+}
+
+.dyn-shop__keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: #ffd2a6;
+}
+
+.dyn-shop__price {
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+/* ── Achievements: Dynasty milestones ── */
+.ach-card__dynasty {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #9cc8ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .dyn-run,
+  html:not([data-full-motion]) .dyn-complete,
+  html:not([data-full-motion]) .dyn-complete__card,
+  html:not([data-full-motion]) .dyn-complete__five li {
+    animation: none;
+  }
+}

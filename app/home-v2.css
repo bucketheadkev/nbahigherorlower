@@ -289,7 +289,7 @@
 }
 
 .rh3-play,
-.rh3-franchise,
+.rh3-dynasty,
 .rh3-modes {
   appearance: none;
   position: relative;
@@ -309,14 +309,14 @@
 }
 
 .rh3-play:active,
-.rh3-franchise:active,
+.rh3-dynasty:active,
 .rh3-modes:active {
   transform: scale(0.965);
   filter: brightness(1.1);
 }
 
 .rh3-play:focus-visible,
-.rh3-franchise:focus-visible,
+.rh3-dynasty:focus-visible,
 .rh3-modes:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 3px;
@@ -411,8 +411,8 @@
     0 4px 14px rgba(120, 30, 0, 0.35);
 }
 
-/* MY FRANCHISE — second */
-.rh3-franchise {
+/* DYNASTY ROAD — second */
+.rh3-dynasty {
   width: 90%;
   height: clamp(3.9rem, 8.6dvh, 4.6rem);
   gap: clamp(0.8rem, 4vw, 1.1rem);
@@ -429,15 +429,21 @@
     0 12px 26px rgba(0, 0, 0, 0.45);
 }
 
-.rh3-franchise__icon {
-  width: clamp(2.7rem, 12vw, 3.2rem);
-  height: auto;
-  aspect-ratio: 264 / 153;
-  object-fit: contain;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+.rh3-dynasty__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: clamp(2.1rem, 9.5vw, 2.5rem);
+  height: clamp(2.1rem, 9.5vw, 2.5rem);
+  filter: drop-shadow(0 0 8px rgba(60, 140, 255, 0.55)) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
 }
 
-.rh3-franchise__rule,
+.rh3-dynasty__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rh3-dynasty__rule,
 .rh3-modes__rule {
   width: 1.5px;
   height: 44%;
@@ -445,13 +451,28 @@
   background: rgba(150, 190, 255, 0.45);
 }
 
-.rh3-franchise__label {
-  font-size: clamp(1.2rem, 6vw, 1.5rem);
+.rh3-dynasty__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(1.1rem, 5.6vw, 1.45rem);
   font-weight: 900;
   letter-spacing: 0.015em;
-  line-height: 1;
+  line-height: 1.1;
   white-space: nowrap;
   text-shadow: 0 2px 10px rgba(0, 20, 70, 0.6);
+}
+
+/* An unsigned $1B run is waiting on Dynasty Road. */
+.rh3-dynasty__alert {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.95rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #ff8a2a;
+  box-shadow: 0 0 0 2px rgba(7, 19, 55, 0.9), 0 0 10px rgba(255, 138, 42, 0.85);
 }
 
 /* MODES — third */

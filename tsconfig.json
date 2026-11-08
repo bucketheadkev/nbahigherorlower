@@ -39,6 +39,7 @@
     "node_modules",
     "ios",
     "android",
-    "capacitor.config.ts"
+    "capacitor.config.ts",
+    "supabase/functions"
   ]
 }

@@ -45,6 +45,9 @@ export type MessageKey =
   | 'home.playButton'
   | 'home.modes'
   | 'home.modesClose'
+  | 'home.dynastyRoad'
+  | 'home.dynastyUnsigned'
+  | 'home.dynastyChestReady'
   | 'home.menuPlayer'
   | 'home.menuAccount'
   | 'home.menuGuest'
@@ -192,6 +195,9 @@ const EN: Record<MessageKey, string> = {
   'home.playButton': 'PLAY',
   'home.modes': 'MODES',
   'home.modesClose': 'Close',
+  'home.dynastyRoad': 'Dynasty Road',
+  'home.dynastyUnsigned': 'a $1B run is waiting to be signed',
+  'home.dynastyChestReady': 'a chest is ready to open',
   'home.menuPlayer': 'Player',
   'home.menuAccount': 'Account',
   'home.menuGuest': 'Guest · Sign in',
@@ -361,6 +367,9 @@ const ES: Record<MessageKey, string> = {
   'home.playButton': 'JUGAR',
   'home.modes': 'MODOS',
   'home.modesClose': 'Cerrar',
+  'home.dynastyRoad': 'Ruta de Dinastías',
+  'home.dynastyUnsigned': 'una partida de $1B espera su fichaje',
+  'home.dynastyChestReady': 'un cofre está listo para abrir',
   'home.menuPlayer': 'Jugador',
   'home.menuAccount': 'Cuenta',
   'home.menuGuest': 'Invitado · Inicia sesión',

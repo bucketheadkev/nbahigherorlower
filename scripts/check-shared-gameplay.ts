@@ -162,12 +162,11 @@ const siakam2010 = card({
 });
 assert.notEqual(resolveAuthoritativePlayerValue(siakam2010), 181_000_000);
 
-const offPrimary = getDollarValueForSlot(bird80s, 'SF');
+// Full value at every eligible position: no primary/alternate difference.
+const alternate = getDollarValueForSlot(bird80s, 'SF');
 const primary = getDollarValueForSlot(bird80s, 'PF');
 assert.equal(primary, 213_000_000);
-assert.equal(offPrimary, 200_000_000);
-assert.equal(offPrimary % 1_000_000, 0);
-assert.equal(getDollarValueForSlot(bird80s, 'SF'), offPrimary);
+assert.equal(alternate, primary);
 
 const rounds: H2HRoundPublic[] = [
   { position: 'PG', matchup_resolved: true, p1_raw_value: 110_000_000, p2_raw_value: 90_000_000, p1_adjusted_value: 110_000_000, p2_adjusted_value: 72_500_000 },

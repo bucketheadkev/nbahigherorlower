@@ -52,10 +52,13 @@ import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
 import { BallionTicketMachine } from './BallionTicketMachine';
-import { RunBonusCard } from './run/RunBonusCard';
+import { RunBonusCard, RunBonusChip } from './run/RunBonusCard';
 import { CircuitRunCard } from './circuit/CircuitRunCard';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 import { RunEarnings, type RunEarningsData, type RunBonusOutcome } from './run/RunEarnings';
+import { DynastySignOffer } from './dynasty/DynastySignOffer';
+import { preloadClassicArena } from '@/lib/tradeup/classicArenaAssets';
+import { ChestProgressNote } from './dynasty/ChestProgressNote';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly';
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ClassicRosterReveal } from './ClassicRosterReveal';
@@ -237,6 +240,9 @@ export function BillionTradeEngine({
   );
   /** A real Classic Run: Run Bonus, run records, achievements, Rollover. */
   const isClassicRun = !isH2H && !isSynced;
+  useEffect(() => {
+    if (isClassicRun) preloadClassicArena();
+  }, [isClassicRun]);
   /** Classic Run draft chrome (vertical five + hub/pick) — also used for online 1v1. */
   const useClassicDraftChrome = !isH2H;
   const playerHandle = (h2hPlayerName ?? 'YOU').trim() || 'YOU';
@@ -393,6 +399,10 @@ export function BillionTradeEngine({
   const filledCount = filled.length;
   const seatedValues = useMemo(
     () => pricedLineup(slots).map((p) => ({ playerId: p.id, value: p.dollarValue })),
+    [slots],
+  );
+  const lineupIds = useMemo(
+    () => LINEUP_POSITIONS.flatMap((pos) => (slots[pos] ? [slots[pos]!.id] : [])),
     [slots],
   );
 
@@ -1151,6 +1161,8 @@ export function BillionTradeEngine({
   }, [resetTableForNextPick, slamPayload?.premium]);
 
   const showDraft = phase === 'draft';
+  /** Classic draft in the full-screen arena (Jumbotron, court, SPIN). 1v1 keeps its own board. */
+  const arenaDraft = isClassicRun && showDraft;
   const showReveal = phase === 'reveal';
   const lineupLocked = isSynced && deferOnlineReveal && filledCount >= 5;
   /** Once five are seated, Franchise shows its own roster preview in place of the court. */
@@ -1190,22 +1202,34 @@ export function BillionTradeEngine({
         courtAnalyze ? ' is-court-collapsing' : ''
       }${
         isH2H || isOnline ? ' billion-shell--h2h' : ''
-      }`}
+      }${arenaDraft ? ' billion-shell--arena' : ''}`}
     >
       <GameBackground />
+      {arenaDraft ? <div className="cj-arena" aria-hidden /> : null}
 
       <header className={`billion-top billion-top--spin${isH2H || isOnline ? ' billion-top--h2h' : ''}`}>
         <button
           type="button"
           className="tu-back"
+          aria-label={arenaDraft ? t('game.home').replace(/^←\s*/, '') : undefined}
           onClick={() => {
             resume();
             playUiBack();
             onExit();
           }}
         >
-          {franchise?.exitLabel ?? t('game.home')}
+          {arenaDraft ? (
+            <>
+              <svg className="cj-back__arrow" viewBox="0 0 24 24" aria-hidden>
+                <path d="M20 12H5.5M11.5 5 4.5 12l7 7" />
+              </svg>
+              CLASSIC
+            </>
+          ) : (
+            (franchise?.exitLabel ?? t('game.home'))
+          )}
         </button>
+        {arenaDraft && !circuit ? <RunBonusChip bonus={runBonus} seated={seatedValues} /> : null}
         {isOnline ? (
           <span className="billion-draft-meta billion-draft-meta--h2h-spacer" aria-hidden="true" />
         ) : isH2H && h2hOpponent ? (
@@ -1248,7 +1272,30 @@ export function BillionTradeEngine({
           onComplete={handleRevealComplete}
           onTotalSettled={handleTotalSettled}
           onPlayAgain={onPlayAgain ?? onExit}
-          earnings={earnings ? <RunEarnings data={earnings} reduceMotion={reduceMotion} /> : null}
+          earnings={
+            earnings ? (
+              <>
+                <RunEarnings data={earnings} reduceMotion={reduceMotion} />
+                {earnings.runValue >= BILLION_GOAL && lineupIds.length === 5 ? (
+                  <DynastySignOffer
+                    clientRunId={earnings.runRef}
+                    lineup={lineupIds}
+                    runValue={earnings.runValue}
+                    verify={earnings.submit}
+                    context="results"
+                  />
+                ) : null}
+                {lineupIds.length === 5 ? (
+                  <ChestProgressNote
+                    clientRunId={earnings.runRef}
+                    lineup={lineupIds}
+                    runValue={earnings.runValue}
+                    verify={earnings.submit}
+                  />
+                ) : null}
+              </>
+            ) : null
+          }
         />
       ) : null}
 
@@ -1312,10 +1359,11 @@ export function BillionTradeEngine({
                   onPrint={handleTicketPrint}
                   onResult={handleTicketResult}
                   onReroll={handleTicketReroll}
+                  variant={arenaDraft ? 'arena' : 'board'}
                 />
                 {circuit ? (
                   <CircuitRunCard name={circuit.name} rerollsAllowed={circuit.rerollsAllowed} />
-                ) : isClassicRun ? (
+                ) : isClassicRun && !arenaDraft ? (
                   <RunBonusCard bonus={runBonus} seated={seatedValues} reduceMotion={reduceMotion} />
                 ) : null}
               </div>
@@ -1359,6 +1407,7 @@ export function BillionTradeEngine({
                 primarySlot={placingPlayer?.primaryPosition ?? null}
                 targetColor={placingPlayer ? teamGlowColor(placingPlayer.teamId) : null}
                 targetPrimary={placingPlayer ? getTeamColors(placingPlayer.teamId).primary : null}
+                variant={arenaDraft ? 'arena' : 'court'}
               />
             ) : (
               <aside className="classic-lineup-board" aria-label="Your five">
@@ -1517,7 +1566,7 @@ export function BillionTradeEngine({
               present={readyToDraft && Boolean(spunTeam && spunEra) && !courtAnalyze && !sheetDismissed}
               open={sheetOpen}
               onOpenChange={setSheetOpen}
-              anchorSelectors={['.billion-booth-stage .ter__goal-block', '.billion-h2h-bar--draft', '.billion-top']}
+              anchorSelectors={['.cj__anchor', '.billion-booth-stage .ter__goal-block', '.billion-h2h-bar--draft', '.billion-top']}
               label="Player selection"
               peek={
                 selectedOffer ? (

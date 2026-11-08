@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useBankBalance } from '@/hooks/useBankBalance';
+import { dynastyAccountKey, useDynasty } from '@/hooks/useDynasty';
+import { DYNASTY_COLLECTIONS } from '@/lib/tradeup/dynasty/catalog';
+import { dc } from '@/lib/tradeup/dynasty/copy';
 import { useLocale } from '@/hooks/useLocale';
 import type { MessageKey } from '@/lib/i18n/messages';
 import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
@@ -95,14 +98,62 @@ function AchievementCard({ challenge }: { challenge: ChallengeProgress }) {
   );
 }
 
-export function ChallengesScreen() {
+interface DynastyMilestone {
+  id: string;
+  goal: string;
+  progress: number;
+  target: number;
+  complete: boolean;
+}
+
+/** Dynasty Road milestones: recognized here from the server's completions; they pay no cash. */
+function DynastyMilestoneCard({ milestone, badge }: { milestone: DynastyMilestone; badge: string }) {
   const { t } = useLocale();
+  const pct = milestone.complete ? 100 : Math.round((milestone.progress / milestone.target) * 100);
+  return (
+    <li className={`ach-card ach-card--dynasty${milestone.complete ? ' is-earned' : ''}`}>
+      <span className="ach-card__medal" aria-hidden>
+        {milestone.complete ? <CheckIcon /> : <LockIcon />}
+      </span>
+      <div className="ach-card__body">
+        <h3 className="ach-card__goal">{milestone.goal}</h3>
+        {!milestone.complete && milestone.target > 1 ? (
+          <div className="ach-card__progress">
+            <div className="ach-card__bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+              <span style={{ width: `${pct}%` }} />
+            </div>
+            <span className="ach-card__progress-label">
+              {milestone.progress}/{milestone.target}
+            </span>
+          </div>
+        ) : null}
+      </div>
+      <div className="ach-card__reward">
+        {milestone.complete ? <span className="ach-card__stamp">{t('challenges.earned')}</span> : null}
+        <strong className="ach-card__dynasty">{badge}</strong>
+      </div>
+    </li>
+  );
+}
+
+export function ChallengesScreen() {
+  const { t, locale } = useLocale();
   const [challenges, setChallenges] = useState<ChallengeProgress[]>(() =>
     buildChallengeProgressList(),
   );
   const [filter, setFilter] = useState<ChallengeFilter>('incomplete');
   const { state: account } = useAccountAuth();
   const bank = useBankBalance(account.status === 'permanent');
+  const dynasty = useDynasty(dynastyAccountKey(account));
+  const dynastiesDone = dynasty.state?.completed.length ?? 0;
+  const championships = DYNASTY_COLLECTIONS.filter((c) => c.kind === 'championship').length;
+  const milestones: DynastyMilestone[] = [
+    { id: 'dynasty-first', goal: dc('achFirst', locale), target: 1 },
+    { id: 'dynasty-three', goal: dc('achThree', locale), target: 3 },
+    { id: 'dynasty-all', goal: dc('achAll', locale), target: championships },
+  ].map((m) => ({ ...m, progress: Math.min(dynastiesDone, m.target), complete: dynastiesDone >= m.target }));
+  const shownMilestones = milestones.filter((m) => (filter === 'complete' ? m.complete : !m.complete));
+  const milestonesDone = milestones.filter((m) => m.complete).length;
 
   useEffect(() => {
     const refresh = () => setChallenges(buildChallengeProgressList());
@@ -114,8 +165,8 @@ export function ChallengesScreen() {
     };
   }, []);
 
-  const earnedCount = challenges.filter((c) => c.complete).length;
-  const openCount = challenges.length - earnedCount;
+  const earnedCount = challenges.filter((c) => c.complete).length + milestonesDone;
+  const openCount = challenges.length + milestones.length - earnedCount;
 
   const items = useMemo(
     () => byPayout(challenges.filter((c) => (filter === 'complete' ? c.complete : !c.complete))),
@@ -167,7 +218,7 @@ export function ChallengesScreen() {
           </button>
         </div>
 
-        {items.length === 0 ? (
+        {items.length + shownMilestones.length === 0 ? (
           <div className="ach-empty">
             <p>
               {filter === 'complete'
@@ -179,6 +230,9 @@ export function ChallengesScreen() {
           <ul className="ach-list">
             {items.map((challenge) => (
               <AchievementCard key={challenge.id} challenge={challenge} />
+            ))}
+            {shownMilestones.map((m) => (
+              <DynastyMilestoneCard key={m.id} milestone={m} badge={dc('achBadge', locale)} />
             ))}
           </ul>
         )}

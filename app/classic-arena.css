@@ -1,0 +1,824 @@
+/* =========================================================
+   Classic arena — the approved reference (design/classic-reference.png, 576 × 1024) rebuilt 1:1.
+
+   Every position below is a reference pixel × --u. --u scales the whole composition so it fills
+   the width (a hair of the arena's outer edge may crop on narrow phones) and fits between the
+   safe areas; extra height splits above and below. The static art (arena, Jumbotron frame, logo,
+   headline, backboard, court lines, half-court arc) is the reference itself
+   (public/images/classic/arena-plate.webp, built by scripts/build-classic-arena.py); the live parts
+   (panels, reels, jerseys, pills, SPIN, top bar) sit on it at the reference coordinates.
+   ========================================================= */
+
+.billion-shell--arena {
+  --st: env(safe-area-inset-top, 0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+  --avail-h: calc(100dvh - var(--st) - var(--sb));
+  /* Fill the width on phones, never so large that SPIN (bottom at 971) leaves the screen. */
+  --u: min(
+    max(calc(100vw / 576), min(calc(var(--avail-h) / 1024), calc(100vw / 540))),
+    calc(var(--avail-h) / 990)
+  );
+  --stage-w: calc(var(--u) * 576);
+  --stage-h: calc(var(--u) * 1024);
+  --stage-x: calc(50vw - var(--stage-w) / 2);
+  --stage-y: calc(var(--st) + max(0px, (var(--avail-h) - var(--stage-h)) / 2));
+  --cj-font: "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+
+  height: 100dvh;
+  overflow: hidden !important;
+  background: #020815 !important;
+}
+
+.billion-shell--arena .game-bg,
+.billion-shell--arena .arena-atmo {
+  display: none !important;
+}
+
+/* The arena itself: the reference plate, extended past its edges for any screen shape. */
+.billion-shell .cj-arena {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  pointer-events: none;
+  background-color: #020815;
+  background-image: url("/images/classic/arena-plate.webp");
+  background-repeat: no-repeat;
+  /* Plate = reference + 160 px each side, 220 above, 320 below (see the build script). */
+  background-size: calc(var(--u) * 897) calc(var(--u) * 1564);
+  background-position: calc(var(--stage-x) - var(--u) * 160) calc(var(--stage-y) - var(--u) * 220);
+}
+
+/* Wide screens: fade the plate's outer extension into the arena's dark. */
+@media (min-aspect-ratio: 3/4) {
+  .cj-arena::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      #020815 calc(var(--stage-x) - var(--u) * 60),
+      transparent calc(var(--stage-x) + var(--u) * 6),
+      transparent calc(var(--stage-x) + var(--stage-w) - var(--u) * 6),
+      #020815 calc(var(--stage-x) + var(--stage-w) + var(--u) * 60)
+    );
+  }
+}
+
+/* The draft layout wrappers keep their logic but no longer lay anything out. */
+.billion-shell.billion-shell--arena .billion-draft-layout.billion-draft-layout,
+.billion-shell.billion-shell--arena .billion-main.billion-main--draft,
+.billion-shell.billion-shell--arena .billion-booth-stage.billion-booth-stage {
+  position: static !important;
+  display: block !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  transform: none !important;
+  filter: none !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ── Top bar: ← CLASSIC · 0/5 ── */
+/* Spans the visible part of the stage, so ← CLASSIC and 0/5 never crop on narrow phones. */
+.billion-shell--arena .billion-top {
+  position: fixed !important;
+  z-index: 6 !important;
+  left: max(var(--stage-x), 0px) !important;
+  right: max(var(--stage-x), 0px) !important;
+  top: var(--stage-y) !important;
+  width: auto !important;
+  height: calc(var(--u) * 40) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 max(calc(var(--u) * 18 + min(var(--stage-x), 0px)), 14px, env(safe-area-inset-left, 0px)) !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.billion-shell--arena .billion-top .tu-back {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: calc(var(--u) * 40) !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-family: var(--cj-font) !important;
+  font-size: calc(var(--u) * 18.5) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.billion-shell--arena .billion-top .tu-back {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: calc(var(--u) * 12) !important;
+}
+
+.cj-back__arrow {
+  width: calc(var(--u) * 19);
+  height: calc(var(--u) * 19);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.billion-shell--arena .billion-top .billion-draft-meta {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-family: var(--cj-font) !important;
+  font-size: calc(var(--u) * 18.5) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Run Bonus (not in the reference's art; it rides the empty middle of the top bar). */
+.rb-chip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--cj-font);
+}
+
+.rb-chip__pill {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 6);
+  height: calc(var(--u) * 24);
+  margin: 0;
+  padding: 0 calc(var(--u) * 10);
+  border: 1px solid rgba(60, 240, 143, 0.55);
+  border-radius: 999px;
+  background: rgba(2, 14, 30, 0.82);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: calc(var(--u) * 11);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rb-chip__label {
+  text-transform: uppercase;
+  color: rgba(200, 220, 255, 0.85);
+}
+
+.rb-chip__reward {
+  color: #3cf08f;
+}
+
+.rb-chip.is-complete .rb-chip__pill {
+  border-color: #3cf08f;
+  box-shadow: 0 0 calc(var(--u) * 8) rgba(60, 240, 143, 0.45);
+}
+
+.rb-chip__pop {
+  position: absolute;
+  top: calc(100% + var(--u) * 6);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(var(--u) * 320);
+  margin: 0;
+  padding: calc(var(--u) * 7) calc(var(--u) * 10);
+  border: 1px solid rgba(60, 240, 143, 0.45);
+  border-radius: calc(var(--u) * 10);
+  background: rgba(2, 12, 28, 0.95);
+  color: #ffffff;
+  font-size: calc(var(--u) * 12.5);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+}
+
+/* ── Jumbotron displays and SPIN ── */
+.cj {
+  position: fixed;
+  z-index: 4;
+  left: var(--stage-x);
+  top: var(--stage-y);
+  width: var(--stage-w);
+  height: var(--stage-h);
+  pointer-events: none;
+  font-family: var(--cj-font);
+}
+
+.cj__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Where the Jumbotron's light ring ends: the player sheet stops just below it. */
+.cj__anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: calc(var(--u) * 372);
+}
+
+/* TEAM / ERA displays, inset inside the Jumbotron (reference 104/304, 184, 170 × 122). */
+.cj__panel {
+  --p-ink: #ffffff;
+  position: absolute;
+  top: calc(var(--u) * 184);
+  width: calc(var(--u) * 170);
+  height: calc(var(--u) * 122);
+  box-sizing: border-box;
+  overflow: hidden;
+  border: calc(var(--u) * 2) solid #1c7de4;
+  border-top-color: #79b6e6;
+  border-bottom-color: #6fbcf0;
+  border-radius: calc(var(--u) * 15);
+  /* Idle: navy face with the darker middle band. */
+  background: linear-gradient(
+    180deg,
+    #021d34 0%,
+    #00253f 27%,
+    #002541 29.5%,
+    #00132a 29.5%,
+    #001024 70.5%,
+    #00213d 70.5%,
+    #001f38 100%
+  );
+  box-shadow:
+    0 0 calc(var(--u) * 7) rgba(28, 125, 228, 0.65),
+    0 0 calc(var(--u) * 1.5) rgba(120, 190, 245, 0.7),
+    inset 0 0 calc(var(--u) * 6) rgba(28, 125, 228, 0.35);
+}
+
+.cj__panel--team {
+  left: calc(var(--u) * 104);
+}
+
+.cj__panel--era {
+  left: calc(var(--u) * 304);
+}
+
+/* Spinning: one open window, no band, no arrows, no label; the reel uses the full box. */
+.cj.is-spinning .cj__panel {
+  background: linear-gradient(180deg, #021d34, #00203b 50%, #001f38);
+}
+
+/* A landed team fills the whole display. */
+.cj__panel--team.is-team,
+.cj.is-spinning .cj__panel--team.is-team {
+  --p-ink: var(--team-ink, #ffffff);
+  background: var(--team-accent);
+}
+
+/* The reel is the whole display. */
+.cj .barrel-reel {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1;
+  width: auto !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cj .barrel-reel__frame {
+  display: none !important;
+}
+
+.cj .barrel-reel__strip,
+.cj .barrel-reel__solo,
+.cj .barrel-reel__ready,
+.cj .barrel-reel__hold {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.cj .barrel-reel__strip {
+  bottom: auto !important;
+  gap: 0 !important;
+}
+
+.cj .barrel-card {
+  --fs: 36.5;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 calc(var(--u) * 8) !important;
+  box-sizing: border-box;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent;
+  box-shadow: none !important;
+  color: var(--p-ink);
+  font-family: var(--cj-font) !important;
+  font-size: calc(var(--u) * var(--fs)) !important;
+  font-weight: 700 !important;
+  font-style: normal !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1 !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(0, 0, 0, 0.45) !important;
+  transform: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+.cj .barrel-card.is-ghost {
+  display: none !important;
+}
+
+/* Decades read as written: 90s, 00s, 10s. */
+.cj .barrel-card--era:not(.is-ready) {
+  text-transform: none !important;
+}
+
+/* Placeholders and decades sit on the display itself (team tiles bring their own color). */
+.cj .barrel-card.is-ready,
+.cj .barrel-card.barrel-card--era {
+  background: transparent !important;
+  color: var(--p-ink) !important;
+}
+
+.cj .barrel-card {
+  color: var(--p-ink) !important;
+  -webkit-text-fill-color: currentColor !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+}
+
+.cj .barrel-card.barrel-card--team[style*="color"] {
+  color: unset;
+}
+
+/* Team names (6+ letters) go condensed and shrink only as much as they must. */
+.cj .barrel-card[data-len="6"],
+.cj .barrel-card[data-len="7"],
+.cj .barrel-card[data-len="8"],
+.cj .barrel-card[data-len="9"],
+.cj .barrel-card[data-len="10"],
+.cj .barrel-card[data-len="11"],
+.cj .barrel-card[data-len="12"],
+.cj .barrel-card[data-len="13"],
+.cj .barrel-card[data-len="14"],
+.cj .barrel-card[data-len="15"] {
+  font-family: "Avenir Next Condensed", var(--cj-font) !important;
+  font-weight: 800 !important;
+}
+.cj .barrel-card[data-len="6"] { --fs: 36.5; }
+.cj .barrel-card[data-len="7"] { --fs: 33; }
+.cj .barrel-card[data-len="8"] { --fs: 28.5; }
+.cj .barrel-card[data-len="9"] { --fs: 25.5; }
+.cj .barrel-card[data-len="10"] { --fs: 23; }
+.cj .barrel-card[data-len="11"] { --fs: 21; }
+.cj .barrel-card[data-len="12"] { --fs: 19; }
+.cj .barrel-card[data-len="13"],
+.cj .barrel-card[data-len="14"],
+.cj .barrel-card[data-len="15"] { --fs: 17; }
+
+.cj__chev {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  width: calc(var(--u) * 19);
+  height: calc(var(--u) * 11);
+  transform: translateX(-50%);
+  fill: none;
+  stroke: var(--p-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.cj__chev--up {
+  top: calc(var(--u) * 10);
+}
+
+.cj__chev--down {
+  top: calc(var(--u) * 95);
+}
+
+.cj.is-spinning .cj__chev {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* SPIN, exactly where the reference has it: above the extra dark court, inside the half-court arc. */
+.cj__spin {
+  appearance: none;
+  position: absolute;
+  left: calc(var(--u) * 53);
+  top: calc(var(--u) * 890);
+  width: calc(var(--u) * 471);
+  height: calc(var(--u) * 81);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: calc(var(--u) * 1.5) solid rgba(255, 205, 150, 0.95);
+  border-radius: calc(var(--u) * 15);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 7%),
+    linear-gradient(
+      180deg,
+      #fea51e 0%,
+      #fd9204 14%,
+      #f97d00 34%,
+      #e85a00 55%,
+      #e04b00 62%,
+      #f15f00 78%,
+      #fb8804 89%,
+      #fdb057 95%,
+      #ffe7c9 100%
+    );
+  box-shadow:
+    0 0 calc(var(--u) * 16) rgba(255, 110, 0, 0.7),
+    0 0 calc(var(--u) * 4) rgba(255, 160, 60, 0.85),
+    0 calc(var(--u) * 6) calc(var(--u) * 14) rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-family: var(--cj-font);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+
+.cj__spin:active {
+  transform: scale(0.98);
+  filter: brightness(1.08);
+}
+
+.cj__spin.is-off {
+  pointer-events: none;
+  opacity: 0.5;
+  box-shadow: 0 calc(var(--u) * 6) calc(var(--u) * 14) rgba(0, 0, 0, 0.55);
+}
+
+.cj__spin-label {
+  padding-left: 0.27em;
+  font-size: calc(var(--u) * 50);
+  font-weight: 700;
+  letter-spacing: 0.27em;
+  line-height: 1;
+  text-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 3) rgba(140, 40, 0, 0.45);
+}
+
+/* ── The court: five seats at the reference positions ── */
+.draft-hub-court.draft-hub-court--arena {
+  position: fixed !important;
+  z-index: 2 !important;
+  left: var(--stage-x) !important;
+  top: var(--stage-y) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: var(--stage-w) !important;
+  height: var(--stage-h) !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none;
+  font-family: var(--cj-font);
+}
+
+.draft-hub-court--arena .draft-hub-court__stage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  aspect-ratio: auto !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat {
+  position: absolute !important;
+  inset: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+/* Each seat is its reference shirt's box; --pill-gap is the space down to its position pill. */
+.draft-hub-court--arena .draft-hub-court__seat--pf {
+  --pill-gap: 6;
+  --pill-w: 71;
+  left: calc(var(--u) * 161) !important;
+  top: calc(var(--u) * 468) !important;
+  width: calc(var(--u) * 109) !important;
+  height: calc(var(--u) * 136) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat--c {
+  --pill-gap: 6;
+  --pill-w: 70;
+  left: calc(var(--u) * 307) !important;
+  top: calc(var(--u) * 468) !important;
+  width: calc(var(--u) * 110) !important;
+  height: calc(var(--u) * 136) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat--sg {
+  --pill-gap: 8;
+  --pill-w: 75;
+  left: calc(var(--u) * 30) !important;
+  top: calc(var(--u) * 603) !important;
+  width: calc(var(--u) * 112) !important;
+  height: calc(var(--u) * 141) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat--sf {
+  --pill-gap: 7;
+  --pill-w: 74;
+  left: calc(var(--u) * 434) !important;
+  top: calc(var(--u) * 603) !important;
+  width: calc(var(--u) * 112) !important;
+  height: calc(var(--u) * 141) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat--pg {
+  --pill-gap: 5;
+  --pill-w: 74;
+  left: calc(var(--u) * 231) !important;
+  top: calc(var(--u) * 649) !important;
+  width: calc(var(--u) * 115) !important;
+  height: calc(var(--u) * 145) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__slot {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none;
+  transform: none !important;
+  overflow: visible !important;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.draft-hub-court--arena .draft-hub-court__slot::before,
+.draft-hub-court--arena .draft-hub-court__slot::after,
+.draft-hub-court--arena .draft-hub-court__seat::before,
+.draft-hub-court--arena .draft-hub-court__seat::after {
+  display: none !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__slot:focus-visible .aj {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Position pills under each jersey. */
+.draft-hub-court--arena .draft-hub-court__seat-pos,
+.draft-hub-court--arena .draft-hub-court__seat-pos.is-empty {
+  position: absolute !important;
+  left: 50% !important;
+  top: calc(100% + var(--u) * var(--pill-gap, 6)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: calc(var(--u) * var(--pill-w, 72)) !important;
+  height: calc(var(--u) * 25) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  box-sizing: border-box;
+  transform: translateX(-50%) !important;
+  border: calc(var(--u) * 1.6) solid #3d6fb4 !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #000d28, #04192c) !important;
+  box-shadow:
+    0 0 calc(var(--u) * 4) rgba(40, 120, 230, 0.55),
+    inset 0 calc(var(--u) * 1) 0 rgba(140, 190, 240, 0.25) !important;
+  color: #ffffff !important;
+  font-family: var(--cj-font) !important;
+  font-size: calc(var(--u) * 17) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1 !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+/* Eligible seats while placing a pick: the team color rings the jersey and breathes. */
+.draft-hub-court--arena .draft-hub-court__slot.is-target .aj {
+  filter: drop-shadow(0 0 calc(var(--u) * 5) var(--target-primary, #3fa9ff))
+    drop-shadow(0 0 calc(var(--u) * 2) rgba(255, 255, 255, 0.85));
+  animation: aj-target 1.1s ease-in-out infinite;
+}
+
+.draft-hub-court--arena .draft-hub-court__slot.is-primary .aj {
+  filter: drop-shadow(0 0 calc(var(--u) * 7) var(--target-primary, #3fa9ff))
+    drop-shadow(0 0 calc(var(--u) * 2.5) #ffffff);
+}
+
+/* Darken rather than fade, so the floor never shows through a shirt. */
+.draft-hub-court--arena .draft-hub-court__slot.is-moving .aj {
+  filter: drop-shadow(0 0 calc(var(--u) * 2.5) rgba(255, 255, 255, 0.9));
+}
+
+.draft-hub-court--arena.is-choosing .draft-hub-court__slot.is-empty:not(.is-target) .aj {
+  filter: brightness(0.62);
+}
+
+@keyframes aj-target {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+/* Lineup locked: the five pulse once and dim toward the valuation. */
+.draft-hub-court--arena.is-analyze-pulse .aj,
+.draft-hub-court--arena.is-analyze-sweep .aj {
+  filter: brightness(1.25) drop-shadow(0 0 calc(var(--u) * 8) rgba(80, 170, 255, 0.8));
+}
+
+.draft-hub-court--arena:is(.is-analyze-collapse, .is-analyze-beam) .draft-hub-court__seat {
+  opacity: 0;
+  transform: scale(0.9) !important;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* Player details (tap a filled jersey) stay above the court. */
+.draft-hub-court--arena .draft-hub-court__pop {
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/* ── The jersey: vector art of the reference shirt (components/tradeup/draft/ArenaJersey.tsx) ── */
+.aj {
+  position: absolute;
+  inset: 0;
+  display: block;
+  container-type: inline-size;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* The shirt's soft shadow on the hardwood. */
+.aj::before {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: -5%;
+  height: 16%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25) 60%, transparent);
+  pointer-events: none;
+}
+
+.aj__card {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+}
+
+.aj__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.aj__text {
+  position: absolute;
+  left: 17%;
+  right: 17%;
+  top: 30%;
+  bottom: 18%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aj-ink, #ffffff);
+  font-family: "Avenir Next Condensed", var(--cj-font);
+  font-size: 30cqw;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* The back: surname across the shoulders, one line, sized to fit. */
+.aj.is-back .aj__text {
+  top: 16%;
+  bottom: 52%;
+  left: 13%;
+  right: 13%;
+}
+
+.aj__surname {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Turned around its own center; the face changes while the shirt is edge-on. */
+.aj.is-turning .aj__card {
+  animation: aj-turn 0.42s ease-in-out;
+}
+
+@keyframes aj-turn {
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.02);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.aj.is-landing .aj__card {
+  animation: aj-land 0.55s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+@keyframes aj-land {
+  0% {
+    transform: scale(0.88);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .aj.is-landing .aj__card,
+  html:not([data-full-motion]) .aj.is-turning .aj__card,
+  html:not([data-full-motion]) .draft-hub-court--arena .draft-hub-court__slot.is-target .aj {
+    animation: none;
+  }
+}

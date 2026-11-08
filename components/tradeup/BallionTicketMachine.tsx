@@ -58,6 +58,21 @@ interface BallionTicketMachineProps {
   onPrint: () => void;
   onResult: (pair: SpinPair) => void;
   onReroll: (kind: TicketRerollKind) => void;
+  /** `arena`: Classic's Jumbotron (two full-panel displays) and the court's SPIN button. */
+  variant?: 'board' | 'arena';
+}
+
+function PanelChevrons() {
+  return (
+    <>
+      <svg className="cj__chev cj__chev--up" viewBox="0 0 24 14" aria-hidden>
+        <path d="M3 11.5 12 3l9 8.5" />
+      </svg>
+      <svg className="cj__chev cj__chev--down" viewBox="0 0 24 14" aria-hidden>
+        <path d="M3 2.5 12 11l9-8.5" />
+      </svg>
+    </>
+  );
 }
 
 const TEAM_ITEM_H = 78;
@@ -236,6 +251,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   onPrint,
   onResult,
   onReroll: _onReroll,
+  variant = 'board',
 }: BallionTicketMachineProps) {
   const { t } = useLocale();
   const customGoal = Boolean(goalCopy && goalCopy.trim());
@@ -446,6 +462,78 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           ['--team-ink' as string]: teamInk,
         } as CSSProperties)
       : undefined;
+
+  if (variant === 'arena') {
+    const canRoll = mode === 'idle' && !autoReroll && !rollLocked;
+    return (
+      <div
+        className={`cj${mode === 'spinning' ? ' is-spinning' : ''}${mode === 'landed' ? ' is-landed' : ''}`}
+        aria-label="Team and era roll"
+      >
+        {/* The headline and logo are part of the arena art; this keeps them readable to VoiceOver. */}
+        <h2 className="cj__sr">Build a $1,000,000,000 team</h2>
+        <span className="cj__anchor" aria-hidden />
+        <div className={`cj__panel cj__panel--team${teamFill ? ' is-team' : ''}`} style={teamPanelStyle}>
+          <BarrelReel
+            strip={spinTeam ? teamStrip : []}
+            spinId={spinTeam ? teamSpinId : 0}
+            itemHeight={TEAM_ITEM_H}
+            durationMs={teamMs}
+            reduceMotion={reduceMotion}
+            variant="team"
+            axis="y"
+            columns={1}
+            gap={0}
+            flat
+            readyLabel="TEAM"
+            holdLabel={!spinTeam && displayTeam ? teamLabel(displayTeam) : null}
+            holdStyle={teamFill && teamInk ? { background: teamFill, color: teamInk } : undefined}
+            celebrate={mode === 'landed'}
+            landIndex={teamStrip.length > TEAM_STRIP_LEN ? TEAM_STRIP_LEN - 1 : undefined}
+            nudgeSettle={nudgeSettle}
+            onLocked={spinTeam ? onTeamLocked : undefined}
+          />
+          <PanelChevrons />
+        </div>
+        <div className="cj__panel cj__panel--era">
+          <BarrelReel
+            strip={spinEra ? eraStrip : []}
+            spinId={spinEra ? eraSpinId : 0}
+            itemHeight={TEAM_ITEM_H}
+            durationMs={eraMs}
+            reduceMotion={reduceMotion}
+            variant="era"
+            axis="y"
+            columns={1}
+            gap={0}
+            readyLabel="ERA"
+            holdLabel={!spinEra && displayEra ? eraShortLabel(displayEra) : null}
+            celebrate={mode === 'landed'}
+            landIndex={eraStrip.length > ERA_STRIP_LEN ? ERA_STRIP_LEN - 1 : undefined}
+            nudgeSettle={nudgeSettle}
+            onLocked={spinEra ? onEraLocked : undefined}
+          />
+          <PanelChevrons />
+        </div>
+        {canRoll ? (
+          <button
+            type="button"
+            className="cj__spin"
+            onClick={(e) => {
+              e.preventDefault();
+              handleRoll();
+            }}
+          >
+            <span className="cj__spin-label">{t('game.roll')}</span>
+          </button>
+        ) : (
+          <div className="cj__spin is-off" aria-hidden>
+            <span className="cj__spin-label">{t('game.roll')}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

@@ -3,7 +3,7 @@
  * Run: npx tsx --tsconfig tsconfig.json scripts/test-onboarding-demo.ts
  */
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { getDollarValueForSlot, OFF_PRIMARY_SLOT_VALUE_FACTOR } from '@/lib/tradeup/billionDollar';
+import { getDollarValueForSlot } from '@/lib/tradeup/billionDollar';
 import {
   FINAL_FIVE,
   FINAL_TOTAL,
@@ -39,11 +39,7 @@ check('Kobe is a SG who can play SF', KOBE.primaryPosition === 'SG' && playerFit
 const sg = seatedValue(KOBE, 'SG');
 const sf = seatedValue(KOBE, 'SF');
 check('SG price is his full value', sg === KOBE.base, money(sg));
-check(
-  'SF price is the game’s 3% rule',
-  sf === getDollarValueForSlot(KOBE, 'SF') && sf === Math.round((sg * OFF_PRIMARY_SLOT_VALUE_FACTOR) / 1e6) * 1e6,
-  `${money(sf)} (−${money(sg - sf)})`,
-);
+check('SF price is also his full value', sf === getDollarValueForSlot(KOBE, 'SF') && sf === sg, money(sf));
 
 console.log('practice five:');
 for (const [player, slot] of FINAL_FIVE) {

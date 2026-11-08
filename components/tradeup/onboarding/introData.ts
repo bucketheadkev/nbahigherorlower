@@ -46,7 +46,7 @@ export const MAGIC = legend('hist_1980s_LAL_magic_johnson');
 export const DIRK = legend('hist_2000s_DAL_dirk_nowitzki');
 export const EWING = legend('hist_1990s_NYK_patrick_ewing');
 
-/** The game's seated price: full at the primary position, 3% off anywhere else. */
+/** The game's seated price: full value at every position the player is eligible for. */
 export function seatedValue(player: TradePlayer, slot: Position): number {
   return getDollarValueForSlot(player, slot);
 }
@@ -121,22 +121,25 @@ export const STEPS = {
     },
   },
   penalty: {
-    title: { en: 'POSITION MATTERS', es: 'LA POSICIÓN IMPORTA' },
+    title: { en: 'MORE THAN ONE POSITION', es: 'MÁS DE UNA POSICIÓN' },
     line: {
-      en: 'Playing outside a primary position reduces a player’s value by 3%.',
-      es: 'Jugar fuera de su posición principal reduce el valor de un jugador un 3%.',
+      en: 'Kobe can play SG or SF — he keeps his full value at both.',
+      es: 'Kobe puede jugar de SG o SF — conserva su valor completo en ambas.',
     },
   },
   moveSg: {
-    title: { en: 'POSITION MATTERS', es: 'LA POSICIÓN IMPORTA' },
+    title: { en: 'MOVE YOUR PLAYER', es: 'MUEVE A TU JUGADOR' },
     line: {
-      en: 'Move Kobe to shooting guard to restore his full value.',
-      es: 'Mueve a Kobe a escolta (SG) para recuperar su valor completo.',
+      en: 'Move Kobe to shooting guard to free up small forward.',
+      es: 'Mueve a Kobe a escolta (SG) para liberar el puesto de alero.',
     },
   },
   restored: {
     title: { en: 'FULL VALUE', es: 'VALOR COMPLETO' },
-    line: { en: 'At his primary position, Kobe is worth 100%.', es: 'En su posición principal, Kobe vale el 100%.' },
+    line: {
+      en: 'Every position a player can play is worth 100% of his value.',
+      es: 'Cada posición que puede jugar vale el 100% de su valor.',
+    },
   },
   fill: {
     title: { en: 'LET’S COMPLETE YOUR TEAM.', es: 'COMPLETEMOS TU EQUIPO.' },
@@ -188,7 +191,6 @@ export const LABELS = {
   teamValue: { en: 'TEAM VALUE', es: 'VALOR DEL EQUIPO' },
   bankEarned: { en: 'BANK EARNED', es: 'GANADO PARA EL BANCO' },
   yourBank: { en: 'WHAT YOUR BANK DOES', es: 'PARA QUÉ SIRVE TU BANCO' },
-  franchises: { en: 'Own Franchises', es: 'Compra Franquicias' },
   leaderboard: { en: 'Climb the leaderboard', es: 'Sube en la clasificación' },
   wall: {
     en: 'Reach $1,000,000,000 in Bank to join the Wall of Fame',

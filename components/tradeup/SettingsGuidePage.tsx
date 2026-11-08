@@ -143,12 +143,10 @@ function Example({ example, locale }: { example: GuideExample; locale: string })
     );
   }
   if (example === 'position') {
-    const full = seatedValue(KOBE, 'SG');
-    const off = seatedValue(KOBE, 'SF');
     return (
       <ul className="sgx-cards">
         <PlayerCard player={KOBE} slot="SG" tag={nav.fullValue} tone="good" />
-        <PlayerCard player={KOBE} slot="SF" tag={`−3% · −${formatCash(full - off)}`} tone="warn" />
+        <PlayerCard player={KOBE} slot="SF" tag={nav.fullValue} tone="good" />
       </ul>
     );
   }

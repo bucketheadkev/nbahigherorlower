@@ -16,6 +16,7 @@ import { getTeam } from '@/lib/tradeup/teams';
 import { eraShortLabel, type DecadeEra, type ValuedPlayer } from '@/lib/tradeup/billionDollar';
 import type { Position } from '@/lib/tradeup/types';
 import { ArenaCourtArt } from './draft/ArenaCourt';
+import { ArenaJersey } from './draft/ArenaJersey';
 import { CourtJersey } from './draft/CourtJersey';
 
 export type HubCardPlayer = ValuedPlayer & { era?: DecadeEra };
@@ -45,6 +46,9 @@ type DraftHubCardsProps = {
   /** When set, empty/filled seats route placement through the draft engine. */
   onSlotPress?: (slot: Position) => void;
   onAnalyzeComplete?: () => void;
+  /** `arena`: Classic's full-screen arena. The floor comes from the arena art; seats and jerseys
+   * sit on it at the reference positions (app/classic-arena.css). */
+  variant?: 'court' | 'arena';
 };
 
 /** A press that travels farther than this is a scroll or swipe, never a jersey tap. */
@@ -170,7 +174,9 @@ export function DraftHubCards({
   reduceMotion = false,
   onSlotPress,
   onAnalyzeComplete,
+  variant = 'court',
 }: DraftHubCardsProps) {
+  const arena = variant === 'arena';
   const [detailSlot, setDetailSlot] = useState<Position | null>(null);
   const [flippedSlots, setFlippedSlots] = useState<ReadonlySet<Position>>(() => new Set());
   const pressRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
@@ -340,13 +346,14 @@ export function DraftHubCards({
   return (
     <aside
       ref={rootRef}
-      className={`draft-hub-court${analyzing ? ' is-analyzing' : ''}${stageClass}${
+      className={`draft-hub-court${arena ? ' draft-hub-court--arena' : ''}${analyzing ? ' is-analyzing' : ''}${stageClass}${
         assignMode ? ' is-assigning' : ''
       }${impact ? ' is-impacting' : ''}${choosing ? ' is-choosing' : ''}`}
       style={courtStyle}
       aria-label={analyzing ? 'Activating lineup' : 'Your five'}
     >
       <div className="draft-hub-court__stage">
+        {arena ? null : (
         <div className="draft-hub-court__floor" aria-hidden="true">
           {impact ? (
             <>
@@ -393,6 +400,7 @@ export function DraftHubCards({
           </span>
           <span className="draft-hub-court__energy-sweep" aria-hidden="true" />
         </div>
+        )}
 
         {COURT_SLOTS.map((slot) => {
           const player = slots[slot];
@@ -479,12 +487,22 @@ export function DraftHubCards({
                   setDetailSlot((prev) => (prev === slot ? null : slot));
                 }}
               >
-                <CourtJersey
-                  position={slot}
-                  playerName={filled && player ? player.name : null}
-                  flipped={showName}
-                  landing={filled && landingSlots.has(slot)}
-                />
+                {arena ? (
+                  <ArenaJersey
+                    position={slot}
+                    playerName={filled && player ? player.name : null}
+                    colors={filled ? colors : null}
+                    flipped={showName}
+                    landing={filled && landingSlots.has(slot)}
+                  />
+                ) : (
+                  <CourtJersey
+                    position={slot}
+                    playerName={filled && player ? player.name : null}
+                    flipped={showName}
+                    landing={filled && landingSlots.has(slot)}
+                  />
+                )}
               </button>
               <span className={`draft-hub-court__seat-pos${filled && player ? '' : ' is-empty'}`}>
                 {slot}

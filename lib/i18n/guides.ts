@@ -58,7 +58,6 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
         { icon: 'rollover', title: 'Rollover', line: 'Every dollar above $1,000,000,000 goes into your Bank.' },
         { icon: 'bonus', title: 'Run Bonuses', line: 'Complete the bonus challenge on a run for extra cash.' },
         { icon: 'achievement', title: 'Achievements', line: 'Hit milestones to earn more.' },
-        { icon: 'franchise', title: 'Franchises', line: 'Spend your Bank to own an NBA team.' },
         { icon: 'leaderboard', title: 'Leaderboard', line: 'Players are ranked by Bank balance.' },
         { icon: 'wall', title: 'Wall of Fame', line: 'Reach a $1,000,000,000 Bank to join it.' },
       ],
@@ -69,6 +68,7 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
       items: [
         { mark: '$1B', title: 'Classic Run', line: 'Solo draft. Reach $1,000,000,000.' },
         { mark: '1V1', title: 'Head to Head', line: 'Draft against a rival. Higher total wins.' },
+        { mark: '5/5', title: 'Dynasty Road', line: 'Sign one player from every $1B Classic run. Collect each title team’s starting five.' },
       ],
     },
   ],
@@ -89,8 +89,8 @@ const HOW_VALUES_EN: GuidePageContent = {
     {
       kind: 'example',
       label: 'Position',
-      title: 'Primary position = full value.',
-      line: 'Seat a player anywhere else and he is worth 3% less. Move him back to restore it.',
+      title: 'Every position he plays = full value.',
+      line: 'Seat a player at any position he is eligible for and he keeps his full value.',
       example: 'position',
     },
     {
@@ -140,7 +140,6 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
         { icon: 'rollover', title: 'Excedente', line: 'Cada dólar por encima de $1,000,000,000 va a tu Banco.' },
         { icon: 'bonus', title: 'Bonos de partida', line: 'Cumple el reto de bono de una partida para ganar más.' },
         { icon: 'achievement', title: 'Logros', line: 'Alcanza hitos para ganar más.' },
-        { icon: 'franchise', title: 'Franquicias', line: 'Usa tu Banco para ser dueño de un equipo NBA.' },
         { icon: 'leaderboard', title: 'Clasificación', line: 'Los jugadores se ordenan por saldo del Banco.' },
         { icon: 'wall', title: 'Muro de la Fama', line: 'Llega a $1,000,000,000 en tu Banco para entrar.' },
       ],
@@ -151,6 +150,7 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
       items: [
         { mark: '$1B', title: 'Partida clásica', line: 'Draft en solitario. Llega a $1,000,000,000.' },
         { mark: '1V1', title: 'Cara a cara', line: 'Draftea contra un rival. Gana el total más alto.' },
+        { mark: '5/5', title: 'Ruta de Dinastías', line: 'Ficha a un jugador en cada partida Clásica de $1B. Colecciona el quinteto de cada campeón.' },
       ],
     },
   ],
@@ -171,8 +171,8 @@ const HOW_VALUES_ES: GuidePageContent = {
     {
       kind: 'example',
       label: 'Posición',
-      title: 'Posición principal = valor completo.',
-      line: 'En cualquier otra posición vale un 3% menos. Devuélvelo a su posición para recuperarlo.',
+      title: 'Cada posición que juega = valor completo.',
+      line: 'Colócalo en cualquier posición en la que puede jugar y conserva su valor completo.',
       example: 'position',
     },
     {

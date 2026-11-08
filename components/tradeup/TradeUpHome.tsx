@@ -4,6 +4,7 @@ import { type MouseEvent as ReactMouseEvent, useEffect, useLayoutEffect, useRef,
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
 import { useBankBalance } from '@/hooks/useBankBalance';
+import { dynastyAccountKey, useDynasty } from '@/hooks/useDynasty';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/lib/account/accountPromptStorage';
 import { formatCash, readBankPreview } from '@/lib/tradeup/bank';
 import { recordLocalInduction } from '@/lib/tradeup/wallOfFame';
+import { preloadClassicArena } from '@/lib/tradeup/classicArenaAssets';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import {
   AccountAuthSheet,
@@ -25,7 +27,7 @@ import { BallionLogo } from './TradeUpLogo';
 import { SoundSettings, type SettingsLink } from './SoundSettings';
 import { WallOfFameScreen } from './WallOfFameScreen';
 import { TickerNumber, money } from './onboarding/ticker';
-import { FranchiseMode } from './franchise/FranchiseMode';
+import { DynastyRoad } from './dynasty/DynastyRoad';
 
 /** home-v2/arena.jpg: the backboard top and net bottom, as shares of the photo's height. */
 const HOOP_TOP = 0.205;
@@ -67,17 +69,25 @@ export function TradeUpHome({
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
   const [wallOpen, setWallOpen] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
-  const [franchisesOpen, setFranchisesOpen] = useState(false);
+  const [dynastyOpen, setDynastyOpen] = useState(false);
   const permanent = accountState.status === 'permanent';
+  const dynasty = useDynasty(dynastyAccountKey(accountState));
+  const unsignedRuns = dynasty.state?.pending.length ?? 0;
+  const readyChests = dynasty.state?.chests.filter((c) => c.status === 'ready').length ?? 0;
+  const { refresh: refreshDynasty } = dynasty;
+  // Home remounts after every run, so an unsigned $1B run shows up right away.
+  useEffect(() => {
+    refreshDynasty();
+  }, [refreshDynasty]);
 
   useEffect(() => {
     if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
   }, [bank, permanent]);
 
-  // Franchise arena art, warmed up so the mode opens on a ready background.
+  // Modes sheet and Classic arena art, warmed up so both open fully drawn.
   useEffect(() => {
     const id = window.setTimeout(() => {
-      new Image().src = '/images/pack/arena-bg.jpg';
+      preloadClassicArena();
       new Image().src = '/images/home-v2/classic.jpg';
       new Image().src = '/images/home-v2/1v1.jpg';
     }, 1500);
@@ -299,13 +309,36 @@ export function TradeUpHome({
 
           <button
             type="button"
-            className="rh3-franchise"
-            onClick={go(() => setFranchisesOpen(true))}
+            className="rh3-dynasty"
+            aria-label={
+              unsignedRuns > 0
+                ? `${t('home.dynastyRoad')} · ${t('home.dynastyUnsigned')}`
+                : readyChests > 0
+                  ? `${t('home.dynastyRoad')} · ${t('home.dynastyChestReady')}`
+                  : t('home.dynastyRoad')
+            }
+            onClick={go(() => setDynastyOpen(true))}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="rh3-franchise__icon" src="/images/home-v2/arena-exterior.png" alt="" aria-hidden />
-            <span className="rh3-franchise__rule" aria-hidden />
-            <span className="rh3-franchise__label">{t('home.myFranchise').toLocaleUpperCase()}</span>
+            <span className="rh3-dynasty__icon" aria-hidden>
+              <svg viewBox="0 0 32 32" width="32" height="32">
+                <defs>
+                  <linearGradient id="rh3-dyn-banner" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#5aa8ff" />
+                    <stop offset="1" stopColor="#1748c9" />
+                  </linearGradient>
+                </defs>
+                <path d="M5.5 4.5h21" stroke="#d6e6ff" strokeWidth="2" strokeLinecap="round" />
+                <path d="M8 5.5h16v21l-8-4.6-8 4.6v-21Z" fill="url(#rh3-dyn-banner)" stroke="#a9ceff" strokeWidth="1.2" strokeLinejoin="round" />
+                <path d="M10.5 8.6h11" stroke="#ff9a3d" strokeWidth="1.6" strokeLinecap="round" />
+                <path
+                  d="m16 11.4 1.45 2.95 3.25.47-2.35 2.3.55 3.24L16 18.83l-2.9 1.53.55-3.24-2.35-2.3 3.25-.47L16 11.4Z"
+                  fill="#ffffff"
+                />
+              </svg>
+            </span>
+            <span className="rh3-dynasty__rule" aria-hidden />
+            <span className="rh3-dynasty__label">{t('home.dynastyRoad').toLocaleUpperCase()}</span>
+            {unsignedRuns + readyChests > 0 ? <span className="rh3-dynasty__alert" aria-hidden /> : null}
           </button>
 
           <button type="button" className="rh3-modes" onClick={go(() => setModesOpen(true))}>
@@ -338,19 +371,12 @@ export function TradeUpHome({
         onContinueAsGuest={continueAsGuest}
       />
 
-      <FranchiseMode
-        open={franchisesOpen}
-        permanent={permanent}
-        userId={permanent ? accountState.user.id : null}
-        guestBank={bank ?? 0}
-        onClose={() => setFranchisesOpen(false)}
+      <DynastyRoad
+        open={dynastyOpen}
+        onClose={() => setDynastyOpen(false)}
         onSignIn={() => {
-          setFranchisesOpen(false);
+          setDynastyOpen(false);
           openSheet('signup');
-        }}
-        onPlayClassic={() => {
-          setFranchisesOpen(false);
-          onPlay();
         }}
       />
 
