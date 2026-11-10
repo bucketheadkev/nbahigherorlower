@@ -40,14 +40,19 @@ function isShareCancelled(err: unknown): boolean {
 }
 
 /** PNG of the on-screen results card (total + five players). */
-export async function captureRunShareCard(node: HTMLElement): Promise<Blob | null> {
+export async function captureRunShareCard(
+  node: HTMLElement,
+  opts?: { pixelRatio?: number; backgroundColor?: string; exclude?: (node: HTMLElement) => boolean },
+): Promise<Blob | null> {
   try {
     const { toBlob } = await import('html-to-image');
+    const exclude = opts?.exclude;
     return await toBlob(node, {
-      pixelRatio: 2,
+      pixelRatio: opts?.pixelRatio ?? 2,
       cacheBust: true,
-      backgroundColor: '#03143a',
+      backgroundColor: opts?.backgroundColor ?? '#03143a',
       skipAutoScale: true,
+      filter: exclude ? (el) => !(el instanceof HTMLElement && exclude(el)) : undefined,
     });
   } catch {
     return null;

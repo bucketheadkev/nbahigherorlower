@@ -25,6 +25,7 @@ import './franchise-opening.css';
 import './franchise-v5.css';
 import './dynasty.css';
 import './classic-arena.css';
+import './classic-results.css';
 
 export const metadata: Metadata = {
   title: '1B Run',

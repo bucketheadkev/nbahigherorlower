@@ -465,13 +465,28 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   if (variant === 'arena') {
     const canRoll = mode === 'idle' && !autoReroll && !rollLocked;
+    // Arrows and the center band belong to the untouched TEAM / ERA displays only.
+    const pristine = mode === 'idle' && !displayTeam && !displayEra && !spinTeam && !spinEra;
     return (
       <div
-        className={`cj${mode === 'spinning' ? ' is-spinning' : ''}${mode === 'landed' ? ' is-landed' : ''}`}
+        className={`cj${pristine ? ' is-pristine' : ''}${mode === 'spinning' ? ' is-spinning' : ''}${
+          mode === 'landed' ? ' is-landed' : ''
+        }`}
         aria-label="Team and era roll"
       >
-        {/* The headline and logo are part of the arena art; this keeps them readable to VoiceOver. */}
-        <h2 className="cj__sr">Build a $1,000,000,000 team</h2>
+        {/* Live vector text on the Jumbotron's curve (sharp on any screen); reference px coordinates. */}
+        <h2 className="cj__headline" aria-label="Build a $1,000,000,000 team">
+          <svg viewBox="60 110 460 80" aria-hidden>
+            <defs>
+              <path id="cj-headline-arc" d="M85 169A1545 1545 0 0 1 500 169" />
+            </defs>
+            <text className="cj__headline-text">
+              <textPath href="#cj-headline-arc" startOffset="50%" textAnchor="middle" textLength="414" lengthAdjust="spacing">
+                BUILD A <tspan className="cj__headline-cash">$1,000,000,000</tspan> TEAM
+              </textPath>
+            </text>
+          </svg>
+        </h2>
         <span className="cj__anchor" aria-hidden />
         <div className={`cj__panel cj__panel--team${teamFill ? ' is-team' : ''}`} style={teamPanelStyle}>
           <BarrelReel

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import {
   BILLION_GOAL,
   buildEraRoster,
@@ -36,7 +37,7 @@ import {
   getWorldRank,
 } from '@/lib/tradeup/worldLeaderboard';
 import { submitVerifiedClassicLineup } from '@/lib/account/leaderboardCloud';
-import { markPayoutsCelebrated } from '@/lib/tradeup/bank';
+import { isDynastyPreview, previewRecordRun } from '@/lib/account/dynastyPreview';
 import { payLocalRollover } from '@/lib/tradeup/rollover';
 import { runBonusFacts } from '@/lib/tradeup/runBonuses';
 import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
@@ -52,13 +53,12 @@ import { useLocale } from '@/hooks/useLocale';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { GameBackground } from './game/GameBackground';
 import { BallionTicketMachine } from './BallionTicketMachine';
-import { RunBonusCard, RunBonusChip } from './run/RunBonusCard';
+import { RunBonusCard } from './run/RunBonusCard';
 import { CircuitRunCard } from './circuit/CircuitRunCard';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
-import { RunEarnings, type RunEarningsData, type RunBonusOutcome } from './run/RunEarnings';
-import { DynastySignOffer } from './dynasty/DynastySignOffer';
+import type { RunEarningsData, RunBonusOutcome } from './run/RunEarnings';
 import { preloadClassicArena } from '@/lib/tradeup/classicArenaAssets';
-import { ChestProgressNote } from './dynasty/ChestProgressNote';
+import { ClassicRunResults } from './run/ClassicRunResults';
 import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly';
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ClassicRosterReveal } from './ClassicRosterReveal';
@@ -75,6 +75,7 @@ import {
 } from '@/lib/tradeup/h2hDraftBridge';
 import { CircleName, DraftHubCards } from './DraftHubCards';
 import { DraftSheet } from './draft/DraftSheet';
+import { ArenaPicker } from './draft/ArenaPicker';
 
 /**
  * Experimental: replace classic five position rows with half-court roster.
@@ -274,6 +275,8 @@ export function BillionTradeEngine({
   const [courtAnalyze, setCourtAnalyze] = useState(false);
   /** True after the hub-court siphon — ClassicRosterReveal starts at FINALIZING VALUE. */
   const [revealSkipAnalyze, setRevealSkipAnalyze] = useState(false);
+  /** Classic: the arena lights go out between the fifth pick and the results. */
+  const [arenaBlackout, setArenaBlackout] = useState(false);
   const pendingAssignRef = useRef<{
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
@@ -309,7 +312,8 @@ export function BillionTradeEngine({
   const runRefRef = useRef<string | null>(circuit?.attemptId ?? null);
   const runRecordedRef = useRef(false);
   const [runStarted, setRunStarted] = useState(false);
-  const [earnings, setEarnings] = useState<RunEarningsData | null>(null);
+  /** This run's payouts and verification (recorded server-side; the results screen stays clean). */
+  const [, setEarnings] = useState<RunEarningsData | null>(null);
   const { state: account } = useAccountAuth();
 
   /** This run's one optional objective (Classic runs only — never Cash Cups). */
@@ -401,11 +405,6 @@ export function BillionTradeEngine({
     () => pricedLineup(slots).map((p) => ({ playerId: p.id, value: p.dollarValue })),
     [slots],
   );
-  const lineupIds = useMemo(
-    () => LINEUP_POSITIONS.flatMap((pos) => (slots[pos] ? [slots[pos]!.id] : [])),
-    [slots],
-  );
-
   useEffect(() => {
     if (!isOnline || !onOnlineProgress) return;
     onOnlineProgress(filledCount);
@@ -661,7 +660,14 @@ export function BillionTradeEngine({
           setOffers([]);
           setSelectedOfferId(null);
           setMovingFrom(null);
-          if (EXPERIMENTAL_DRAFT_HUB_CARDS) {
+          if (isClassicRun) {
+            // The fifth jersey lands, the arena lights go out, then the results light up.
+            setSheetDismissed(true);
+            resetTimerRef.current = window.setTimeout(() => {
+              setArenaBlackout(true);
+              resetTimerRef.current = window.setTimeout(() => setPhase('reveal'), reduceMotion ? 0 : 300);
+            }, reduceMotion ? 0 : 320);
+          } else if (EXPERIMENTAL_DRAFT_HUB_CARDS) {
             resetTimerRef.current = window.setTimeout(() => {
               setCourtAnalyze(true);
             }, reduceMotion ? 40 : 150);
@@ -698,6 +704,7 @@ export function BillionTradeEngine({
     },
     [
       deferOnlineReveal,
+      isClassicRun,
       isFranchise,
       isH2H,
       isSynced,
@@ -756,6 +763,11 @@ export function BillionTradeEngine({
         runBonus: runBonusOutcome,
         circuit: circuit ? { name: circuit.name } : null,
       });
+      // Offline Dynasty preview records the run here (the server records real accounts' runs).
+      if (isDynastyPreview()) {
+        const ids = LINEUP_POSITIONS.flatMap((pos) => (finalSlots[pos] ? [finalSlots[pos]!.id] : []));
+        if (ids.length === 5) previewRecordRun(runRef, ids, total);
+      }
     },
     [account.status, circuit, isClassicRun, runPayoutRef],
   );
@@ -851,11 +863,8 @@ export function BillionTradeEngine({
         },
         previousBest,
       );
-      if (unlocked.length > 0) {
-        // The run's earnings panel celebrates these; skip the global popup.
-        markPayoutsCelebrated(unlocked);
-        notifyAchievementsUnlocked();
-      }
+      // Their Cash is celebrated by the earnings summary back on the home screen.
+      if (unlocked.length > 0) notifyAchievementsUnlocked();
       const seatTotal = pricedLineup(slots).reduce((sum, player) => sum + player.dollarValue, 0);
       recordClassicRun(seatTotal > 0 ? seatTotal : payload.teamValue, unlocked, slots);
     },
@@ -1202,7 +1211,7 @@ export function BillionTradeEngine({
         courtAnalyze ? ' is-court-collapsing' : ''
       }${
         isH2H || isOnline ? ' billion-shell--h2h' : ''
-      }${arenaDraft ? ' billion-shell--arena' : ''}`}
+      }${arenaDraft ? ' billion-shell--arena' : ''}${showReveal && isClassicRun ? ' billion-shell--results' : ''}`}
     >
       <GameBackground />
       {arenaDraft ? <div className="cj-arena" aria-hidden /> : null}
@@ -1223,13 +1232,12 @@ export function BillionTradeEngine({
               <svg className="cj-back__arrow" viewBox="0 0 24 24" aria-hidden>
                 <path d="M20 12H5.5M11.5 5 4.5 12l7 7" />
               </svg>
-              CLASSIC
+              BACK
             </>
           ) : (
             (franchise?.exitLabel ?? t('game.home'))
           )}
         </button>
-        {arenaDraft && !circuit ? <RunBonusChip bonus={runBonus} seated={seatedValues} /> : null}
         {isOnline ? (
           <span className="billion-draft-meta billion-draft-meta--h2h-spacer" aria-hidden="true" />
         ) : isH2H && h2hOpponent ? (
@@ -1260,7 +1268,22 @@ export function BillionTradeEngine({
         />
       ) : null}
 
-      {showReveal && !isH2H && !(isSynced && deferOnlineReveal) ? (
+      {arenaBlackout && !showReveal && typeof document !== 'undefined'
+        ? createPortal(<div className="cr-blackout" aria-hidden />, document.body)
+        : null}
+
+      {showReveal && isClassicRun ? (
+        <ClassicRunResults
+          roster={LINEUP_POSITIONS.flatMap((pos) => {
+            const player = slots[pos];
+            return player ? [{ ...player, seatedSlot: pos }] : [];
+          })}
+          reduceMotion={reduceMotion}
+          onTotalSettled={handleTotalSettled}
+          onComplete={handleRevealComplete}
+          onPlayAgain={onPlayAgain ?? onExit}
+        />
+      ) : showReveal && !isH2H && !(isSynced && deferOnlineReveal) ? (
         <ClassicRosterReveal
           roster={LINEUP_POSITIONS.flatMap((pos) => {
             const player = slots[pos];
@@ -1272,30 +1295,6 @@ export function BillionTradeEngine({
           onComplete={handleRevealComplete}
           onTotalSettled={handleTotalSettled}
           onPlayAgain={onPlayAgain ?? onExit}
-          earnings={
-            earnings ? (
-              <>
-                <RunEarnings data={earnings} reduceMotion={reduceMotion} />
-                {earnings.runValue >= BILLION_GOAL && lineupIds.length === 5 ? (
-                  <DynastySignOffer
-                    clientRunId={earnings.runRef}
-                    lineup={lineupIds}
-                    runValue={earnings.runValue}
-                    verify={earnings.submit}
-                    context="results"
-                  />
-                ) : null}
-                {lineupIds.length === 5 ? (
-                  <ChestProgressNote
-                    clientRunId={earnings.runRef}
-                    lineup={lineupIds}
-                    runValue={earnings.runValue}
-                    verify={earnings.submit}
-                  />
-                ) : null}
-              </>
-            ) : null
-          }
         />
       ) : null}
 
@@ -1568,8 +1567,46 @@ export function BillionTradeEngine({
               onOpenChange={setSheetOpen}
               anchorSelectors={['.cj__anchor', '.billion-booth-stage .ter__goal-block', '.billion-h2h-bar--draft', '.billion-top']}
               label="Player selection"
+              cue={
+                isClassicRun ? (
+                  <>
+                    <svg className="draft-sheet__cue-icon" viewBox="0 0 24 24" aria-hidden>
+                      <path d="M6 9.5l6 6 6-6" />
+                    </svg>
+                    Drag down to see your court
+                  </>
+                ) : undefined
+              }
               peek={
-                selectedOffer ? (
+                isClassicRun ? (
+                  <span className={`draft-sheet-peek draft-sheet-peek--arena${selectedOffer ? ' has-pick' : ''}`}>
+                    {selectedOffer ? (
+                      <span
+                        className="draft-sheet-peek__chip"
+                        style={{
+                          background: getTeamColors(selectedOffer.teamId).primary,
+                          color: contrastOnPrimary(getTeamColors(selectedOffer.teamId).primary),
+                        }}
+                      >
+                        {playerInitials(selectedOffer.name)}
+                      </span>
+                    ) : null}
+                    <span className="draft-sheet-peek__copy">
+                      <strong>{selectedOffer ? selectedOffer.name : 'Pick a player'}</strong>
+                      <em>
+                        {selectedOffer
+                          ? `Tap a glowing ${formatEligiblePositions(selectedOffer)} jersey`
+                          : 'Tap here or swipe up for the list'}
+                      </em>
+                    </span>
+                    <span className="draft-sheet-peek__open" aria-hidden>
+                      <svg viewBox="0 0 24 24">
+                        <path d="M6 14.5l6-6 6 6" />
+                      </svg>
+                      LIST
+                    </span>
+                  </span>
+                ) : selectedOffer ? (
                   <span className="draft-sheet-peek">
                     <span
                       className="draft-sheet-peek__chip"
@@ -1597,7 +1634,24 @@ export function BillionTradeEngine({
                 ) : null
               }
             >
-              {spunTeam && spunEra ? (
+              {spunTeam && spunEra && isClassicRun ? (
+                <div className="billion-pick-stage">
+                  <ArenaPicker
+                    team={spunTeam}
+                    boardKey={`${spunTeam.id}:${spunEra}`}
+                    offers={availableOffers}
+                    openPositions={openPositions}
+                    selectedId={selectedOfferId}
+                    canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
+                    canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                    rerollsOff={!rerollsAllowed}
+                    interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
+                    hint={pickHint}
+                    onSelect={handleSelectOffer}
+                    onReroll={handleTicketReroll}
+                  />
+                </div>
+              ) : spunTeam && spunEra ? (
                 <div className="billion-pick-stage">
                   <FranchisePickScreen
                     team={spunTeam}

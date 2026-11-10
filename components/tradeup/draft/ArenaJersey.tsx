@@ -139,6 +139,7 @@ export const ArenaJersey = memo(function ArenaJersey({
   const fall = `aj-fall-${uid}`;
   const chest = `aj-chest-${uid}`;
   const pit = `aj-pit-${uid}`;
+  const shadow = `aj-shadow-${uid}`;
 
   return (
     <span
@@ -172,6 +173,11 @@ export const ArenaJersey = memo(function ArenaJersey({
               <stop offset="0.6" stopColor="#fff" stopOpacity="0.05" />
               <stop offset="1" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
+            <radialGradient id={shadow} cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stopColor="#000" stopOpacity="0.62" />
+              <stop offset="0.55" stopColor="#000" stopOpacity="0.38" />
+              <stop offset="1" stopColor="#000" stopOpacity="0" />
+            </radialGradient>
             <radialGradient id={pit} cx="0.5" cy="0.5" r="0.5">
               <stop offset="0" stopColor="#000" stopOpacity="0.32" />
               <stop offset="1" stopColor="#000" stopOpacity="0" />
@@ -183,6 +189,8 @@ export const ArenaJersey = memo(function ArenaJersey({
               <stop offset="1" stopColor="#000" stopOpacity="0.3" />
             </linearGradient>
           </defs>
+          {/* Contact shadow on the hardwood; inside the card so it turns with the shirt. */}
+          <ellipse cx="57" cy="141" rx="61" ry="8.5" fill={`url(#${shadow})`} />
           <path className="aj__body" d={BODY} fill={palette.body} />
           <g clipPath={`url(#${clip})`}>
             <rect width="114" height="142" fill={`url(#${mesh})`} />
@@ -206,7 +214,12 @@ export const ArenaJersey = memo(function ArenaJersey({
             <path d={ARMHOLES} fill="none" stroke={palette.trim} strokeWidth="13.6" />
             <path d={neck.collar} fill="none" stroke={palette.trim} strokeWidth="7" />
             <path d={BACK_EDGE} fill="none" stroke={palette.trim} strokeWidth="4" />
+            {/* Not a valid seat for the player being placed: darkened, never blurred. */}
+            <path className="aj__shade" d={BODY} fill="#000" />
           </g>
+          {/* Seat states (eligible target, player being moved): crisp rings on the shirt's outline. */}
+          <path className="aj__ring aj__ring--outer" d={BODY} fill="none" strokeWidth="7" strokeLinejoin="round" />
+          <path className="aj__ring aj__ring--inner" d={BODY} fill="none" strokeWidth="2.6" strokeLinejoin="round" />
         </svg>
         {playerName ? (
           <span className="aj__text">

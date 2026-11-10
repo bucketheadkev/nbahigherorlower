@@ -24,6 +24,8 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** Collapsed bar content. */
   peek: ReactNode;
+  /** Shown under the handle while expanded (e.g. "drag down to see your court"). */
+  cue?: ReactNode;
   children: ReactNode;
   /** The expanded sheet stops just below the first of these that exists. */
   anchorSelectors?: string[];
@@ -34,7 +36,7 @@ type Props = {
  * Bottom sheet that slides over the lower court. Only the handle strip (and the peek bar when
  * collapsed) drags it, so scrolling the list inside never moves or closes the sheet.
  */
-export function DraftSheet({ present, open, onOpenChange, peek, children, anchorSelectors, label }: Props) {
+export function DraftSheet({ present, open, onOpenChange, peek, cue, children, anchorSelectors, label }: Props) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const grabRef = useRef<HTMLDivElement | null>(null);
   const peekRef = useRef<HTMLDivElement | null>(null);
@@ -196,6 +198,11 @@ export function DraftSheet({ present, open, onOpenChange, peek, children, anchor
           onKeyDown={onKeyDown}
         >
           <span aria-hidden="true" />
+          {cue ? (
+            <span className="draft-sheet__cue" aria-hidden={!open || undefined}>
+              {cue}
+            </span>
+          ) : null}
         </div>
         <div ref={peekRef} className="draft-sheet__peek" aria-hidden={open || undefined}>
           {lastPeek.current}

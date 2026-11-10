@@ -1052,6 +1052,148 @@ export function playFinalTotalSettleSound(): void {
   });
 }
 
+/** Decode the Classic results stingers ahead of the reveal so each lands on its frame. */
+export function warmResultsRevealSounds(): void {
+  if (typeof window === 'undefined') return;
+  warmFinalTotalSettleSound();
+  void ensureClickBuffer('billion_celebration');
+}
+
+/** Rising pentatonic steps, one per row (PG → C), so the five reveals build. */
+const REVEAL_STEPS_HZ = [523.25, 587.33, 659.25, 783.99, 880];
+
+/**
+ * One player row lighting up: a soft airy swish under a short bell tone, synthesized on the
+ * running AudioContext (no file, so it never waits on a decode or a fresh tap).
+ */
+export function playResultsRowSound(index: number): void {
+  if (typeof window === 'undefined' || getAudioSettings().sfxMuted) return;
+  const audio = getCtx();
+  if (!audio) return;
+  if (audio.state === 'suspended') void audio.resume().catch(() => undefined);
+  if (audio.state !== 'running') return;
+  const level = 0.16 * masterScale() * (index >= 4 ? 1.25 : 1);
+  const now = audio.currentTime;
+
+  const out = audio.createGain();
+  out.gain.value = level;
+  out.connect(audio.destination);
+
+  // Swish: band-passed noise sweeping up.
+  const noiseLen = 0.22;
+  const noise = audio.createBuffer(1, Math.floor(audio.sampleRate * noiseLen), audio.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const swish = audio.createBufferSource();
+  swish.buffer = noise;
+  const band = audio.createBiquadFilter();
+  band.type = 'bandpass';
+  band.Q.value = 1.2;
+  band.frequency.setValueAtTime(900, now);
+  band.frequency.exponentialRampToValueAtTime(5200, now + noiseLen);
+  const swishGain = audio.createGain();
+  swishGain.gain.setValueAtTime(0.0001, now);
+  swishGain.gain.exponentialRampToValueAtTime(0.5, now + 0.05);
+  swishGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseLen);
+  swish.connect(band).connect(swishGain).connect(out);
+
+  // Bell: fundamental plus a quiet octave, quick attack, gentle decay.
+  const freq = REVEAL_STEPS_HZ[Math.min(index, REVEAL_STEPS_HZ.length - 1)]!;
+  const bellGain = audio.createGain();
+  bellGain.gain.setValueAtTime(0.0001, now + 0.03);
+  bellGain.gain.exponentialRampToValueAtTime(0.9, now + 0.045);
+  bellGain.gain.exponentialRampToValueAtTime(0.0001, now + (index >= 4 ? 0.9 : 0.55));
+  bellGain.connect(out);
+  const tones = [freq, freq * 2].map((hz, i) => {
+    const osc = audio.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = hz;
+    const g = audio.createGain();
+    g.gain.value = i === 0 ? 1 : 0.22;
+    osc.connect(g).connect(bellGain);
+    return osc;
+  });
+
+  swish.start(now);
+  tones.forEach((osc) => osc.start(now + 0.03));
+  const end = now + 1;
+  swish.stop(end);
+  tones.forEach((osc) => osc.stop(end));
+  window.setTimeout(() => {
+    try {
+      out.disconnect();
+    } catch {
+      /* ignore */
+    }
+  }, 1200);
+}
+
+/**
+ * The held beat before the fifth row: a low swell and rising air over `holdMs`. Returns a stop
+ * that cuts it the instant the row lands (or the reveal is skipped).
+ */
+export function playResultsSuspenseSound(holdMs: number): () => void {
+  const noop = () => {};
+  if (typeof window === 'undefined' || getAudioSettings().sfxMuted) return noop;
+  const audio = getCtx();
+  if (!audio || audio.state !== 'running') return noop;
+  const now = audio.currentTime;
+  const dur = Math.max(0.2, holdMs / 1000);
+
+  const out = audio.createGain();
+  out.gain.setValueAtTime(0.0001, now);
+  out.gain.exponentialRampToValueAtTime(0.13 * masterScale(), now + dur);
+  out.connect(audio.destination);
+
+  const noise = audio.createBuffer(1, Math.floor(audio.sampleRate * (dur + 0.3)), audio.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+  const air = audio.createBufferSource();
+  air.buffer = noise;
+  const band = audio.createBiquadFilter();
+  band.type = 'bandpass';
+  band.Q.value = 2.4;
+  band.frequency.setValueAtTime(320, now);
+  band.frequency.exponentialRampToValueAtTime(2600, now + dur);
+  const airGain = audio.createGain();
+  airGain.gain.value = 0.55;
+  air.connect(band).connect(airGain).connect(out);
+
+  const swell = audio.createOscillator();
+  swell.type = 'sine';
+  swell.frequency.setValueAtTime(98, now);
+  swell.frequency.exponentialRampToValueAtTime(147, now + dur);
+  swell.connect(out);
+
+  air.start(now);
+  swell.start(now);
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    const t = audio.currentTime;
+    out.gain.cancelScheduledValues(t);
+    out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), t);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    air.stop(t + 0.08);
+    swell.stop(t + 0.08);
+    window.setTimeout(() => {
+      try {
+        out.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }, 200);
+  };
+  window.setTimeout(stop, holdMs + 400);
+  return stop;
+}
+
+/** The team crossed $1B: the victory stinger, from its decoded buffer when warm. */
+export function playResultsVictorySound(): void {
+  playClick('billion_celebration');
+}
+
 /** Stop cash-register / results stinger when leaving the reveal screen. */
 export function stopFinalTotalSettleSound(): void {
   cashRegisterToken += 1;

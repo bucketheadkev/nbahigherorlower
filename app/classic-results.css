@@ -1,0 +1,756 @@
+/* =========================================================
+   Classic results — design/classic-results-reference.png (580 × 1024) rebuilt 1:1.
+
+   Every size is a reference pixel × --u. --u fits the whole layout (title to SHARE, with at least
+   60 px of floor under the list) between the safe areas; taller phones show more hardwood between
+   the list and the buttons. The arena and floor are public/images/classic/results-bg.webp
+   (scripts/build-classic-results.py); everything on it is live.
+   ========================================================= */
+
+/* Anton (SIL OFL, public/fonts/Anton-OFL.txt): the heavy condensed numerals of the reference total. */
+@font-face {
+  font-family: "1BR Total";
+  src: url("/fonts/anton-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+.billion-shell--results .billion-top {
+  display: none !important;
+}
+
+/* The arena lights go out after the fifth pick. */
+.cr-blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: #000;
+  pointer-events: auto;
+  animation: cr-blackout 0.3s ease-in both;
+}
+
+@keyframes cr-blackout {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cr {
+  --st: env(safe-area-inset-top, 0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 835));
+  --cr-font: "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  overflow: hidden;
+  background: #03060d;
+  color: #fff;
+  font-family: var(--cr-font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Arena + hardwood: full height on phones, never narrower than the layout on wide screens. */
+.cr__bg {
+  --bgw: max(calc(100dvh * 580 / 1024), calc(var(--u) * 580));
+  position: absolute;
+  inset: 0;
+  background: #03060d url("/images/classic/results-bg.webp") no-repeat center bottom;
+  background-size: auto max(100%, calc(var(--u) * 1024));
+}
+
+@media (min-aspect-ratio: 580/1024) {
+  .cr__bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      #03060d calc(50vw - var(--bgw) / 2),
+      transparent calc(50vw - var(--bgw) / 2 + var(--u) * 50),
+      transparent calc(50vw + var(--bgw) / 2 - var(--u) * 50),
+      #03060d calc(50vw + var(--bgw) / 2)
+    );
+  }
+}
+
+/* Height beyond the reference's proportions: a fifth above the title, the rest as floor. */
+.cr__stage {
+  position: absolute;
+  top: calc(var(--st) + max(0px, (100dvh - var(--st) - var(--sb) - var(--u) * 1024) * 0.2));
+  bottom: var(--sb);
+  left: 50%;
+  width: calc(var(--u) * 580);
+  transform: translateX(-50%);
+}
+
+/* ── 1B RUN APP ── */
+.cr__title {
+  position: absolute;
+  top: calc(var(--u) * 17);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 29);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 4) rgba(0, 0, 0, 0.6);
+}
+
+/* ── Team total ── */
+.cr__total {
+  position: absolute;
+  top: calc(var(--u) * 72);
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.22s ease-out;
+  /* The reference numerals lean slightly and run a touch wider than Anton's own proportions. */
+  transform: skewX(-5deg) scaleX(1.02);
+}
+
+.cr__total.is-in {
+  opacity: 1;
+}
+
+/* The span's own text sets the size and carries the glow; the rim and the face are drawn on top. */
+.cr__total-num {
+  position: relative;
+  display: inline-block;
+  padding: 0 calc(var(--u) * 8);
+  font-family: "1BR Total", Impact, "Avenir Next Condensed", var(--cr-font);
+  font-size: calc(var(--u) * 81);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: calc(var(--u) * 1.5);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 calc(var(--u) * 4) rgba(120, 255, 60, 0.7))
+    drop-shadow(0 0 calc(var(--u) * 18) rgba(70, 245, 30, 0.42));
+  transform-origin: 50% 55%;
+}
+
+.cr__total-num::before,
+.cr__total-num::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+}
+
+/* Dark green rim: the bevelled edge of the reference numerals. */
+.cr__total-num::before {
+  -webkit-text-fill-color: #1a7a06;
+  -webkit-text-stroke: calc(var(--u) * 6) rgba(14, 80, 2, 0.8);
+  text-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 3) rgba(0, 40, 0, 0.45);
+}
+
+/* The lit face, a touch heavier than the font's Bold. */
+.cr__total-num::after {
+  background: linear-gradient(
+    180deg,
+    #f4ffd8 0%,
+    #c4ff74 20%,
+    #78ff32 40%,
+    #45ec16 58%,
+    #2fcb0a 78%,
+    #4fe01a 92%,
+    #b5ff5e 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: calc(var(--u) * 3) #4cf01c;
+}
+
+/* The beat before the fifth player: the number breathes. */
+.cr.is-suspense .cr__total-num {
+  animation: cr-breathe 0.34s ease-in-out infinite alternate;
+}
+
+@keyframes cr-breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.035);
+    filter: drop-shadow(0 0 calc(var(--u) * 6) rgba(130, 255, 60, 0.85))
+      drop-shadow(0 0 calc(var(--u) * 26) rgba(70, 245, 30, 0.55));
+  }
+}
+
+/* The four seated players step back while the fifth slot waits, empty and pulsing. */
+.cr-row__sweep {
+  transition: background-color 0.3s ease;
+}
+
+.cr.is-suspense .cr-row.is-in .cr-row__sweep {
+  background-color: rgba(0, 0, 0, 0.32);
+}
+
+.cr.is-suspense .cr-row.is-last:not(.is-in) {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 0 calc(var(--u) * 10) rgba(255, 255, 255, 0.3),
+    inset 0 0 calc(var(--u) * 10) rgba(255, 255, 255, 0.12);
+  animation: cr-slot-wait 0.34s ease-in-out infinite alternate;
+}
+
+.cr.is-suspense .cr-row.is-last:not(.is-in) > * {
+  visibility: hidden;
+}
+
+@keyframes cr-slot-wait {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+/* Crossing $1B: one bright, confident pulse, then the settled number. */
+.cr.is-billion:not(.is-skipped) .cr__total-num {
+  animation: cr-win 0.95s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+@keyframes cr-win {
+  0% {
+    transform: scale(1);
+  }
+  22% {
+    transform: scale(1.075);
+    filter: drop-shadow(0 0 calc(var(--u) * 8) rgba(140, 255, 70, 0.95))
+      drop-shadow(0 0 calc(var(--u) * 30) rgba(80, 255, 30, 0.6));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Player rows ── */
+.cr__rows {
+  position: absolute;
+  top: calc(var(--u) * 216);
+  left: calc(var(--u) * 23);
+  width: calc(var(--u) * 534);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 7.75);
+}
+
+.cr-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: calc(var(--u) * 59);
+  /* The team's alternate color is the frame; a brighter version of it glows around the row. */
+  border: calc(var(--u) * 2.4) solid var(--a);
+  border-radius: calc(var(--u) * 13);
+  background:
+    radial-gradient(72% 120% at 50% -30%, rgba(255, 255, 255, 0.24), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.32), transparent 15%, transparent 85%, rgba(0, 0, 0, 0.32)),
+    linear-gradient(180deg, var(--p-hi) 0%, var(--p) 30%, var(--p-lo) 76%, var(--p-lo) 100%);
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.8) color-mix(in srgb, var(--a-glow) 70%, transparent),
+    0 0 calc(var(--u) * 8) color-mix(in srgb, var(--a-glow) 80%, transparent),
+    0 0 calc(var(--u) * 22) color-mix(in srgb, var(--a-glow) 42%, transparent),
+    0 calc(var(--u) * 5) calc(var(--u) * 12) rgba(0, 0, 0, 0.5),
+    inset 0 0 calc(var(--u) * 7) color-mix(in srgb, var(--a-glow) 26%, transparent),
+    inset 0 calc(var(--u) * 1.4) 0 rgba(255, 255, 255, 0.32);
+  color: var(--ink, #fff);
+  opacity: 0;
+  transform: translateY(calc(var(--u) * 10)) scale(0.985);
+}
+
+/* Faint glass reflection along the bottom. */
+.cr-row::after {
+  content: "";
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: calc(var(--u) * 3);
+  height: calc(var(--u) * 1.2);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  pointer-events: none;
+}
+
+.cr-row.is-in {
+  animation: cr-row-in 0.44s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+.cr-row.is-last.is-in {
+  animation-duration: 0.62s;
+}
+
+@keyframes cr-row-in {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(var(--u) * 10)) scale(0.985);
+    filter: brightness(1.7);
+  }
+  55% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.cr.is-skipped .cr-row.is-in {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+/* The light sweep that crosses a row as it appears. */
+.cr-row__sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: calc(var(--u) * 10.6);
+  pointer-events: none;
+}
+
+.cr-row__sweep::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -36%;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5) 50%, transparent);
+  transform: skewX(-18deg);
+  opacity: 0;
+}
+
+.cr-row.is-in .cr-row__sweep::before {
+  animation: cr-sweep 0.62s 0.04s cubic-bezier(0.35, 0, 0.25, 1) both;
+}
+
+.cr-row.is-last.is-in .cr-row__sweep::before {
+  animation-duration: 0.9s;
+}
+
+.cr.is-skipped .cr-row__sweep {
+  display: none;
+}
+
+@keyframes cr-sweep {
+  0% {
+    opacity: 1;
+    transform: translateX(0) skewX(-18deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(480%) skewX(-18deg);
+  }
+}
+
+.cr-row__pos {
+  flex: 0 0 calc(var(--u) * 68);
+  box-sizing: border-box;
+  padding-left: calc(var(--u) * 3);
+  text-align: center;
+  font-size: calc(var(--u) * 27.5);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.cr-row__div {
+  flex: 0 0 calc(var(--u) * 1.6);
+  height: calc(var(--u) * 28);
+  background: color-mix(in srgb, var(--ink, #fff) 42%, transparent);
+}
+
+.cr-row__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: calc(var(--u) * 15);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.cr-row__name-text {
+  display: inline-block;
+  font-size: calc(var(--u) * 30.5);
+  font-weight: 600;
+  letter-spacing: 0;
+  transform-origin: 0 50%;
+}
+
+.cr-row__val {
+  flex: none;
+  margin-left: calc(var(--u) * 14);
+  padding-right: calc(var(--u) * 13.6);
+  font-size: calc(var(--u) * 30.5);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.cr-row__pos,
+.cr-row__name-text,
+.cr-row__val {
+  text-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 2.5) rgba(0, 0, 0, 0.38);
+}
+
+/* The secondary color travels around the border: a soft dash on the row's own outline. */
+.cr-row__glow {
+  position: absolute;
+  left: calc(var(--u) * -2.4);
+  top: calc(var(--u) * -2.4);
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+}
+
+.cr-row__glow path {
+  fill: none;
+  stroke: var(--a-glow);
+  stroke-linecap: round;
+}
+
+/* Four strokes, widest and faintest first, approximate a soft glow without a blur filter. */
+.cr-row__glow-l1 {
+  stroke-dasharray: 30 70;
+  opacity: 0.12;
+  animation: cr-glow-l1 8s linear infinite;
+  animation-delay: inherit;
+}
+
+.cr-row__glow-l2 {
+  stroke-dasharray: 24 76;
+  opacity: 0.22;
+  animation: cr-glow-l2 8s linear infinite;
+  animation-delay: inherit;
+}
+
+.cr-row__glow-l3 {
+  stroke-dasharray: 17 83;
+  opacity: 0.42;
+  animation: cr-glow-l3 8s linear infinite;
+  animation-delay: inherit;
+}
+
+.cr-row__glow-core {
+  stroke: color-mix(in srgb, var(--a-glow) 70%, #ffffff);
+  stroke-dasharray: 11 89;
+  opacity: 0.92;
+  animation: cr-glow-core 8s linear infinite;
+  animation-delay: inherit;
+}
+
+/* Centred on one point: each dash starts half its length behind it. */
+@keyframes cr-glow-l1 {
+  from {
+    stroke-dashoffset: 15;
+  }
+  to {
+    stroke-dashoffset: -85;
+  }
+}
+
+@keyframes cr-glow-l2 {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: -88;
+  }
+}
+
+@keyframes cr-glow-l3 {
+  from {
+    stroke-dashoffset: 8.5;
+  }
+  to {
+    stroke-dashoffset: -91.5;
+  }
+}
+
+@keyframes cr-glow-core {
+  from {
+    stroke-dashoffset: 5.5;
+  }
+  to {
+    stroke-dashoffset: -94.5;
+  }
+}
+
+/* ── BUILD ANOTHER / SHARE ── */
+.cr__actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * 40);
+  height: calc(var(--u) * 190);
+  opacity: 0;
+  transform: translateY(calc(var(--u) * 10));
+  pointer-events: none;
+  transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.cr.is-done .cr__actions {
+  opacity: 1;
+  transform: none;
+}
+
+.cr.is-skipped .cr__actions {
+  transition-duration: 0.18s;
+}
+
+.cr.is-live .cr__actions {
+  pointer-events: auto;
+}
+
+.cr__again,
+.cr__share {
+  appearance: none;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--cr-font);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+
+.cr__again:active,
+.cr__share:active {
+  transform: scale(0.985);
+  filter: brightness(1.08);
+}
+
+.cr__again {
+  left: calc(var(--u) * 24);
+  top: 0;
+  width: calc(var(--u) * 534);
+  height: calc(var(--u) * 95);
+  border: calc(var(--u) * 2) solid #ffc985;
+  border-bottom-color: #ff9b3d;
+  border-radius: calc(var(--u) * 20);
+  background:
+    linear-gradient(90deg, rgba(150, 40, 0, 0.18), transparent 12%, transparent 88%, rgba(150, 40, 0, 0.18)),
+    radial-gradient(80% 90% at 50% -20%, rgba(255, 235, 190, 0.35), transparent 58%),
+    linear-gradient(180deg, #ffa53b 0%, #ff8716 18%, #f86e00 44%, #eb5600 74%, #da4700 100%);
+  box-shadow:
+    0 0 calc(var(--u) * 16) rgba(255, 120, 0, 0.5),
+    0 calc(var(--u) * 7) calc(var(--u) * 14) rgba(0, 0, 0, 0.5),
+    inset 0 calc(var(--u) * 2) 0 rgba(255, 255, 255, 0.42),
+    inset 0 calc(var(--u) * -4) calc(var(--u) * 8) rgba(150, 40, 0, 0.32);
+  font-size: calc(var(--u) * 51);
+  letter-spacing: -0.035em;
+  text-shadow:
+    0 calc(var(--u) * 3) 0 rgba(140, 45, 0, 0.5),
+    0 calc(var(--u) * 4) calc(var(--u) * 10) rgba(0, 0, 0, 0.22);
+}
+
+.cr__share {
+  left: calc(var(--u) * 25.5);
+  top: calc(var(--u) * 116);
+  width: calc(var(--u) * 528.5);
+  height: calc(var(--u) * 74);
+  gap: calc(var(--u) * 24);
+  border: calc(var(--u) * 2) solid #86bdf0;
+  border-radius: calc(var(--u) * 18);
+  background: linear-gradient(180deg, #0e2b55 0%, #0a2045 48%, #061631 100%);
+  box-shadow:
+    0 0 calc(var(--u) * 10) rgba(80, 160, 255, 0.32),
+    0 calc(var(--u) * 6) calc(var(--u) * 14) rgba(0, 0, 0, 0.5),
+    inset 0 calc(var(--u) * 1.5) 0 rgba(170, 210, 255, 0.3);
+  font-size: calc(var(--u) * 28);
+  letter-spacing: 0.01em;
+}
+
+.cr__share:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.cr__share-icon {
+  width: calc(var(--u) * 48);
+  height: calc(var(--u) * 48);
+  margin-top: calc(var(--u) * -4);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__share-error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 196);
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 14);
+  font-weight: 600;
+  color: #ffb3a8;
+}
+
+/* ── Lights: black, then a flickering spotlight that settles into the arena's own light ── */
+.cr__fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cr__dark,
+.cr__spot {
+  position: absolute;
+  inset: 0;
+}
+
+.cr__dark {
+  background: #000;
+  animation: cr-lights 0.68s linear forwards;
+}
+
+.cr__spot {
+  background: radial-gradient(
+    ellipse 62% 78% at 50% -6%,
+    rgba(255, 246, 228, 0.34),
+    rgba(255, 240, 214, 0.12) 46%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: cr-spot 1.7s linear forwards;
+}
+
+@keyframes cr-lights {
+  0% {
+    opacity: 1;
+  }
+  10% {
+    opacity: 0.55;
+  }
+  16% {
+    opacity: 0.95;
+  }
+  28% {
+    opacity: 0.3;
+  }
+  36% {
+    opacity: 0.82;
+  }
+  52% {
+    opacity: 0.12;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cr-spot {
+  0% {
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.9;
+  }
+  11% {
+    opacity: 0.2;
+  }
+  18% {
+    opacity: 1;
+  }
+  24% {
+    opacity: 0.4;
+  }
+  32% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.cr.is-skipped .cr__fx {
+  display: none;
+}
+
+/* ── $1B: the whole arena shakes once, money and confetti pour over it ── */
+.cr__world {
+  position: absolute;
+  inset: 0;
+}
+
+.cr.is-shaking .cr__world {
+  animation: cr-shake 0.42s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+}
+
+@keyframes cr-shake {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    transform: translate3d(-6px, 3px, 0);
+  }
+  28% {
+    transform: translate3d(5px, -3px, 0);
+  }
+  46% {
+    transform: translate3d(-3px, 2px, 0);
+  }
+  66% {
+    transform: translate3d(2px, -1px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Its own layer, so redrawing it every frame never repaints the glowing total and rows above it. */
+.cr__party {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform;
+}
