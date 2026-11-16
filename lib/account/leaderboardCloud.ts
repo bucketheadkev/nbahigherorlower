@@ -1,7 +1,8 @@
 /**
  * Verified Classic run submission via Supabase RPC.
  * Clients submit lineups (player ids + seats); server computes the value.
- * The public leaderboard now ranks Bank totals (see bankLeaderboardCloud).
+ * Public Wins board ranks $1B Classic finishes (see winsLeaderboardCloud).
+ * Bank wealth board helpers remain in bankLeaderboardCloud.
  */
 
 import { BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';

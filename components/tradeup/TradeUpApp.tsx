@@ -30,12 +30,12 @@ import { Onboarding } from './onboarding/Onboarding';
 import { EarningsSummaryHost } from './EarningsSummary';
 import { RankScreen } from './rank/RankScreen';
 import { RankRewardHost } from './rank/RankRewardHost';
+import { XpRewardHost } from './xp/XpRewardHost';
 import { RunResultsPreview } from './dev/RunResultsPreview';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
-import { ChallengesScreen } from './ChallengesScreen';
 import { LeaderboardScreen } from './LeaderboardScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
-import { MyRunsScreen } from './MyRunsScreen';
+import { ShopScreen } from './ShopScreen';
 import { TradeUpHome } from './TradeUpHome';
 import { TradeUpLoading } from './TradeUpLoading';
 
@@ -97,7 +97,6 @@ export function TradeUpApp() {
   const [showSplash, setShowSplash] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [appReady, setAppReady] = useState(false);
-  const [runsKey, setRunsKey] = useState(0);
   const [pendingH2HJoinCode, setPendingH2HJoinCode] = useState<string | null>(null);
   const [invalidInvite, setInvalidInvite] = useState<string | null>(null);
 
@@ -207,7 +206,6 @@ export function TradeUpApp() {
   const handleExit = useCallback(() => {
     setCircuitRun(null);
     releaseStickyH2HRoom();
-    setRunsKey((k) => k + 1);
     setHubTab('home');
     setScreen('hub');
   }, [releaseStickyH2HRoom]);
@@ -282,10 +280,10 @@ export function TradeUpApp() {
   const handleHubChange = useCallback((tab: HubTab) => {
     setHubTab(tab);
     setScreen('hub');
-    if (tab === 'runs') setRunsKey((k) => k + 1);
   }, []);
 
   const handleOpenRank = useCallback(() => handleHubChange('rank'), [handleHubChange]);
+  const handleOpenShop = useCallback(() => handleHubChange('shop'), [handleHubChange]);
 
   // Mount hub tab bar under the splash so it crossfades in with home (not after).
   const showTabs = screen === 'hub' && !invalidInvite;
@@ -330,12 +328,10 @@ export function TradeUpApp() {
           pendingJoinCode={pendingH2HJoinCode}
           onJoinCodeConsumed={() => setPendingH2HJoinCode(null)}
         />
-      ) : hubTab === 'challenges' && !showSplash ? (
-        <ChallengesScreen />
-      ) : hubTab === 'runs' && !showSplash ? (
-        <MyRunsScreen key={runsKey} />
       ) : hubTab === 'board' && !showSplash ? (
         <LeaderboardScreen />
+      ) : hubTab === 'shop' && !showSplash ? (
+        <ShopScreen />
       ) : hubTab === 'rank' && !showSplash ? (
         <RankScreen />
       ) : (
@@ -343,6 +339,7 @@ export function TradeUpApp() {
           onPlay={handlePlay}
           onHeadToHead={handleHeadToHead}
           onOpenRank={handleOpenRank}
+          onOpenShop={handleOpenShop}
           allowAccountPrompt={!showSplash && !showGuide}
         />
       )}
@@ -380,6 +377,11 @@ export function TradeUpApp() {
 
       <EarningsSummaryHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
       <RankRewardHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
+      {/* XP/reward: armed after Classic settle; also when hub has a queued reveal. */}
+      <XpRewardHost
+        enabled={!showSplash && !showGuide && !invalidInvite}
+        armWithoutSignal={screen === 'hub'}
+      />
       <RunResultsPreview />
     </LocaleProvider>
   );

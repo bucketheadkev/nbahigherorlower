@@ -6,8 +6,8 @@ import { useSound } from '@/hooks/useSound';
 import type { MessageKey } from '@/lib/i18n/messages';
 import { hapticLight } from '@/lib/tradeup/haptics';
 
-/** `rank` has no tab of its own (it opens from the home menu), so no tab lights up there. */
-export type HubTab = 'home' | 'runs' | 'board' | 'challenges' | 'rank';
+/** Official home nav: Leaderboard · Play · Shop. `rank` stays menu-only (no tab). */
+export type HubTab = 'home' | 'board' | 'shop' | 'rank' | 'runs' | 'challenges';
 
 interface MobileBottomNavProps {
   active: HubTab;
@@ -16,22 +16,10 @@ interface MobileBottomNavProps {
 
 const TABS: { id: HubTab; label: MessageKey; icon: ReactNode }[] = [
   {
-    id: 'runs',
-    label: 'nav.myRuns',
-    icon: (
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-        <path d="M9 6.5h11M9 12h11M9 17.5h11" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-        <circle cx="4.5" cy="6.5" r="1.6" fill="currentColor" />
-        <circle cx="4.5" cy="12" r="1.6" fill="currentColor" />
-        <circle cx="4.5" cy="17.5" r="1.6" fill="currentColor" />
-      </svg>
-    ),
-  },
-  {
     id: 'board',
     label: 'nav.leaderboard',
     icon: (
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden>
         <rect x="4" y="13.5" width="4" height="6.5" rx="1" />
         <rect x="10" y="9.5" width="4" height="10.5" rx="1" />
         <rect x="16" y="5" width="4" height="15" rx="1" />
@@ -42,30 +30,34 @@ const TABS: { id: HubTab; label: MessageKey; icon: ReactNode }[] = [
     id: 'home',
     label: 'nav.play',
     icon: (
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-        <path d="M8 5.6c0-.8.9-1.3 1.6-.9l9.3 6.4c.6.4.6 1.3 0 1.7l-9.3 6.4c-.7.5-1.6 0-1.6-.9V5.6Z" />
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+        <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M12 3.8c2.2 2.4 3.4 5.2 3.4 8.2S14.2 17.8 12 20.2M12 3.8C9.8 6.2 8.6 9 8.6 12s1.2 5.8 3.4 8.2M4.2 12h15.6M5.4 8.2h13.2M5.4 15.8h13.2"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       </svg>
     ),
   },
   {
-    id: 'challenges',
-    label: 'nav.challenges',
+    id: 'shop',
+    label: 'nav.shop',
     icon: (
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
         <path
-          d="M7.5 4h9v4.6a4.5 4.5 0 0 1-9 0V4Z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M7.5 6H4.8v1.3A3 3 0 0 0 7.8 10.3M16.5 6h2.7v1.3a3 3 0 0 1-3 3M12 13.1v3.4M8.6 20h6.8M9.6 20l.6-3.5h3.6l.6 3.5"
+          d="M7 8.2V7a5 5 0 0 1 10 0v1.2"
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
+        />
+        <path
+          d="M6.2 8.2h11.6l-.7 11.2a1.8 1.8 0 0 1-1.8 1.6H8.7a1.8 1.8 0 0 1-1.8-1.6L6.2 8.2Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
           strokeLinejoin="round"
         />
-        <path d="m12 5.6.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2.7-1.4Z" fill="currentColor" />
       </svg>
     ),
   },
@@ -75,7 +67,6 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
   const { playTap, resume } = useSound();
   const { t } = useLocale();
 
-  /** The tapped tab lights up on this frame; the screen swap renders right after as a transition. */
   const [pending, setPending] = useState<HubTab | null>(null);
   useEffect(() => setPending(null), [active]);
   const current = pending ?? active;
@@ -96,13 +87,10 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
 
   return (
     <nav
-      className={`oneb-tabbar${index < 0 ? ' is-idle' : ''}`}
+      className={`oneb-tabbar oneb-tabbar--tri${index < 0 ? ' is-idle' : ''}`}
       aria-label={t('nav.main')}
       style={{ '--tab-index': Math.max(0, index) } as CSSProperties}
     >
-      <span className="oneb-tabbar__divider" aria-hidden />
-      <span className="oneb-tabbar__divider" aria-hidden />
-      <span className="oneb-tabbar__divider" aria-hidden />
       <span className="oneb-tabbar__glider" aria-hidden />
       {TABS.map((tab) => {
         const on = tab.id === current;

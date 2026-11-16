@@ -1,150 +1,557 @@
 /* =========================================================
-   Leaderboard — premium arena backdrop and ranking surfaces
+   Wins board — championship black / gold / cyan rim
+   Weekly + all-time $1B Classic wins
    ========================================================= */
 
-.oneb-hub.lbx-screen {
-  background: #01050d !important;
+.oneb-hub.wb-screen {
+  --wb-ink: #05070c;
+  --wb-panel: #0c1018;
+  --wb-gold: #e8c56a;
+  --wb-gold-hot: #ffe29a;
+  --wb-silver: #c9d4e8;
+  --wb-bronze: #d4a078;
+  --wb-cyan: #7ee7ff;
+  --wb-line: rgba(232, 197, 106, 0.22);
+  --wb-font: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  background: var(--wb-ink) !important;
+  color: #f4f1ea;
+  font-family: var(--wb-font);
 }
 
-/* ── Backdrop (static) ── */
-.lbx-backdrop__base {
+/* ── Backdrop ── */
+.wb-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.wb-backdrop__void {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 55% at 50% -8%, #0d2a4c 0%, rgba(8, 26, 52, 0.55) 38%, transparent 70%),
-    linear-gradient(180deg, #061428 0%, #030b19 42%, #01050d 100%);
+    radial-gradient(95% 50% at 50% -6%, #1a1408 0%, transparent 55%),
+    radial-gradient(70% 40% at 80% 20%, rgba(126, 231, 255, 0.06), transparent 60%),
+    linear-gradient(180deg, #0a0d14 0%, #05070c 48%, #030407 100%);
 }
 
-.lbx-backdrop__beam {
+.wb-backdrop__flare {
   position: absolute;
-  top: -12%;
+  top: 8%;
+  left: 50%;
+  width: 120%;
+  height: 42%;
+  transform: translateX(-50%);
+  background: radial-gradient(45% 55% at 50% 40%, rgba(232, 197, 106, 0.16) 0%, rgba(232, 197, 106, 0.04) 45%, transparent 70%);
+  filter: blur(2px);
+}
+
+.wb-backdrop__rim {
+  position: absolute;
+  top: -8%;
+  left: 50%;
   width: 70%;
-  height: 78%;
-  opacity: 0.55;
-  background: linear-gradient(180deg, rgba(150, 255, 210, 0.1) 0%, rgba(150, 255, 210, 0.03) 45%, transparent 85%);
-  filter: blur(18px);
+  height: 28%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(126, 231, 255, 0.18);
+  box-shadow:
+    0 0 40px rgba(126, 231, 255, 0.08),
+    inset 0 0 30px rgba(126, 231, 255, 0.05);
+  opacity: 0.7;
 }
 
-.lbx-backdrop__beam.is-left {
-  left: -18%;
-  transform: rotate(-24deg);
-  transform-origin: top left;
-}
-
-.lbx-backdrop__beam.is-right {
-  right: -18%;
-  transform: rotate(24deg);
-  transform-origin: top right;
-}
-
-.lbx-backdrop__court {
+.wb-backdrop__court {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  stroke: rgba(80, 230, 170, 0.11);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 92%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 92%);
+  stroke: rgba(232, 197, 106, 0.1);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 90%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 90%);
 }
 
-/* Emerald light where the champions stand. */
-.lbx-backdrop__crown {
-  position: absolute;
-  top: 18%;
-  left: 50%;
-  width: 130%;
-  height: 46%;
-  transform: translateX(-50%);
-  background: radial-gradient(50% 50% at 50% 50%, rgba(41, 228, 144, 0.16) 0%, rgba(41, 228, 144, 0.05) 45%, transparent 72%);
-}
-
-.lbx-backdrop__vignette {
+.wb-backdrop__vignette {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
-    linear-gradient(180deg, transparent 70%, rgba(1, 4, 10, 0.85) 100%);
+    radial-gradient(120% 90% at 50% 35%, transparent 50%, rgba(0, 0, 0, 0.62) 100%),
+    linear-gradient(180deg, transparent 72%, rgba(3, 4, 7, 0.92) 100%);
 }
 
-/* ── My Bank card: glass over the arena ── */
-.lbx-screen .lbx-mine {
-  border-color: rgba(41, 228, 144, 0.32);
+/* ── Header ── */
+.wb-head {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  padding: 0.85rem 1.1rem 0.35rem;
+  text-align: center;
+}
+
+.wb-head__eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 106, 0.72);
+}
+
+.wb-head__title {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.85rem, 7.2vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: #fff8e8;
+  text-shadow:
+    0 0 24px rgba(232, 197, 106, 0.28),
+    0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.wb-head__meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(214, 220, 235, 0.62);
+}
+
+.wb-help {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 197, 106, 0.35);
+  background: rgba(12, 14, 20, 0.7);
+  color: var(--wb-gold);
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wb-help__note {
+  margin: 0.65rem auto 0;
+  max-width: 22rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(232, 197, 106, 0.2);
+  background: rgba(8, 10, 16, 0.88);
+  color: rgba(236, 230, 214, 0.82);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* ── Period tabs ── */
+.wb-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin: 0.95rem auto 0.25rem;
+  max-width: 20rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 197, 106, 0.2);
   background:
-    radial-gradient(ellipse 85% 70% at 50% 0%, rgba(41, 228, 144, 0.13), transparent 70%),
-    linear-gradient(168deg, rgba(10, 32, 60, 0.92) 0%, rgba(5, 18, 38, 0.94) 55%, rgba(3, 10, 24, 0.96) 100%);
+    linear-gradient(180deg, rgba(24, 20, 12, 0.95), rgba(8, 10, 16, 0.95));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.wb-tabs__btn {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  color: rgba(220, 224, 236, 0.55);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wb-tabs__btn.is-active {
+  color: #120e06;
+  background: linear-gradient(180deg, var(--wb-gold-hot) 0%, var(--wb-gold) 100%);
+  box-shadow:
+    0 0 18px rgba(232, 197, 106, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* ── Main scroll ── */
+.wb-main {
+  position: relative;
+  z-index: 1;
+  padding: 0.55rem 0.9rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── My wins card ── */
+.wb-mine {
+  position: relative;
+  margin: 0.35rem 0 1rem;
+  padding: 0.95rem 1rem 0.85rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(232, 197, 106, 0.38);
+  background:
+    radial-gradient(ellipse 90% 80% at 50% -10%, rgba(232, 197, 106, 0.16), transparent 65%),
+    linear-gradient(165deg, rgba(28, 24, 14, 0.96) 0%, rgba(10, 12, 18, 0.96) 55%, rgba(6, 8, 12, 0.98) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 18px 36px rgba(0, 0, 0, 0.5);
+    0 16px 36px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
 }
 
-/* ── Podium: the top three carry the room ── */
-.lbx-screen .lbx-podium {
+.wb-mine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(126, 231, 255, 0.05) 50%, transparent 60%);
+  pointer-events: none;
+}
+
+.wb-mine__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wb-mine__label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 106, 0.75);
+}
+
+.wb-mine__rank {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(200, 208, 224, 0.5);
+}
+
+.wb-mine__rank.is-ranked {
+  color: var(--wb-cyan);
+}
+
+.wb-mine__balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0.45rem 0 0;
+  font-size: clamp(2rem, 9vw, 2.55rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: #fff6df;
+  text-shadow: 0 0 20px rgba(232, 197, 106, 0.25);
+}
+
+.wb-mine__unit {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 106, 0.7);
+}
+
+.wb-mine__goal {
+  margin: 0.4rem 0 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: rgba(200, 208, 224, 0.55);
+}
+
+/* ── Podium ── */
+.wb-podium {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr 1fr;
+  gap: 0.45rem;
+  align-items: end;
+  margin: 0.35rem 0 1rem;
+}
+
+.wb-podium__card {
+  --medal: var(--wb-silver);
   position: relative;
-}
-
-.lbx-screen .lbx-podium__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 7.2rem;
+  padding: 0.85rem 0.35rem 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--medal) 40%, transparent);
   background:
     radial-gradient(ellipse 100% 70% at 50% 0%, color-mix(in srgb, var(--medal) 22%, transparent), transparent 72%),
-    linear-gradient(180deg, rgba(16, 32, 62, 0.94) 0%, rgba(5, 12, 28, 0.96) 100%);
+    linear-gradient(180deg, rgba(22, 26, 36, 0.96) 0%, rgba(8, 10, 16, 0.98) 100%);
   box-shadow:
-    inset 0 2px 0 color-mix(in srgb, var(--medal) 75%, transparent),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 16px 32px rgba(0, 0, 0, 0.55);
-}
-
-.lbx-screen .lbx-podium__card.is-place-1 {
-  border-color: color-mix(in srgb, var(--lbx-gold) 60%, transparent);
-  box-shadow:
-    inset 0 2px 0 var(--lbx-gold),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 18px 40px rgba(0, 0, 0, 0.6),
-    0 0 34px rgba(242, 211, 139, 0.18);
-}
-
-.lbx-screen .lbx-podium__card.is-place-1 .lbx-podium__name {
-  font-size: 1.02rem;
-  letter-spacing: 0.01em;
-}
-
-/* Values scale with their own card so a $1,000,000,000+ Bank never touches the edge. */
-.lbx-screen .lbx-podium__card {
+    inset 0 2px 0 color-mix(in srgb, var(--medal) 70%, transparent),
+    0 14px 28px rgba(0, 0, 0, 0.5);
+  text-align: center;
   container-type: inline-size;
-  padding-left: 0.35rem;
-  padding-right: 0.35rem;
 }
 
-.lbx-screen .lbx-podium__value,
-.lbx-screen .lbx-podium__card.is-place-1 .lbx-podium__value {
-  max-width: 100%;
-  font-size: clamp(0.62rem, 11.5cqi, 1.05rem);
-  text-shadow: 0 0 14px rgba(41, 228, 144, 0.3);
-}
-
-/* ── Rows 4–100: crisp glass rows, top ten slightly lifted ── */
-.lbx-screen .lbx-row {
-  border-color: rgba(150, 190, 255, 0.08);
-  background: linear-gradient(100deg, rgba(10, 24, 48, 0.9) 0%, rgba(4, 11, 26, 0.92) 100%);
+.wb-podium__card.is-place-1 {
+  --medal: var(--wb-gold);
+  min-height: 8.4rem;
+  border-color: color-mix(in srgb, var(--wb-gold) 55%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 6px 16px rgba(0, 0, 0, 0.35);
+    inset 0 2px 0 var(--wb-gold),
+    0 18px 40px rgba(0, 0, 0, 0.58),
+    0 0 32px rgba(232, 197, 106, 0.2);
 }
 
-.lbx-screen .lbx-list[aria-label] > .lbx-row:nth-child(-n + 7):not(.is-you) {
-  border-color: rgba(41, 228, 144, 0.16);
+.wb-podium__card.is-place-2 {
+  --medal: var(--wb-silver);
+}
+
+.wb-podium__card.is-place-3 {
+  --medal: var(--wb-bronze);
+}
+
+.wb-podium__card.is-you {
+  outline: 1px solid rgba(126, 231, 255, 0.45);
+}
+
+.wb-podium__medal {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--medal) 90%, #fff);
+}
+
+.wb-podium__name {
+  margin: 0.15rem 0 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.72rem, 4.2vw, 0.92rem);
+  font-weight: 800;
+  color: #f7f3ea;
+}
+
+.wb-podium__card.is-place-1 .wb-podium__name {
+  font-size: clamp(0.82rem, 4.6vw, 1.02rem);
+}
+
+.wb-podium__value {
+  margin: 0.2rem 0 0;
+  max-width: 100%;
+  font-size: clamp(0.95rem, 12cqi, 1.45rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-gold-hot);
+  text-shadow: 0 0 14px rgba(232, 197, 106, 0.28);
+}
+
+.wb-podium__unit {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(200, 208, 224, 0.45);
+}
+
+.wb-you {
+  display: inline-block;
+  margin-left: 0.25rem;
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-cyan);
+}
+
+/* ── List rows ── */
+.wb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wb-row {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(232, 197, 106, 0.1);
   background:
-    radial-gradient(90% 140% at 0% 50%, rgba(41, 228, 144, 0.06), transparent 60%),
-    linear-gradient(100deg, rgba(12, 28, 54, 0.92) 0%, rgba(5, 13, 30, 0.94) 100%);
+    linear-gradient(100deg, rgba(16, 18, 26, 0.94) 0%, rgba(8, 10, 16, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 6px 14px rgba(0, 0, 0, 0.35);
 }
 
-.lbx-screen .lbx-row__rank {
-  color: rgba(214, 228, 255, 0.5);
+.wb-list > .wb-row:nth-child(-n + 7):not(.is-you) {
+  border-color: rgba(232, 197, 106, 0.18);
+  background:
+    radial-gradient(90% 140% at 0% 50%, rgba(232, 197, 106, 0.07), transparent 60%),
+    linear-gradient(100deg, rgba(22, 20, 14, 0.95) 0%, rgba(10, 12, 18, 0.96) 100%);
 }
 
-.lbx-screen .lbx-list[aria-label] > .lbx-row:nth-child(-n + 7) .lbx-row__rank {
-  color: rgba(214, 240, 228, 0.82);
+.wb-row.is-you {
+  border-color: rgba(126, 231, 255, 0.42);
+  background: linear-gradient(100deg, rgba(12, 36, 42, 0.92), rgba(8, 16, 22, 0.95));
 }
 
-.lbx-screen .lbx-row.is-you {
-  border-color: rgba(41, 228, 144, 0.5);
-  background: linear-gradient(100deg, rgba(14, 58, 50, 0.9), rgba(6, 28, 28, 0.92));
+.wb-row__rank {
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgba(200, 208, 224, 0.42);
+  text-align: center;
+}
+
+.wb-list > .wb-row:nth-child(-n + 7) .wb-row__rank {
+  color: rgba(232, 197, 106, 0.78);
+}
+
+.wb-row__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f2efe6;
+}
+
+.wb-row__value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-row__value strong {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--wb-gold-hot);
+}
+
+.wb-row__value small {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(200, 208, 224, 0.42);
+}
+
+.wb-gap {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.85rem 0;
+}
+
+.wb-gap span {
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: rgba(232, 197, 106, 0.35);
+}
+
+/* ── States / guest ── */
+.wb-skeleton {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wb-skeleton li {
+  height: 3.1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, rgba(30, 28, 22, 0.7), rgba(18, 18, 24, 0.7), rgba(30, 28, 22, 0.7));
+  background-size: 200% 100%;
+  animation: wb-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes wb-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.wb-state {
+  margin: 1.5rem 0.25rem;
+  padding: 1.25rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(232, 197, 106, 0.18);
+  background: rgba(10, 12, 18, 0.85);
+  text-align: center;
+}
+
+.wb-state__kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--wb-gold);
+}
+
+.wb-state__copy {
+  margin: 0.55rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(220, 224, 236, 0.7);
+}
+
+.wb-state__btn,
+.wb-guest__btn {
+  appearance: none;
+  margin-top: 0.9rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(180deg, var(--wb-gold-hot), var(--wb-gold));
+  color: #120e06;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(232, 197, 106, 0.28);
+}
+
+.wb-guest {
+  margin: 1.25rem 0 0.5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px dashed rgba(126, 231, 255, 0.28);
+  background: rgba(8, 18, 24, 0.72);
+  text-align: center;
+}
+
+.wb-guest p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(220, 224, 236, 0.72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-skeleton li {
+    animation: none;
+  }
 }

@@ -1,0 +1,41 @@
+export {
+  XP_COMPLETED_RUN,
+  XP_PERFORMANCE_BONUS_MAX,
+  XP_BILLION_BONUS,
+  XP_PER_COIN,
+  XP_STARTING_LEVEL,
+  xpToAdvance,
+  performanceBonusXp,
+  calculateClassicRunRewards,
+  progressFromTotalXp,
+  type ClassicXpBreakdown,
+  type LevelProgress,
+} from './config';
+
+export {
+  XP_PROFILE_KEY,
+  XP_PENDING_LEVELUPS_KEY,
+  XP_PENDING_REVEALS_KEY,
+  XP_CHANGED_EVENT,
+  XP_REVEAL_READY_EVENT,
+  getXpProfile,
+  getXpProgress,
+  getXpCoins,
+  hasAwardedXpRun,
+  saveXpProfile,
+  applyXpAward,
+  getPendingXpReveals,
+  getPendingLevelUps,
+  enqueuePendingXpReveal,
+  enqueuePendingLevelUp,
+  consumePendingXpReveal,
+  consumePendingLevelUp,
+  clearPendingXpReveals,
+  clearPendingLevelUps,
+  signalXpRevealReady,
+  type XpProfile,
+  type PendingXpReveal,
+  type PendingLevelUp,
+} from './storage';
+
+export { awardClassicRunXp, type ClassicXpAwardResult } from './award';

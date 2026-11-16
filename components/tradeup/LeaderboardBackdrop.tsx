@@ -1,34 +1,29 @@
 'use client';
 
 /**
- * Leaderboard backdrop: deep navy into near-black, an emerald light over the podium, two faint
- * arena beams, and the court drawn in barely-there lines. Static — nothing animates or scrolls.
+ * Wins board backdrop — black championship floor, gold rim light, faint court geometry.
+ * Static: nothing animates or scrolls.
  */
 export function LeaderboardBackdrop() {
   return (
-    <div className="arena-atmo lbx-backdrop" aria-hidden>
-      <div className="lbx-backdrop__base" />
-      <div className="lbx-backdrop__beam is-left" />
-      <div className="lbx-backdrop__beam is-right" />
-      <svg className="lbx-backdrop__court" viewBox="0 0 400 860" preserveAspectRatio="xMidYMin slice">
-        <g fill="none" strokeWidth="1.4">
-          {/* Baseline, key and free-throw circle under the podium */}
-          <path d="M20 120H380" />
-          <rect x="140" y="120" width="120" height="190" />
-          <path d="M140 310a60 60 0 0 0 120 0" />
-          <path d="M140 310a60 60 0 0 1 120 0" strokeDasharray="6 7" />
-          <path d="M44 120v108a156 156 0 0 0 312 0V120" />
-          <circle cx="200" cy="150" r="9" />
-          <path d="M176 136h48" />
-          {/* Half-court line and center circle further down */}
-          <path d="M20 700H380" />
-          <circle cx="200" cy="700" r="60" />
-          <circle cx="200" cy="700" r="20" />
-          <path d="M20 120V860M380 120V860" />
+    <div className="arena-atmo wb-backdrop" aria-hidden>
+      <div className="wb-backdrop__void" />
+      <div className="wb-backdrop__flare" />
+      <div className="wb-backdrop__rim" />
+      <svg className="wb-backdrop__court" viewBox="0 0 400 860" preserveAspectRatio="xMidYMin slice">
+        <g fill="none" strokeWidth="1.25">
+          <path d="M28 96H372" />
+          <rect x="148" y="96" width="104" height="168" rx="2" />
+          <path d="M148 264a52 52 0 0 0 104 0" />
+          <circle cx="200" cy="132" r="8" />
+          <path d="M48 96v96a152 152 0 0 0 304 0V96" />
+          <path d="M28 640H372" />
+          <circle cx="200" cy="640" r="54" />
+          <circle cx="200" cy="640" r="16" />
+          <path d="M28 96V860M372 96V860" />
         </g>
       </svg>
-      <div className="lbx-backdrop__crown" />
-      <div className="lbx-backdrop__vignette" />
+      <div className="wb-backdrop__vignette" />
     </div>
   );
 }

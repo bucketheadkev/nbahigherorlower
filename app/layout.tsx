@@ -19,6 +19,7 @@ import './h2h-ipad-portrait.css';
 import './web-phone.css';
 import './web-responsive.css';
 import './home-v2.css';
+import './home-official.css';
 import './my-runs.css';
 import './settings-guides.css';
 import './franchise-opening.css';

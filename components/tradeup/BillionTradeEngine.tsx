@@ -42,6 +42,7 @@ import { payLocalRollover } from '@/lib/tradeup/rollover';
 import { runBonusFacts } from '@/lib/tradeup/runBonuses';
 import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
 import { settleRunBonus } from '@/lib/account/runBonusCloud';
+import { awardClassicRunXp, signalXpRevealReady } from '@/lib/tradeup/xp';
 import { useRunBonus } from '@/hooks/useRunBonus';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { contrastOnPrimary, getTeamColors, teamGlowColor, teamRingColor } from '@/lib/tradeup/teamColors';
@@ -763,6 +764,8 @@ export function BillionTradeEngine({
         runBonus: runBonusOutcome,
         circuit: circuit ? { name: circuit.name } : null,
       });
+      // XP / coins credit here (idempotent on runRef). Level-up UI waits for hub return.
+      awardClassicRunXp(runRef, total);
       // Offline Dynasty preview records the run here (the server records real accounts' runs).
       if (isDynastyPreview()) {
         const ids = LINEUP_POSITIONS.flatMap((pos) => (finalSlots[pos] ? [finalSlots[pos]!.id] : []));
@@ -874,6 +877,10 @@ export function BillionTradeEngine({
   const handleRevealComplete = useCallback(
     (payload: { teamValue: number }) => {
       finishRun(slots, payload.teamValue);
+      if (isClassicRun) {
+        // Results layout stays intact — XP/reward overlay opens after settle (reference timing).
+        window.setTimeout(() => signalXpRevealReady(), 700);
+      }
       if (isOnline && onOnlineComplete) {
         const lineup = serializeMatchLineup(rosterInSlotOrder(slots));
         onOnlineComplete({
@@ -882,7 +889,7 @@ export function BillionTradeEngine({
         });
       }
     },
-    [finishRun, isOnline, onOnlineComplete, slots],
+    [finishRun, isClassicRun, isOnline, onOnlineComplete, slots],
   );
 
   const handleSelectOffer = useCallback(

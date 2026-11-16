@@ -53,13 +53,13 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
     },
     {
       kind: 'list',
-      label: 'Build your Bank',
+      label: 'Climb the board',
       items: [
-        { icon: 'rollover', title: 'Rollover', line: 'Every dollar above $1,000,000,000 goes into your Bank.' },
-        { icon: 'bonus', title: 'Run Bonuses', line: 'Complete the bonus challenge on a run for extra cash.' },
+        { icon: 'rollover', title: 'Hit $1B', line: 'Finish a Classic Run at $1,000,000,000 or more to score a win.' },
+        { icon: 'bonus', title: 'Run Bonuses', line: 'Complete the bonus challenge on a run for extra rewards.' },
         { icon: 'achievement', title: 'Achievements', line: 'Hit milestones to earn more.' },
-        { icon: 'leaderboard', title: 'Leaderboard', line: 'Players are ranked by Bank balance.' },
-        { icon: 'wall', title: 'Wall of Fame', line: 'Reach a $1,000,000,000 Bank to join it.' },
+        { icon: 'leaderboard', title: 'Leaderboard', line: 'Ranked by $1B Classic wins — weekly and all-time.' },
+        { icon: 'wall', title: 'Wall of Fame', line: 'Hit $1,000,000,000 in Classic to earn your place.' },
       ],
     },
     {
@@ -68,7 +68,6 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
       items: [
         { mark: '$1B', title: 'Classic Run', line: 'Solo draft. Reach $1,000,000,000.' },
         { mark: '1V1', title: 'Head to Head', line: 'Draft against a rival. Higher total wins.' },
-        { mark: '5/5', title: 'Dynasty Road', line: 'Sign one player from every $1B Classic run. Collect each title team’s starting five.' },
       ],
     },
   ],
@@ -97,7 +96,7 @@ const HOW_VALUES_EN: GuidePageContent = {
       kind: 'example',
       label: 'Team value',
       title: 'Five values. One total.',
-      line: 'Clear $1,000,000,000 and everything above it rolls into your Bank.',
+      line: 'Clear $1,000,000,000 to lock in a Classic win on the leaderboard.',
       example: 'rollover',
     },
     {
@@ -135,13 +134,13 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
     },
     {
       kind: 'list',
-      label: 'Haz crecer tu Banco',
+      label: 'Sube en la tabla',
       items: [
-        { icon: 'rollover', title: 'Excedente', line: 'Cada dólar por encima de $1,000,000,000 va a tu Banco.' },
+        { icon: 'rollover', title: 'Llega a $1B', line: 'Termina un Classic Run en $1,000,000,000 o más para sumar una victoria.' },
         { icon: 'bonus', title: 'Bonos de partida', line: 'Cumple el reto de bono de una partida para ganar más.' },
         { icon: 'achievement', title: 'Logros', line: 'Alcanza hitos para ganar más.' },
-        { icon: 'leaderboard', title: 'Clasificación', line: 'Los jugadores se ordenan por saldo del Banco.' },
-        { icon: 'wall', title: 'Muro de la Fama', line: 'Llega a $1,000,000,000 en tu Banco para entrar.' },
+        { icon: 'leaderboard', title: 'Clasificación', line: 'Se ordena por victorias Classic de $1B — semanal e histórico.' },
+        { icon: 'wall', title: 'Muro de la Fama', line: 'Llega a $1,000,000,000 en Classic para entrar.' },
       ],
     },
     {
@@ -150,7 +149,6 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
       items: [
         { mark: '$1B', title: 'Partida clásica', line: 'Draft en solitario. Llega a $1,000,000,000.' },
         { mark: '1V1', title: 'Cara a cara', line: 'Draftea contra un rival. Gana el total más alto.' },
-        { mark: '5/5', title: 'Ruta de Dinastías', line: 'Ficha a un jugador en cada partida Clásica de $1B. Colecciona el quinteto de cada campeón.' },
       ],
     },
   ],
@@ -179,7 +177,7 @@ const HOW_VALUES_ES: GuidePageContent = {
       kind: 'example',
       label: 'Valor del equipo',
       title: 'Cinco valores. Un total.',
-      line: 'Supera $1,000,000,000 y todo lo que pase de ahí va a tu Banco.',
+      line: 'Supera $1,000,000,000 para asegurar una victoria Classic en la clasificación.',
       example: 'rollover',
     },
     {
