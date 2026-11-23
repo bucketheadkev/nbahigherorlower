@@ -4,7 +4,12 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
 import { fetchMyBankBalance } from '@/lib/account/bankLeaderboardCloud';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { BANK_CHANGED_EVENT, getBankBalance, readBankPreview } from '@/lib/tradeup/bank';
+import {
+  BANK_CHANGED_EVENT,
+  bindOptimisticBankCredit,
+  getBankBalance,
+  readBankPreview,
+} from '@/lib/tradeup/bank';
 import {
   balanceFromCacheForUser,
   isBankAuthLoading,
@@ -36,6 +41,12 @@ const store = {
   userId: null as string | null,
   started: 0,
   applied: 0,
+  /**
+   * Optimistic floor after local trivia / rollover credits. Pull must not paint a
+   * lower server balance until the ledger has caught up (otherwise Bank Money
+   * looks stuck / snaps back after a $1B run or trivia win).
+   */
+  floor: null as number | null,
   listeners: new Set<() => void>(),
   burst: [] as number[],
   poll: 0,
@@ -69,11 +80,42 @@ function writeCache(userId: string, balance: number) {
 }
 
 function clearDisplay(emitChange = true) {
-  const changed = store.value != null || store.userId != null;
+  const changed = store.value != null || store.userId != null || store.floor != null;
   store.value = null;
   store.userId = null;
+  store.floor = null;
   store.applied = store.started;
   if (changed && emitChange) emit();
+}
+
+/**
+ * Instant Bank bump for signed-in players (trivia win, $1B rollover) while the
+ * server ledger catches up. Guests ignore this — they use the local ledger path.
+ */
+function applyOptimisticBankCredit(amount: number): void {
+  if (typeof window === 'undefined' || !(amount > 0)) return;
+  if (!store.wired) wire();
+  if (!store.userId) {
+    // Session not known yet — still raise a floor from cache when available.
+    const cached = readCache();
+    if (cached) {
+      store.userId = cached.userId;
+      store.value = cached.balance + amount;
+      store.floor = store.value;
+      writeCache(cached.userId, store.value);
+      emit();
+    }
+    return;
+  }
+  const base =
+    store.value ??
+    balanceFromCacheForUser(readCache(), store.userId) ??
+    0;
+  const next = base + Math.round(amount);
+  store.value = next;
+  store.floor = Math.max(store.floor ?? 0, next);
+  writeCache(store.userId, next);
+  emit();
 }
 
 async function pull(): Promise<void> {
@@ -95,6 +137,7 @@ async function pull(): Promise<void> {
   if (store.userId && store.userId !== userId) {
     // Another account signed in on this device: never show the previous player's Bank.
     store.value = null;
+    store.floor = null;
     store.applied = 0;
     emit();
   }
@@ -114,8 +157,20 @@ async function pull(): Promise<void> {
   // Session may have changed while the request was in flight.
   if (store.userId !== userId) return;
   store.applied = seq;
-  if (store.value !== result.balance) {
-    store.value = result.balance;
+
+  let next = result.balance;
+  if (store.floor != null) {
+    if (next >= store.floor) {
+      // Server caught up to the optimistic credit.
+      store.floor = null;
+    } else {
+      // Keep the higher optimistic number until the ledger posts.
+      next = store.floor;
+    }
+  }
+
+  if (store.value !== next) {
+    store.value = next;
     emit();
   }
   writeCache(userId, result.balance);
@@ -146,6 +201,7 @@ function wire() {
   if (store.wired) return;
   store.wired = true;
   // Do not hydrate from cache here — userId is unknown until pull().
+  bindOptimisticBankCredit(applyOptimisticBankCredit);
   window.addEventListener(BANK_CHANGED_EVENT, recheckSoon);
   window.addEventListener(CLASSIC_PROGRESS_EVENT, recheckSoon);
   window.addEventListener('focus', onFocus);
@@ -161,6 +217,7 @@ function wire() {
 function unwire() {
   if (!store.wired) return;
   store.wired = false;
+  bindOptimisticBankCredit(null);
   window.removeEventListener(BANK_CHANGED_EVENT, recheckSoon);
   window.removeEventListener(CLASSIC_PROGRESS_EVENT, recheckSoon);
   window.removeEventListener('focus', onFocus);

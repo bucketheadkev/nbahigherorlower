@@ -12,6 +12,7 @@
  */
 
 import {
+  announceOptimisticBankCredit,
   appendLocalLedger,
   BANK_CHANGED_EVENT,
   getLocalLedgerRefs,
@@ -73,6 +74,9 @@ export function payTriviaBonus(
   if (!appended) return 0;
 
   markPaid(ref);
+  // Guests read the local ledger; signed-in Bank UI is server-only — bump it now
+  // so trivia wins update Bank Money immediately (server sync still TODO).
+  announceOptimisticBankCredit(amount);
   window.dispatchEvent(new Event(BANK_CHANGED_EVENT));
   // TODO(server): when trivia_bonus bank_post exists, sync signed-in payouts here.
   return amount;

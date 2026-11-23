@@ -191,6 +191,36 @@ export function readBankPreview(): number | null {
 /** Fired whenever the balance may have changed. */
 export const BANK_CHANGED_EVENT = ACHIEVEMENT_UNLOCKED_EVENT;
 
+/**
+ * Signed-in Bank Money bump before the server ledger catches up.
+ * `useBankBalance` registers a handler so credits land even if no React
+ * subscriber is mounted yet (queued until bind).
+ */
+type OptimisticBankHandler = (amount: number) => void;
+let optimisticBankHandler: OptimisticBankHandler | null = null;
+let pendingOptimisticBank = 0;
+
+/** Register / clear the Bank display optimistic-credit sink (from `useBankBalance`). */
+export function bindOptimisticBankCredit(handler: OptimisticBankHandler | null): void {
+  optimisticBankHandler = handler;
+  if (handler && pendingOptimisticBank > 0) {
+    const queued = pendingOptimisticBank;
+    pendingOptimisticBank = 0;
+    handler(queued);
+  }
+}
+
+/** Ask the Bank display to credit Cash immediately (signed-in optimistic path). */
+export function announceOptimisticBankCredit(amount: number): void {
+  if (typeof window === 'undefined' || !(amount > 0)) return;
+  const n = Math.round(amount);
+  if (optimisticBankHandler) {
+    optimisticBankHandler(n);
+  } else {
+    pendingOptimisticBank += n;
+  }
+}
+
 /** Classic runs over this goal earn their surplus (see surplusSpin). */
 export const RUN_BONUS_GOAL = 1_000_000_000;
 

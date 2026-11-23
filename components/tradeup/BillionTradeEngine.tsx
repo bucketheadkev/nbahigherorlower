@@ -39,7 +39,8 @@ import {
 } from '@/lib/tradeup/worldLeaderboard';
 import { submitVerifiedClassicLineup } from '@/lib/account/leaderboardCloud';
 import { isDynastyPreview, previewRecordRun } from '@/lib/account/dynastyPreview';
-import { payLocalRollover } from '@/lib/tradeup/rollover';
+import { announceOptimisticBankCredit, BANK_CHANGED_EVENT } from '@/lib/tradeup/bank';
+import { payLocalRollover, rolloverFor } from '@/lib/tradeup/rollover';
 import { runBonusFacts } from '@/lib/tradeup/runBonuses';
 import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
 import { settleRunBonus } from '@/lib/account/runBonusCloud';
@@ -1021,7 +1022,19 @@ export function BillionTradeEngine({
       runRecordedRef.current = true;
       const runRef = runPayoutRef();
       const local = account.status !== 'permanent';
-      if (local) payLocalRollover(runRef, total);
+      if (local) {
+        payLocalRollover(runRef, total);
+      } else {
+        // Signed-in: server pays on verified submit, but Bank UI reads the server
+        // ledger — credit optimistically so rollover shows up immediately.
+        const surplus = rolloverFor(total);
+        if (surplus > 0) {
+          announceOptimisticBankCredit(surplus);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event(BANK_CHANGED_EVENT));
+          }
+        }
+      }
       const bonus = circuit ? null : runBonusRef.current;
       let runBonusOutcome: RunBonusOutcome = { status: 'none', bonusId: null, payout: 0 };
       if (bonus?.mode === 'local') {
