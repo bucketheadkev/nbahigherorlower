@@ -26,11 +26,18 @@ import {
 import type { TeamInfo } from '@/lib/tradeup/types';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import { publishSpinHandoff, type SpinBoxSnapshot } from '@/lib/tradeup/spinHandoff';
+import {
+  erasForTeam,
+  pickRerollPair,
+  uniqueTeams,
+  type TicketRerollKind,
+} from '@/lib/tradeup/rerollPair';
 import { BarrelReel, REEL_NUDGE_CHANCE } from './BarrelReel';
 import { buildSpinStrip, type SpinStripItem } from './SpinReel';
 import { useLocale } from '@/hooks/useLocale';
 
-export type TicketRerollKind = 'team' | 'era';
+export type { TicketRerollKind };
+export { uniqueTeams, erasForTeam, pickRerollPair, resolveRerollPair } from '@/lib/tradeup/rerollPair';
 
 type BoardMode = 'idle' | 'spinning' | 'landed';
 
@@ -43,6 +50,8 @@ interface BallionTicketMachineProps {
   selectedPlayerName?: string | null;
   autoReroll?: TicketRerollKind | null;
   rerollFrom?: SpinPair | null;
+  /** Pre-validated destination pair from the engine (charged only after this was chosen). */
+  rerollTarget?: SpinPair | null;
   /** Held axis during a one-sided reroll (engine keeps the other value). */
   holdTeam?: TeamInfo | null;
   holdEra?: DecadeEra | null;
@@ -127,28 +136,6 @@ const ERA_SPIN_MS = WHEEL_SPIN_DURATION_MS;
 const TEAM_SPIN_MS_REDUCED = 80;
 const ERA_SPIN_MS_REDUCED = 80;
 
-export function uniqueTeams(pairs: SpinPair[]): TeamInfo[] {
-  const seen = new Set<string>();
-  const out: TeamInfo[] = [];
-  for (const p of pairs) {
-    if (seen.has(p.team.id)) continue;
-    seen.add(p.team.id);
-    out.push(p.team);
-  }
-  return out;
-}
-
-export function erasForTeam(pairs: SpinPair[], teamId: string): DecadeEra[] {
-  const seen = new Set<string>();
-  const out: DecadeEra[] = [];
-  for (const p of pairs) {
-    if (p.team.id !== teamId || seen.has(p.era)) continue;
-    seen.add(p.era);
-    out.push(p.era);
-  }
-  return out;
-}
-
 function pickFairResult(pairs: SpinPair[]): SpinPair {
   const teams = uniqueTeams(pairs);
   if (teams.length === 0) return pairs[0]!;
@@ -159,35 +146,6 @@ function pickFairResult(pairs: SpinPair[]): SpinPair {
       ? eras[Math.floor(Math.random() * eras.length)]!
       : pairs.find((p) => p.team.id === team.id)?.era ?? '2020s';
   return { team, era };
-}
-
-export function pickRerollPair(
-  pairs: SpinPair[],
-  locked: SpinPair,
-  kind: TicketRerollKind,
-): SpinPair {
-  if (kind === 'team') {
-    // Prefer teams that can keep the same era so the era reel stays truthful.
-    const allTeams = uniqueTeams(pairs).filter((t) => t.id !== locked.team.id);
-    const sameEraPool = allTeams.filter((t) =>
-      erasForTeam(pairs, t.id).includes(locked.era),
-    );
-    const pool = sameEraPool.length > 0 ? sameEraPool : allTeams;
-    if (pool.length === 0) return locked;
-    const team = pool[Math.floor(Math.random() * pool.length)]!;
-    const eras = erasForTeam(pairs, team.id);
-    const era = eras.includes(locked.era)
-      ? locked.era
-      : (eras[Math.floor(Math.random() * eras.length)] ?? locked.era);
-    return { team, era };
-  }
-
-  const otherEras = erasForTeam(pairs, locked.team.id).filter(
-    (e) => e !== locked.era,
-  );
-  if (otherEras.length === 0) return locked;
-  const era = otherEras[Math.floor(Math.random() * otherEras.length)]!;
-  return { team: locked.team, era };
 }
 
 function teamLabel(team: TeamInfo): string {
@@ -241,6 +199,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
   reduceMotion = false,
   autoReroll = null,
   rerollFrom = null,
+  rerollTarget = null,
   holdTeam = null,
   holdEra = null,
   showGoal = false,
@@ -406,7 +365,11 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       return;
     }
     autoDoneRef.current = true;
-    const next = pickRerollPair(allPairs, baseline, autoReroll);
+    const next =
+      rerollTarget &&
+      (rerollTarget.team.id !== baseline.team.id || rerollTarget.era !== baseline.era)
+        ? rerollTarget
+        : pickRerollPair(allPairs, baseline, autoReroll);
     onAutoRerollConsumed?.();
     hapticLight();
     // Sound already started in the reroll tap (iOS gesture).
@@ -419,7 +382,7 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
       },
       { playSound: false, keepLanded: true },
     );
-  }, [allPairs, autoReroll, beginSpin, onAutoRerollConsumed, rerollFrom]);
+  }, [allPairs, autoReroll, beginSpin, onAutoRerollConsumed, rerollFrom, rerollTarget]);
 
   const onTeamLocked = useCallback(() => {
     teamDoneRef.current = true;

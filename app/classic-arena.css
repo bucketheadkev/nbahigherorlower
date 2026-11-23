@@ -715,18 +715,29 @@
   stroke: var(--aj-ring-inner, transparent);
 }
 
-/* Eligible seats while placing a pick: team-color ring with a white edge, gently breathing. */
+/* Eligible seats: friendly full-body gold invite (not outline-only). */
 .draft-hub-court--arena .draft-hub-court__slot.is-target .aj {
-  --aj-ring-outer: color-mix(in srgb, var(--target-primary, #3fa9ff) 78%, #ffffff);
-  --aj-ring-inner: #ffffff;
-  animation: aj-target 1.1s ease-in-out infinite;
+  --aj-body: #ffcf3d;
+  --aj-trim: #fff3b0;
+  --aj-ring-outer: #ffe566;
+  --aj-ring-inner: #fff8d0;
+  --aj-shade: rgba(255, 200, 60, 0.22);
+  animation: aj-target 1.15s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.72));
+}
+
+.draft-hub-court--arena .draft-hub-court__slot.is-target .aj__body {
+  fill: var(--aj-body) !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__slot.is-target .aj__shade {
+  /* Soft gold highlight instead of black shade so the whole jersey reads gold */
+  fill: #fff6c0 !important;
+  opacity: 0.28 !important;
+  mix-blend-mode: soft-light;
 }
 
 .draft-hub-court--arena .draft-hub-court__slot.is-target .aj__ring {
-  opacity: 0.9;
-}
-
-.draft-hub-court--arena .draft-hub-court__slot.is-primary .aj__ring {
   opacity: 1;
 }
 
@@ -749,7 +760,7 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.035);
+    transform: scale(1.055);
   }
 }
 
@@ -901,8 +912,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 0 8px;
+  gap: 4px;
+  padding: 8px 0 4px;
   cursor: grab;
   touch-action: none;
 }
@@ -1049,14 +1060,14 @@
 }
 
 .billion-shell--arena .draft-sheet__body {
-  padding: 2px 12px 0;
+  padding: 0 12px 0;
 }
 
-/* ── The picker: rerolls, position filters, players ── */
+/* ── The picker: rerolls → perks → player list ── */
 .ap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   flex: 1;
   min-height: 0;
   font-family: var(--ap-font);
@@ -1065,26 +1076,37 @@
 .ap__rerolls {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.ap__below-rerolls {
+  flex: 0 0 auto;
+  margin-top: -1px;
+}
+
+.ap__below-rerolls .perk-bar {
+  padding: 0;
 }
 
 .ap-reroll {
   appearance: none;
-  height: 58px;
+  min-height: 46px;
   margin: 0;
-  padding: 0 12px;
+  padding: 5px 7px 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 2px;
   box-sizing: border-box;
-  border-radius: 15px;
+  border-radius: 11px;
   border: 1.5px solid #ffc27a;
   background: linear-gradient(180deg, #ffa53b 0%, #ff8716 30%, #f36a00 70%, #e55400 100%);
   box-shadow:
-    0 0 14px rgba(255, 120, 0, 0.36),
+    0 0 12px rgba(255, 120, 0, 0.32),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
-    0 6px 14px rgba(0, 0, 0, 0.45);
+    0 4px 12px rgba(0, 0, 0, 0.42);
   color: #ffffff;
   font-family: inherit;
   cursor: pointer;
@@ -1100,25 +1122,27 @@
 
 .ap-reroll__icon {
   flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: drop-shadow(0 1px 0 rgba(140, 45, 0, 0.35));
 }
 
 .ap-reroll__copy {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: 1px;
   line-height: 1;
+  text-align: center;
 }
 
 .ap-reroll__copy strong {
-  font-size: clamp(13px, 3.7vw, 15.5px);
+  font-size: clamp(11.5px, 3.2vw, 13.5px);
   font-weight: 800;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -1127,9 +1151,9 @@
 
 .ap-reroll__copy em {
   font-style: normal;
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.88);
 }
 
@@ -1142,88 +1166,31 @@
   cursor: default;
 }
 
+.ap-reroll.is-used .ap-reroll__icon {
+  filter: none;
+}
+
 .ap-reroll.is-used .ap-reroll__copy strong {
   text-shadow: none;
 }
 
-.ap__filters {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.ap-filter {
-  appearance: none;
-  height: 46px;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  border: 1px solid rgba(130, 180, 255, 0.24);
-  background: linear-gradient(180deg, #12284f, #0c1d3d);
-  color: #e3ecff;
-  font-family: inherit;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.ap-filter__label {
-  font-size: 14.5px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  line-height: 1;
-}
-
-.ap-filter__count {
-  font-size: 10.5px;
-  font-weight: 700;
-  line-height: 1;
-  color: rgba(165, 195, 245, 0.85);
-}
-
-.ap-filter.is-filled .ap-filter__count {
-  color: #6ee7a0;
-}
-
-.ap-filter.is-empty:not(.is-on) {
-  opacity: 0.45;
-}
-
-.ap-filter.is-on {
-  border-color: #9fd0ff;
-  background: linear-gradient(180deg, #3594ff, #1764dc);
-  box-shadow:
-    0 0 12px rgba(60, 150, 255, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  color: #ffffff;
-}
-
-.ap-filter.is-on .ap-filter__count {
-  color: rgba(255, 255, 255, 0.9);
-}
-
 .ap__hint {
   margin: 0;
+  flex: 0 0 auto;
   text-align: center;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: rgba(200, 215, 242, 0.72);
+  color: rgba(200, 215, 242, 0.62);
 }
 
 .ap__list {
   list-style: none;
   margin: 0;
-  padding: 0 0 10px;
+  padding: 0 0 8px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  flex: 1;
+  gap: 5px;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -1243,16 +1210,17 @@
   width: 100%;
   margin: 0;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 28px;
+  grid-template-columns: 40px minmax(0, 1fr) 26px;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px 10px 10px;
+  gap: 10px;
+  padding: 7px 10px 7px 8px;
   box-sizing: border-box;
-  border-radius: 15px;
+  border-radius: 13px;
   border: 1px solid rgba(140, 190, 255, 0.22);
+  /* Team primary fill is set inline; navy is only the fallback before paint. */
   background: linear-gradient(180deg, #172f5c, #0e2045);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  color: #f2f6ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  color: var(--ap-ink, #f2f6ff);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -1277,22 +1245,23 @@
   cursor: default;
 }
 
+/* Primary-position chip in the board team's color (no top filter row). */
 .ap-row__pos {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  font-size: 15.5px;
+  border-radius: 11px;
+  font-size: 14px;
   font-weight: 800;
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.26), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
-/* Full name, the full stat line, then where he can play: nothing is cut off. */
+/* Player name + PTS/REB/AST. */
 .ap-row__meta {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -1300,11 +1269,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 17.5px;
+  font-size: 15.5px;
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.1;
   letter-spacing: 0.005em;
-  color: #ffffff;
+  color: var(--ap-ink, #ffffff);
 }
 
 .ap-row__meta em {
@@ -1312,54 +1281,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-style: normal;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
-  color: #c2d3f3;
-}
-
-.ap-row__fits {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.ap-row__fits span {
-  padding: 3px 6px;
-  border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1;
-}
-
-.ap-row__fits .ap-row__fits-label {
-  padding: 0 2px 0 0;
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  color: rgba(194, 211, 243, 0.62);
-}
-
-.ap-row__fits .is-open {
-  color: #8ff0b8;
-  box-shadow: inset 0 0 0 1px rgba(110, 230, 165, 0.45);
-  background: rgba(60, 200, 120, 0.12);
-}
-
-.ap-row__fits .is-taken {
-  color: rgba(200, 212, 235, 0.38);
-  box-shadow: inset 0 0 0 1px rgba(200, 212, 235, 0.14);
+  color: var(--ap-muted, #c2d3f3);
 }
 
 .ap-row__check {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: grid;
   place-items: center;
   box-sizing: border-box;
   border-radius: 50%;
-  border: 2px solid rgba(200, 215, 255, 0.35);
+  border: 2px solid color-mix(in srgb, var(--ap-ink, #fff) 35%, transparent);
 }
 
 .ap-row__check.is-on {
@@ -1378,27 +1314,28 @@
   stroke-linejoin: round;
 }
 
-/* Short phones: the same system, a little tighter. */
 @media (max-height: 720px) {
   .ap-reroll {
-    height: 50px;
-  }
-
-  .ap-filter {
-    height: 40px;
+    min-height: 42px;
+    padding: 4px 6px 3px;
   }
 
   .ap-row {
-    padding: 8px 10px 8px 8px;
-  }
-
-  .ap-row__meta {
-    gap: 4px;
+    padding: 6px 9px 6px 7px;
   }
 
   .ap-row__pos {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .ap-row__meta {
+    gap: 2px;
+  }
+
+  .ap-row__meta strong {
+    font-size: 14.5px;
   }
 
   .billion-shell--arena .draft-sheet__peek {

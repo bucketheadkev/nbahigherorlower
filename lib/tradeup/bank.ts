@@ -95,7 +95,9 @@ export interface LocalLedgerEntry {
     | 'rank_reward'
     | 'cash_table_wager'
     | 'cash_table_payout'
-    | 'cash_table_refund';
+    | 'cash_table_refund'
+    /** Guest/local trivia run bonuses. Cloud sync needs a later SQL migration. */
+    | 'trivia_bonus';
   at: number;
 }
 
@@ -132,13 +134,13 @@ export function getLocalLedgerRefs(kind: LocalLedgerEntry['kind']): Set<string> 
   return new Set(readLocalLedger().filter((e) => e.kind === kind).map((e) => e.ref));
 }
 
-function localLedgerTotal(): number {
+export function getLocalLedgerTotal(): number {
   return readLocalLedger().reduce((sum, e) => sum + e.amount, 0);
 }
 
 export function getBankBalance(): number {
   const earned = completedIds().reduce((sum, id) => sum + challengeReward(id), 0);
-  return Math.max(0, earned + localLedgerTotal());
+  return Math.max(0, earned + getLocalLedgerTotal());
 }
 
 function readSeen(): Set<string> {

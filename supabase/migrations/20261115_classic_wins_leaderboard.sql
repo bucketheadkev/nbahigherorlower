@@ -44,7 +44,7 @@ AS $$
   INNER JOIN public.profiles p ON p.user_id = t.user_id
   WHERE t.win_count > 0
   ORDER BY t.win_count DESC, p.username_normalized ASC
-  LIMIT GREATEST(1, LEAST(coalesce(p_limit, 100), 200));
+  LIMIT GREATEST(1, LEAST(coalesce(p_limit, 100), 100));
 $$;
 
 REVOKE ALL ON FUNCTION public.get_classic_wins_all_time(integer) FROM PUBLIC;
@@ -54,7 +54,7 @@ GRANT EXECUTE ON FUNCTION public.get_classic_wins_all_time(integer) TO anon, aut
 -- Weekly wins — ISO week in UTC (Monday 00:00 UTC → next Monday)
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.get_classic_wins_weekly(p_limit integer DEFAULT 100)
+CREATE OR REPLACE FUNCTION public.get_classic_wins_weekly(p_limit integer DEFAULT 10)
 RETURNS TABLE (
   rank bigint,
   username text,
@@ -83,7 +83,7 @@ AS $$
   INNER JOIN public.profiles p ON p.user_id = t.user_id
   WHERE t.win_count > 0
   ORDER BY t.win_count DESC, p.username_normalized ASC
-  LIMIT GREATEST(1, LEAST(coalesce(p_limit, 100), 200));
+  LIMIT GREATEST(1, LEAST(coalesce(p_limit, 10), 10));
 $$;
 
 REVOKE ALL ON FUNCTION public.get_classic_wins_weekly(integer) FROM PUBLIC;

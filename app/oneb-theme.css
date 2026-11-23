@@ -3077,15 +3077,7 @@
 }
 
 .draft-hub-court__pos-label {
-  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(0.58rem, 2.4vw, 0.7rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(220, 235, 255, 0.78);
-  line-height: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+  display: none !important;
 }
 
 .draft-hub-court__slot.is-empty {
@@ -3469,12 +3461,7 @@
 }
 
 .draft-hub-court__pop-pos {
-  font-size: 0.5rem;
-  font-weight: 850;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--slot-accent) 75%, var(--slot-ink) 25%);
-  margin-bottom: 0.12rem;
+  display: none !important;
 }
 
 .draft-hub-court__pop-first {
@@ -3727,16 +3714,17 @@ html:not([data-full-motion]) .draft-hub-court__pop {
     filter: brightness(1);
   }
   45% {
-    transform: scale(1.07);
-    filter: brightness(1.22) saturate(1.08);
+    /* ~5% stronger pulse than prior 1.07 / 1.22 peak */
+    transform: scale(1.1235);
+    filter: brightness(1.281) saturate(1.13);
     box-shadow:
-      0 0 0 1px rgba(var(--court-slot-glow), 0.35),
-      0 0 18px rgba(var(--court-slot-glow), 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      0 0 0 1px rgba(var(--court-slot-glow), 0.38),
+      0 0 20px rgba(var(--court-slot-glow), 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
   100% {
     transform: scale(1);
-    filter: brightness(1.06);
+    filter: brightness(1.08);
   }
 }
 
@@ -3747,7 +3735,7 @@ html:not([data-full-motion]) .draft-hub-court__pop {
   }
   45% {
     opacity: 1;
-    transform: scale(1.12);
+    transform: scale(1.176);
   }
   100% {
     opacity: 0.7;
@@ -4784,11 +4772,13 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 .billion-court-dock__item.is-target:not(.is-filled) .billion-court-dock__circle {
   position: relative;
   overflow: visible;
-  border-color: rgba(255, 176, 106, 0.9) !important;
+  border-color: #ffe566 !important;
   border-style: solid !important;
-  background: #0c1830 !important;
-  color: #fff6ee !important;
-  box-shadow: 0 0 10px rgba(255, 109, 40, 0.55) !important;
+  background: linear-gradient(180deg, #ffe566 0%, #ffc107 55%, #e6a800 100%) !important;
+  color: #3a2800 !important;
+  box-shadow:
+    0 0 14px rgba(255, 210, 60, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
   animation: none;
   transform: none;
 }
@@ -4803,9 +4793,9 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
     from 0deg,
     transparent 0deg,
     transparent 250deg,
-    rgba(255, 176, 106, 0.15) 292deg,
-    rgba(255, 244, 220, 0.95) 328deg,
-    rgba(255, 109, 40, 0.2) 348deg,
+    rgba(255, 240, 160, 0.2) 292deg,
+    rgba(255, 255, 230, 0.95) 328deg,
+    rgba(255, 200, 40, 0.25) 348deg,
     transparent 360deg
   );
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1px));
@@ -4826,7 +4816,7 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
 }
 
 .billion-court-dock__item.is-target .billion-court-dock__pos {
-  color: #ffb06a !important;
+  color: #ffe566 !important;
 }
 
 .billion-court-dock__item.is-unavailable .billion-court-dock__pos {
@@ -12928,20 +12918,14 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
   padding: 0.22rem 0.7rem;
 }
 
-/* ── Pick court: seats the chosen player can take glow in his team's color; his primary
-   position wears the thickest ring. --dock-ring comes from teamRingColor() on the dock. ── */
-.tradeup-shell.billion-shell .billion-draft-layout .billion-court.is-slots-only .billion-court-dock .billion-court-dock__item.is-target:not(.is-filled) .billion-court-dock__circle {
-  border-width: 2px !important;
-  border-color: color-mix(in srgb, var(--dock-ring, #ffb06a) 85%, transparent) !important;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--dock-ring, #ff6d28) 55%, transparent) !important;
-}
-
+/* ── Pick court: every eligible seat uses the same bright gold (no primary boost). ── */
+.tradeup-shell.billion-shell .billion-draft-layout .billion-court.is-slots-only .billion-court-dock .billion-court-dock__item.is-target:not(.is-filled) .billion-court-dock__circle,
 .tradeup-shell.billion-shell .billion-draft-layout .billion-court.is-slots-only .billion-court-dock .billion-court-dock__item.is-target.is-primary:not(.is-filled) .billion-court-dock__circle {
-  border-width: 4.5px !important;
-  border-color: var(--dock-ring, #ffb06a) !important;
-  box-shadow:
-    0 0 16px color-mix(in srgb, var(--dock-ring, #ff6d28) 70%, transparent),
-    inset 0 0 8px color-mix(in srgb, var(--dock-ring, #ff6d28) 30%, transparent) !important;
+  border-width: 2px !important;
+  border-color: #ffe566 !important;
+  background: linear-gradient(180deg, #ffe566 0%, #ffc107 55%, #e6a800 100%) !important;
+  color: #3a2800 !important;
+  box-shadow: 0 0 14px rgba(255, 210, 60, 0.7) !important;
 }
 
 .tradeup-shell.billion-shell .billion-court-dock .billion-court-dock__item.is-target:not(.is-filled) .billion-court-dock__circle::after {
@@ -12949,17 +12933,15 @@ html:not([data-full-motion]) .draft-hub-court.is-analyzing .draft-hub-court__bea
     from 0deg,
     transparent 0deg,
     transparent 250deg,
-    color-mix(in srgb, var(--dock-ring, #ffb06a) 18%, transparent) 292deg,
-    color-mix(in srgb, var(--dock-ring, #fff4dc) 60%, #ffffff) 328deg,
-    color-mix(in srgb, var(--dock-ring, #ff6d28) 25%, transparent) 348deg,
+    rgba(255, 240, 160, 0.2) 292deg,
+    rgba(255, 255, 230, 0.95) 328deg,
+    rgba(255, 200, 40, 0.25) 348deg,
     transparent 360deg
   );
 }
 
-.tradeup-shell.billion-shell .billion-court-dock .billion-court-dock__item.is-target .billion-court-dock__pos {
-  color: color-mix(in srgb, var(--dock-ring, #ffb06a) 70%, #ffffff) !important;
-}
-
+.tradeup-shell.billion-shell .billion-court-dock .billion-court-dock__item.is-target .billion-court-dock__pos,
 .tradeup-shell.billion-shell .billion-court-dock .billion-court-dock__item.is-target.is-primary .billion-court-dock__pos {
-  font-weight: 900;
+  font-weight: 850;
+  color: #ffe566 !important;
 }

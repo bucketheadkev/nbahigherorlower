@@ -1,0 +1,96 @@
+{
+  "title": {
+    "x": 93,
+    "y": 63,
+    "w": 244,
+    "h": 56
+  },
+  "stageWrap": {
+    "x": 16,
+    "y": 132,
+    "w": 398,
+    "h": 416
+  },
+  "stageNat": {
+    "w": 1170,
+    "h": 700
+  },
+  "arenaNat": {
+    "w": 1290,
+    "h": 2796
+  },
+  "xp": {
+    "x": 43,
+    "y": 664,
+    "w": 344,
+    "h": 64
+  },
+  "play": {
+    "x": 16,
+    "y": 739,
+    "w": 398,
+    "h": 70
+  },
+  "modes": {
+    "x": 16,
+    "y": 818,
+    "w": 398,
+    "h": 42
+  },
+  "coin": {
+    "x": 262,
+    "y": 12,
+    "w": 104,
+    "h": 41
+  },
+  "profile": {
+    "x": 16,
+    "y": 11,
+    "w": 43,
+    "h": 43
+  },
+  "tabbar": {
+    "x": 0,
+    "y": 875,
+    "w": 430,
+    "h": 57
+  },
+  "tabs": [
+    {
+      "text": "Leaderboard",
+      "box": {
+        "x": 6,
+        "y": 882,
+        "w": 139,
+        "h": 45
+      },
+      "active": false
+    },
+    {
+      "text": "Play",
+      "box": {
+        "x": 145,
+        "y": 882,
+        "w": 139,
+        "h": 45
+      },
+      "active": true
+    },
+    {
+      "text": "Shop",
+      "box": {
+        "x": 285,
+        "y": 882,
+        "w": 139,
+        "h": 45
+      },
+      "active": false
+    }
+  ],
+  "hasAwaiting": false,
+  "hasPreview": false,
+  "arenaSrc": "/images/home-v4/home-arena-bg@3x.webp",
+  "stageSrc": "/images/home-v4/home-jersey-stage@3x.webp",
+  "vw": 430,
+  "vh": 932
+}

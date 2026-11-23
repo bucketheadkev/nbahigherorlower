@@ -297,12 +297,13 @@
   --jersey-line: rgba(150, 157, 168, 0.6);
 }
 
-/* One tight glow, no outer bloom: a single static drop-shadow in the placing team's color
-   (drawn once, never animated), and the outline lit in the same color. Empty seats stay gray. */
+/* Eligible seats: brilliant bright-gold fill (replaces team-primary outline). */
 .draft-hub-court .jersey-slot.is-target .jersey {
-  --jersey-glow-color: var(--target-color, var(--target-primary, #7ec8ff));
-  --jersey-line: var(--jersey-glow-color);
-  --jersey-line-w: 2.4px;
+  --jersey-fill: #ffd54a;
+  --jersey-trim: #fff6c8;
+  --jersey-glow-color: #ffe566;
+  --jersey-line: #fff8d0;
+  --jersey-line-w: 2.2px;
 }
 
 .draft-hub-court .jersey-slot.is-moving .jersey {
@@ -313,10 +314,6 @@
 
 .draft-hub-court .jersey-slot:is(.is-target, .is-moving) .jersey__shape {
   filter: drop-shadow(0 0 5px var(--jersey-glow-color));
-}
-
-.draft-hub-court .jersey-slot.is-target.is-primary .jersey {
-  transform: scale(1.04);
 }
 
 .draft-hub-court .jersey-slot:active .jersey {
@@ -393,7 +390,8 @@
   position: fixed;
   left: 0;
   right: 0;
-  top: 30%;
+  /* Higher sheet → more player rows (~4) visible above the fold. */
+  top: 22%;
   bottom: 0;
   z-index: 60;
   width: 100%;

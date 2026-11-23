@@ -25,27 +25,39 @@ import {
   stopFinalTotalSettleSound,
   warmResultsRevealSounds,
 } from '@/lib/tradeup/gameAudio';
+import { formatCash } from '@/lib/tradeup/bank';
 import { hapticHeavy, hapticLight, hapticSuccess, hapticTap, hapticWarning } from '@/lib/tradeup/haptics';
+import { holdInterruptions } from '@/lib/tradeup/interruptions';
 import { cancelFrame, easeOutCubic, scheduleFrame } from '@/lib/tradeup/perf/rafClock';
+import { rolloverFor } from '@/lib/tradeup/rollover';
 import { captureRunShareCard, shareRunResultImage } from '@/lib/tradeup/shareRunResult';
 import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position } from '@/lib/tradeup/types';
+import { useXpProfile } from '@/hooks/useXpProfile';
+import { calculateClassicRunRewards } from '@/lib/tradeup/xp/config';
+import { XpProgressBar } from '../xp/XpProgressBar';
 import { WinCelebration } from './WinCelebration';
 
 type SeatedPlayer = ValuedPlayer & { seatedSlot?: Position };
 
 /*
  * Timeline (ms from mount; the arena has already faded to black). The spotlight flickers on,
- * then the rows light up PG → C, each adding its value to the total; the fifth waits a beat.
+ * then the rows light up PG → C, each adding its value to the total. The fifth only waits a
+ * beat when the four-player total is exactly $790M.
  */
 const T_TOTAL_IN = 320;
-const T_ROWS = [450, 800, 1150, 1500, 2450];
+const ROW_GAP_MS = 350;
+const T_ROW_FIRST = 450;
+/** Even cadence for all five when there is no $790M suspense beat. */
+const T_ROWS_EVEN = [0, 1, 2, 3, 4].map((i) => T_ROW_FIRST + i * ROW_GAP_MS);
+/** Suspense cadence: same first four, then a held beat before C. */
+const T_ROWS_SUSPENSE = [450, 800, 1150, 1500, 2450];
 const STEP_COUNT_MS = 340;
 const LAST_COUNT_MS = 880;
 const T_ACTIONS_AFTER_FINAL = 260;
-/** The held beat before the fifth player starts once the fourth has finished counting. */
-const T_SUSPENSE = T_ROWS[3]! + STEP_COUNT_MS + 40;
+/** Only this four-player total unlocks the fifth-row hesitation. */
+const FIFTH_SUSPENSE_AT = 790_000_000;
 
 interface Props {
   roster: SeatedPlayer[];
@@ -54,7 +66,12 @@ interface Props {
   onTotalSettled: (payload: { teamValue: number }) => void;
   /** The run is complete (verification, personal best, outcome). */
   onComplete: (payload: { teamValue: number }) => void;
+  /** Begin trivia (eligible $1B+) or build another. */
   onPlayAgain: () => void;
+  /** Skip trivia and start a new run (eligible $1B+ only). */
+  onSkipTrivia?: () => void;
+  /** Leave results and return home. */
+  onExit?: () => void;
 }
 
 interface Row {
@@ -186,7 +203,15 @@ function FitName({ text }: { text: string }) {
  * final places PG → C while the team total counts up, and the screen settles on the approved
  * layout (design/classic-results-reference.png). Tap anywhere during the reveal to finish it.
  */
-export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled, onComplete, onPlayAgain }: Props) {
+export function ClassicRunResults({
+  roster,
+  reduceMotion = false,
+  onTotalSettled,
+  onComplete,
+  onPlayAgain,
+  onSkipTrivia,
+  onExit,
+}: Props) {
   const rows = useMemo<Row[]>(
     () =>
       LINEUP_POSITIONS.flatMap((pos) => {
@@ -210,6 +235,18 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
   );
   const teamValue = useMemo(() => rows.reduce((sum, row) => sum + row.value, 0), [rows]);
   const isBillion = teamValue >= BILLION_GOAL;
+  const fourPlayerTotal = useMemo(
+    () => rows.slice(0, 4).reduce((sum, row) => sum + row.value, 0),
+    [rows],
+  );
+  /** Fifth-row hesitation only when the first four land on exactly $790M. */
+  const holdFifth = Math.round(fourPlayerTotal) === FIFTH_SUSPENSE_AT;
+  const rowTimes = holdFifth ? T_ROWS_SUSPENSE : T_ROWS_EVEN;
+  const rollover = rolloverFor(teamValue);
+  const xpBreakdown = calculateClassicRunRewards(teamValue);
+  /** Trivia BEGIN only when the run banks rollover above $1B. */
+  const showTrivia = isBillion && rollover > 0;
+  const { progress } = useXpProfile();
 
   const [shown, setShown] = useState(0);
   const [display, setDisplay] = useState(0);
@@ -277,6 +314,9 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
     onComplete({ teamValue });
   }, [isBillion, later, onComplete, onTotalSettled, reduceMotion, teamValue]);
 
+  // Keep hub XP / earnings from covering Build Another while results are up.
+  useEffect(() => holdInterruptions(), []);
+
   useEffect(() => {
     warmResultsRevealSounds();
     if (reduceMotion) {
@@ -288,6 +328,11 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
     }
     later(() => setTotalIn(true), T_TOTAL_IN);
     let running = 0;
+    const times = rowTimes;
+    const suspenseAt =
+      holdFifth && rows.length >= 5
+        ? (times[3] ?? T_ROW_FIRST + 3 * ROW_GAP_MS) + STEP_COUNT_MS + 40
+        : null;
     rows.forEach((row, index) => {
       later(() => {
         setShown(index + 1);
@@ -296,12 +341,13 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
         running += row.value;
         const last = index === rows.length - 1;
         countTo(running, last ? LAST_COUNT_MS : STEP_COUNT_MS, last ? settle : undefined);
-        if (index === rows.length - 2) {
-          const holdMs = (T_ROWS[rows.length - 1] ?? T_SUSPENSE) - T_SUSPENSE;
+        if (holdFifth && suspenseAt != null && index === rows.length - 2) {
+          const fifthAt = times[rows.length - 1] ?? suspenseAt;
+          const holdMs = Math.max(0, fifthAt - suspenseAt);
           later(() => {
             setSuspense(true);
             stopRiser.current = playResultsSuspenseSound(holdMs);
-          }, T_SUSPENSE - (T_ROWS[index] ?? 0));
+          }, Math.max(0, suspenseAt - (times[index] ?? 0)));
         }
         if (last) {
           stopRiser.current?.();
@@ -309,7 +355,7 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
           setSuspense(false);
           later(() => setDone(true), LAST_COUNT_MS + T_ACTIONS_AFTER_FINAL);
         }
-      }, T_ROWS[index] ?? T_ROWS[T_ROWS.length - 1]!);
+      }, times[index] ?? times[times.length - 1]!);
     });
     const pending = timers.current;
     return () => {
@@ -355,7 +401,10 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
         pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
         backgroundColor: '#03060d',
         exclude: (el) =>
-          el.classList.contains('cr__actions') || el.classList.contains('cr__fx') || el.classList.contains('cr__party'),
+          el.classList.contains('cr__actions') ||
+          el.classList.contains('cr__fx') ||
+          el.classList.contains('cr__party') ||
+          el.classList.contains('cr__home'),
       });
       if (!blob) {
         setShareError('Could not capture results');
@@ -375,7 +424,9 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
       ref={rootRef}
       className={`cr${skipped || reduceMotion ? ' is-skipped' : ''}${suspense ? ' is-suspense' : ''}${final ? ' is-final' : ''}${
         final && isBillion ? ' is-billion' : ''
-      }${done ? ' is-done' : ''}${live ? ' is-live' : ''}${shaking ? ' is-shaking' : ''}`}
+      }${done ? ' is-done' : ''}${live ? ' is-live' : ''}${shaking ? ' is-shaking' : ''} is-run-rewards${
+        showTrivia ? ' is-trivia-rewards' : ''
+      }`}
       onPointerDown={done ? undefined : skip}
       aria-label="Run results"
     >
@@ -384,6 +435,23 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
         {/* Between the arena and the content: the money pours behind the total and the names. */}
         {party ? <WinCelebration reduceMotion={reduceMotion} onDone={() => setParty(false)} /> : null}
         <div className="cr__stage">
+          {onExit && done ? (
+            <button
+              type="button"
+              className="cr__home"
+              aria-label="Back to home"
+              onClick={(e) => {
+                e.stopPropagation();
+                hapticTap();
+                onExit();
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden>
+                <path d="M15.2 4.8 8 12l7.2 7.2" />
+              </svg>
+              <span>Home</span>
+            </button>
+          ) : null}
           <p className="cr__title">1B RUN APP</p>
           <p className={`cr__total${totalIn ? ' is-in' : ''}`} aria-live="polite">
             <span className="cr__total-num" data-text={formatDollarsExact(display)}>
@@ -419,27 +487,71 @@ export function ClassicRunResults({ roster, reduceMotion = false, onTotalSettled
             ))}
           </ol>
           <div className="cr__actions">
-            <button
-              type="button"
-              className="cr__again"
-              onClick={() => {
-                hapticTap();
-                onPlayAgain();
-              }}
-            >
-              BUILD ANOTHER
-            </button>
-            <button type="button" className="cr__share" onClick={() => void handleShare()} disabled={sharing}>
-              <svg className="cr__share-icon" viewBox="0 0 24 24" aria-hidden>
-                <path d="M12 14V2.8M7.6 7 12 2.6 16.4 7M8.6 9.8H6.2A2.2 2.2 0 0 0 4 12v7.3a2.2 2.2 0 0 0 2.2 2.2h11.6a2.2 2.2 0 0 0 2.2-2.2V12a2.2 2.2 0 0 0-2.2-2.2h-2.4" />
-              </svg>
-              <span>{sharing ? 'PREPARING…' : 'SHARE'}</span>
-            </button>
-            {shareError ? (
-              <p className="cr__share-error" role="alert">
-                {shareError}
-              </p>
-            ) : null}
+            <div className="cr-rewards">
+              <div className="cr-rewards__xp">
+                <XpProgressBar
+                  progress={progress}
+                  levelLabel="LVL"
+                  gainedXp={done ? xpBreakdown.total : null}
+                  compact
+                  className="cr-rewards__meter"
+                />
+                {done && xpBreakdown.coins > 0 ? (
+                  <p className="cr-rewards__coins-plain">+{xpBreakdown.coins} coins</p>
+                ) : null}
+              </div>
+
+              {rollover > 0 ? (
+                <p className="cr-rewards__rollover">
+                  Bank rollover <strong>+{formatCash(rollover)}</strong>
+                </p>
+              ) : null}
+
+              {showTrivia ? (
+                <div className="cr-rewards__trivia-note">
+                  <button
+                    type="button"
+                    className="cr-rewards__begin"
+                    onClick={() => {
+                      hapticTap();
+                      onPlayAgain();
+                    }}
+                  >
+                    START TRIVIA RUN
+                  </button>
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                className="cr__again cr__again--inline"
+                onClick={() => {
+                  hapticTap();
+                  if (showTrivia && onSkipTrivia) onSkipTrivia();
+                  else onPlayAgain();
+                }}
+              >
+                BUILD ANOTHER
+              </button>
+
+              <button
+                type="button"
+                className="cr__share cr__share--inline"
+                onClick={() => void handleShare()}
+                disabled={sharing}
+              >
+                <svg className="cr__share-icon" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M12 14V2.8M7.6 7 12 2.6 16.4 7M8.6 9.8H6.2A2.2 2.2 0 0 0 4 12v7.3a2.2 2.2 0 0 0 2.2 2.2h11.6a2.2 2.2 0 0 0 2.2-2.2V12a2.2 2.2 0 0 0-2.2-2.2h-2.4" />
+                </svg>
+                <span>{sharing ? 'PREPARING…' : 'SHARE'}</span>
+              </button>
+
+              {shareError ? (
+                <p className="cr__share-error" role="alert">
+                  {shareError}
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

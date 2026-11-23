@@ -14,7 +14,8 @@ import {
 const DRAG_SLOP_PX = 6;
 /** px/ms — a flick this fast decides the snap regardless of where it was released. */
 const FLICK_VELOCITY = 0.35;
-const GAP_BELOW_ANCHOR_PX = 8;
+/** Sit tight under the jumbotron so rerolls read as the first sheet content. */
+const GAP_BELOW_ANCHOR_PX = 4;
 
 type Props = {
   /** Mounted and on screen (a spin has landed). When false the sheet slides fully away. */

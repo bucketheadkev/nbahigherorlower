@@ -1,0 +1,16 @@
+{
+  "plate": {
+    "src": "/images/home-v4/home-master-ui@3x.png",
+    "nat": {
+      "w": 1290,
+      "h": 2796
+    },
+    "tabbarHidden": true
+  },
+  "board": true,
+  "shop": true,
+  "classic": false,
+  "modes": false,
+  "profile": true,
+  "errs": []
+}

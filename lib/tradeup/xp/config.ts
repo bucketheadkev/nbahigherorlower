@@ -14,8 +14,33 @@ export const XP_PERFORMANCE_BONUS_MAX = 100;
 /** Extra XP when the roster clears $1B. */
 export const XP_BILLION_BONUS = 100;
 
-/** Coins granted = floor(runXp / XP_PER_COIN). */
+/**
+ * @deprecated Coins are flat awards now (see COINS_*). Kept so older callers/tests compile.
+ * Prefer COINS_COMPLETED_RUN / COINS_BILLION_BONUS / COINS_LEVEL_UP.
+ */
 export const XP_PER_COIN = 10;
+
+/** Coins for finishing any Classic run. */
+export const COINS_COMPLETED_RUN = 20;
+
+/** Extra coins when the roster clears $1B. */
+export const COINS_BILLION_BONUS = 30;
+
+/** Coins granted once per level gained from a Classic award. */
+export const COINS_LEVEL_UP = 50;
+
+/** One-time new-player welcome gift. */
+export const COINS_WELCOME = 200;
+
+/** Coin price for each perk activation and each paid Team/Era reroll. */
+export const COINS_PERK_COST = 100;
+export const COINS_REROLL_COST = 100;
+
+/** Max perk activations per Classic run (separate from rerolls). */
+export const MAX_PERK_ACTIVATIONS_PER_RUN = 3;
+
+/** Max Team/Era rerolls per Classic run (free + paid combined). */
+export const MAX_REROLLS_PER_RUN = 4;
 
 /** Players start at level 1. */
 export const XP_STARTING_LEVEL = 1;
@@ -44,13 +69,14 @@ export interface ClassicXpBreakdown {
   coins: number;
 }
 
-/** Pure XP + coin math for one completed Classic run. */
+/** Pure XP + base coin math for one completed Classic run (level-up coins applied in award). */
 export function calculateClassicRunRewards(teamValue: number): ClassicXpBreakdown {
   const completed = XP_COMPLETED_RUN;
   const performance = performanceBonusXp(teamValue);
   const billion = teamValue >= BILLION_GOAL ? XP_BILLION_BONUS : 0;
   const total = completed + performance + billion;
-  const coins = Math.floor(total / XP_PER_COIN);
+  const coins =
+    COINS_COMPLETED_RUN + (teamValue >= BILLION_GOAL ? COINS_BILLION_BONUS : 0);
   return { completed, performance, billion, total, coins };
 }
 

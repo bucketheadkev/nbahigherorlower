@@ -533,7 +533,6 @@ export function DraftHubCards({
             const era = resolveEra(detailPlayer);
             return (
               <>
-                <p className="draft-hub-court__pop-pos">{detailSlot}</p>
                 <p className="draft-hub-court__pop-first">{first}</p>
                 {last ? (
                   <p className="draft-hub-court__pop-last">{last}</p>

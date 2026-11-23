@@ -16,6 +16,7 @@ import {
 } from '@/lib/account/accountAuth';
 import { markAccountPromptSeen } from '@/lib/account/accountPromptStorage';
 import { USERNAME_MAX } from '@/lib/account/username';
+import { useSound } from '@/hooks/useSound';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
 export type AccountSheetView = 'menu' | 'signup' | 'login' | 'forgot' | 'claim';
@@ -43,6 +44,7 @@ export function AccountAuthSheet({
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { resume, playTap } = useSound();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -65,6 +67,8 @@ export function AccountAuthSheet({
       if (opts?.skipWhen?.()) return;
       e.preventDefault();
       e.stopPropagation();
+      void resume();
+      playTap();
       fn();
     };
 

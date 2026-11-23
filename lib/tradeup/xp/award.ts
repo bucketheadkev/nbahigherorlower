@@ -1,13 +1,14 @@
 /**
  * Award Classic-run XP once per runRef. Safe to call from recordClassicRun.
- * Does not modify evaluation layout — queues a slim XP/reward reveal for after settle.
+ * Credits XP/coins immediately. No hub "coins collected" overlay — rewards
+ * are shown on the evaluation screen instead.
  */
 
-import { calculateClassicRunRewards } from './config';
+import { calculateClassicRunRewards, COINS_LEVEL_UP } from './config';
 import {
   applyXpAward,
-  enqueuePendingXpReveal,
   hasAwardedXpRun,
+  saveXpProfile,
   type PendingXpReveal,
   type XpProfile,
 } from './storage';
@@ -42,27 +43,24 @@ export function awardClassicRunXp(runRef: string, teamValue: number): ClassicXpA
   });
   if (!applied) return { awarded: false, reason: 'duplicate', breakdown };
 
-  const pendingItem: PendingXpReveal = {
-    id: `xp_${ref}`,
-    runRef: ref,
-    fromLevel: applied.fromLevel,
-    toLevel: applied.toLevel,
-    fromTotalXp: applied.fromTotalXp,
-    toTotalXp: applied.toTotalXp,
-    xpFromRun: breakdown.total,
-    coinsFromRun: breakdown.coins,
-    coinsBefore: applied.coinsBefore,
-    coinsAfter: applied.coinsAfter,
-    createdAt: Date.now(),
-  };
-  enqueuePendingXpReveal(pendingItem);
+  const levelsGained = Math.max(0, applied.toLevel - applied.fromLevel);
+  const levelCoins = levelsGained * COINS_LEVEL_UP;
+  let profile = applied.profile;
+  if (levelCoins > 0) {
+    profile = saveXpProfile({
+      ...applied.profile,
+      coins: applied.profile.coins + levelCoins,
+    });
+  }
+
+  const coinsFromRun = breakdown.coins + levelCoins;
 
   return {
     awarded: true,
-    breakdown,
-    profile: applied.profile,
+    breakdown: { ...breakdown, coins: coinsFromRun },
+    profile,
     fromLevel: applied.fromLevel,
     toLevel: applied.toLevel,
-    pending: pendingItem,
+    pending: null,
   };
 }

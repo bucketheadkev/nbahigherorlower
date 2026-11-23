@@ -42,7 +42,7 @@ export function RankScreen() {
   const { locale } = useLocale();
   const { state: account } = useAccountAuth();
   const permanent = account.status === "permanent";
-  const balance = useBankBalance(permanent);
+  const balance = useBankBalance(account.status);
   const { rank, peak, ready } = useRank(
     account.status === "permanent" ? account.user.id : null,
     balance,

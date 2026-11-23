@@ -1,0 +1,34 @@
+{
+  "assets": [
+    {
+      "path": "home-arena-bg@3x.webp",
+      "width": 1290,
+      "height": 2796,
+      "alpha": false,
+      "source": "programmatically authored at target resolution"
+    },
+    {
+      "path": "home-jersey-stage@3x.webp",
+      "width": 1170,
+      "height": 700,
+      "alpha": true,
+      "source": "alpha-matted from supplied 787x1536 approved reference; upscaled"
+    },
+    {
+      "path": "home-pg-glow@3x.png",
+      "width": 1170,
+      "height": 700,
+      "alpha": true,
+      "source": "original optional effect"
+    },
+    {
+      "path": "home-arena-bg-realistic@3x.webp",
+      "width": 1290,
+      "height": 2796,
+      "alpha": false,
+      "source": "cool-toned regrade of previously generated 852\u00d71847 arena art, resampled to target dimensions",
+      "role": "alternative photo-based arena background"
+    }
+  ],
+  "usage": "Layered runtime only; never mount the preview"
+}

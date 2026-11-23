@@ -35,6 +35,7 @@ import { RunResultsPreview } from './dev/RunResultsPreview';
 import type { CircuitRunConfig } from '@/lib/account/circuitCloud';
 import { LeaderboardScreen } from './LeaderboardScreen';
 import { MobileBottomNav, type HubTab } from './MobileBottomNav';
+import { HomeHubChromeHost } from './home/HomeHubChromeHost';
 import { ShopScreen } from './ShopScreen';
 import { TradeUpHome } from './TradeUpHome';
 import { TradeUpLoading } from './TradeUpLoading';
@@ -52,12 +53,11 @@ const HeadToHeadFlow = dynamic(
 type Screen = 'hub' | 'engine' | 'h2h';
 
 const HOME_ART = [
-  '/images/home-v2/arena.jpg',
+  '/images/home-v2/arena-navy@3x.webp',
   '/images/home-v2/classic.jpg',
   '/images/home-v2/1v1.jpg',
   '/images/home-v2/money.png',
   '/images/home-v2/trophy-gold.png',
-  '/images/home-v2/arena-exterior.png',
 ];
 
 /** Survives Strict Mode remounts — intro plays once per page load. */
@@ -282,12 +282,18 @@ export function TradeUpApp() {
     setScreen('hub');
   }, []);
 
-  const handleOpenRank = useCallback(() => handleHubChange('rank'), [handleHubChange]);
   const handleOpenShop = useCallback(() => handleHubChange('shop'), [handleHubChange]);
+  const handleOpenBoard = useCallback(() => {
+    try {
+      sessionStorage.setItem('oneb_board_metric', 'bank');
+    } catch {
+      /* private mode */
+    }
+    handleHubChange('board');
+  }, [handleHubChange]);
 
   // Mount hub tab bar under the splash so it crossfades in with home (not after).
   const showTabs = screen === 'hub' && !invalidInvite;
-
   return (
     <LocaleProvider>
       {invalidInvite ? (
@@ -328,21 +334,49 @@ export function TradeUpApp() {
           pendingJoinCode={pendingH2HJoinCode}
           onJoinCodeConsumed={() => setPendingH2HJoinCode(null)}
         />
-      ) : hubTab === 'board' && !showSplash ? (
-        <LeaderboardScreen />
-      ) : hubTab === 'shop' && !showSplash ? (
-        <ShopScreen />
-      ) : hubTab === 'rank' && !showSplash ? (
-        <RankScreen />
       ) : (
-        <TradeUpHome
-          onPlay={handlePlay}
-          onHeadToHead={handleHeadToHead}
-          onOpenRank={handleOpenRank}
-          onOpenShop={handleOpenShop}
-          allowAccountPrompt={!showSplash && !showGuide}
-        />
+        <div className="hub-shell">
+          {/* Keep hub panes laid out — display:none on Shop killed the glider animation. */}
+          <div
+            className={`hub-pane${hubTab === 'home' ? ' is-active' : ''}`}
+            aria-hidden={hubTab !== 'home'}
+          >
+            <TradeUpHome
+              onPlay={handlePlay}
+              onHeadToHead={handleHeadToHead}
+              onOpenShop={handleOpenShop}
+              onOpenBoard={handleOpenBoard}
+              allowAccountPrompt={!showSplash && !showGuide && hubTab === 'home'}
+            />
+          </div>
+          {/* Mount Shop/Board as soon as splash ends so website taps aren't a cold mount.
+              Keep panes laid out (visibility only) — never content-visibility:hidden. */}
+          {!showSplash ? (
+            <>
+              <div
+                className={`hub-pane${hubTab === 'board' ? ' is-active' : ''}`}
+                aria-hidden={hubTab !== 'board'}
+              >
+                <LeaderboardScreen />
+              </div>
+              <div
+                className={`hub-pane${hubTab === 'shop' ? ' is-active' : ''}`}
+                aria-hidden={hubTab !== 'shop'}
+              >
+                <ShopScreen />
+              </div>
+              {hubTab === 'rank' ? <RankScreen /> : null}
+            </>
+          ) : null}
+        </div>
       )}
+
+      {/* One shared top chrome for Home · Leaderboard · Shop — same look + place. */}
+      {screen === 'hub' &&
+      !showSplash &&
+      (hubTab === 'home' || hubTab === 'board' || hubTab === 'shop') ? (
+        <HomeHubChromeHost onOpenShop={handleOpenShop} />
+      ) : null}
 
       {showGuide && !showSplash ? (
         <Onboarding
@@ -376,11 +410,13 @@ export function TradeUpApp() {
       ) : null}
 
       <EarningsSummaryHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
-      <RankRewardHost enabled={screen === 'hub' && !showSplash && !showGuide && !invalidInvite} />
-      {/* XP/reward: armed after Classic settle; also when hub has a queued reveal. */}
+      {/* Rank progression removed from the product — keep host mounted off. */}
+      <RankRewardHost enabled={false} />
+      {/* XP/reward animation: hub only — awards still queue during Classic; never over results. */}
       <XpRewardHost
-        enabled={!showSplash && !showGuide && !invalidInvite}
+        enabled={!showSplash && !showGuide && !invalidInvite && screen !== 'engine' && screen !== 'h2h'}
         armWithoutSignal={screen === 'hub'}
+        inRun={screen === 'engine' || screen === 'h2h'}
       />
       <RunResultsPreview />
     </LocaleProvider>

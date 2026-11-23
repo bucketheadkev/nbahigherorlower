@@ -11,7 +11,9 @@ import {
   XP_BILLION_BONUS,
   XP_COMPLETED_RUN,
   XP_PERFORMANCE_BONUS_MAX,
-  XP_PER_COIN,
+  COINS_COMPLETED_RUN,
+  COINS_BILLION_BONUS,
+  COINS_LEVEL_UP,
 } from '../lib/tradeup/xp/config';
 
 // Baseline completed run (near-zero value)
@@ -21,7 +23,7 @@ import {
   assert.equal(r.performance, 0);
   assert.equal(r.billion, 0);
   assert.equal(r.total, 50);
-  assert.equal(r.coins, 5);
+  assert.equal(r.coins, COINS_COMPLETED_RUN);
 }
 
 // Mid performance (~50% of $1B → ~50 bonus)
@@ -31,7 +33,7 @@ import {
   assert.equal(r.performance, Math.round(0.5 * XP_PERFORMANCE_BONUS_MAX));
   assert.equal(r.billion, 0);
   assert.equal(r.total, 50 + 50);
-  assert.equal(r.coins, Math.floor(100 / XP_PER_COIN));
+  assert.equal(r.coins, COINS_COMPLETED_RUN);
 }
 
 // Perfect billion run
@@ -41,7 +43,7 @@ import {
   assert.equal(r.performance, XP_PERFORMANCE_BONUS_MAX);
   assert.equal(r.billion, XP_BILLION_BONUS);
   assert.equal(r.total, 250);
-  assert.equal(r.coins, 25);
+  assert.equal(r.coins, COINS_COMPLETED_RUN + COINS_BILLION_BONUS);
 }
 
 // Progressive thresholds climb
@@ -95,15 +97,19 @@ assert.ok(xpToAdvance(10) > xpToAdvance(5));
   const first = awardClassicRunXp('run_a', BILLION_GOAL);
   assert.equal(first.awarded, true);
   assert.equal(first.breakdown?.total, 250);
-  assert.equal(first.breakdown?.coins, 25);
-  assert.equal(getXpProfile().coins, 25);
+  const expectedCoins = COINS_COMPLETED_RUN + COINS_BILLION_BONUS;
+  // Level-up bonus if this award crossed a level
+  const levels = Math.max(0, (first.toLevel ?? 1) - (first.fromLevel ?? 1));
+  const withLevel = expectedCoins + levels * COINS_LEVEL_UP;
+  assert.equal(first.breakdown?.coins, withLevel);
+  assert.equal(getXpProfile().coins, withLevel);
   assert.equal(getPendingXpReveals().length, 1);
   assert.equal(getPendingXpReveals()[0]?.xpFromRun, 250);
 
   const dup = awardClassicRunXp('run_a', BILLION_GOAL);
   assert.equal(dup.awarded, false);
   assert.equal(dup.reason, 'duplicate');
-  assert.equal(getXpProfile().coins, 25);
+  assert.equal(getXpProfile().coins, withLevel);
   assert.equal(getPendingXpReveals().length, 1);
 
   const second = awardClassicRunXp('run_b', BILLION_GOAL);

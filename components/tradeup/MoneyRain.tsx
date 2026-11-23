@@ -108,26 +108,26 @@ type CalmSeed = {
   opacity: number;
 };
 
-const CALM_COUNT = 22;
+const CALM_COUNT = 28;
 
-/** Sparse, slow, paper-like bills. Three depth layers: far ones are smaller, dimmer and slower. */
+/** Paper bills with depth — faster fall, more realistic flutter. */
 function buildCalmBills(): CalmSeed[] {
   const rand = mulberry32(0x1b5eed);
   const lanes = shuffledLanePercents(CALM_COUNT, rand);
   return lanes.map((left, i) => {
     const depth = i % 3;
     const u = rand();
-    const fall = (depth === 0 ? 15 : depth === 1 ? 19 : 24) + rand() * 6;
+    const fall = (depth === 0 ? 7.2 : depth === 1 ? 9.4 : 12.2) + rand() * 2.4;
     return {
       left,
-      width: (depth === 0 ? 30 : depth === 1 ? 24 : 18) + u * 6,
+      width: (depth === 0 ? 34 : depth === 1 ? 27 : 20) + u * 5,
       fall,
-      delay: -((i / CALM_COUNT) * fall + rand() * 2),
-      flutter: 2.4 + rand() * 2,
-      flutterDelay: -rand() * 4,
-      sway: 10 + rand() * 18,
-      tilt: 8 + rand() * 22,
-      opacity: depth === 0 ? 0.5 + u * 0.12 : depth === 1 ? 0.34 + u * 0.1 : 0.2 + u * 0.08,
+      delay: -((i / CALM_COUNT) * fall + rand() * 1.4),
+      flutter: 1.35 + rand() * 1.1,
+      flutterDelay: -rand() * 3,
+      sway: 14 + rand() * 22,
+      tilt: 10 + rand() * 26,
+      opacity: depth === 0 ? 0.62 + u * 0.14 : depth === 1 ? 0.42 + u * 0.12 : 0.24 + u * 0.1,
     };
   });
 }

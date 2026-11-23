@@ -13,6 +13,8 @@ export type MessageKey =
   | 'home.draftA'
   | 'home.oneBillion'
   | 'home.teamWord'
+  | 'home.askTitle'
+  | 'home.askGoal'
   | 'home.modesButton'
   | 'home.coinPlus'
   | 'lang.switchToEn'
@@ -45,6 +47,7 @@ export type MessageKey =
   | 'home.coinsLabel'
   | 'home.profileLabel'
   | 'home.wallOfFame'
+  | 'home.wallOfFameBlurb'
   | 'xp.level'
   | 'xp.toNext'
   | 'xp.congrats'
@@ -65,6 +68,16 @@ export type MessageKey =
   | 'home.playButton'
   | 'home.modes'
   | 'home.modesClose'
+  | 'home.bankMoney'
+  | 'home.bankGoal'
+  | 'home.bankWallHint'
+  | 'home.bankProgressLabel'
+  | 'home.bankClose'
+  | 'home.bankExplainTitle'
+  | 'home.bankExplainCopy'
+  | 'home.bankExplainRollover'
+  | 'home.bankExplainTrivia'
+  | 'home.bankExplainBoard'
   | 'home.dynastyRoad'
   | 'home.dynastyUnsigned'
   | 'home.dynastyChestReady'
@@ -130,6 +143,7 @@ export type MessageKey =
   | 'leaderboard.emptyKicker'
   | 'leaderboard.emptyCopy'
   | 'leaderboard.emptyWeekly'
+  | 'leaderboard.emptyDaily'
   | 'leaderboard.emptyAllTime'
   | 'leaderboard.you'
   | 'leaderboard.yourRank'
@@ -137,12 +151,20 @@ export type MessageKey =
   | 'leaderboard.myBank'
   | 'leaderboard.myWins'
   | 'leaderboard.winsUnit'
+  | 'leaderboard.metricWins'
+  | 'leaderboard.metricBank'
+  | 'leaderboard.boardMetric'
   | 'leaderboard.weekly'
+  | 'leaderboard.daily'
   | 'leaderboard.allTime'
+  | 'leaderboard.weeklyWins'
+  | 'leaderboard.dailyWins'
+  | 'leaderboard.allTimeWins'
   | 'leaderboard.periods'
   | 'leaderboard.allTimeHint'
   | 'leaderboard.resetInDays'
   | 'leaderboard.resetInHours'
+  | 'leaderboard.resetInMinutes'
   | 'leaderboard.wallGoal'
   | 'leaderboard.wallReached'
   | 'leaderboard.guestHint'
@@ -188,9 +210,11 @@ const EN: Record<MessageKey, string> = {
   'nav.shop': 'Shop',
   'shop.comingSoon': 'Coming Soon',
   'shop.comingSoonCopy': 'The Shop opens soon. Your coins stay safe.',
-  'home.draftA': 'DRAFT A',
+  'home.draftA': 'BUILD A',
   'home.oneBillion': '$1 BILLION',
   'home.teamWord': 'TEAM',
+  'home.askTitle': 'CAN YOU BUILD A $1 BILLION TEAM?',
+  'home.askGoal': 'MAKE 1 BILLION DOLLARS.',
   'home.modesButton': 'MODES',
   'home.coinPlus': 'Open Shop',
   'nav.rank': 'My Rank',
@@ -225,6 +249,7 @@ const EN: Record<MessageKey, string> = {
   'home.coinsLabel': 'Coins',
   'home.profileLabel': 'Profile',
   'home.wallOfFame': 'Wall of Fame',
+  'home.wallOfFameBlurb': 'For $1B Bank holders',
   'xp.level': 'LVL',
   'xp.toNext': 'XP to next level',
   'xp.congrats': 'CONGRATULATIONS',
@@ -243,8 +268,21 @@ const EN: Record<MessageKey, string> = {
   'home.franchisesDesc': 'Own a team',
   'home.myFranchise': 'My Franchise',
   'home.playButton': 'PLAY',
-  'home.modes': 'Choose Mode',
+  'home.modes': 'MODE',
   'home.modesClose': 'Close',
+  'home.bankMoney': 'Road to $1 Billion · Bank Money',
+  'home.bankGoal': 'Progress to $1 Billion',
+  'home.bankWallHint': 'Hit $1B → public Wall of Fame. Tap to view.',
+  'home.bankProgressLabel': 'Road to $1 Billion bank money',
+  'home.bankClose': 'Close',
+  'home.bankExplainTitle': 'Bank Money',
+  'home.bankExplainCopy':
+    'Bank Money is permanent in-game cash. It is separate from Coins used for perks and rerolls.',
+  'home.bankExplainRollover':
+    'Finish a Classic Run above $1,000,000,000 and every dollar over $1B is banked forever.',
+  'home.bankExplainTrivia':
+    'After Build Another, you can play trivia for an extra Bank bonus — Easy +$10M, Medium +$25M, Hard +$45M. Wrong or timed-out answers keep your rollover but add no bonus.',
+  'home.bankExplainBoard': 'Climb the Bank Money leaderboard by total Bank saved.',
   'home.dynastyRoad': 'Dynasty Road',
   'home.dynastyUnsigned': 'a $1B run is waiting to be signed',
   'home.dynastyChestReady': 'a chest is ready to open',
@@ -304,36 +342,45 @@ const EN: Record<MessageKey, string> = {
   'leaderboard.eyebrow': 'CLASSIC RUN',
   'leaderboard.title': 'Leaderboard',
   'leaderboard.world': 'Top winners',
-  'leaderboard.metaTop': 'Every $1B Classic finish counts as a win',
+  'leaderboard.metaTop': 'Top 10 daily · Top 100 all-time · Top 10 win $10M Bank',
   'leaderboard.helpLabel': 'How wins work',
   'leaderboard.helpCopy':
-    'A win is a Classic Run that finishes at $1,000,000,000 or more. Weekly resets every Monday 00:00 UTC. All-time never resets. Sign in so verified finishes count on the board.',
-  'leaderboard.loading': 'Loading the wins board…',
-  'leaderboard.error': 'Could not load the wins board.',
+    'A win is a Classic Run at $1B+. Daily resets every 24 hours. Top 10 each day get $10,000,000 Bank Money. All-time never resets. Sign in so finishes count.',
+  'leaderboard.loading': 'Loading…',
+  'leaderboard.error': 'Could not load the board.',
   'leaderboard.retry': 'Try again',
   'leaderboard.emptyKicker': 'OPEN COURT',
-  'leaderboard.emptyCopy': 'No wins on the board yet. Hit $1B in Classic to claim #1.',
-  'leaderboard.emptyWeekly': 'No $1B wins this week yet. Be first on the board.',
-  'leaderboard.emptyAllTime': 'No all-time wins yet. Hit $1B in Classic to open the board.',
+  'leaderboard.emptyCopy': 'Nobody on the board yet.',
+  'leaderboard.emptyWeekly': 'No wins this week yet.',
+  'leaderboard.emptyDaily': 'No wins in this 24h window yet.',
+  'leaderboard.emptyAllTime': 'No all-time wins yet.',
   'leaderboard.you': 'You',
   'leaderboard.yourRank': 'Your rank',
   'leaderboard.unranked': 'Unranked',
   'leaderboard.myBank': 'My Bank',
   'leaderboard.myWins': 'My Wins',
   'leaderboard.winsUnit': 'Wins',
+  'leaderboard.metricWins': 'Wins',
+  'leaderboard.metricBank': 'Bank',
+  'leaderboard.boardMetric': 'Board metric',
   'leaderboard.weekly': 'Weekly',
+  'leaderboard.daily': 'Daily',
   'leaderboard.allTime': 'All-Time',
+  'leaderboard.weeklyWins': 'Weekly Wins',
+  'leaderboard.dailyWins': 'Daily Wins',
+  'leaderboard.allTimeWins': 'All-Time Wins',
   'leaderboard.periods': 'Leaderboard period',
-  'leaderboard.allTimeHint': 'Career $1B Classic finishes',
+  'leaderboard.allTimeHint': 'Career $1B finishes',
   'leaderboard.resetInDays': 'Resets in {days}d {hours}h',
   'leaderboard.resetInHours': 'Resets in {hours}h',
+  'leaderboard.resetInMinutes': 'Resets in {minutes}m',
   'leaderboard.wallGoal': '{amount} to the Wall of Fame',
   'leaderboard.wallReached': 'On the Wall of Fame',
-  'leaderboard.guestHint': 'Create an account so your $1B Classic wins hit the board.',
+  'leaderboard.guestHint': 'Create an account so your wins hit the board.',
   'leaderboard.guestCta': 'Create account',
   'leaderboard.comingKicker': 'COMING ONLINE',
-  'leaderboard.comingCopy': 'The wins board is almost ready. Keep stacking $1B Classic runs.',
-  'leaderboard.rankOf': '#{rank} worldwide',
+  'leaderboard.comingCopy': 'The board is almost ready.',
+  'leaderboard.rankOf': '#{rank}',
   'challenge.halfway-home.blurb':
     'Finish a Classic run worth $500,000,000 or more.',
   'challenge.closing-in.blurb':
@@ -390,9 +437,11 @@ const ES: Record<MessageKey, string> = {
   'nav.shop': 'Tienda',
   'shop.comingSoon': 'Próximamente',
   'shop.comingSoonCopy': 'La tienda abre pronto. Tus monedas están seguras.',
-  'home.draftA': 'ARMA UN',
+  'home.draftA': 'CONSTRUYE UN',
   'home.oneBillion': '$1 BILLÓN',
   'home.teamWord': 'EQUIPO',
+  'home.askTitle': '¿PUEDES ARMAR UN EQUIPO DE $1 BILLÓN?',
+  'home.askGoal': 'HAZ 1 BILLÓN DE DÓLARES.',
   'home.modesButton': 'MODOS',
   'home.coinPlus': 'Abrir tienda',
   'nav.rank': 'Mi Rango',
@@ -427,6 +476,7 @@ const ES: Record<MessageKey, string> = {
   'home.coinsLabel': 'Monedas',
   'home.profileLabel': 'Perfil',
   'home.wallOfFame': 'Muro de la Fama',
+  'home.wallOfFameBlurb': 'Para titulares Bank $1B',
   'xp.level': 'NVL',
   'xp.toNext': 'XP al siguiente nivel',
   'xp.congrats': 'FELICIDADES',
@@ -445,8 +495,21 @@ const ES: Record<MessageKey, string> = {
   'home.franchisesDesc': 'Ten tu equipo',
   'home.myFranchise': 'Mi franquicia',
   'home.playButton': 'JUGAR',
-  'home.modes': 'Elegir modo',
+  'home.modes': 'MODO',
   'home.modesClose': 'Cerrar',
+  'home.bankMoney': 'Camino a $1B · Banco',
+  'home.bankGoal': 'Progreso a $1 mil millones',
+  'home.bankWallHint': 'Llega a $1B → Muro de la Fama público. Toca para ver.',
+  'home.bankProgressLabel': 'Camino a $1B en el Banco',
+  'home.bankClose': 'Cerrar',
+  'home.bankExplainTitle': 'Dinero del Banco',
+  'home.bankExplainCopy':
+    'El Dinero del Banco es efectivo permanente del juego. Es distinto de las Monedas para perks y rerolls.',
+  'home.bankExplainRollover':
+    'Si terminas un Classic Run por encima de $1,000,000,000, cada dólar sobre $1B se guarda para siempre.',
+  'home.bankExplainTrivia':
+    'Después de Build Another puedes jugar trivia por un bono extra — Fácil +$10M, Media +$25M, Difícil +$45M. Fallar o agotar el tiempo no quita el rollover.',
+  'home.bankExplainBoard': 'Sube en la clasificación del Banco por el total acumulado.',
   'home.dynastyRoad': 'Ruta de Dinastías',
   'home.dynastyUnsigned': 'una partida de $1B espera su fichaje',
   'home.dynastyChestReady': 'un cofre está listo para abrir',
@@ -507,36 +570,45 @@ const ES: Record<MessageKey, string> = {
   'leaderboard.eyebrow': 'CLASSIC RUN',
   'leaderboard.title': 'Clasificación',
   'leaderboard.world': 'Mejores',
-  'leaderboard.metaTop': 'Cada Classic de $1B o más cuenta como victoria',
+  'leaderboard.metaTop': 'Top 10 diario · Top 100 histórico · Top 10 gana $10M Banco',
   'leaderboard.helpLabel': 'Cómo cuentan las victorias',
   'leaderboard.helpCopy':
-    'Una victoria es un Classic Run de $1,000,000,000 o más. Lo semanal se reinicia cada lunes a las 00:00 UTC. Lo histórico no se reinicia. Inicia sesión para que las partidas verificadas cuenten.',
-  'leaderboard.loading': 'Cargando el tablero de victorias…',
-  'leaderboard.error': 'No se pudo cargar el tablero de victorias.',
+    'Una victoria es un Classic Run de $1B+. Lo diario se reinicia cada 24 horas. El top 10 del día gana $10,000,000 en Dinero del Banco. Lo histórico no se reinicia. Inicia sesión para que cuenten.',
+  'leaderboard.loading': 'Cargando…',
+  'leaderboard.error': 'No se pudo cargar el tablero.',
   'leaderboard.retry': 'Reintentar',
   'leaderboard.emptyKicker': 'CANCHA ABIERTA',
-  'leaderboard.emptyCopy': 'Aún no hay victorias. Llega a $1B en Classic para ser el #1.',
-  'leaderboard.emptyWeekly': 'Aún no hay victorias de $1B esta semana. Sé el primero.',
-  'leaderboard.emptyAllTime': 'Aún no hay victorias históricas. Llega a $1B en Classic.',
+  'leaderboard.emptyCopy': 'Aún no hay nadie en el tablero.',
+  'leaderboard.emptyWeekly': 'Aún no hay victorias esta semana.',
+  'leaderboard.emptyDaily': 'Aún no hay victorias en estas 24 h.',
+  'leaderboard.emptyAllTime': 'Aún no hay victorias históricas.',
   'leaderboard.you': 'Tú',
   'leaderboard.yourRank': 'Tu puesto',
   'leaderboard.unranked': 'Sin puesto',
   'leaderboard.myBank': 'Mi Banco',
   'leaderboard.myWins': 'Mis victorias',
   'leaderboard.winsUnit': 'Victorias',
+  'leaderboard.metricWins': 'Victorias',
+  'leaderboard.metricBank': 'Banco',
+  'leaderboard.boardMetric': 'Métrica del tablero',
   'leaderboard.weekly': 'Semanal',
+  'leaderboard.daily': 'Diario',
   'leaderboard.allTime': 'Histórico',
+  'leaderboard.weeklyWins': 'Semanal',
+  'leaderboard.dailyWins': 'Diario',
+  'leaderboard.allTimeWins': 'Histórico',
   'leaderboard.periods': 'Periodo de clasificación',
-  'leaderboard.allTimeHint': 'Victorias Classic de $1B en tu carrera',
+  'leaderboard.allTimeHint': 'Victorias de $1B en tu carrera',
   'leaderboard.resetInDays': 'Reinicia en {days}d {hours}h',
   'leaderboard.resetInHours': 'Reinicia en {hours}h',
+  'leaderboard.resetInMinutes': 'Reinicia en {minutes}m',
   'leaderboard.wallGoal': 'Faltan {amount} para el Muro de la Fama',
   'leaderboard.wallReached': 'En el Muro de la Fama',
-  'leaderboard.guestHint': 'Crea una cuenta para que tus victorias Classic de $1B entren al tablero.',
+  'leaderboard.guestHint': 'Crea una cuenta para que tus victorias entren al tablero.',
   'leaderboard.guestCta': 'Crear cuenta',
   'leaderboard.comingKicker': 'EN CAMINO',
-  'leaderboard.comingCopy': 'El tablero de victorias está casi listo. Sigue sumando Classic de $1B.',
-  'leaderboard.rankOf': '#{rank} en el mundo',
+  'leaderboard.comingCopy': 'El tablero está casi listo.',
+  'leaderboard.rankOf': '#{rank}',
   'challenge.halfway-home.blurb':
     'Termina una partida Clásica de $500,000,000 o más.',
   'challenge.closing-in.blurb':

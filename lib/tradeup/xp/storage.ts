@@ -21,6 +21,8 @@ export interface XpProfile {
   coins: number;
   /** Run refs already paid — prevents double awards. */
   awardedRunRefs: string[];
+  /** True once the new-player welcome coin gift has been claimed. */
+  welcomeGranted?: boolean;
 }
 
 /** Queued post-run XP fill + coin reward presentation. */
@@ -46,6 +48,7 @@ const EMPTY_PROFILE: XpProfile = {
   totalXp: 0,
   coins: 0,
   awardedRunRefs: [],
+  welcomeGranted: false,
 };
 
 function canUseStorage(): boolean {
@@ -98,11 +101,54 @@ function sanitizeProfile(raw: unknown): XpProfile {
   const awarded = Array.isArray(o.awardedRunRefs)
     ? o.awardedRunRefs.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(-AWARDED_RUN_CAP)
     : [];
-  return { version: 1, totalXp, coins, awardedRunRefs: awarded };
+  const welcomeGranted = o.welcomeGranted === true;
+  return { version: 1, totalXp, coins, awardedRunRefs: awarded, welcomeGranted };
 }
 
 export function getXpProfile(): XpProfile {
   return sanitizeProfile(readJson(XP_PROFILE_KEY));
+}
+
+/**
+ * Grant the one-time welcome gift if missing. Safe to call on home mount.
+ * Returns coins granted (0 if already claimed).
+ */
+export function ensureWelcomeCoins(amount: number): number {
+  const gift = Math.max(0, Math.floor(amount));
+  if (gift <= 0) return 0;
+  const profile = getXpProfile();
+  if (profile.welcomeGranted) return 0;
+  // Existing players who already earned coins keep progress — still mark gift claimed
+  // only when granting, or when they clearly already play (have XP/runs).
+  if (profile.totalXp > 0 || profile.awardedRunRefs.length > 0 || profile.coins > 0) {
+    saveXpProfile({ ...profile, welcomeGranted: true });
+    return 0;
+  }
+  saveXpProfile({
+    ...profile,
+    coins: profile.coins + gift,
+    welcomeGranted: true,
+  });
+  return gift;
+}
+
+/** Spend coins once. Returns false if balance is insufficient. */
+export function spendXpCoins(amount: number, _ref?: string): boolean {
+  const cost = Math.max(0, Math.floor(amount));
+  if (cost <= 0) return true;
+  const profile = getXpProfile();
+  if (profile.coins < cost) return false;
+  saveXpProfile({ ...profile, coins: profile.coins - cost });
+  return true;
+}
+
+/** Credit coins outside a Classic run award (shop restore hooks, etc.). */
+export function grantXpCoins(amount: number): number {
+  const gain = Math.max(0, Math.floor(amount));
+  if (gain <= 0) return 0;
+  const profile = getXpProfile();
+  saveXpProfile({ ...profile, coins: profile.coins + gain });
+  return gain;
 }
 
 export function getXpProgress(): LevelProgress {

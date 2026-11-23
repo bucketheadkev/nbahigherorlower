@@ -248,7 +248,7 @@
     display: none;
   }
 
-  /* Position capsule under every jersey — the only place the position is written. */
+  /* Position capsule under every jersey. */
   .billion-draft-layout--classic-hub .draft-hub-court .draft-hub-court__seat-pos,
   .billion-draft-layout--classic-hub .draft-hub-court .draft-hub-court__seat-pos.is-empty {
     display: block;

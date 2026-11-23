@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useId, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { contrastOnPrimary } from '@/lib/tradeup/teamColors';
 import { jerseyInitials, jerseySurname } from './CourtJersey';
 
@@ -146,7 +146,13 @@ export const ArenaJersey = memo(function ArenaJersey({
       className={`aj aj--${position.toLowerCase()}${filled ? ' is-filled' : ' is-empty'}${
         shownFace === 'back' ? ' is-back' : ''
       }${filled && landing ? ' is-landing' : ''}${turning ? ' is-turning' : ''}`}
-      style={{ ['--aj-ink' as string]: palette.ink }}
+      style={
+        {
+          ['--aj-ink']: palette.ink,
+          ['--aj-body']: palette.body,
+          ['--aj-trim']: palette.trim,
+        } as CSSProperties
+      }
       aria-hidden
     >
       <span className="aj__card">
@@ -191,7 +197,7 @@ export const ArenaJersey = memo(function ArenaJersey({
           </defs>
           {/* Contact shadow on the hardwood; inside the card so it turns with the shirt. */}
           <ellipse cx="57" cy="141" rx="61" ry="8.5" fill={`url(#${shadow})`} />
-          <path className="aj__body" d={BODY} fill={palette.body} />
+          <path className="aj__body" d={BODY} fill="var(--aj-body)" />
           <g clipPath={`url(#${clip})`}>
             <rect width="114" height="142" fill={`url(#${mesh})`} />
             <path d={FOLDS} fill="none" stroke="#000" strokeOpacity="0.07" strokeWidth="7" strokeLinecap="round" />
@@ -202,7 +208,7 @@ export const ArenaJersey = memo(function ArenaJersey({
             <ellipse cx="105" cy="50" rx="14" ry="24" fill={`url(#${pit})`} />
             <path d={HEM} fill="none" stroke="#000" strokeOpacity="0.16" strokeWidth="9" />
             <path d={HEM} fill="none" stroke="#fff" strokeOpacity="0.28" strokeWidth="3.6" />
-            <path d={neck.opening} fill={palette.body} />
+            <path className="aj__body" d={neck.opening} fill="var(--aj-body)" />
             <path d={neck.opening} fill="#000" fillOpacity="0.66" />
             {palette.piping ? (
               <>
@@ -211,9 +217,9 @@ export const ArenaJersey = memo(function ArenaJersey({
                 <path d={BACK_EDGE} fill="none" stroke={palette.piping} strokeWidth="4.4" />
               </>
             ) : null}
-            <path d={ARMHOLES} fill="none" stroke={palette.trim} strokeWidth="13.6" />
-            <path d={neck.collar} fill="none" stroke={palette.trim} strokeWidth="7" />
-            <path d={BACK_EDGE} fill="none" stroke={palette.trim} strokeWidth="4" />
+            <path d={ARMHOLES} fill="none" stroke="var(--aj-trim)" strokeWidth="13.6" />
+            <path d={neck.collar} fill="none" stroke="var(--aj-trim)" strokeWidth="7" />
+            <path d={BACK_EDGE} fill="none" stroke="var(--aj-trim)" strokeWidth="4" />
             {/* Not a valid seat for the player being placed: darkened, never blurred. */}
             <path className="aj__shade" d={BODY} fill="#000" />
           </g>

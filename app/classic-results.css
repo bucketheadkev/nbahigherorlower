@@ -24,7 +24,8 @@
 .cr-blackout {
   position: fixed;
   inset: 0;
-  z-index: 130;
+  /* Above hub XP/account prompts (120) and a stuck splash veil (200). */
+  z-index: 210;
   background: #000;
   pointer-events: auto;
   animation: cr-blackout 0.3s ease-in both;
@@ -46,7 +47,8 @@
   --cr-font: "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   position: fixed;
   inset: 0;
-  z-index: 120;
+  /* Above XP reward (120), account prompts (120), and splash (200). */
+  z-index: 215;
   overflow: hidden;
   background: #03060d;
   color: #fff;
@@ -507,7 +509,7 @@
   }
 }
 
-/* ── BUILD ANOTHER / SHARE ── */
+/* ── BUILD ANOTHER / SHARE (and $1B compact rewards) ── */
 .cr__actions {
   position: absolute;
   left: 0;
@@ -518,6 +520,241 @@
   transform: translateY(calc(var(--u) * 10));
   pointer-events: none;
   transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+/* Every run: XP bar under players, CTAs stacked so SHARE stays on-screen. */
+.cr.is-run-rewards {
+  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 920));
+}
+
+.cr.is-run-rewards.is-trivia-rewards {
+  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 980));
+}
+
+.cr.is-run-rewards .cr__actions {
+  bottom: calc(var(--u) * 10);
+  height: auto;
+  max-height: none;
+  left: calc(var(--u) * 22);
+  right: calc(var(--u) * 22);
+  width: auto;
+}
+
+.cr.is-run-rewards .cr__rows {
+  top: calc(var(--u) * 178);
+  transform: scale(0.86);
+  transform-origin: top center;
+}
+
+.cr__home {
+  appearance: none;
+  position: absolute;
+  z-index: 6;
+  top: calc(var(--u) * 18);
+  left: calc(var(--u) * 18);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 6);
+  margin: 0;
+  padding: calc(var(--u) * 8) calc(var(--u) * 12) calc(var(--u) * 8) calc(var(--u) * 8);
+  border: calc(var(--u) * 1.5) solid rgba(150, 190, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(6, 14, 32, 0.72);
+  color: rgba(230, 240, 255, 0.92);
+  font-family: var(--cr-font);
+  font-size: calc(var(--u) * 16);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
+.cr__home svg {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__home:active {
+  transform: scale(0.97);
+}
+
+.cr-rewards {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 10);
+  min-height: 0;
+  width: 100%;
+}
+
+/* Level / coin meter — sits under the roster, above CTAs. No chrome plate. */
+.cr-rewards__xp {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 2) calc(var(--u) * 4) 0;
+}
+
+.cr-rewards__meter {
+  padding: calc(var(--u) * 2) 0 0 !important;
+}
+
+.cr-rewards__meter .xp-meter__lvl {
+  font-size: calc(var(--u) * 14);
+  color: rgba(220, 230, 250, 0.82);
+}
+
+.cr-rewards__meter .xp-meter__lvl strong {
+  font-size: calc(var(--u) * 20);
+}
+
+.cr-rewards__meter .xp-meter__track {
+  height: calc(var(--u) * 10);
+}
+
+.cr-rewards__meter .xp-meter__gain {
+  font-size: calc(var(--u) * 15);
+}
+
+.cr-rewards__meter .xp-meter__totals {
+  margin-top: calc(var(--u) * 4);
+  font-size: calc(var(--u) * 13);
+}
+
+.cr-rewards__coins-plain {
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 15);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: #ffd56a;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Plain rollover — no background plate; sits above Start Trivia. */
+.cr-rewards__rollover {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 18);
+  font-weight: 750;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: rgba(230, 240, 255, 0.9);
+  text-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 4) rgba(0, 0, 0, 0.55);
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.cr-rewards__rollover strong {
+  margin-left: calc(var(--u) * 6);
+  font-weight: 900;
+  color: #7dff8a;
+  text-shadow:
+    0 0 calc(var(--u) * 8) rgba(80, 255, 120, 0.35),
+    0 calc(var(--u) * 1.5) calc(var(--u) * 3) rgba(0, 0, 0, 0.45);
+}
+
+.cr-rewards__trivia-note {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.cr-rewards__begin {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: calc(var(--u) * 58);
+  border: calc(var(--u) * 2) solid #ffc985;
+  border-bottom-color: #ff9b3d;
+  border-radius: calc(var(--u) * 14);
+  background:
+    linear-gradient(90deg, rgba(150, 40, 0, 0.18), transparent 12%, transparent 88%, rgba(150, 40, 0, 0.18)),
+    linear-gradient(180deg, #ffa53b 0%, #ff8716 22%, #f86e00 55%, #da4700 100%);
+  box-shadow:
+    0 0 calc(var(--u) * 12) rgba(255, 120, 0, 0.42),
+    inset 0 calc(var(--u) * 2) 0 rgba(255, 255, 255, 0.4);
+  color: #fff;
+  font-family: var(--cr-font);
+  font-style: italic;
+  font-weight: 850;
+  font-size: calc(var(--u) * 26);
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.cr-rewards__begin:active {
+  transform: scale(0.985);
+  filter: brightness(1.08);
+}
+
+.cr__again--inline,
+.cr__share--inline {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+}
+
+.cr__again--inline {
+  height: calc(var(--u) * 72) !important;
+  font-size: calc(var(--u) * 38) !important;
+  letter-spacing: -0.03em !important;
+}
+
+.cr.is-trivia-rewards .cr__again--inline {
+  height: calc(var(--u) * 64) !important;
+  font-size: calc(var(--u) * 34) !important;
+}
+
+.cr__share--inline {
+  height: calc(var(--u) * 48) !important;
+  font-size: calc(var(--u) * 20) !important;
+  gap: calc(var(--u) * 12) !important;
+}
+
+.cr__share--inline .cr__share-icon {
+  width: calc(var(--u) * 26);
+  height: calc(var(--u) * 26);
+  margin-top: 0;
+}
+
+.cr-rewards__skip {
+  appearance: none;
+  margin: 0;
+  padding: calc(var(--u) * 4) 0;
+  border: 0;
+  background: transparent;
+  color: rgba(180, 200, 230, 0.55);
+  font-family: var(--cr-font);
+  font-size: calc(var(--u) * 16);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cr.is-run-rewards .cr__share-error {
+  position: relative;
+  top: auto;
 }
 
 .cr.is-done .cr__actions {

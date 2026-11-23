@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
 import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
@@ -32,7 +33,7 @@ interface SoundSettingsProps {
 
 /**
  * Feedback settings — Sound Effects + Haptics (+ H2H username).
- * Gear variant opens a right-edge drawer.
+ * Gear variant opens a full-screen settings page (X to dismiss).
  */
 export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSettingsProps) {
   const {
@@ -618,6 +619,50 @@ export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSett
   ) : null;
 
   if (variant === 'gear') {
+    const overlay =
+      open || nameModal || deleteModal || deleteSuccessModal
+        ? createPortal(
+            <>
+              {open ? (
+                <div
+                  className="settings-drawer settings-drawer--screen"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Settings"
+                >
+                  <aside className="settings-drawer__panel settings-drawer__panel--screen">
+                    <header className="settings-drawer__header">
+                      <div className="settings-drawer__title-block">
+                        <p className="settings-drawer__eyebrow">1B RUN</p>
+                        <h2>Settings</h2>
+                      </div>
+                      <button
+                        type="button"
+                        className="settings-ctrl settings-drawer__close"
+                        aria-label="Close"
+                        onClick={press(close)}
+                      >
+                        ✕
+                      </button>
+                    </header>
+                    <div className="settings-drawer__body">{settingsBody}</div>
+                  </aside>
+                  {activeGuide ? (
+                    <SettingsGuidePage guideId={activeGuide} onBack={() => setActiveGuide(null)} />
+                  ) : null}
+                  {activeLegal ? (
+                    <SettingsLegalPage pageId={activeLegal} onBack={() => setActiveLegal(null)} />
+                  ) : null}
+                </div>
+              ) : null}
+              {nameModal}
+              {deleteModal}
+              {deleteSuccessModal}
+            </>,
+            document.body,
+          )
+        : null;
+
     return (
       <div className="sound-settings sound-settings--ballion sound-settings--gear">
         <button
@@ -653,49 +698,7 @@ export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSett
             />
           </svg>
         </button>
-
-        {open ? (
-          <div className="settings-drawer" role="dialog" aria-modal="true" aria-label="Settings">
-            <button
-              type="button"
-              className="settings-ctrl settings-drawer__scrim"
-              aria-label="Close settings"
-              onClick={press(close)}
-            />
-            <aside className="settings-drawer__panel">
-              <header className="settings-drawer__header">
-                <div className="settings-drawer__title-block">
-                  <p className="settings-drawer__eyebrow">1B RUN</p>
-                  <h2>Settings</h2>
-                </div>
-                <button
-                  type="button"
-                  className="settings-ctrl settings-drawer__close"
-                  aria-label="Close"
-                  onClick={press(close)}
-                >
-                  ✕
-                </button>
-              </header>
-              <div className="settings-drawer__body">{settingsBody}</div>
-            </aside>
-            {activeGuide ? (
-              <SettingsGuidePage
-                guideId={activeGuide}
-                onBack={() => setActiveGuide(null)}
-              />
-            ) : null}
-            {activeLegal ? (
-              <SettingsLegalPage
-                pageId={activeLegal}
-                onBack={() => setActiveLegal(null)}
-              />
-            ) : null}
-          </div>
-        ) : null}
-        {nameModal}
-        {deleteModal}
-        {deleteSuccessModal}
+        {overlay}
       </div>
     );
   }

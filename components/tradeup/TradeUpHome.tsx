@@ -1,78 +1,100 @@
 'use client';
 
-import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
+import { memo, type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useAchievementCloudSync } from '@/hooks/useAchievementCloudSync';
-import { useBankBalance } from '@/hooks/useBankBalance';
 import { useLocale } from '@/hooks/useLocale';
 import { useSound } from '@/hooks/useSound';
-import { useXpProfile } from '@/hooks/useXpProfile';
 import {
   hasSeenAccountPrompt,
   markAccountPromptSeen,
   resetAccountPromptSeen,
 } from '@/lib/account/accountPromptStorage';
-import { readBankPreview } from '@/lib/tradeup/bank';
-import { recordLocalInduction } from '@/lib/tradeup/wallOfFame';
 import { preloadClassicArena } from '@/lib/tradeup/classicArenaAssets';
-import { hapticLight } from '@/lib/tradeup/haptics';
 import {
   AccountAuthSheet,
   type AccountSheetView,
 } from './AccountAuthSheet';
 import { AccountProgressPrompt } from './AccountProgressPrompt';
 import { HomeModesSheet } from './HomeModesSheet';
-import { HomeCoinChip } from './home/HomeCoinChip';
-import { HomeJerseyStage } from './home/HomeJerseyStage';
-import { HomePlayButton } from './home/HomePlayButton';
-import { HomeProfileMark } from './home/HomeProfileMark';
-import { HomeXpModule } from './home/HomeXpModule';
-import { SoundSettings, type SettingsLink } from './SoundSettings';
+import { HomeArenaLiveFx } from './home/HomeArenaLiveFx';
+import { HomeRisingBubbles } from './home/HomeRisingBubbles';
+import { HomeBankProgress } from './home/HomeBankProgress';
 import { WallOfFameScreen } from './WallOfFameScreen';
+import { useBankBalance } from '@/hooks/useBankBalance';
+import { COINS_WELCOME, ensureWelcomeCoins } from '@/lib/tradeup/xp';
 
 interface TradeUpHomeProps {
   onPlay: () => void;
   onHeadToHead: () => void;
-  onOpenRank: () => void;
   onOpenShop?: () => void;
-  /** False while the splash or first-run guide is up, so the account popup waits its turn. */
+  onOpenBoard?: () => void;
   allowAccountPrompt?: boolean;
 }
 
 /**
- * Official 5-jersey home — fidelity to the approved reference composition.
- * PLAY / MODES / profile / coin+ / menu are live; jersey stage is art.
+ * Premium home body — arena bg + CTAs. Top chrome lives in HomeHubChromeHost (shared).
+ * Memoized so hub Shop taps don't rebuild the home tree on website.
  */
-export function TradeUpHome({
+export const TradeUpHome = memo(function TradeUpHome({
   onPlay,
   onHeadToHead,
-  onOpenRank,
-  onOpenShop,
+  onOpenBoard,
   allowAccountPrompt = true,
 }: TradeUpHomeProps) {
-  const { resume } = useSound();
+  const { resume, playTap } = useSound();
   const { t } = useLocale();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
   useAchievementCloudSync(accountState);
-  const bank = useBankBalance(accountState.status === 'permanent');
-  const { progress, coins } = useXpProfile();
   const [promptOpen, setPromptOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
-  const [wallOpen, setWallOpen] = useState(false);
   const [modesOpen, setModesOpen] = useState(false);
-  const permanent = accountState.status === 'permanent';
-  const navLockRef = useRef(false);
+  const [wallOpen, setWallOpen] = useState(false);
+  const [playShake, setPlayShake] = useState(false);
+  const shakeTimerRef = useRef<number | null>(null);
+  const bankBalance = useBankBalance(accountState.status) ?? 0;
+  const isPermanent = accountState.status === 'permanent';
+  const wallUsername = isPermanent ? accountState.profile.username : null;
 
   useEffect(() => {
-    if (!permanent && bank != null && readBankPreview() == null) recordLocalInduction(bank);
-  }, [bank, permanent]);
+    ensureWelcomeCoins(COINS_WELCOME);
+  }, []);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       preloadClassicArena();
+      new Image().src = '/images/home-v2/classic.jpg';
+      new Image().src = '/images/home-v2/1v1.jpg';
     }, 1500);
     return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>('.oneb-tabbar');
+    if (!bar) return;
+    const root = document.documentElement;
+    const apply = () =>
+      root.style.setProperty(
+        '--home-tabbar-h',
+        `${Math.max(0, Math.round(window.innerHeight - bar.getBoundingClientRect().top))}px`,
+      );
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(bar);
+    window.addEventListener('resize', apply);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', apply);
+    };
+  }, []);
+
+  const navLockRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimerRef.current != null) window.clearTimeout(shakeTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -114,17 +136,33 @@ export function TradeUpHome({
 
   const go = (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return;
-    if (navLockRef.current) return;
+    if (navLockRef.current || playShake) return;
     navLockRef.current = true;
     try {
       resume();
-      hapticLight();
+      playTap();
       fn();
     } finally {
       window.setTimeout(() => {
         navLockRef.current = false;
       }, 800);
     }
+  };
+
+  /** Dramatic 0.3s home shake, then enter Classic. */
+  const launchClassic = () => {
+    if (playShake || navLockRef.current) return;
+    navLockRef.current = true;
+    resume();
+    playTap();
+    setPlayShake(true);
+    if (shakeTimerRef.current != null) window.clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = window.setTimeout(() => {
+      shakeTimerRef.current = null;
+      setPlayShake(false);
+      navLockRef.current = false;
+      onPlay();
+    }, 300);
   };
 
   const openSheet = (view: AccountSheetView) => {
@@ -138,76 +176,54 @@ export function TradeUpHome({
     setPromptOpen(false);
   };
 
-  const menuLinks: SettingsLink[] = [
-    {
-      id: 'account',
-      label: t('home.menuAccount'),
-      value:
-        accountState.status === 'permanent'
-          ? accountState.profile.username
-          : accountState.status === 'loading'
-            ? '…'
-            : t('home.menuGuest'),
-      onSelect: () => openSheet('menu'),
-    },
-    { id: 'rank', label: t('home.menuProgress'), value: t('nav.rank'), onSelect: onOpenRank },
-    { id: 'wall', label: t('home.menuLegends'), value: t('home.wallOfFame'), onSelect: () => setWallOpen(true) },
-  ];
-
   return (
-    <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub run-home home-screen home-screen--official">
-      <div className="home-scene" aria-hidden>
-        <div className="home-scene__arena" />
-        <div className="home-scene__lights" />
-        <div className="home-scene__floor" />
-        <div className="home-scene__veil" />
+    <div
+      className={`tradeup-shell tradeup-shell--home tradeup-shell--hub run-home rh5${
+        playShake ? ' is-play-shake' : ''
+      }`}
+    >
+      <div className="rh5-bg" aria-hidden>
+        <div className="rh5-bg__photo" />
+        <HomeRisingBubbles />
+        <HomeArenaLiveFx />
+        <div className="rh5-bg__veil" />
+        <div className="rh5-bg__rim" />
       </div>
 
-      <div className="home-ui home-ui--official">
-        <header className="home-top home-top--official">
-          <HomeProfileMark
-            label={t('home.profileLabel')}
-            onClick={go(() => openSheet(permanent ? 'menu' : 'signup'))}
+      <main className="rh5-main">
+        <div className="rh5-actions">
+          <HomeBankProgress
+            onOpenBoard={onOpenBoard ? go(onOpenBoard) : undefined}
+            onOpenWall={go(() => setWallOpen(true))}
           />
-          <div className="home-top__end">
-            <HomeCoinChip
-              value={coins}
-              label={t('home.coinsLabel')}
-              plusLabel={t('home.coinPlus')}
-              onPlus={onOpenShop ? go(onOpenShop) : undefined}
-            />
-            <div className="home-top__menu">
-              <SoundSettings variant="gear" links={menuLinks} linksLabel={t('home.menuPlayer')} />
-            </div>
+          <div className="rh5-actions__row">
+            <button
+              type="button"
+              className="rh5-cta rh5-cta--play"
+              onClick={(e) => {
+                if (e.button !== 0) return;
+                launchClassic();
+              }}
+            >
+              <span className="rh5-cta__glow" aria-hidden />
+              <span className="rh5-cta__sheen" aria-hidden />
+              <span className="rh5-cta__label">{t('home.playButton')}</span>
+            </button>
+            <button
+              type="button"
+              className="rh5-cta rh5-cta--modes ui-tap"
+              onClick={go(() => setModesOpen(true))}
+            >
+              <span className="rh5-cta__label">{t('home.modesButton')}</span>
+            </button>
           </div>
-        </header>
-
-        <div className="home-hero">
-          <h1 className="home-title">
-            <span className="home-title__line">{t('home.draftA')}</span>
-            <span className="home-title__line">
-              <em className="home-title__billion">{t('home.oneBillion')}</em>{' '}
-              <span>{t('home.teamWord')}</span>
-            </span>
-          </h1>
-
-          <HomeJerseyStage />
-
-          <HomeXpModule progress={progress} />
         </div>
-
-        <div className="home-cta home-cta--official">
-          <HomePlayButton label={t('home.playButton')} onClick={go(onPlay)} />
-          <button type="button" className="home-modes-btn ui-tap" onClick={go(() => setModesOpen(true))}>
-            {t('home.modesButton')}
-          </button>
-        </div>
-      </div>
+      </main>
 
       <HomeModesSheet
         open={modesOpen}
         onClose={() => setModesOpen(false)}
-        onClassic={onPlay}
+        onClassic={launchClassic}
         onHeadToHead={onHeadToHead}
       />
 
@@ -218,18 +234,6 @@ export function TradeUpHome({
         onContinueAsGuest={continueAsGuest}
       />
 
-      <WallOfFameScreen
-        open={wallOpen}
-        bankBalance={bank ?? 0}
-        username={accountState.status === 'permanent' ? accountState.profile.username : null}
-        permanent={permanent}
-        onClose={() => setWallOpen(false)}
-        onSignIn={() => {
-          setWallOpen(false);
-          openSheet('signup');
-        }}
-      />
-
       <AccountAuthSheet
         open={sheetOpen}
         initialView={sheetView}
@@ -237,6 +241,19 @@ export function TradeUpHome({
         onStateChange={setAccountState}
         onClose={() => setSheetOpen(false)}
       />
+
+      <WallOfFameScreen
+        open={wallOpen}
+        preview
+        username={wallUsername}
+        permanent={isPermanent}
+        bankBalance={bankBalance}
+        onClose={() => setWallOpen(false)}
+        onSignIn={() => {
+          setWallOpen(false);
+          openSheet('signup');
+        }}
+      />
     </div>
   );
-}
+});

@@ -1,0 +1,19 @@
+{
+  "tests": {
+    "leaderboard": true,
+    "shop": true,
+    "playTab": true,
+    "coinPlus": true,
+    "profile": false,
+    "profile_err": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.oneb-tabbar__item').filter({ ",
+    "modes": false,
+    "modes_err": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator('.home-modes-btn')\n    - locator",
+    "playClassic": false,
+    "playClassic_err": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.home-play')\n    - locator res"
+  },
+  "errors": [],
+  "layout": {
+    "hasAwaiting": false,
+    "hasPreview": false
+  }
+}

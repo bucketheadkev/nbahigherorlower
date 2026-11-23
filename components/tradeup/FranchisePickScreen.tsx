@@ -41,10 +41,18 @@ interface FranchisePickScreenProps {
   canRerollEra: boolean;
   /** Format has no rerolls (The Circuit · No Reroll). */
   rerollsOff?: boolean;
+  /** Remaining / cost label under Reroll Team. */
+  teamRerollLabel?: string;
+  /** Remaining / cost label under Reroll Era. */
+  eraRerollLabel?: string;
+  /** X-Ray Vision — show dollar values on each offer. */
+  showValues?: boolean;
   /** Blocks select/reroll during slam, placement, or handoff. */
   interactionLocked?: boolean;
   /** Spin one header box in place. The other result stays put. */
   rerolling?: TicketRerollKind | null;
+  /** Pre-validated destination pair from the engine (charged only after this was chosen). */
+  rerollTarget?: SpinPair | null;
   reduceMotion?: boolean;
   /** The spin booth stays on screen (draft sheet), so the result boxes don't fly in from it. */
   skipArrival?: boolean;
@@ -101,8 +109,12 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
   canRerollTeam,
   canRerollEra,
   rerollsOff = false,
+  teamRerollLabel,
+  eraRerollLabel,
+  showValues = false,
   interactionLocked = false,
   rerolling = null,
+  rerollTarget = null,
   reduceMotion = false,
   skipArrival = false,
   hint,
@@ -201,7 +213,12 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
     if (spinKeyRef.current === key) return;
     spinKeyRef.current = key;
     const pairs = listValidSpinPairs();
-    const next = pickRerollPair(pairs, { team, era }, rerolling);
+    const locked = { team, era };
+    const next =
+      rerollTarget &&
+      (rerollTarget.team.id !== locked.team.id || rerollTarget.era !== locked.era)
+        ? rerollTarget
+        : pickRerollPair(pairs, locked, rerolling);
     plannedRef.current = next;
     if (rerolling === 'team') {
       setSpinStrip(buildTeamColorStrip(uniqueTeams(pairs), next.team, TEAM_STRIP_LEN));
@@ -211,7 +228,7 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
     setFreshAxis(null);
     setNudgeSettle(Math.random() < REEL_NUDGE_CHANCE);
     setSpinId((n) => n + 1);
-  }, [era, rerolling, team]);
+  }, [era, rerollTarget, rerolling, team]);
 
   const onReelLocked = () => {
     const pair = plannedRef.current;
@@ -292,7 +309,13 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
             onReroll('team');
           }}
         >
-          <em>{canRerollTeam ? '1 left' : rerollsOff ? 'Off' : 'Used'}</em>
+          <em>
+            {canRerollTeam
+              ? teamRerollLabel ?? 'Available'
+              : rerollsOff
+                ? 'Off'
+                : 'Used'}
+          </em>
           <strong>Reroll Team</strong>
         </button>
         <button
@@ -306,7 +329,13 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
             onReroll('era');
           }}
         >
-          <em>{canRerollEra ? '1 left' : rerollsOff ? 'Off' : 'Used'}</em>
+          <em>
+            {canRerollEra
+              ? eraRerollLabel ?? 'Available'
+              : rerollsOff
+                ? 'Off'
+                : 'Used'}
+          </em>
           <strong>Reroll Era</strong>
         </button>
       </div>
@@ -372,17 +401,26 @@ export const FranchisePickScreen = memo(function FranchisePickScreen({
                 <span className="franchise-pick__meta">
                   <strong>{player.name}</strong>
                   <em className="franchise-pick__stats">
-                    {Number.isFinite(player.eraStats?.ppg)
-                      ? `${player.eraStats.ppg.toFixed(1)} PTS`
-                      : '— PTS'}
-                    {' · '}
-                    {Number.isFinite(player.eraStats?.rpg)
-                      ? `${player.eraStats.rpg.toFixed(1)} REB`
-                      : '— REB'}
-                    {' · '}
-                    {Number.isFinite(player.eraStats?.apg)
-                      ? `${player.eraStats.apg.toFixed(1)} AST`
-                      : '— AST'}
+                    {showValues ? (
+                      <>
+                        $
+                        {Math.round(player.dollarValue).toLocaleString('en-US')}
+                      </>
+                    ) : (
+                      <>
+                        {Number.isFinite(player.eraStats?.ppg)
+                          ? `${player.eraStats.ppg.toFixed(1)} PTS`
+                          : '— PTS'}
+                        {' · '}
+                        {Number.isFinite(player.eraStats?.rpg)
+                          ? `${player.eraStats.rpg.toFixed(1)} REB`
+                          : '— REB'}
+                        {' · '}
+                        {Number.isFinite(player.eraStats?.apg)
+                          ? `${player.eraStats.apg.toFixed(1)} AST`
+                          : '— AST'}
+                      </>
+                    )}
                   </em>
                 </span>
                 <span className={`franchise-pick__check${selected ? ' is-on' : ''}`} aria-hidden>

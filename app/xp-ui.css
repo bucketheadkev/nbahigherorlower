@@ -1,0 +1,228 @@
+/* =========================================================
+   XP meter + post-run reward overlay
+   Kept separate from home-v2 so home redesigns cannot wipe these.
+   ========================================================= */
+
+/* ── Slim XP meter (striped orange parallelogram) ── */
+.xp-meter {
+  width: 100%;
+  padding: 0.55rem 0.15rem 0.1rem;
+}
+
+.xp-meter.is-compact {
+  padding: 0.35rem 0.1rem 0;
+}
+
+.xp-meter__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.xp-meter__lvl {
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(210, 220, 240, 0.78);
+  white-space: nowrap;
+}
+
+.xp-meter__lvl strong {
+  margin-left: 0.15rem;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  font-style: italic;
+}
+
+.xp-meter__bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.45rem;
+}
+
+.xp-meter__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 0.52rem;
+  overflow: hidden;
+  clip-path: polygon(0.45rem 0, 100% 0, calc(100% - 0.45rem) 100%, 0 100%);
+  background: rgba(8, 12, 20, 0.92);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.xp-meter.is-compact .xp-meter__track {
+  height: 0.46rem;
+}
+
+.xp-meter__fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transform-origin: left center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 40%),
+    repeating-linear-gradient(
+      -55deg,
+      #ffc44a 0 5px,
+      #ff8a12 5px 10px
+    );
+  box-shadow:
+    0 0 10px rgba(255, 140, 30, 0.45),
+    inset 0 1px 0 rgba(255, 240, 180, 0.35);
+}
+
+.xp-meter__gain {
+  flex: 0 0 auto;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: #ffd56a;
+  text-shadow: 0 1px 6px rgba(255, 140, 20, 0.35);
+  white-space: nowrap;
+}
+
+.xp-meter__totals {
+  margin: 0.35rem 0 0;
+  padding-left: 0.05rem;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(220, 228, 245, 0.72);
+  text-align: center;
+}
+
+.xp-meter__totals span {
+  color: rgba(160, 175, 200, 0.55);
+}
+
+/* ── Post-run XP + Reward overlay ── */
+.xp-reward {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding:
+    max(1rem, env(safe-area-inset-top, 0px))
+    1rem
+    max(1rem, env(safe-area-inset-bottom, 0px));
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  pointer-events: auto;
+}
+
+.xp-reward__scrim {
+  position: absolute;
+  inset: 0;
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: rgba(2, 6, 14, 0.55);
+  cursor: pointer;
+}
+
+.xp-reward__stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
+  width: min(21.5rem, 100%);
+}
+
+.xp-reward__module {
+  padding: 0.85rem 0.95rem 0.8rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 120, 40, 0.45);
+  background: linear-gradient(180deg, rgba(14, 20, 34, 0.96), rgba(6, 10, 18, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(120, 60, 200, 0.12),
+    0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+.xp-reward__level-chip {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffb45a;
+  text-align: center;
+}
+
+.xp-reward__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.15rem 1.25rem 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #141c2e 0%, #0a101c 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.xp-reward__title {
+  margin: 0 0 0.85rem;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+}
+
+.xp-reward__coin {
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+}
+
+.xp-reward__amount {
+  margin: 0.55rem 0 1.05rem;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 2.35rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.xp-reward__claim {
+  appearance: none;
+  width: 100%;
+  height: 3rem;
+  margin: 0;
+  border: 0;
+  border-radius: 0.7rem;
+  background: linear-gradient(180deg, #ff9d33 0%, #ff6a00 55%, #e04b00 100%);
+  color: #fff;
+  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 200, 0.4),
+    0 8px 18px rgba(255, 100, 0, 0.28);
+}
+
+.xp-reward__claim:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .xp-reward__claim:active {
+    transform: none;
+  }
+}

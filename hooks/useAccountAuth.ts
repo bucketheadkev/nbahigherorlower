@@ -6,6 +6,7 @@ import {
   type AccountAuthState,
 } from '@/lib/account/accountAuth';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { syncCloudCoinsIntoLocal } from '@/lib/tradeup/xp/cloudCoins';
 
 /**
  * App-wide account state: guest / anonymous / permanent / needs_username / loading.
@@ -54,6 +55,9 @@ export function useAccountAuth(): {
           }
           retries = 0;
           setState(next);
+          if (next.status === 'permanent') {
+            void syncCloudCoinsIntoLocal();
+          }
         } catch (err) {
           console.warn('[account] resolve failed', err);
         }

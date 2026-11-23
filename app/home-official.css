@@ -1,502 +1,147 @@
 /* =========================================================
-   Official 5-jersey home — fidelity to approved reference
+   Hub chrome — sticky top on Leaderboard / Shop
+   (home itself uses the last-pushed rh2/rh3 arena composition)
    ========================================================= */
 
-:root {
-  --home-tab-h: 3.55rem;
-  --home-tabbar-h: 3.55rem;
-  --home-tab-clearance: calc(var(--home-tab-h) + env(safe-area-inset-bottom, 0px) + 0.75rem);
-  --home-pad-x: max(1rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
-  --home-navy-0: #050b18;
-  --home-navy-1: #0a1630;
-  --hub-tab-bar-h: 3.55rem;
-}
-
-.home-screen--official {
-  position: relative;
-  height: 100dvh;
-  padding: 0 !important;
-  overflow: hidden;
-  background: var(--home-navy-0);
-  color: #fff;
-  -webkit-font-smoothing: antialiased;
-}
-
-.home-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.home-scene__arena {
-  position: absolute;
-  inset: 0;
-  background:
-    url('/images/home-v4/home-arena-blur.jpg') center top / cover no-repeat,
-    radial-gradient(90% 55% at 50% -5%, rgba(70, 130, 220, 0.28) 0%, transparent 55%),
-    linear-gradient(180deg, #0c1c3c 0%, #071226 42%, #040914 100%);
-}
-
-.home-scene__lights {
-  position: absolute;
-  inset: 0 0 40%;
-  background:
-    radial-gradient(ellipse at 50% 8%, rgba(180, 220, 255, 0.35), transparent 42%),
-    radial-gradient(ellipse at 22% 18%, rgba(120, 180, 255, 0.18), transparent 28%),
-    radial-gradient(ellipse at 78% 18%, rgba(120, 180, 255, 0.18), transparent 28%);
-  filter: blur(0.5px);
-}
-
-.home-scene__floor {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: 18%;
-  height: 48%;
-  background:
-    radial-gradient(closest-side at 50% 40%, rgba(30, 70, 140, 0.35), transparent 70%),
-    linear-gradient(180deg, transparent 0%, rgba(8, 18, 40, 0.55) 100%);
-  transform: perspective(480px) rotateX(58deg);
-  transform-origin: center top;
-}
-
-.home-scene__veil {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(4, 8, 18, 0.15) 0%, transparent 28%, transparent 55%, rgba(4, 8, 18, 0.72) 100%);
-}
-
-.home-ui--official {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 30rem;
-  height: 100%;
-  margin: 0 auto;
-  padding:
-    calc(env(safe-area-inset-top, 0px) + 0.65rem)
-    var(--home-pad-x)
-    var(--home-tab-clearance);
-  box-sizing: border-box;
-}
-
-.home-top--official {
+/* Legacy hub chrome sizing — rh5-top rules in home-plate.css own the live look. */
+.home-hub-top--live:not(.rh5-top) {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 40;
+  width: min(100%, 30rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 0.85rem)
+    max(1rem, env(safe-area-inset-right, 0px))
+    0.75rem
+    max(1rem, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(2, 8, 23, 0.94) 0%, rgba(2, 8, 23, 0.55) 72%, transparent);
+  pointer-events: none;
+}
+
+.home-hub-top--live > * {
+  pointer-events: auto;
+}
+
+.home-hub-top--live .rh2-player {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-hub-top--live .rh2-player .home-profile {
+  width: 2.85rem;
+  height: 2.85rem;
   flex: 0 0 auto;
-  min-height: 2.75rem;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 180, 60, 0.35))
+    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
 }
 
-.home-top__end {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-left: auto;
-}
-
-.home-screen--official .home-profile {
-  position: relative;
-  width: 2.7rem;
-  height: 2.7rem;
-  flex: 0 0 auto;
-}
-
-.home-screen--official .home-profile--btn {
+.home-hub-top--live .rh2-player .home-profile--btn {
   appearance: none;
   margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.home-screen--official .home-profile__svg {
+.home-hub-top--live .rh2-player .home-profile__svg {
   display: block;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
 }
 
-.home-screen--official .home-coin {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: none;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-  height: 2.55rem;
-  padding: 0 0.28rem 0 0.32rem;
-  border-radius: 999px;
-  border: 1.5px solid rgba(140, 180, 240, 0.35);
-  background: linear-gradient(180deg, #15243f 0%, #0a1224 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 6px 14px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
-}
-
-.home-screen--official .home-coin__icon {
-  width: 1.65rem;
-  height: 1.65rem;
-  flex: 0 0 auto;
-}
-
-.home-screen--official .home-coin__value {
-  min-width: 1.6rem;
-  padding-right: 0.15rem;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1.05rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-  line-height: 1;
-}
-
-.home-coin__plus {
-  appearance: none;
-  display: grid;
-  place-items: center;
-  width: 1.85rem;
-  height: 1.85rem;
+.home-hub-top--live .rh2-player__name {
   margin: 0;
-  border: 0;
-  border-radius: 0.45rem;
-  background: linear-gradient(180deg, #ff9d33 0%, #ff6a00 100%);
-  color: #fff;
-  font-size: 1.25rem;
-  font-weight: 900;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.35);
-}
-
-.home-coin__plus:active {
-  transform: scale(0.96);
-}
-
-.home-screen--official .sound-settings__gear {
-  width: 2.55rem !important;
-  height: 2.55rem !important;
-  border-radius: 0.75rem !important;
-  border: 0 !important;
-  color: #fff !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.home-hero {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  min-height: 0;
-  padding: 0.35rem 0 0.5rem;
-}
-
-.home-title {
-  margin: 0;
-  text-align: center;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-weight: 900;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-style: italic;
   letter-spacing: 0.01em;
   line-height: 1.05;
-  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
-}
-
-.home-title__line {
-  display: block;
-  font-size: clamp(1.55rem, 6.2vw, 2.05rem);
-  font-style: italic;
-}
-
-.home-title__billion {
-  font-style: italic;
-  color: #39ff6a;
+  color: #fff;
   text-shadow:
-    0 0 12px rgba(57, 255, 106, 0.45),
-    0 2px 10px rgba(0, 0, 0, 0.4);
+    0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 12px rgba(20, 80, 200, 0.4);
 }
 
-.home-stage-art {
-  position: relative;
-  width: min(100%, 22.5rem);
-  margin: 0 auto;
-  filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.42));
-}
-
-.home-stage-art__plate {
-  display: block;
-  width: 100%;
-  height: auto;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-.home-stage-art__pg-glow {
-  position: absolute;
-  left: 50%;
-  bottom: 8%;
-  width: 42%;
-  height: 18%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(255, 140, 30, 0.45), transparent 70%);
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-/* XP module */
-.home-xp {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.65rem;
-  width: min(100%, 21.5rem);
-  margin-top: 0.15rem;
-  padding: 0.55rem 0.75rem 0.55rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(110, 160, 230, 0.35);
-  background: linear-gradient(180deg, rgba(14, 28, 56, 0.92), rgba(8, 14, 28, 0.96));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 8px 18px rgba(0, 0, 0, 0.28);
-}
-
-.home-xp__hex {
-  position: relative;
-  width: 2.75rem;
-  height: 2.75rem;
-  flex: 0 0 auto;
-}
-
-.home-xp__hex svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.home-xp__level {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 1.05rem;
-  font-weight: 900;
-  font-style: italic;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-}
-
-.home-xp__body {
-  min-width: 0;
-}
-
-.home-xp__totals {
-  margin: 0 0 0.28rem;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.78rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: rgba(230, 238, 255, 0.9);
-}
-
-.home-xp__totals span {
-  color: rgba(160, 180, 210, 0.55);
-}
-
-.home-xp__track {
-  height: 0.42rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(4, 10, 22, 0.9);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.home-xp__fill {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #5ad0ff 0%, #7ef0ff 55%, #b8fbff 100%);
-  box-shadow: 0 0 10px rgba(90, 210, 255, 0.45);
-  transform: scaleX(0);
-}
-
-/* CTA */
-.home-cta--official {
-  flex: 0 0 auto;
+.home-hub-top__tools {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.55rem;
-  width: 100%;
-  padding-bottom: 0.2rem;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
 }
 
-.home-play--alive {
-  appearance: none;
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 4.35rem;
-  margin: 0;
-  border: 0;
-  border-radius: 1.15rem;
-  overflow: hidden;
-  cursor: pointer;
-  color: #fff;
+.home-hub-top--live:not(.rh5-top) .home-coin {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  height: 3.2rem;
+  padding: 0 0.32rem 0 0.4rem;
+  border: 1.5px solid rgba(140, 190, 255, 0.55);
+  border-radius: 999px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 40%),
-    linear-gradient(180deg, #ff9d33 0%, #ff6d0c 52%, #e04b00 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #163058 0%, #081428 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 236, 200, 0.5),
-    0 0 0 1px rgba(255, 180, 80, 0.35),
-    0 10px 28px rgba(255, 100, 0, 0.35),
-    0 0 32px rgba(255, 120, 20, 0.28);
-  -webkit-tap-highlight-color: transparent;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(60, 120, 220, 0.18),
+    0 0 16px rgba(40, 120, 255, 0.28),
+    0 6px 14px rgba(0, 0, 0, 0.42);
 }
 
-.home-play__glow {
-  position: absolute;
-  inset: -20%;
-  background: radial-gradient(circle at 50% 40%, rgba(255, 230, 160, 0.35), transparent 55%);
-  animation: home-play-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
+.home-hub-top--live:not(.rh5-top) .home-coin__icon {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
-.home-play__shimmer {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.35) 48%,
-    transparent 62%
-  );
-  transform: translateX(-120%);
-  animation: home-play-shimmer 2.8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.home-play__spark {
-  position: absolute;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
-  opacity: 0;
-  animation: home-play-spark 2.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.home-play__spark--a { top: 22%; left: 18%; animation-delay: 0.2s; }
-.home-play__spark--b { top: 30%; right: 22%; animation-delay: 1.1s; }
-.home-play__spark--c { bottom: 28%; left: 42%; animation-delay: 1.8s; }
-
-.home-play__label {
-  position: relative;
-  z-index: 1;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 2rem;
+.home-hub-top--live:not(.rh5-top) .home-coin__value {
+  min-width: 1.55rem;
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+  font-size: 1.28rem;
   font-weight: 900;
   font-style: italic;
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-.home-modes-btn {
-  appearance: none;
-  width: 100%;
-  height: 2.65rem;
-  margin: 0;
-  border: 1.5px solid rgba(220, 230, 255, 0.55);
-  border-radius: 0.85rem;
-  background: linear-gradient(180deg, rgba(18, 32, 60, 0.92), rgba(8, 14, 28, 0.96));
+  font-variant-numeric: tabular-nums;
   color: #fff;
-  font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: 0.82rem;
-  font-weight: 850;
-  letter-spacing: 0.14em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.home-modes-btn:active {
-  transform: translateY(1px);
+.home-hub-top--live:not(.rh5-top) .home-hub-top__menu .sound-settings__gear {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  border-radius: 0.85rem !important;
+  border: 1.5px solid rgba(80, 155, 255, 0.8) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 14px rgba(30, 110, 255, 0.38),
+    0 6px 14px rgba(0, 0, 0, 0.4) !important;
 }
 
-@keyframes home-play-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
+/* Leave identical room under shared rh5 chrome on board (Shop owns its own inset) */
+body:has(.home-hub-top.rh5-top) .wb-screen {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 4.85rem);
 }
 
-@keyframes home-play-shimmer {
-  0%, 35% { transform: translateX(-120%); }
-  65%, 100% { transform: translateX(120%); }
-}
-
-@keyframes home-play-spark {
-  0%, 100% { opacity: 0; transform: scale(0.4); }
-  40% { opacity: 1; transform: scale(1); }
-  70% { opacity: 0; transform: scale(0.6); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-full-motion]) .home-play__glow,
-  html:not([data-full-motion]) .home-play__shimmer,
-  html:not([data-full-motion]) .home-play__spark {
-    animation: none !important;
-    opacity: 0.4;
-  }
-}
-
-/* 3-tab official nav */
-.oneb-tabbar--tri {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-}
-
-.oneb-tabbar--tri .oneb-tabbar__glider {
-  width: calc((100% - 0.4rem) / 3) !important;
-}
-
-.oneb-tabbar--tri .oneb-tabbar__item.is-active {
-  color: #ff8a20 !important;
-}
-
-.oneb-tabbar--tri .oneb-tabbar__item--home.is-active {
-  color: #ff8a20 !important;
-}
-
-.oneb-tabbar-host .oneb-tabbar--tri .oneb-tabbar__glider::before {
-  border-color: rgba(255, 150, 60, 0.55);
-  background: linear-gradient(180deg, rgba(255, 140, 40, 0.22), rgba(255, 100, 0, 0.08));
-  box-shadow: none;
-}
-
-/* Shop placeholder */
-.shop-screen {
+/* Legacy placeholder only — live Shop is styled in shop-ui.css */
+.shop-screen:not(:has(.shop-ui)) {
   display: grid;
   place-items: center;
   min-height: 100dvh;
   padding:
     calc(env(safe-area-inset-top, 0px) + 1.5rem)
     1.25rem
-    calc(var(--home-tab-clearance) + 1rem);
+    calc(1rem + env(safe-area-inset-bottom, 0px) + var(--hub-tab-bar-h, 4.85rem));
   background:
     radial-gradient(80% 50% at 50% 0%, rgba(50, 100, 180, 0.25), transparent 60%),
     #050b18;
@@ -532,16 +177,4 @@
   color: rgba(200, 214, 240, 0.78);
   font-size: 0.95rem;
   line-height: 1.4;
-}
-
-@media (max-width: 360px) {
-  .home-play--alive {
-    height: 4rem;
-  }
-  .home-play__label {
-    font-size: 1.75rem;
-  }
-  .home-title__line {
-    font-size: 1.4rem;
-  }
 }

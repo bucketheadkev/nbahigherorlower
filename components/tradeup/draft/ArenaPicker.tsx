@@ -1,20 +1,23 @@
 'use client';
 
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { EraOfferPlayer } from '@/lib/tradeup/billionDollar';
-import { getEligiblePositions, playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
-import { LINEUP_POSITIONS } from '@/lib/tradeup/startingLineup';
+import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
+import { hapticMedium } from '@/lib/tradeup/haptics';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import type { TicketRerollKind } from '../BallionTicketMachine';
 
 const TAP_SLOP_PX = 18;
-type Filter = 'ALL' | Position;
+
+/** Horizontal player bar tinted with the board team's primary. */
+function teamRowFill(primary: string): string {
+  return `linear-gradient(180deg, ${primary} 0%, color-mix(in srgb, ${primary} 68%, #041018) 100%)`;
+}
 
 interface Props {
   team: TeamInfo;
-  /** Changes when a reroll lands, so the filter resets for the new board. */
+  /** Changes when a reroll lands, so the list refreshes for the new board. */
   boardKey: string;
   offers: EraOfferPlayer[];
   openPositions: Position[];
@@ -22,8 +25,13 @@ interface Props {
   canRerollTeam: boolean;
   canRerollEra: boolean;
   rerollsOff?: boolean;
+  teamRerollLabel?: string;
+  eraRerollLabel?: string;
+  showValues?: boolean;
   interactionLocked?: boolean;
   hint: string;
+  /** Rendered under Team/Era rerolls (Classic perks). */
+  belowRerolls?: ReactNode;
   onSelect: (player: EraOfferPlayer) => void;
   onReroll: (kind: TicketRerollKind) => void;
 }
@@ -38,37 +46,38 @@ function RerollIcon() {
 }
 
 /**
- * Classic player selection (inside the draft sheet). The Jumbotron already shows the team and era,
- * so this is the rerolls, position filters and the players.
+ * Classic player selection (inside the draft sheet).
+ * Jumbotron already shows team + era — sheet starts with big reroll icons, then a dense player list.
+ * Position chip uses the board team's primary color. No top position filters.
  */
 export const ArenaPicker = memo(function ArenaPicker({
   team,
-  boardKey,
   offers,
   openPositions,
   selectedId,
   canRerollTeam,
   canRerollEra,
   rerollsOff = false,
+  teamRerollLabel,
+  eraRerollLabel,
+  showValues = false,
   interactionLocked = false,
   hint,
+  belowRerolls,
   onSelect,
   onReroll,
 }: Props) {
   const colors = getTeamColors(team.id);
   const ink = contrastOnPrimary(colors.primary);
-  const [filter, setFilter] = useState<Filter>('ALL');
+  const muted = ink === '#ffffff' ? 'rgba(255, 255, 255, 0.78)' : 'rgba(10, 16, 28, 0.68)';
+  const rowStyle = {
+    background: teamRowFill(colors.primary),
+    borderColor: `color-mix(in srgb, ${colors.primary} 45%, rgba(255, 255, 255, 0.35))`,
+    ['--ap-ink' as string]: ink,
+    ['--ap-muted' as string]: muted,
+  } as CSSProperties;
   const pointer = useRef<{ id: number; x: number; y: number; playerId: string } | null>(null);
   const dragged = useRef(false);
-
-  useEffect(() => setFilter('ALL'), [boardKey]);
-
-  const counts = useMemo(() => {
-    const out = {} as Record<Position, number>;
-    for (const pos of LINEUP_POSITIONS) out[pos] = offers.filter((p) => playerFitsSlot(p, pos)).length;
-    return out;
-  }, [offers]);
-  const shown = filter === 'ALL' ? offers : offers.filter((p) => playerFitsSlot(p, filter));
 
   const reroll = (kind: TicketRerollKind, can: boolean) => {
     const open = can && !interactionLocked;
@@ -87,7 +96,15 @@ export const ArenaPicker = memo(function ArenaPicker({
         <RerollIcon />
         <span className="ap-reroll__copy">
           <strong>{kind === 'team' ? 'REROLL TEAM' : 'REROLL ERA'}</strong>
-          <em>{can ? '1 FREE' : rerollsOff ? 'OFF' : 'USED'}</em>
+          <em>
+            {can
+              ? kind === 'team'
+                ? teamRerollLabel ?? 'FREE'
+                : eraRerollLabel ?? 'FREE'
+              : rerollsOff
+                ? 'OFF'
+                : 'USED'}
+          </em>
         </span>
       </button>
     );
@@ -100,46 +117,21 @@ export const ArenaPicker = memo(function ArenaPicker({
         {reroll('era', canRerollEra)}
       </div>
 
-      <div className="ap__filters" role="tablist" aria-label="Filter by position">
-        {(['ALL', ...LINEUP_POSITIONS] as Filter[]).map((key) => {
-          const filled = key !== 'ALL' && !openPositions.includes(key);
-          const count = key === 'ALL' ? offers.length : counts[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={filter === key}
-              className={`ap-filter${filter === key ? ' is-on' : ''}${filled ? ' is-filled' : ''}${
-                count === 0 ? ' is-empty' : ''
-              }`}
-              onClick={() => {
-                hapticLight();
-                setFilter(key);
-              }}
-            >
-              <span className="ap-filter__label">{key}</span>
-              <span className="ap-filter__count">{filled ? '✓' : count}</span>
-            </button>
-          );
-        })}
-      </div>
+      {belowRerolls ? <div className="ap__below-rerolls">{belowRerolls}</div> : null}
 
       <p className="ap__hint">{hint}</p>
 
       <ul className="ap__list" aria-label="Available players">
-        {shown.length === 0 ? (
-          <li className="ap__empty">No {filter} on this board — try another position.</li>
-        ) : null}
-        {shown.map((player) => {
+        {offers.length === 0 ? <li className="ap__empty">No players on this board.</li> : null}
+        {offers.map((player) => {
           const selected = selectedId === player.id;
-          const eligible = getEligiblePositions(player);
           const ineligible = !openPositions.some((pos) => playerFitsSlot(player, pos));
           return (
             <li key={player.id}>
               <button
                 type="button"
                 className={`ap-row${selected ? ' is-selected' : ''}${ineligible ? ' is-disabled' : ''}`}
+                style={rowStyle}
                 data-draft-player-id={player.id}
                 disabled={ineligible}
                 aria-pressed={selected}
@@ -177,22 +169,24 @@ export const ArenaPicker = memo(function ArenaPicker({
                 <span className="ap-row__meta">
                   <strong>{player.name}</strong>
                   <em>
-                    {Number.isFinite(player.eraStats?.ppg) ? `${player.eraStats.ppg.toFixed(1)} PTS` : '— PTS'}
-                    {' · '}
-                    {Number.isFinite(player.eraStats?.rpg) ? `${player.eraStats.rpg.toFixed(1)} REB` : '— REB'}
-                    {' · '}
-                    {Number.isFinite(player.eraStats?.apg) ? `${player.eraStats.apg.toFixed(1)} AST` : '— AST'}
+                    {showValues ? (
+                      <>${Math.round(player.dollarValue).toLocaleString('en-US')}</>
+                    ) : (
+                      <>
+                        {Number.isFinite(player.eraStats?.ppg)
+                          ? `${player.eraStats.ppg.toFixed(1)} PTS`
+                          : '— PTS'}
+                        {' · '}
+                        {Number.isFinite(player.eraStats?.rpg)
+                          ? `${player.eraStats.rpg.toFixed(1)} REB`
+                          : '— REB'}
+                        {' · '}
+                        {Number.isFinite(player.eraStats?.apg)
+                          ? `${player.eraStats.apg.toFixed(1)} AST`
+                          : '— AST'}
+                      </>
+                    )}
                   </em>
-                  <span className="ap-row__fits" aria-label={`Plays ${eligible.join(', ')}`}>
-                    <span className="ap-row__fits-label" aria-hidden>
-                      PLAYS
-                    </span>
-                    {eligible.map((pos) => (
-                      <span key={pos} className={openPositions.includes(pos) ? 'is-open' : 'is-taken'}>
-                        {pos}
-                      </span>
-                    ))}
-                  </span>
                 </span>
                 <span className={`ap-row__check${selected ? ' is-on' : ''}`} aria-hidden>
                   {selected ? (

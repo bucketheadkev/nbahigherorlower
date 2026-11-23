@@ -9,7 +9,8 @@ import {
 } from '@/lib/tradeup/audioSettings';
 import {
   playGameSound,
-  preloadGameAudio,
+  playUiTapSound,
+  schedulePreloadGameAudio,
   setGameSfxMuted,
   setGameSfxVolume,
   syncAudioSettings,
@@ -47,8 +48,10 @@ export function useSound() {
   }, []);
 
   const resume = useCallback(() => {
+    // Cheap unlock only — full library preload runs on idle so hub Shop/Coins
+    // taps never hitch waiting on Audio element creation + .load().
     unlockGameAudio();
-    preloadGameAudio();
+    schedulePreloadGameAudio();
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -93,6 +96,7 @@ export function useSound() {
   );
 
   const playTap = useCallback(() => {
+    playUiTapSound();
     hapticTap();
   }, []);
   const playAccept = useCallback(() => {

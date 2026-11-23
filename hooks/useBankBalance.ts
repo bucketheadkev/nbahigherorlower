@@ -5,6 +5,13 @@ import { USER_DATA_CLEARED_EVENT } from '@/lib/account/clearLocalUserData';
 import { fetchMyBankBalance } from '@/lib/account/bankLeaderboardCloud';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { BANK_CHANGED_EVENT, getBankBalance, readBankPreview } from '@/lib/tradeup/bank';
+import {
+  balanceFromCacheForUser,
+  isBankAuthLoading,
+  isBankPermanent,
+  shouldUseGuestBank,
+  type BankAuthStatus,
+} from '@/lib/tradeup/bankDisplay';
 import { CLASSIC_PROGRESS_EVENT } from '@/lib/tradeup/storage';
 
 /**
@@ -18,12 +25,11 @@ const CACHE_KEY = 'oneb_bank_server_cache_v1';
 
 /**
  * One shared server balance for every screen (signed-in players). Rules that keep it from ever
- * freezing:
- *   - a failed or slow read never replaces the balance with something else; the last real server
- *     number stays up and the next check tries again;
+ * freezing / flashing the wrong number:
+ *   - a failed or slow read never replaces the balance with $0 / guest;
+ *   - cache is applied only when cached.userId matches the live session user;
  *   - an older response can never overwrite a newer one;
- *   - changes are re-checked several times, and the balance is polled while visible and on
- *     focus / visibility / reconnect.
+ *   - account switches clear the prior balance before the next pull lands.
  */
 const store = {
   value: null as number | null,
@@ -42,8 +48,13 @@ function emit() {
 
 function readCache(): { userId: string; balance: number } | null {
   try {
-    const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as { userId?: unknown; balance?: unknown } | null;
-    return raw && typeof raw.userId === 'string' && typeof raw.balance === 'number' ? { userId: raw.userId, balance: raw.balance } : null;
+    const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as {
+      userId?: unknown;
+      balance?: unknown;
+    } | null;
+    return raw && typeof raw.userId === 'string' && typeof raw.balance === 'number'
+      ? { userId: raw.userId, balance: raw.balance }
+      : null;
   } catch {
     return null;
   }
@@ -57,6 +68,14 @@ function writeCache(userId: string, balance: number) {
   }
 }
 
+function clearDisplay(emitChange = true) {
+  const changed = store.value != null || store.userId != null;
+  store.value = null;
+  store.userId = null;
+  store.applied = store.started;
+  if (changed && emitChange) emit();
+}
+
 async function pull(): Promise<void> {
   const seq = ++store.started;
   let userId: string | null = null;
@@ -66,7 +85,13 @@ async function pull(): Promise<void> {
   } catch {
     return;
   }
-  if (!userId) return;
+
+  if (!userId) {
+    // Signed out: never keep another account's Bank on screen.
+    clearDisplay(true);
+    return;
+  }
+
   if (store.userId && store.userId !== userId) {
     // Another account signed in on this device: never show the previous player's Bank.
     store.value = null;
@@ -74,8 +99,20 @@ async function pull(): Promise<void> {
     emit();
   }
   store.userId = userId;
+
+  // Only the matching account's cache may paint before the network returns.
+  if (store.value == null) {
+    const cachedBalance = balanceFromCacheForUser(readCache(), userId);
+    if (cachedBalance != null) {
+      store.value = cachedBalance;
+      emit();
+    }
+  }
+
   const result = await fetchMyBankBalance();
   if (result.ok !== true || seq < store.applied) return;
+  // Session may have changed while the request was in flight.
+  if (store.userId !== userId) return;
   store.applied = seq;
   if (store.value !== result.balance) {
     store.value = result.balance;
@@ -95,9 +132,7 @@ const onVisible = () => {
 const onFocus = () => void pull();
 /** Signed out / data deleted on this device: forget the old balance before anyone else signs in. */
 const onCleared = () => {
-  store.value = null;
-  store.userId = null;
-  store.applied = store.started;
+  clearDisplay(false);
   try {
     localStorage.removeItem(CACHE_KEY);
   } catch {
@@ -110,11 +145,7 @@ const onCleared = () => {
 function wire() {
   if (store.wired) return;
   store.wired = true;
-  const cached = readCache();
-  if (cached && store.value == null) {
-    store.userId = cached.userId;
-    store.value = cached.balance;
-  }
+  // Do not hydrate from cache here — userId is unknown until pull().
   window.addEventListener(BANK_CHANGED_EVENT, recheckSoon);
   window.addEventListener(CLASSIC_PROGRESS_EVENT, recheckSoon);
   window.addEventListener('focus', onFocus);
@@ -154,18 +185,46 @@ const noop = () => () => {};
 const getServer = () => store.value;
 const getNull = () => null;
 
+export type { BankAuthStatus };
+
 /**
- * Bank balance to display. Signed-in players get the server ledger balance (shared, always
- * refreshing — see `store`); guests get the on-device total. Null until the first read.
+ * Bank balance to display.
+ * - Auth still loading / unavailable → null (never guest, never forced $0).
+ * - Permanent → server ledger (cache only when userId matches).
+ * - Guest / anonymous → on-device total once auth has resolved.
  */
-export function useBankBalance(permanent: boolean): number | null {
+export function useBankBalance(
+  permanentOrStatus: boolean | BankAuthStatus,
+): number | null {
+  const status: BankAuthStatus =
+    typeof permanentOrStatus === 'boolean'
+      ? permanentOrStatus
+        ? 'permanent'
+        : 'guest'
+      : permanentOrStatus;
+
+  const authLoading = isBankAuthLoading(status);
+  const permanent = isBankPermanent(status);
+  const useGuest = shouldUseGuestBank(status);
+
   const [local, setLocal] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
-  const server = useSyncExternalStore(permanent ? subscribe : noop, permanent ? getServer : getNull, getNull);
+  // Subscribe whenever we may need the server number (permanent, or loading so a
+  // cold signed-in launch can hydrate the matching cache as soon as the session is known).
+  const subscribeServer = permanent || authLoading;
+  const server = useSyncExternalStore(
+    subscribeServer ? subscribe : noop,
+    subscribeServer ? getServer : getNull,
+    getNull,
+  );
 
   useEffect(() => setPreview(readBankPreview()), []);
 
   useEffect(() => {
+    if (!useGuest) {
+      setLocal(null);
+      return;
+    }
     const refresh = () => setLocal(getBankBalance());
     refresh();
     window.addEventListener(BANK_CHANGED_EVENT, refresh);
@@ -178,9 +237,20 @@ export function useBankBalance(permanent: boolean): number | null {
       window.removeEventListener(CLASSIC_PROGRESS_EVENT, refresh);
       window.removeEventListener('storage', refresh);
     };
-  }, []);
+  }, [useGuest]);
+
+  // Permanent account (or switch): refresh so cache/userId stay aligned.
+  useEffect(() => {
+    if (permanent) void pull();
+    if (!permanent && !authLoading) {
+      // Left a permanent session — drop server display; guest path uses local.
+      // Keep store for a later sign-in; pull() will mismatch-clear if needed.
+    }
+  }, [permanent, authLoading]);
 
   if (preview != null) return preview;
-  // Signed in: only ever the server's number (never the device total, which can look frozen).
-  return permanent ? server : local;
+  // Auth unresolved: never guest, never a leftover account's Bank, never forced $0.
+  if (authLoading) return null;
+  if (permanent) return server;
+  return local;
 }

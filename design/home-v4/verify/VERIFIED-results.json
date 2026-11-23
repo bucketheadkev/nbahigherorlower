@@ -1,0 +1,51 @@
+{
+  "layout": {
+    "stage": {
+      "x": 43,
+      "y": 134,
+      "w": 344,
+      "h": 206
+    },
+    "xp": {
+      "x": 43,
+      "y": 664,
+      "w": 344,
+      "h": 64
+    },
+    "play": {
+      "x": 16,
+      "y": 739,
+      "w": 398,
+      "h": 70
+    },
+    "title": {
+      "x": 93,
+      "y": 63,
+      "w": 244,
+      "h": 56
+    },
+    "tabbar": {
+      "x": 0,
+      "y": 875,
+      "w": 430,
+      "h": 57
+    },
+    "tabs": [
+      "Leaderboard",
+      "Play",
+      "Shop"
+    ],
+    "arenaSrc": "/images/home-v4/home-arena-bg@3x.webp",
+    "stageSrc": "/images/home-v4/home-jersey-stage@3x.webp",
+    "awaiting": false,
+    "previewMounted": false
+  },
+  "leaderboard": true,
+  "shop": true,
+  "playTab": true,
+  "coinPlus": true,
+  "modes": true,
+  "classic": true,
+  "profile": true,
+  "errs": []
+}

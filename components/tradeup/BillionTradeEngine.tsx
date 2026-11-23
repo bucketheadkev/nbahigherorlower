@@ -9,6 +9,7 @@ import {
   formatDollarsExact,
   getDollarValue,
   getDollarValueForSlot,
+  listValidSpinPairs,
   sumTeamValue,
   type DecadeEra,
   type EraOfferPlayer,
@@ -42,7 +43,32 @@ import { payLocalRollover } from '@/lib/tradeup/rollover';
 import { runBonusFacts } from '@/lib/tradeup/runBonuses';
 import { settleLocalRunBonus } from '@/lib/tradeup/runBonusLocal';
 import { settleRunBonus } from '@/lib/account/runBonusCloud';
-import { awardClassicRunXp, signalXpRevealReady } from '@/lib/tradeup/xp';
+import {
+  awardClassicRunXp,
+  COINS_PERK_COST,
+  COINS_REROLL_COST,
+  getXpCoins,
+  MAX_REROLLS_PER_RUN,
+  spendXpCoins,
+} from '@/lib/tradeup/xp';
+import { useXpProfile } from '@/hooks/useXpProfile';
+import { holdInterruptions } from '@/lib/tradeup/interruptions';
+import {
+  MAX_PERK_USES,
+  PERK_DEFS,
+  canAffordPerk,
+  purchasePerkActivation,
+  type PerkId,
+} from '@/lib/tradeup/perks';
+import { getPerkStock } from '@/lib/tradeup/perkInventory';
+import { ClassicPerksBar } from './perks/ClassicPerksBar';
+import { ConfirmSpendSheet } from './ConfirmSpendSheet';
+import { ClassicTriviaSheet } from './trivia/ClassicTriviaSheet';
+import {
+  decideTriviaGate,
+  lockSettledTriviaTotal,
+  type TriviaEligibility,
+} from '@/lib/tradeup/trivia/triviaGate';
 import { useRunBonus } from '@/hooks/useRunBonus';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { contrastOnPrimary, getTeamColors, teamGlowColor, teamRingColor } from '@/lib/tradeup/teamColors';
@@ -64,7 +90,7 @@ import { DraftPlayerSlamFly, type DraftSlamPayload } from './DraftPlayerSlamFly'
 import { FranchisePickScreen } from './FranchisePickScreen';
 import { ClassicRosterReveal } from './ClassicRosterReveal';
 import { HeadToHeadShowdown } from './HeadToHeadShowdown';
-import type { TicketRerollKind } from './BallionTicketMachine';
+import { resolveRerollPair, type TicketRerollKind } from '@/lib/tradeup/rerollPair';
 import type { H2HOpponent } from '@/lib/tradeup/h2hOpponents';
 import { serializeMatchLineup } from '@/lib/multiplayer/match';
 import type { H2HPosition } from '@/lib/multiplayer/h2hPenalty';
@@ -282,10 +308,30 @@ export function BillionTradeEngine({
     slot: Position;
     valued: ValuedPlayer & { era?: DecadeEra };
   } | null>(null);
-  /** One free team reroll + one free era reroll for the entire run (no ads). */
+  /** Team/Era rerolls allowed (Classic). Cap is MAX_REROLLS_PER_RUN; first Team + first Era free. */
   const rerollsAllowed = !isFranchise && (!circuit || circuit.rerollsAllowed);
-  const [teamRerolls, setTeamRerolls] = useState(rerollsAllowed ? 1 : 0);
-  const [eraRerolls, setEraRerolls] = useState(rerollsAllowed ? 1 : 0);
+  const [rerollsUsedCount, setRerollsUsedCount] = useState(0);
+  const [freeTeamLeft, setFreeTeamLeft] = useState(rerollsAllowed);
+  const [freeEraLeft, setFreeEraLeft] = useState(rerollsAllowed);
+  const [perkUses, setPerkUses] = useState(0);
+  const [xrayActive, setXrayActive] = useState(false);
+  const [doubleDraftLeft, setDoubleDraftLeft] = useState(0);
+  const [swapMode, setSwapMode] = useState(false);
+  const [triviaOpen, setTriviaOpen] = useState(false);
+  const [triviaRunRef, setTriviaRunRef] = useState('');
+  const pendingPlayAgainRef = useRef<(() => void) | null>(null);
+  /** Settled celebration total — only source for Build Another → trivia eligibility. */
+  const settledTeamValueRef = useRef(0);
+  const evaluationSettledRef = useRef(false);
+  const triviaEligibilityRef = useRef<TriviaEligibility>('pending');
+  const triviaOpenedRef = useRef(false);
+  const [spendConfirm, setSpendConfirm] = useState<null | {
+    kind: 'perk' | 'reroll';
+    perkId?: PerkId;
+    rerollKind?: TicketRerollKind;
+    title: string;
+    copy: string;
+  }>(null);
   const [boothReroll, setBoothReroll] = useState<TicketRerollKind | null>(null);
   const clearBoothReroll = useCallback(() => setBoothReroll(null), []);
   /** Reroll spinning inside the selection header — the other result stays put. */
@@ -326,8 +372,18 @@ export function BillionTradeEngine({
   runBonusRef.current = runBonus;
   const teamRerollUsedRef = useRef(false);
   const eraRerollUsedRef = useRef(false);
+  const rerollsUsedCountRef = useRef(0);
+  const freeTeamLeftRef = useRef(rerollsAllowed);
+  const freeEraLeftRef = useRef(rerollsAllowed);
+  freeTeamLeftRef.current = freeTeamLeft;
+  freeEraLeftRef.current = freeEraLeft;
+  rerollsUsedCountRef.current = rerollsUsedCount;
   /** Blocks select/reroll/slot commits until placement finishes or table resets. */
   const interactionLockRef = useRef(false);
+  /** Sync lock for Team/Era reroll taps — set before free/coin consume. */
+  const rerollInFlightRef = useRef(false);
+  /** Pre-validated pair for the in-flight reroll animation. */
+  const [rerollTarget, setRerollTarget] = useState<SpinPair | null>(null);
   const lockInteractions = useCallback(() => {
     interactionLockRef.current = true;
     setPickInteractionLocked(true);
@@ -335,6 +391,10 @@ export function BillionTradeEngine({
   const unlockInteractions = useCallback(() => {
     interactionLockRef.current = false;
     setPickInteractionLocked(false);
+  }, []);
+  const releaseRerollLock = useCallback(() => {
+    rerollInFlightRef.current = false;
+    setRerollTarget(null);
   }, []);
   const fourPlayerTotalBeforeFifthRef = useRef<number | null>(null);
   const resetTimerRef = useRef(0);
@@ -467,6 +527,7 @@ export function BillionTradeEngine({
 
   const handleTicketResult = useCallback((pair: SpinPair) => {
     unlockInteractions();
+    releaseRerollLock();
     setSpunTeam(pair.team);
     setSpunEra(pair.era);
     setTicketPrinting(false);
@@ -476,7 +537,7 @@ export function BillionTradeEngine({
     setStatus(
       `${pair.team.fullName} · ${pair.era} — pick a player, then tap an open circle.`,
     );
-  }, [unlockInteractions]);
+  }, [releaseRerollLock, unlockInteractions]);
 
   const handleHeaderRerollSettled = useCallback((pair: SpinPair) => {
     setSpunTeam(pair.team);
@@ -484,24 +545,75 @@ export function BillionTradeEngine({
     setHeaderReroll(null);
     setRerollFrom(null);
     unlockInteractions();
+    releaseRerollLock();
     setStatus(
       `${pair.team.fullName} · ${pair.era} — pick a player, then tap an open circle.`,
     );
-  }, [unlockInteractions]);
+  }, [releaseRerollLock, unlockInteractions]);
 
-  const handleTicketReroll = useCallback((kind: TicketRerollKind) => {
+  const { coins: liveCoins } = useXpProfile();
+  const rerollsRemaining = Math.max(0, MAX_REROLLS_PER_RUN - rerollsUsedCount);
+  const canPayReroll = liveCoins >= COINS_REROLL_COST || getXpCoins() >= COINS_REROLL_COST;
+  const canRerollTeam =
+    rerollsAllowed && rerollsRemaining > 0 && (freeTeamLeft || canPayReroll);
+  const canRerollEra =
+    rerollsAllowed && rerollsRemaining > 0 && (freeEraLeft || canPayReroll);
+
+  const executeTicketReroll = useCallback((kind: TicketRerollKind) => {
     if (phase !== 'draft' || ticketPrinting || evalStartedRef.current) return;
     if (interactionLockRef.current || slamPayload || pendingAssignRef.current) return;
-    if (kind === 'team') {
-      if (teamRerollUsedRef.current || teamRerolls <= 0) return;
-      teamRerollUsedRef.current = true;
-      setTeamRerolls(0);
-    } else {
-      if (eraRerollUsedRef.current || eraRerolls <= 0) return;
-      eraRerollUsedRef.current = true;
-      setEraRerolls(0);
+    // Synchronous gate — must beat a second tap before React re-renders.
+    if (rerollInFlightRef.current) return;
+    if (!rerollsAllowed) return;
+    if (!spunTeam || !spunEra) {
+      setStatus('Roll a team and era before rerolling.');
+      return;
     }
-    if (!spunTeam || !spunEra) return;
+    if (rerollsUsedCountRef.current >= MAX_REROLLS_PER_RUN) {
+      setStatus(`No rerolls left (${MAX_REROLLS_PER_RUN} max this run).`);
+      return;
+    }
+
+    rerollInFlightRef.current = true;
+
+    const baseline: SpinPair = { team: spunTeam, era: spunEra };
+    let next: SpinPair | null = null;
+    try {
+      next = resolveRerollPair(listValidSpinPairs(), baseline, kind);
+    } catch (err) {
+      console.warn('[BillionTradeEngine] reroll pair failed', err);
+      next = null;
+    }
+    if (!next) {
+      setStatus(
+        kind === 'team'
+          ? 'No other team available for this era.'
+          : 'No other era available for this team.',
+      );
+      releaseRerollLock();
+      return;
+    }
+
+    const free = kind === 'team' ? freeTeamLeftRef.current : freeEraLeftRef.current;
+    if (!free) {
+      if (!spendXpCoins(COINS_REROLL_COST, `reroll:${kind}`)) {
+        setStatus(`Need ${COINS_REROLL_COST} coins to reroll.`);
+        releaseRerollLock();
+        return;
+      }
+    } else if (kind === 'team') {
+      setFreeTeamLeft(false);
+      freeTeamLeftRef.current = false;
+    } else {
+      setFreeEraLeft(false);
+      freeEraLeftRef.current = false;
+    }
+    if (kind === 'team') teamRerollUsedRef.current = true;
+    else eraRerollUsedRef.current = true;
+    const nextUsed = rerollsUsedCountRef.current + 1;
+    rerollsUsedCountRef.current = nextUsed;
+    setRerollsUsedCount(nextUsed);
+    setRerollTarget(next);
     resume();
     // Start in this tap. The header reel begins in an effect, after iPhone drops HTML play().
     playSpinClickSound();
@@ -511,14 +623,47 @@ export function BillionTradeEngine({
     setMovingFrom(null);
     if (useClassicDraftChrome) {
       // The list slides away and the booth reels spin the reroll; the list returns on landing.
-      setRerollFrom({ team: spunTeam, era: spunEra });
+      setRerollFrom(baseline);
       setBoothRerolling(true);
       setBoothReroll(kind);
     } else {
       setHeaderReroll(kind);
     }
-    setStatus(kind === 'team' ? 'Rerolling team…' : 'Rerolling era…');
-  }, [phase, ticketPrinting, teamRerolls, eraRerolls, reduceMotion, resume, spunTeam, spunEra, slamPayload, lockInteractions, useClassicDraftChrome]);
+    const left = MAX_REROLLS_PER_RUN - nextUsed;
+    setStatus(
+      kind === 'team'
+        ? `Rerolling team… (${left} reroll${left === 1 ? '' : 's'} left)`
+        : `Rerolling era… (${left} reroll${left === 1 ? '' : 's'} left)`,
+    );
+  }, [
+    phase,
+    ticketPrinting,
+    resume,
+    spunTeam,
+    spunEra,
+    slamPayload,
+    lockInteractions,
+    releaseRerollLock,
+    useClassicDraftChrome,
+    rerollsAllowed,
+  ]);
+
+  const handleTicketReroll = useCallback(
+    (kind: TicketRerollKind) => {
+      const free = kind === 'team' ? freeTeamLeftRef.current : freeEraLeftRef.current;
+      if (free) {
+        executeTicketReroll(kind);
+        return;
+      }
+      setSpendConfirm({
+        kind: 'reroll',
+        rerollKind: kind,
+        title: kind === 'team' ? 'Reroll team?' : 'Reroll era?',
+        copy: `Spend ${COINS_REROLL_COST} coins to reroll this ${kind}?`,
+      });
+    },
+    [executeTicketReroll],
+  );
 
   // Load era board AFTER spin completes — never during reel frames.
   useEffect(() => {
@@ -688,6 +833,21 @@ export function BillionTradeEngine({
 
       setStatus(`${player.name} locked at ${POSITION_LABELS[targetSlot]}.`);
       if (opts?.skipReset) return;
+
+      // Double Draft: stay on the same team/era for the second pick.
+      if (doubleDraftLeft > 1) {
+        setDoubleDraftLeft((n) => Math.max(0, n - 1));
+        setOffers((prev) => prev.filter((p) => p.id !== player.id));
+        setSheetDismissed(false);
+        setSheetOpen(true);
+        unlockInteractions();
+        setStatus('Double Draft — pick your second player from this roll.');
+        return;
+      }
+      if (doubleDraftLeft === 1) {
+        setDoubleDraftLeft(0);
+      }
+
       if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
       // Classic: paint the filled jersey first; remount the booth once that frame is out.
       if (useClassicDraftChrome) setSheetDismissed(true);
@@ -705,6 +865,7 @@ export function BillionTradeEngine({
     },
     [
       deferOnlineReveal,
+      doubleDraftLeft,
       isClassicRun,
       isFranchise,
       isH2H,
@@ -726,7 +887,129 @@ export function BillionTradeEngine({
     return runRefRef.current;
   }, []);
 
-  const rerollsUsed = () => teamRerollUsedRef.current || eraRerollUsedRef.current;
+  const rerollsUsed = () => rerollsUsedCountRef.current > 0;
+
+  const applyPerk = useCallback(
+    (id: PerkId) => {
+      if (!isClassicRun || evalStartedRef.current || phase !== 'draft') return;
+      if (perkUses >= MAX_PERK_USES) {
+        setStatus(`Perk limit reached (${MAX_PERK_USES} per run).`);
+        return;
+      }
+      if (id === 'xray' && xrayActive) return;
+      if (id === 'double_draft' && doubleDraftLeft > 0) return;
+      if (id === 'player_swap' && swapMode) return;
+      if (!purchasePerkActivation(id)) {
+        setStatus('Need 100 coins for that perk.');
+        return;
+      }
+      setPerkUses((n) => n + 1);
+      if (id === 'xray') {
+        setXrayActive(true);
+        setStatus('X-Ray Vision on — player values revealed for this run.');
+      } else if (id === 'double_draft') {
+        setDoubleDraftLeft(2);
+        setStatus('Double Draft — pick two players from the same team/era.');
+      } else {
+        setSwapMode(true);
+        setStatus('Player Swap — select a roster player, then an eligible offer to replace them.');
+      }
+    },
+    [doubleDraftLeft, isClassicRun, perkUses, phase, swapMode, xrayActive],
+  );
+
+  const handleActivatePerk = useCallback(
+    (id: PerkId) => {
+      if (!isClassicRun || evalStartedRef.current || phase !== 'draft') return;
+      if (perkUses >= MAX_PERK_USES) {
+        setStatus(`Perk limit reached (${MAX_PERK_USES} per run).`);
+        return;
+      }
+      if (id === 'xray' && xrayActive) return;
+      if (id === 'double_draft' && doubleDraftLeft > 0) return;
+      if (id === 'player_swap' && swapMode) return;
+      const def = PERK_DEFS.find((p) => p.id === id);
+      const stock = getPerkStock(id);
+      const canPay = canAffordPerk(id);
+      if (!canPay && stock <= 0) {
+        setStatus('Need 100 coins for that perk.');
+        return;
+      }
+      // Always confirm — never auto-fire inventory or coin spends.
+      setSpendConfirm({
+        kind: 'perk',
+        perkId: id,
+        title: `Use ${def?.title ?? 'perk'}?`,
+        copy:
+          stock > 0
+            ? `Use 1 inventory charge? Each perk can only be used once this run.`
+            : `Spend ${COINS_PERK_COST} coins? Each perk can only be used once this run.`,
+      });
+    },
+    [doubleDraftLeft, isClassicRun, perkUses, phase, swapMode, xrayActive],
+  );
+
+  const markTriviaEvaluationSettled = useCallback((teamValue: number) => {
+    const next = lockSettledTriviaTotal(
+      {
+        evaluationSettled: evaluationSettledRef.current,
+        settledTotal: settledTeamValueRef.current,
+        eligibility: triviaEligibilityRef.current,
+      },
+      teamValue,
+    );
+    if (!next.lockedNow) return;
+    evaluationSettledRef.current = true;
+    settledTeamValueRef.current = next.settledTotal;
+    triviaEligibilityRef.current = next.eligibility;
+  }, []);
+
+  const requestPlayAgain = useCallback(() => {
+    const again = onPlayAgain ?? onExit;
+    // Classic: gate Trivia only on the locked settled evaluation total — never a live re-sum.
+    const runRef = isClassicRun ? runPayoutRef() : runRefRef.current;
+    const decision = decideTriviaGate({
+      isClassicRun,
+      evaluationSettled: evaluationSettledRef.current,
+      settledTotal: settledTeamValueRef.current,
+      eligibility: triviaEligibilityRef.current,
+      runRef,
+      triviaOpened: triviaOpenedRef.current,
+      triviaOpen,
+    });
+    if (decision.action === 'wait' || decision.action === 'ignore') return;
+    if (decision.action === 'open') {
+      triviaOpenedRef.current = true;
+      pendingPlayAgainRef.current = again;
+      setTriviaRunRef(decision.runRef);
+      setTriviaOpen(true);
+      return;
+    }
+    again();
+  }, [isClassicRun, onExit, onPlayAgain, runPayoutRef, triviaOpen]);
+
+  const finishTrivia = useCallback(() => {
+    if (!triviaOpen) return;
+    setTriviaOpen(false);
+    const again = pendingPlayAgainRef.current ?? onPlayAgain ?? onExit;
+    pendingPlayAgainRef.current = null;
+    // Defer remount so the trivia portal can unmount cleanly first.
+    window.setTimeout(() => again(), 0);
+  }, [onExit, onPlayAgain, triviaOpen]);
+
+  /** Leave results without Trivia (still starts a new run). */
+  const skipTriviaAndReplay = useCallback(() => {
+    if (triviaOpen || triviaOpenedRef.current) return;
+    triviaOpenedRef.current = true;
+    const again = onPlayAgain ?? onExit;
+    again();
+  }, [onExit, onPlayAgain, triviaOpen]);
+
+  // Keep hub overlays (XP, etc.) from covering trivia while it's open over results.
+  useEffect(() => {
+    if (!triviaOpen) return;
+    return holdInterruptions();
+  }, [triviaOpen]);
 
   /**
    * Once per Classic run: Rollover (guests are paid here; the server pays signed-in runs when the
@@ -854,6 +1137,8 @@ export function BillionTradeEngine({
   const handleTotalSettled = useCallback(
     (payload: { teamValue: number }) => {
       if (!isClassicRun) return;
+      // Lock settled total for Trivia as soon as evaluation finishes counting.
+      markTriviaEvaluationSettled(payload.teamValue);
       const lineup = rosterInSlotOrder(slots);
       const previousBest = getBestRosterValue();
       const unlocked = processClassicRunChallenges(
@@ -871,16 +1156,16 @@ export function BillionTradeEngine({
       const seatTotal = pricedLineup(slots).reduce((sum, player) => sum + player.dollarValue, 0);
       recordClassicRun(seatTotal > 0 ? seatTotal : payload.teamValue, unlocked, slots);
     },
-    [isClassicRun, recordClassicRun, slots],
+    [isClassicRun, markTriviaEvaluationSettled, recordClassicRun, slots],
   );
 
   const handleRevealComplete = useCallback(
     (payload: { teamValue: number }) => {
+      // Duplicate completion callbacks keep the first locked settled total.
+      markTriviaEvaluationSettled(payload.teamValue);
       finishRun(slots, payload.teamValue);
-      if (isClassicRun) {
-        // Results layout stays intact — XP/reward overlay opens after settle (reference timing).
-        window.setTimeout(() => signalXpRevealReady(), 700);
-      }
+      // Do NOT signal XP here — XpRewardHost would cover Build Another / Share (same z-index).
+      // Pending XP plays when the player returns to hub (armWithoutSignal).
       if (isOnline && onOnlineComplete) {
         const lineup = serializeMatchLineup(rosterInSlotOrder(slots));
         onOnlineComplete({
@@ -889,7 +1174,7 @@ export function BillionTradeEngine({
         });
       }
     },
-    [finishRun, isClassicRun, isOnline, onOnlineComplete, slots],
+    [finishRun, isOnline, markTriviaEvaluationSettled, onOnlineComplete, slots],
   );
 
   const handleSelectOffer = useCallback(
@@ -1060,6 +1345,23 @@ export function BillionTradeEngine({
       }
 
       if (occupant) {
+        if (swapMode && playerFitsSlot(selectedOffer, slot)) {
+          const valued: ValuedPlayer & { era?: DecadeEra } = {
+            ...selectedOffer,
+            dollarValue: getDollarValueForSlot(selectedOffer, slot),
+            ...(spunEra ? { era: spunEra } : {}),
+          };
+          lockInteractions();
+          playPlaceClickSound();
+          hapticSlam();
+          setSwapMode(false);
+          setSlots((prev) => ({ ...prev, [slot]: valued }));
+          setSelectedOfferId(null);
+          setOffers((prev) => prev.filter((p) => p.id !== selectedOffer.id));
+          unlockInteractions();
+          setStatus(`${selectedOffer.name} swapped into ${POSITION_LABELS[slot]}.`);
+          return;
+        }
         playReject();
         setStatus('That slot is locked — you cannot replace a placed player.');
         return;
@@ -1139,6 +1441,7 @@ export function BillionTradeEngine({
       slots,
       spunEra,
       spunTeam,
+      swapMode,
       unlockInteractions,
       useClassicDraftChrome,
       isH2H,
@@ -1288,7 +1591,9 @@ export function BillionTradeEngine({
           reduceMotion={reduceMotion}
           onTotalSettled={handleTotalSettled}
           onComplete={handleRevealComplete}
-          onPlayAgain={onPlayAgain ?? onExit}
+          onPlayAgain={requestPlayAgain}
+          onSkipTrivia={skipTriviaAndReplay}
+          onExit={onExit}
         />
       ) : showReveal && !isH2H && !(isSynced && deferOnlineReveal) ? (
         <ClassicRosterReveal
@@ -1301,9 +1606,11 @@ export function BillionTradeEngine({
           fromCourtBeam={revealSkipAnalyze}
           onComplete={handleRevealComplete}
           onTotalSettled={handleTotalSettled}
-          onPlayAgain={onPlayAgain ?? onExit}
+          onPlayAgain={requestPlayAgain}
         />
       ) : null}
+
+      <ClassicTriviaSheet open={triviaOpen} runRef={triviaRunRef} onDone={finishTrivia} />
 
       {showDraft ? (
         <div
@@ -1349,6 +1656,7 @@ export function BillionTradeEngine({
                   selectedPlayerName={null}
                   autoReroll={boothReroll}
                   rerollFrom={rerollFrom}
+                  rerollTarget={rerollTarget}
                   holdTeam={spunTeam ?? rerollFrom?.team ?? null}
                   holdEra={spunEra ?? rerollFrom?.era ?? null}
                   showGoal={isClassicRun}
@@ -1375,17 +1683,37 @@ export function BillionTradeEngine({
               </div>
             ) : spunTeam && spunEra ? (
               <div className="billion-pick-stage">
+                {isClassicRun ? (
+                  <ClassicPerksBar
+                    activationsUsed={perkUses}
+                    active={{
+                      xray: xrayActive,
+                      double_draft: doubleDraftLeft > 0,
+                      player_swap: swapMode,
+                    }}
+                    disabled={pickInteractionLocked || Boolean(slamPayload)}
+                    onActivate={handleActivatePerk}
+                  />
+                ) : null}
                 <FranchisePickScreen
                   team={spunTeam}
                   era={spunEra}
                   offers={availableOffers}
                   openPositions={openPositions}
                   selectedId={selectedOfferId}
-                  canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
-                  canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                  canRerollTeam={canRerollTeam && !evalStartedRef.current}
+                  canRerollEra={canRerollEra && !evalStartedRef.current}
+                  teamRerollLabel={
+                    freeTeamLeft ? `${rerollsRemaining} left · free` : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                  }
+                  eraRerollLabel={
+                    freeEraLeft ? `${rerollsRemaining} left · free` : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                  }
+                  showValues={xrayActive}
                   rerollsOff={!rerollsAllowed}
                   interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
                   rerolling={headerReroll}
+                  rerollTarget={rerollTarget}
                   reduceMotion={reduceMotion}
                   hint={pickHint}
                   onSelect={handleSelectOffer}
@@ -1649,11 +1977,34 @@ export function BillionTradeEngine({
                     offers={availableOffers}
                     openPositions={openPositions}
                     selectedId={selectedOfferId}
-                    canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
-                    canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                    canRerollTeam={canRerollTeam && !evalStartedRef.current}
+                    canRerollEra={canRerollEra && !evalStartedRef.current}
+                    teamRerollLabel={
+                      freeTeamLeft
+                        ? `${rerollsRemaining} left · free`
+                        : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                    }
+                    eraRerollLabel={
+                      freeEraLeft
+                        ? `${rerollsRemaining} left · free`
+                        : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                    }
+                    showValues={xrayActive}
                     rerollsOff={!rerollsAllowed}
                     interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
                     hint={pickHint}
+                    belowRerolls={
+                      <ClassicPerksBar
+                        activationsUsed={perkUses}
+                        active={{
+                          xray: xrayActive,
+                          double_draft: doubleDraftLeft > 0,
+                          player_swap: swapMode,
+                        }}
+                        disabled={pickInteractionLocked || Boolean(slamPayload)}
+                        onActivate={handleActivatePerk}
+                      />
+                    }
                     onSelect={handleSelectOffer}
                     onReroll={handleTicketReroll}
                   />
@@ -1666,11 +2017,23 @@ export function BillionTradeEngine({
                     offers={availableOffers}
                     openPositions={openPositions}
                     selectedId={selectedOfferId}
-                    canRerollTeam={teamRerolls > 0 && !evalStartedRef.current}
-                    canRerollEra={eraRerolls > 0 && !evalStartedRef.current}
+                    canRerollTeam={canRerollTeam && !evalStartedRef.current}
+                    canRerollEra={canRerollEra && !evalStartedRef.current}
+                    teamRerollLabel={
+                      freeTeamLeft
+                        ? `${rerollsRemaining} left · free`
+                        : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                    }
+                    eraRerollLabel={
+                      freeEraLeft
+                        ? `${rerollsRemaining} left · free`
+                        : `${rerollsRemaining} left · ${COINS_REROLL_COST}`
+                    }
+                    showValues={xrayActive}
                     rerollsOff={!rerollsAllowed}
                     interactionLocked={pickInteractionLocked || Boolean(slamPayload)}
                     rerolling={headerReroll}
+                    rerollTarget={rerollTarget}
                     reduceMotion={reduceMotion}
                     skipArrival
                     hint={pickHint}
@@ -1693,6 +2056,20 @@ export function BillionTradeEngine({
         payload={slamPayload}
         onImpact={handleSlamImpact}
         onComplete={handleSlamComplete}
+      />
+      <ConfirmSpendSheet
+        open={spendConfirm != null}
+        title={spendConfirm?.title ?? ''}
+        copy={spendConfirm?.copy ?? ''}
+        confirmLabel={spendConfirm?.kind === 'perk' ? 'Use' : 'Spend'}
+        onCancel={() => setSpendConfirm(null)}
+        onConfirm={() => {
+          const pending = spendConfirm;
+          setSpendConfirm(null);
+          if (!pending) return;
+          if (pending.kind === 'perk' && pending.perkId) applyPerk(pending.perkId);
+          if (pending.kind === 'reroll' && pending.rerollKind) executeTicketReroll(pending.rerollKind);
+        }}
       />
     </div>
   );

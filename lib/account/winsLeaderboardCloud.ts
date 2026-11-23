@@ -1,16 +1,17 @@
 /**
- * Classic $1B wins leaderboard — weekly + all-time.
+ * Classic $1B wins leaderboard — daily (24h) + all-time.
  *
  * A win = verified Classic run with verified_value >= $1,000,000,000.
- * RPCs (apply supabase/migrations/20261115_classic_wins_leaderboard.sql):
- *   get_classic_wins_all_time / get_classic_wins_weekly
- *   get_my_classic_wins_all_time / get_my_classic_wins_weekly
+ * RPCs (apply supabase/migrations/20261123_classic_wins_daily.sql):
+ *   get_classic_wins_all_time / get_classic_wins_daily
+ *   get_my_classic_wins_all_time / get_my_classic_wins_daily
+ *   settle_classic_wins_daily (idempotent $10M bank payouts for prior period top 10)
  */
 
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { isAnonymousUser } from '@/lib/account/userKind';
 
-export type WinsBoardPeriod = 'weekly' | 'allTime';
+export type WinsBoardPeriod = 'daily' | 'allTime';
 
 export interface WinsStanding {
   rank: number;
@@ -21,6 +22,9 @@ export interface WinsStanding {
 export type WinsBoardFailure = { ok: false; reason: 'unavailable' | 'error' };
 
 const MISSING_FUNCTION_CODES = new Set(['PGRST202', '42883']);
+
+/** 24h contest buckets from Unix epoch (not tied to local midnight). */
+export const DAILY_WINS_PERIOD_MS = 86_400_000;
 
 function mapStanding(row: Record<string, unknown>): WinsStanding {
   return {
@@ -39,12 +43,12 @@ function failure(error: { code?: string; message?: string }, scope: string): Win
 }
 
 const TOP_RPC: Record<WinsBoardPeriod, string> = {
-  weekly: 'get_classic_wins_weekly',
+  daily: 'get_classic_wins_daily',
   allTime: 'get_classic_wins_all_time',
 };
 
 const MINE_RPC: Record<WinsBoardPeriod, string> = {
-  weekly: 'get_my_classic_wins_weekly',
+  daily: 'get_my_classic_wins_daily',
   allTime: 'get_my_classic_wins_all_time',
 };
 
@@ -84,12 +88,33 @@ export async function fetchMyWinsRank(
   }
 }
 
-/** Next Monday 00:00 UTC — end of the current ISO week window. */
+/** Start of the current 24h contest window (Unix-epoch aligned). */
+export function getDailyWinsPeriodStart(now = new Date()): Date {
+  const ms = Math.floor(now.getTime() / DAILY_WINS_PERIOD_MS) * DAILY_WINS_PERIOD_MS;
+  return new Date(ms);
+}
+
+/** End of the current 24h contest window (when the board resets). */
+export function getDailyWinsResetAt(now = new Date()): Date {
+  return new Date(getDailyWinsPeriodStart(now).getTime() + DAILY_WINS_PERIOD_MS);
+}
+
+/** @deprecated use getDailyWinsResetAt */
 export function getWeeklyWinsResetAt(now = new Date()): Date {
-  const utc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const day = utc.getUTCDay(); // 0 Sun … 1 Mon
-  const daysUntilMonday = day === 0 ? 1 : 8 - day;
-  utc.setUTCDate(utc.getUTCDate() + daysUntilMonday);
-  utc.setUTCHours(0, 0, 0, 0);
-  return utc;
+  return getDailyWinsResetAt(now);
+}
+
+/**
+ * Idempotent settle of the previous 24h period — top 10 each get $10M bank cash.
+ * Safe to call on every board load; no-ops if already settled or RPCs missing.
+ */
+export async function settleDailyWinsPayouts(): Promise<void> {
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.rpc('settle_classic_wins_daily');
+    if (error && error.code && MISSING_FUNCTION_CODES.has(error.code)) return;
+    if (error) console.error('[wins-board] settle daily failed', error.message ?? error);
+  } catch (err) {
+    console.error('[wins-board] settle daily error', err);
+  }
 }

@@ -118,6 +118,8 @@ interface WallOfFameScreenProps {
   bankBalance: number;
   onClose: () => void;
   onSignIn?: () => void;
+  /** Force sample-wall preview (home CTA) without ?wallPreview=1. */
+  preview?: boolean;
 }
 
 export function WallOfFameScreen(props: WallOfFameScreenProps) {
@@ -130,10 +132,17 @@ export function WallOfFameScreen(props: WallOfFameScreenProps) {
   );
 }
 
-function WallOfFame({ username, permanent, bankBalance: bank, onClose, onSignIn }: WallOfFameScreenProps) {
+function WallOfFame({
+  username,
+  permanent,
+  bankBalance: bank,
+  onClose,
+  onSignIn,
+  preview = false,
+}: WallOfFameScreenProps) {
   const { locale } = useLocale();
   const reduceMotion = getPrefersReducedMotion();
-  const wallPreview = useMemo(() => isWallPreview(), []);
+  const wallPreview = useMemo(() => preview || isWallPreview(), [preview]);
   const bankPreview = useMemo(() => readBankPreview() != null, []);
   const demo = wallPreview || bankPreview;
   const demoEntries = useMemo(() => (wallPreview ? previewWall() : []), [wallPreview]);

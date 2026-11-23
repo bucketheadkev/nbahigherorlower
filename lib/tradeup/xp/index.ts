@@ -3,6 +3,14 @@ export {
   XP_PERFORMANCE_BONUS_MAX,
   XP_BILLION_BONUS,
   XP_PER_COIN,
+  COINS_COMPLETED_RUN,
+  COINS_BILLION_BONUS,
+  COINS_LEVEL_UP,
+  COINS_WELCOME,
+  COINS_PERK_COST,
+  COINS_REROLL_COST,
+  MAX_PERK_ACTIVATIONS_PER_RUN,
+  MAX_REROLLS_PER_RUN,
   XP_STARTING_LEVEL,
   xpToAdvance,
   performanceBonusXp,
@@ -24,6 +32,9 @@ export {
   hasAwardedXpRun,
   saveXpProfile,
   applyXpAward,
+  ensureWelcomeCoins,
+  spendXpCoins,
+  grantXpCoins,
   getPendingXpReveals,
   getPendingLevelUps,
   enqueuePendingXpReveal,
@@ -39,3 +50,5 @@ export {
 } from './storage';
 
 export { awardClassicRunXp, type ClassicXpAwardResult } from './award';
+
+export { syncCloudCoinsIntoLocal } from './cloudCoins';

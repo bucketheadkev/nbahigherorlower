@@ -72,7 +72,7 @@ function signed(amount: number): string {
 export function RunEarnings({ data, reduceMotion }: { data: RunEarningsData; reduceMotion: boolean }) {
   const { locale, t } = useLocale();
   const { state: account } = useAccountAuth();
-  const balance = useBankBalance(account.status === 'permanent');
+  const balance = useBankBalance(account.status);
   const rollover = rolloverFor(data.verifiedValue ?? data.runValue);
   const rolloverCounts = data.local || data.submit === 'ok';
   const achievementCash = data.achievementIds.reduce((sum, id) => sum + challengeReward(id), 0);

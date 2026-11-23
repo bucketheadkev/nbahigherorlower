@@ -1,23 +1,32 @@
 'use client';
 
 /**
- * 5-jersey court stage from the official home reference.
- * Photo plate for composition fidelity + light SVG polish glow on PG.
+ * Official five-jersey court centerpiece.
+ * Transparent stage plate + optional PG glow — object-fit:contain, never cover/crop.
  */
 export function HomeJerseyStage() {
   return (
-    <div className="home-stage-art" aria-hidden>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className="home-stage-art" role="img" aria-label="Five-jersey court lineup">
       <img
-        className="home-stage-art__plate"
-        src="/images/home-v4/home-jersey-stage.png"
+        className="home-stage-art__glow"
+        src="/images/home-v4/home-pg-glow@3x.png"
         alt=""
-        width={524}
-        height={389}
+        width={1170}
+        height={700}
         decoding="async"
         draggable={false}
+        aria-hidden
       />
-      <span className="home-stage-art__pg-glow" />
+      <img
+        className="home-stage-art__img"
+        src="/images/home-v4/home-jersey-stage@3x.webp"
+        alt=""
+        width={1170}
+        height={700}
+        decoding="async"
+        fetchPriority="high"
+        draggable={false}
+      />
     </div>
   );
 }

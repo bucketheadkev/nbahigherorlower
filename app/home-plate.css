@@ -1,0 +1,1094 @@
+/* =========================================================
+   Premium home (rh5) — original live UI, no image plate
+   ========================================================= */
+
+/* Shared nav bar + MODE navy — hub-wide so Home / Board / Shop stay identical */
+body:has(.home-hub-top.rh5-top),
+body:has(.oneb-tabbar-host) {
+  --rh5-dock-top: #0d3268;
+  --rh5-dock-mid: #0a2250;
+  --rh5-dock-bot: #071838;
+  --rh5-dock-border: rgba(90, 145, 215, 0.3);
+  --rh5-dock-sheen: rgba(255, 255, 255, 0.09);
+}
+
+.rh5 {
+  --rh5-navy: #0b1c3a;
+  --rh5-navy-mid: #14356a;
+  --rh5-navy-light: #1d4a8c;
+  --rh5-navy-bright: #2a63b5;
+  --rh5-ice: #e8f1ff;
+  --rh5-green: #6dff3c;
+  --rh5-pad-x: max(1rem, env(safe-area-inset-left, 0px));
+  --rh5-pad-r: max(1rem, env(safe-area-inset-right, 0px));
+  /* Web: breathing room above the flush dock */
+  --rh5-tab-clear: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #06101f;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/*
+ * iOS App Store build: pull Bank / PLAY / MODES down flush above the dock.
+ * Pay safe-area once (dock padding already includes it) — no dead strip.
+ */
+html[data-platform="native"] .rh5 {
+  /* Match iOS dock (web-like pill band + safe-area pad) so CTAs clear it */
+  --rh5-tab-clear: calc(5.15rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Generated 1B RUN growth arena — static bars only; live neon FX layered on top */
+.rh5-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #020812;
+}
+
+.rh5-bg__photo {
+  position: absolute;
+  inset: 0;
+  background-image: image-set(
+    url('/images/home-v4/home-1brun-growth@3x.jpg?v=9') 3x,
+    url('/images/home-v4/home-1brun-growth@3x.jpg?v=9') 2x,
+    url('/images/home-v4/home-1brun-growth.jpg?v=9') 1x
+  );
+  background-size: cover;
+  background-position: center 18%;
+  background-repeat: no-repeat;
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Live overlays — subtitle under 1B RUN */
+.rh5-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Small subtitle directly under baked-in 1B RUN — same condensed italic silver */
+.rh5-fx__subtitle {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + clamp(8.35rem, 22.5vh, 11.5rem));
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 90vw;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(0.62rem, 2.5vw, 0.78rem);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.22em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #f7f9fd;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(210, 225, 255, 0.28),
+    0 2px 10px rgba(0, 0, 0, 0.6);
+  -webkit-font-smoothing: antialiased;
+}
+
+.rh5-bg__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 8, 18, 0.18) 0%,
+      rgba(2, 8, 18, 0.04) 12%,
+      transparent 20%,
+      transparent 50%,
+      rgba(2, 8, 18, 0.22) 68%,
+      rgba(2, 8, 18, 0.86) 100%
+    );
+}
+
+.rh5-bg__rim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 40%;
+  opacity: 1;
+  background: linear-gradient(180deg, transparent 0%, rgba(2, 8, 18, 0.42) 42%, rgba(2, 8, 18, 0.94) 100%);
+  pointer-events: none;
+}
+
+/* Bubbles — same speed/feel as before */
+.rh5-bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rh5-bubble {
+  position: absolute;
+  bottom: -4%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.92),
+    rgba(170, 215, 255, 0.42) 55%,
+    rgba(80, 140, 255, 0.05) 100%
+  );
+  box-shadow: 0 0 4px rgba(140, 200, 255, 0.35);
+  opacity: 0;
+  animation-name: rh5-bubble-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes rh5-bubble-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.7);
+  }
+  8% {
+    opacity: 0.65;
+  }
+  85% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--rh5-bubble-drift, 0px), -108vh, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rh5-bubbles {
+    display: none;
+  }
+}
+
+/* Shared top chrome — fixed identical place/look on Home · Board · Shop */
+.rh5-top,
+.home-hub-top--live.rh5-top {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  translate: none !important;
+  z-index: 45 !important;
+  width: 100% !important;
+  max-width: none !important;
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.65rem !important;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 0.75rem)
+    max(1rem, env(safe-area-inset-right, 0px))
+    0.45rem
+    max(1rem, env(safe-area-inset-left, 0px)) !important;
+  box-sizing: border-box !important;
+  /* Opaque enough that Home arena vs Shop/Board never recolors the chrome */
+  background: linear-gradient(
+    180deg,
+    rgba(5, 12, 26, 0.92) 0%,
+    rgba(5, 12, 26, 0.72) 48%,
+    rgba(5, 12, 26, 0.28) 78%,
+    rgba(5, 12, 26, 0) 100%
+  ) !important;
+  pointer-events: none;
+}
+
+.rh5-top > *,
+.home-hub-top--live.rh5-top > * {
+  pointer-events: auto;
+}
+
+.rh5-player {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rh5-player .home-profile {
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+}
+
+.rh5-player .home-profile--btn {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh5-player .home-profile__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.rh5-player__meta {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.rh5-player__name {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: 1.08rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* XP under profile — same on every hub tab */
+.rh5-top .rh4-pxp {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.rh5-top .rh4-pxp__lvl {
+  flex: 0 0 auto;
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: rgba(220, 235, 255, 0.95);
+  white-space: nowrap;
+}
+
+.rh5-top .rh4-pxp__track {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 3.4rem;
+  max-width: 6.5rem;
+  height: 0.38rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(4, 14, 32, 0.9);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(100, 170, 255, 0.35);
+}
+
+.rh5-top .rh4-pxp__fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffc040 0%, #ff8a12 55%, #ffe08a 100%);
+}
+
+.rh5-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+}
+
+.rh5-top .home-coin {
+  appearance: none;
+  display: grid !important;
+  grid-template-columns: 1.4rem auto 1.4rem !important;
+  align-items: center !important;
+  justify-content: start !important;
+  column-gap: 0.34rem !important;
+  height: 2.5rem !important;
+  padding: 0 0.62rem 0 0.34rem !important;
+  border: 1.5px solid var(--rh5-dock-border, rgba(90, 145, 215, 0.3)) !important;
+  border-radius: 999px !important;
+  background:
+    linear-gradient(180deg, var(--rh5-dock-sheen, rgba(255, 255, 255, 0.09)), transparent 42%),
+    linear-gradient(
+      180deg,
+      var(--rh5-dock-top, #0d3268) 0%,
+      var(--rh5-dock-mid, #0a2250) 55%,
+      var(--rh5-dock-bot, #071838) 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.32) !important;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh5-top button.home-coin:active .home-coin__plus {
+  filter: brightness(1.08);
+  transform: scale(0.96);
+}
+
+.rh5-top .home-coin__icon {
+  width: 1.4rem !important;
+  height: 1.4rem !important;
+  margin: 0 !important;
+  filter: drop-shadow(0 1px 3px rgba(180, 120, 20, 0.35));
+  display: block !important;
+  align-self: center !important;
+}
+
+.rh5-top .home-coin__value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 1.05rem !important;
+  height: 1.4rem !important;
+  margin: 0 !important;
+  padding: 0.12em 0 0 !important;
+  box-sizing: border-box !important;
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  font-style: italic !important;
+  font-variant-numeric: tabular-nums;
+  line-height: 1 !important;
+  color: #fff !important;
+  transform: none !important;
+  translate: none !important;
+  align-self: center !important;
+}
+
+.rh5-top .home-coin__plus {
+  display: grid !important;
+  place-items: center;
+  width: 1.4rem !important;
+  height: 1.4rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0.34rem !important;
+  background: linear-gradient(180deg, #7dff4a 0%, #3fd218 48%, #22a80c 100%) !important;
+  color: #06240a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 1px 4px rgba(40, 160, 40, 0.35) !important;
+  pointer-events: none;
+  align-self: center !important;
+}
+
+.rh5-top .home-coin__plus-mark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+}
+
+.rh5-top .home-coin__plus-mark svg {
+  display: block;
+  width: 0.72rem !important;
+  height: 0.72rem !important;
+}
+
+.rh5-top .sound-settings__gear {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.78rem !important;
+  border: 1.5px solid var(--rh5-dock-border, rgba(90, 145, 215, 0.3)) !important;
+  color: #fff !important;
+  background:
+    linear-gradient(180deg, var(--rh5-dock-sheen, rgba(255, 255, 255, 0.09)), transparent 42%),
+    linear-gradient(
+      180deg,
+      var(--rh5-dock-top, #0d3268) 0%,
+      var(--rh5-dock-mid, #0a2250) 55%,
+      var(--rh5-dock-bot, #071838) 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* Main stage — CTAs above tab bar */
+.rh5-main {
+  position: relative;
+  z-index: 3;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 4.6rem)
+    max(1.15rem, var(--rh5-pad-x))
+    var(--rh5-tab-clear);
+  box-sizing: border-box;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.rh5-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  width: min(100%, 22.5rem);
+  margin-bottom: 0.85rem;
+  pointer-events: auto;
+}
+
+html[data-platform="native"] .rh5-actions {
+  margin-bottom: 0.08rem;
+  gap: 0.55rem;
+}
+
+.rh5-actions__row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+/* Bank Money + compact Wall of Fame CTA */
+.rh5-bank {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0.48rem 0.55rem 0.5rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid rgba(70, 120, 190, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 40%),
+    linear-gradient(180deg, #001c44 0%, #001230 55%, #000814 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.38);
+  color: #fff;
+  text-align: left;
+}
+
+.rh5-bank__row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.rh5-bank__body {
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.16rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh5-bank__body:active {
+  transform: scale(0.99);
+}
+
+.rh5-bank__label {
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(175, 205, 240, 0.72);
+  line-height: 1.2;
+}
+
+.rh5-bank__wof-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.18rem;
+  max-width: 5.6rem;
+  padding-top: 0.05rem;
+}
+
+.rh5-bank__wof {
+  appearance: none;
+  margin: 0;
+  padding: 0.28rem 0.42rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(110, 165, 235, 0.4);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 50%),
+    linear-gradient(180deg, #0d3268 0%, #071838 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  color: #eef4ff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.rh5-bank__wof:active {
+  transform: scale(0.97);
+  filter: brightness(1.08);
+}
+
+.rh5-bank__wof-blurb {
+  font-size: 0.42rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-align: right;
+  color: rgba(170, 200, 240, 0.7);
+  white-space: nowrap;
+}
+
+.rh5-bank__value {
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+  font-size: 1.48rem;
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: #5cff9a;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.rh5-bank.is-pending .rh5-bank__value {
+  color: rgba(180, 205, 240, 0.5);
+  letter-spacing: 0.08em;
+  font-style: normal;
+  text-shadow: none;
+}
+
+.rh5-bank.is-pending .rh5-bank__fill {
+  opacity: 0;
+}
+
+/* Watery premium progress well */
+.rh5-bank__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 0.62rem;
+  margin-top: 0.06rem;
+  border-radius: 999px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 45%),
+    rgba(0, 6, 16, 0.92);
+  border: 1px solid rgba(120, 170, 220, 0.14);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.rh5-bank__fill {
+  position: relative;
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.48) 0%,
+      rgba(255, 255, 255, 0.12) 22%,
+      rgba(255, 255, 255, 0) 48%,
+      rgba(0, 50, 28, 0.16) 100%
+    ),
+    linear-gradient(
+      90deg,
+      #067a3c 0%,
+      #0e9f4f 22%,
+      #14c45f 48%,
+      #1ed96c 72%,
+      #2ef07a 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 45, 28, 0.26);
+  transition: width 0.45s ease-out;
+}
+
+/* Liquid meniscus + soft caustic sheen */
+.rh5-bank__fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 120% at 18% 0%, rgba(255, 255, 255, 0.4), transparent 55%),
+    radial-gradient(ellipse 50% 90% at 72% 110%, rgba(180, 255, 220, 0.22), transparent 60%);
+  mix-blend-mode: soft-light;
+}
+
+.rh5-bank__fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 55%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0.38) 48%,
+    rgba(255, 255, 255, 0.08) 62%,
+    transparent 100%
+  );
+  animation: rh5-bank-water-sheen 4.8s ease-in-out infinite;
+}
+
+/* Soft internal liquid wash (no outer neon) */
+.rh5-bank__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(160, 255, 210, 0.12) 45%,
+    rgba(200, 255, 230, 0.2) 70%,
+    transparent 100%
+  );
+  animation: rh5-bank-water-drift 5.5s ease-in-out infinite;
+}
+
+.rh5-bank__bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.rh5-bank__bubbles i {
+  position: absolute;
+  bottom: -20%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.28) 45%, rgba(180, 240, 220, 0.1) 72%, transparent 100%);
+  border: 0.4px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 -0.5px 0.5px rgba(0, 60, 40, 0.12);
+  animation: rh5-bank-bubble-a 0.7s linear infinite;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.rh5-bank__bubbles i:nth-child(1) {
+  left: 6%;
+  animation-name: rh5-bank-bubble-a;
+  animation-duration: 0.72s;
+  animation-delay: 0s;
+}
+.rh5-bank__bubbles i:nth-child(2) {
+  left: 22%;
+  width: 2.25px;
+  height: 2.25px;
+  animation-name: rh5-bank-bubble-b;
+  animation-duration: 0.58s;
+  animation-delay: -0.12s;
+}
+.rh5-bank__bubbles i:nth-child(3) {
+  left: 38%;
+  animation-name: rh5-bank-bubble-c;
+  animation-duration: 0.78s;
+  animation-delay: -0.28s;
+}
+.rh5-bank__bubbles i:nth-child(4) {
+  left: 54%;
+  width: 2.25px;
+  height: 2.25px;
+  animation-name: rh5-bank-bubble-a;
+  animation-duration: 0.55s;
+  animation-delay: -0.05s;
+}
+.rh5-bank__bubbles i:nth-child(5) {
+  left: 70%;
+  animation-name: rh5-bank-bubble-b;
+  animation-duration: 0.68s;
+  animation-delay: -0.4s;
+}
+.rh5-bank__bubbles i:nth-child(6) {
+  left: 86%;
+  width: 2.25px;
+  height: 2.25px;
+  animation-name: rh5-bank-bubble-c;
+  animation-duration: 0.62s;
+  animation-delay: -0.2s;
+}
+.rh5-bank__bubbles i:nth-child(7) {
+  left: 46%;
+  width: 2.25px;
+  height: 2.25px;
+  animation-name: rh5-bank-bubble-b;
+  animation-duration: 0.74s;
+  animation-delay: -0.35s;
+}
+.rh5-bank__bubbles i:nth-child(8) {
+  left: 14%;
+  animation-name: rh5-bank-bubble-c;
+  animation-duration: 0.6s;
+  animation-delay: -0.5s;
+}
+
+@keyframes rh5-bank-bubble-a {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(42%, -180%, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes rh5-bank-bubble-b {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.55);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-48%, -175%, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes rh5-bank-bubble-c {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  45% {
+    transform: translate3d(28%, -85%, 0) scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate3d(-36%, -185%, 0) scale(1.05);
+    opacity: 0;
+  }
+}
+
+@keyframes rh5-bank-water-sheen {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(160%, 0, 0);
+    opacity: 0.9;
+  }
+}
+
+@keyframes rh5-bank-water-drift {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate3d(-6%, 0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate3d(8%, 0, 0);
+  }
+}
+
+/* Shared CTA base — distinct professional cards */
+.rh5-cta {
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0;
+  overflow: hidden;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+/* PLAY — premium primary action */
+.rh5-cta--play {
+  flex: 1.72 1 0;
+  min-width: 0;
+  min-height: 4.55rem;
+  height: 4.55rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 220, 160, 0.85);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 36%),
+    linear-gradient(180deg, #ffc44a 0%, #ff8f14 48%, #e85a00 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 8px rgba(120, 35, 0, 0.28),
+    0 0 0 1px rgba(255, 150, 50, 0.22),
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    0 0 28px rgba(255, 130, 20, 0.38);
+  animation: rh5-play-pulse 2.8s ease-in-out infinite;
+}
+
+.rh5-cta__glow {
+  position: absolute;
+  inset: -36% -10%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 200, 90, 0.34), transparent 62%);
+  opacity: 0.9;
+}
+
+/* MODES — same height as PLAY, narrower flex */
+.rh5-cta--modes {
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: stretch;
+  min-height: 4.55rem;
+  height: 4.55rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(120, 165, 230, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, var(--rh5-dock-top) 0%, var(--rh5-dock-mid) 55%, var(--rh5-dock-bot) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 20px rgba(0, 0, 0, 0.34);
+}
+
+@keyframes rh5-play-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 8px rgba(120, 35, 0, 0.28),
+      0 0 0 1px rgba(255, 150, 50, 0.22),
+      0 10px 28px rgba(0, 0, 0, 0.4),
+      0 0 26px rgba(255, 130, 20, 0.36);
+  }
+  50% {
+    transform: scale(1.025);
+    filter: brightness(1.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.62),
+      inset 0 -3px 8px rgba(120, 35, 0, 0.22),
+      0 0 0 1px rgba(255, 190, 90, 0.35),
+      0 12px 30px rgba(0, 0, 0, 0.36),
+      0 0 38px rgba(255, 150, 40, 0.55);
+  }
+}
+
+.rh5-cta--play:active {
+  animation: none;
+  transform: scale(0.985);
+  filter: brightness(1.05);
+}
+
+.rh5-cta--modes:active {
+  transform: scale(0.985);
+  filter: brightness(1.08);
+}
+
+/* Continuous L→R sheen — travels fully across, then loops */
+.rh5-cta__sheen {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  z-index: 0;
+  width: 42%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 28%,
+    rgba(255, 250, 235, 0.55) 50%,
+    rgba(255, 255, 255, 0.1) 72%,
+    transparent 100%
+  );
+  transform: translate3d(-130%, 0, 0) skewX(-18deg);
+  animation: rh5-sheen 2.6s linear infinite;
+}
+
+@keyframes rh5-sheen {
+  0% {
+    transform: translate3d(-130%, 0, 0) skewX(-18deg);
+  }
+  100% {
+    transform: translate3d(320%, 0, 0) skewX(-18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rh5-cta__sheen {
+    animation: none;
+    opacity: 0.25;
+    transform: translate3d(40%, 0, 0) skewX(-18deg);
+  }
+
+  html:not([data-full-motion]) .rh5-cta--play {
+    animation: none;
+  }
+
+  html:not([data-full-motion]) .rh5-bank__bubbles i,
+  html:not([data-full-motion]) .rh5-bank__glow,
+  html:not([data-full-motion]) .rh5-bank__fill::after {
+    animation: none !important;
+  }
+
+  html:not([data-full-motion]) .rh5-bank__fill::after {
+    opacity: 0.35;
+    transform: translate3d(40%, 0, 0);
+  }
+}
+
+.rh5-cta__label,
+.rh5-cta__icon,
+.rh5-cta__rule {
+  position: relative;
+  z-index: 1;
+}
+
+.rh5-cta__label {
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-weight: 850;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #fff;
+}
+
+.rh5-cta--play .rh5-cta__label {
+  font-size: clamp(1.95rem, 9vw, 2.55rem);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.38),
+    0 2px 12px rgba(80, 20, 0, 0.4),
+    0 0 18px rgba(255, 180, 60, 0.35);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
+.rh5-cta--modes .rh5-cta__label {
+  font-size: clamp(1.15rem, 5.2vw, 1.45rem);
+  letter-spacing: 0.12em;
+  font-weight: 850;
+}
+
+/* PLAY → Classic: light jiggle before transition */
+.rh5.is-play-shake {
+  animation: rh5-play-shake 0.28s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  will-change: transform;
+}
+
+@keyframes rh5-play-shake {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-3px, 1px, 0);
+  }
+  40% {
+    transform: translate3d(3px, -1px, 0);
+  }
+  60% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .rh5.is-play-shake {
+    animation: none;
+  }
+}
+
+/* Neutralize leftover official/v2 chrome rules when using shared rh5-top */
+.home-hub-top--live.rh5-top .home-hub-top__tools {
+  display: contents;
+}
+
+/* Kill any leftover plate/hit layers if somehow present */
+.rh5 .rh4-plate,
+.rh5 .rh4-hit,
+.rh5 .rh4-play-glow,
+.rh5 .rh4-title,
+.rh5 .rh4-play,
+.rh5 .rh4-modes,
+.rh5 .rh3-play,
+.rh5 .rh3-modes {
+  display: none !important;
+}

@@ -72,6 +72,7 @@ type SoundId =
   | 'wheel_stop'
   | 'spin_click'
   | 'place_click'
+  | 'ui_tap'
   | 'success_peak'
   | 'success_soft'
   | 'results_cheer'
@@ -131,6 +132,8 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
   wheel_stop: { path: '/sounds/wheel-stop.mp3', volume: 0.36, debounceMs: 140 },
   spin_click: { path: SPIN_CLICK_SOUND_PATH, volume: SPIN_CLICK_VOLUME, debounceMs: 0 },
   place_click: { path: PLACE_CLICK_SOUND_PATH, volume: PLACE_CLICK_VOLUME, debounceMs: 0 },
+  /** Home / modes UI tap — shared click for PLAY, CHOOSE MODE, and mode picks. */
+  ui_tap: { path: '/sounds/ui-tap.mp3', volume: 0.48, debounceMs: 40 },
   success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
   success_soft: { path: '/sounds/success-soft.mp3', volume: 0.4, debounceMs: 400, maxPlayMs: 1800 },
   /** Legacy alias — final total uses cash_register. */
@@ -605,12 +608,21 @@ export function installPhoneAudioUnlock(): () => void {
 export function unlockGameAudio(): void {
   const audio = getCtx();
   if (!audio) return;
+
+  // After the first unlock, only resume a suspended context — never re-kick
+  // buffer fetches / H2H decode on every nav tap (that was the Shop/Coins hitch).
+  if (unlocked) {
+    if (audio.state === 'suspended') void audio.resume();
+    return;
+  }
+
   unlocked = true;
   primeAudioContext(audio);
   void ensureWheelSpinBuffer();
   void ensureCashRegisterBuffer();
   void ensureClickBuffer('spin_click');
   void ensureClickBuffer('place_click');
+  void ensureClickBuffer('ui_tap');
   // Do not call element.load() here. Every spin used to reload the sample
   // immediately before play(), which aborts the tap on iPhone Safari so the
   // spin is silent or starts late. Preload warms the file once.
@@ -709,7 +721,12 @@ function stopSound(id: SoundId): void {
   }
 }
 
-/** Preload only the sparse major-moment library. */
+/**
+ * Preload only the sparse major-moment library.
+ * Never call from a navigation click handler — creating + .load()ing every
+ * HTMLAudioElement in one sync loop freezes the main thread (Shop/Coins hitch).
+ * Prefer schedulePreloadGameAudio() so idle time owns the work.
+ */
 export function preloadGameAudio(): void {
   if (typeof window === 'undefined' || preloaded) return;
   unlockGameAudio();
@@ -719,6 +736,28 @@ export function preloadGameAudio(): void {
     if (el && el.readyState === 0) el.load();
   });
   preloaded = true;
+}
+
+/** Idle-time audio warm — safe to call from taps; never blocks the paint. */
+export function schedulePreloadGameAudio(): void {
+  if (typeof window === 'undefined' || preloaded) return;
+  const run = () => {
+    try {
+      preloadGameAudio();
+    } catch {
+      /* ignore */
+    }
+  };
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  if (typeof ric === 'function') {
+    ric(run, { timeout: 1800 });
+  } else {
+    window.setTimeout(run, 0);
+  }
 }
 
 export function preloadTicketPrintSound(): void {
@@ -927,6 +966,11 @@ export function playSpinClickSound(): void {
  */
 export function playPlaceClickSound(): void {
   playClick('place_click');
+}
+
+/** Shared home UI click — PLAY, CHOOSE MODE, and mode sheet picks. Call from the tap. */
+export function playUiTapSound(): void {
+  playClick('ui_tap');
 }
 
 /** Stop team/era spin audio (leave screen / new spin / unmount). */

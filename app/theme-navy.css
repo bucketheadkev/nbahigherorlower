@@ -1,0 +1,269 @@
+/* ── App-wide deep navy brushed theme (reference texture) ── */
+
+:root {
+  /* One step lighter than the ultra-deep pass — still premium navy, not the old bright dock */
+  --theme-navy-hi: #0d3268;
+  --theme-navy-mid: #0a2250;
+  --theme-navy-deep: #071838;
+  --theme-navy-ink: #040e22;
+  --theme-navy-edge: rgba(90, 145, 215, 0.3);
+  --theme-navy-sheen: rgba(255, 255, 255, 0.09);
+  --theme-brushed: url('/images/theme/navy-brushed.png');
+}
+
+/* Shared brushed navy surface */
+.theme-navy-surface {
+  background-color: var(--theme-navy-mid);
+  background-image:
+    linear-gradient(180deg, rgba(13, 50, 104, 0.55) 0%, rgba(4, 14, 34, 0.82) 100%),
+    var(--theme-brushed);
+  background-size: cover, 180px 180px;
+  background-position: center, center;
+  background-repeat: no-repeat, repeat;
+}
+
+/* Dock / secondary buttons */
+body:has(.oneb-tabbar-host),
+body:has(.home-hub-top.rh5-top) {
+  --rh5-dock-top: #0d3268;
+  --rh5-dock-mid: #0a2250;
+  --rh5-dock-bot: #071838;
+  --rh5-dock-border: rgba(90, 145, 215, 0.3);
+  --rh5-dock-sheen: rgba(255, 255, 255, 0.09);
+}
+
+/* Bottom nav — brushed navy (matched chrome) */
+.oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar,
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar {
+  background-color: var(--theme-navy-deep) !important;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-mid) 48%, var(--theme-navy-deep) 100%),
+    var(--theme-brushed) !important;
+  background-size: auto, auto, 160px 160px !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-top-color: var(--theme-navy-edge) !important;
+}
+
+html[data-platform="native"] body:has(.oneb-tabbar-host),
+html[data-platform="native"] body:has(.oneb-tabbar-host)::after {
+  background-color: var(--theme-navy-deep) !important;
+}
+
+/* Trivia panel */
+.trivia-sheet__panel {
+  background:
+    linear-gradient(180deg, rgba(13, 50, 104, 0.55), rgba(4, 14, 34, 0.92)),
+    var(--theme-brushed) !important;
+  background-size: cover, 160px 160px !important;
+  border-color: var(--theme-navy-edge) !important;
+}
+
+.trivia-sheet {
+  background: rgba(0, 4, 12, 0.88) !important;
+}
+
+/* Leaderboard */
+.oneb-hub.wb-screen,
+.wb-screen {
+  background:
+    radial-gradient(90% 50% at 50% -10%, rgba(0, 50, 110, 0.42), transparent 55%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-deep) 55%, var(--theme-navy-ink) 100%) !important;
+}
+
+.wb-backdrop,
+.arena-atmo.wb-backdrop {
+  background:
+    linear-gradient(180deg, rgba(0, 28, 64, 0.35), rgba(0, 6, 18, 0.75)),
+    var(--theme-brushed) !important;
+  background-size: cover, 200px 200px !important;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Shop atmosphere base */
+.shop-screen {
+  background: var(--theme-navy-ink) !important;
+}
+
+.shop-atmo__base {
+  background:
+    radial-gradient(95% 48% at 50% -6%, rgba(0, 50, 110, 0.48) 0%, transparent 55%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-mid) 48%, var(--theme-navy-ink) 100%),
+    var(--theme-brushed) !important;
+  background-size: auto, auto, 200px 200px !important;
+  background-blend-mode: normal, normal, soft-light !important;
+}
+
+/* H2H lobby / modes */
+.h2h-lobby,
+.h2h-shell,
+.h2h-modes {
+  background:
+    radial-gradient(80% 45% at 50% 0%, rgba(0, 50, 110, 0.4), transparent 55%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-deep) 60%, var(--theme-navy-ink) 100%) !important;
+}
+
+.h2h-lobby__action,
+.h2h-lobby__primary,
+.h2h-modes__back,
+.h2h-mode-card,
+.run-btn--secondary {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 40%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-mid) 55%, var(--theme-navy-deep) 100%) !important;
+  border-color: var(--theme-navy-edge) !important;
+}
+
+/* Account / login sheet */
+.account-sheet .settings-name-modal__card,
+.account-sheet__card {
+  background:
+    linear-gradient(180deg, rgba(13, 50, 104, 0.75), rgba(4, 14, 34, 0.96)),
+    var(--theme-brushed) !important;
+  background-size: cover, 160px 160px !important;
+  border: 1px solid var(--theme-navy-edge) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55) !important;
+}
+
+.settings-name-modal__error {
+  color: rgba(210, 225, 255, 0.88) !important;
+  background: rgba(0, 28, 64, 0.55);
+  border: 1px solid rgba(100, 150, 210, 0.22);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  font-weight: 650;
+}
+
+.settings-name-modal__save--danger {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 40%),
+    linear-gradient(180deg, var(--theme-navy-hi), var(--theme-navy-deep)) !important;
+  border: 1px solid rgba(90, 145, 215, 0.28) !important;
+  color: #fff !important;
+}
+
+.account-sheet .settings-name-modal__kicker {
+  color: rgba(160, 195, 240, 0.65) !important;
+  letter-spacing: 0.14em;
+}
+
+.account-sheet .settings-name-modal__title {
+  color: #fff !important;
+  font-style: italic;
+}
+
+.account-sheet .settings-name-modal__copy {
+  color: rgba(190, 210, 235, 0.72) !important;
+}
+
+.account-sheet .settings-name-modal__field input {
+  background: rgba(4, 14, 34, 0.85) !important;
+  border: 1px solid rgba(90, 145, 215, 0.28) !important;
+  color: #fff !important;
+  border-radius: 0.65rem !important;
+}
+
+.account-sheet .settings-name-modal__save,
+.account-sheet .settings-name-modal__cancel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 42%),
+    linear-gradient(180deg, var(--theme-navy-hi), var(--theme-navy-deep)) !important;
+  border: 1px solid var(--theme-navy-edge) !important;
+  color: #fff !important;
+}
+
+.account-sheet .settings-name-modal__save {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 40%),
+    linear-gradient(180deg, #2cbc4e 0%, #178a34 70%, #0c5c22 100%) !important;
+  border: 0 !important;
+}
+
+/* Coin pill + settings gear — exact same navy as bottom navigator */
+.rh5-top .home-coin,
+.rh5-top .sound-settings__gear {
+  border-color: var(--theme-navy-edge) !important;
+  background:
+    linear-gradient(180deg, var(--theme-navy-sheen), transparent 42%),
+    linear-gradient(180deg, var(--theme-navy-hi) 0%, var(--theme-navy-mid) 55%, var(--theme-navy-deep) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* Bank cash on leaderboard — richer brighter green */
+.wb-mine__balance.is-bank-cash,
+.wb-podium__value.is-bank-cash,
+.wb-row__value.is-bank-cash strong {
+  color: #1ae066 !important;
+  text-shadow: 0 0 10px rgba(18, 180, 80, 0.28) !important;
+}
+
+.wb-mine__balance.is-bank-cash,
+.wb-podium__value.is-bank-cash {
+  background: linear-gradient(180deg, #7dffaa 0%, #1ad968 40%, #0f9a45 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  filter: drop-shadow(0 0 6px rgba(16, 160, 70, 0.28));
+}
+
+/* Kill shop panel slide delay */
+.shop-panel {
+  animation: none !important;
+}
+
+/*
+ * Hub panes stay laid out (no display:none).
+ * display:none on Shop was forcing a full SVG reflow when opening Shop,
+ * which skipped the tabbar glider animation (felt like a teleport).
+ */
+.hub-shell {
+  position: relative;
+  min-height: 100%;
+}
+
+.hub-pane {
+  min-height: 100%;
+}
+
+.hub-pane.is-active {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.hub-pane:not(.is-active) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* opacity:0 (not visibility:hidden / content-visibility) keeps the Shop
+     compositor layer warm on web so opening Shop/Coins doesn't hitch. */
+  opacity: 0;
+  visibility: visible;
+  pointer-events: none;
+}
+
+/* Pause motion in inactive hub panes (home FX + shop atmosphere). */
+.hub-pane:not(.is-active) .shop-atmo__mote,
+.hub-pane:not(.is-active) .shop-atmo__spot,
+.hub-pane:not(.is-active) .shop-atmo__sheen,
+.hub-pane:not(.is-active) .shop-atmo__court,
+.hub-pane:not(.is-active) .shop-atmo__rim,
+.hub-pane:not(.is-active) .home-rising-bubbles,
+.hub-pane:not(.is-active) .home-arena-live,
+.hub-pane:not(.is-active) [class*='bubble'],
+.hub-pane:not(.is-active) [class*='LiveFx'] {
+  animation-play-state: paused !important;
+}
+
+/* Legacy attr — never collapse mounted hub panes. */
+.hub-pane[hidden] {
+  display: block !important;
+}

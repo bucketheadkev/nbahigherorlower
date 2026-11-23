@@ -29,8 +29,22 @@ function mapStanding(row: Record<string, unknown>): BankStanding {
   };
 }
 
+function isNetworkFailure(error: { message?: string } | unknown): boolean {
+  const message =
+    typeof error === 'object' && error && 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : error instanceof Error
+        ? error.message
+        : String(error ?? '');
+  return /failed to fetch|networkerror|load failed|network request failed/i.test(message);
+}
+
 function failure(error: { code?: string; message?: string }, scope: string): BankBoardFailure {
   if (error.code && MISSING_FUNCTION_CODES.has(error.code)) {
+    return { ok: false, reason: 'unavailable' };
+  }
+  // Offline / blocked / transient network — keep last known balance; don't spam the console.
+  if (isNetworkFailure(error)) {
     return { ok: false, reason: 'unavailable' };
   }
   console.error(`[bank-board] ${scope}`, error.message ?? error);
@@ -49,6 +63,7 @@ export async function fetchBankLeaderboardTop(
     );
     return { ok: true, rows };
   } catch (err) {
+    if (isNetworkFailure(err)) return { ok: false, reason: 'unavailable' };
     console.error('[bank-board] top fetch error', err);
     return { ok: false, reason: 'error' };
   }
@@ -62,6 +77,7 @@ export async function fetchMyBankBalance(): Promise<{ ok: true; balance: number 
     if (error) return failure(error, 'balance fetch failed');
     return { ok: true, balance: Math.max(0, Math.round(Number(data) || 0)) };
   } catch (err) {
+    if (isNetworkFailure(err)) return { ok: false, reason: 'unavailable' };
     console.error('[bank-board] balance fetch error', err);
     return { ok: false, reason: 'error' };
   }
@@ -81,6 +97,7 @@ export async function fetchMyBankRank(): Promise<
     const row = Array.isArray(data) && data.length > 0 ? (data[0] as Record<string, unknown>) : null;
     return { ok: true, standing: row ? mapStanding(row) : null };
   } catch (err) {
+    if (isNetworkFailure(err)) return { ok: false, reason: 'unavailable' };
     console.error('[bank-board] my rank error', err);
     return { ok: false, reason: 'error' };
   }
