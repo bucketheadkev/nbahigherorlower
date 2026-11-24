@@ -61,13 +61,26 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Arena + hardwood: full height on phones, never narrower than the layout on wide screens. */
+/* Arena + hardwood: clean blank court plate, spotlights aimed at the player rows. */
 .cr__bg {
   --bgw: max(calc(100dvh * 580 / 1024), calc(var(--u) * 580));
   position: absolute;
   inset: 0;
-  background: #03060d url("/images/classic/results-bg.webp") no-repeat center bottom;
-  background-size: auto max(100%, calc(var(--u) * 1024));
+  background:
+    #03060d
+    url("/images/classic/results-bg-v4.jpg") no-repeat center bottom;
+  background-size: cover;
+}
+
+/* Soft vignette + light pool on the player rows only — keep the total band clear. */
+.cr__bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 78% 42% at 50% 54%, rgba(255, 214, 150, 0.18), transparent 66%),
+    linear-gradient(180deg, rgba(2, 6, 18, 0.62) 0%, rgba(2, 6, 18, 0.28) 18%, transparent 32%, transparent 64%, rgba(2, 6, 18, 0.48) 100%);
+  pointer-events: none;
 }
 
 @media (min-aspect-ratio: 580/1024) {
@@ -145,8 +158,8 @@
   font-variant-numeric: tabular-nums;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 calc(var(--u) * 4) rgba(120, 255, 60, 0.7))
-    drop-shadow(0 0 calc(var(--u) * 18) rgba(70, 245, 30, 0.42));
+  filter: drop-shadow(0 0 calc(var(--u) * 3) rgba(90, 210, 70, 0.45))
+    drop-shadow(0 0 calc(var(--u) * 12) rgba(50, 180, 40, 0.28));
   transform-origin: 50% 55%;
 }
 
@@ -230,7 +243,36 @@
   }
 }
 
-/* Crossing $1B: one bright, confident pulse, then the settled number. */
+/*
+ * Final under $1B: punchier crimson + soft digit glow only (no plate / halo box).
+ * Kill the layered rim/face pseudos — their strokes/gradients read as a box.
+ */
+.cr.is-final:not(.is-billion) .cr__total-num {
+  color: #ff1f24;
+  -webkit-text-fill-color: #ff1f24;
+  background: none;
+  filter: none;
+  -webkit-text-stroke: 0;
+  padding: 0;
+  text-shadow:
+    0 0 calc(var(--u) * 2.5) rgba(255, 90, 70, 0.95),
+    0 0 calc(var(--u) * 6) rgba(255, 40, 36, 0.65),
+    0 0 calc(var(--u) * 12) rgba(255, 28, 24, 0.38),
+    0 calc(var(--u) * 2) 0 rgba(0, 0, 0, 0.55),
+    0 calc(var(--u) * 1) calc(var(--u) * 2) rgba(0, 0, 0, 0.35);
+}
+
+.cr.is-final:not(.is-billion) .cr__total-num::before,
+.cr.is-final:not(.is-billion) .cr__total-num::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Crossing $1B (including exact): green pulse, then settled green. */
 .cr.is-billion:not(.is-skipped) .cr__total-num {
   animation: cr-win 0.95s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
@@ -278,15 +320,42 @@
     linear-gradient(90deg, rgba(0, 0, 0, 0.32), transparent 15%, transparent 85%, rgba(0, 0, 0, 0.32)),
     linear-gradient(180deg, var(--p-hi) 0%, var(--p) 30%, var(--p-lo) 76%, var(--p-lo) 100%);
   box-shadow:
-    0 0 0 calc(var(--u) * 0.8) color-mix(in srgb, var(--a-glow) 70%, transparent),
-    0 0 calc(var(--u) * 8) color-mix(in srgb, var(--a-glow) 80%, transparent),
-    0 0 calc(var(--u) * 22) color-mix(in srgb, var(--a-glow) 42%, transparent),
+    0 0 calc(var(--u) * 4) color-mix(in srgb, var(--a-glow) 42%, transparent),
     0 calc(var(--u) * 5) calc(var(--u) * 12) rgba(0, 0, 0, 0.5),
-    inset 0 0 calc(var(--u) * 7) color-mix(in srgb, var(--a-glow) 26%, transparent),
     inset 0 calc(var(--u) * 1.4) 0 rgba(255, 255, 255, 0.32);
   color: var(--ink, #fff);
   opacity: 0;
   transform: translateY(calc(var(--u) * 10)) scale(0.985);
+}
+
+/* Thin static rim + subtle sparkle (opacity only — never orbits the box). */
+.cr-row::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--u) * -1);
+  border-radius: calc(var(--u) * 14);
+  border: 1px solid color-mix(in srgb, var(--a-glow) 70%, #ffffff);
+  box-shadow: 0 0 calc(var(--u) * 3.5) color-mix(in srgb, var(--a-glow) 40%, transparent);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: cr-rim-sparkle 2.8s ease-in-out infinite;
+}
+
+@keyframes cr-rim-sparkle {
+  0%,
+  100% {
+    opacity: 0.38;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .cr-row::before {
+    animation: none;
+    opacity: 0.62;
+  }
 }
 
 /* Faint glass reflection along the bottom. */
@@ -426,89 +495,6 @@
   text-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 2.5) rgba(0, 0, 0, 0.38);
 }
 
-/* The secondary color travels around the border: a soft dash on the row's own outline. */
-.cr-row__glow {
-  position: absolute;
-  left: calc(var(--u) * -2.4);
-  top: calc(var(--u) * -2.4);
-  overflow: visible;
-  pointer-events: none;
-  fill: none;
-}
-
-.cr-row__glow path {
-  fill: none;
-  stroke: var(--a-glow);
-  stroke-linecap: round;
-}
-
-/* Four strokes, widest and faintest first, approximate a soft glow without a blur filter. */
-.cr-row__glow-l1 {
-  stroke-dasharray: 30 70;
-  opacity: 0.12;
-  animation: cr-glow-l1 8s linear infinite;
-  animation-delay: inherit;
-}
-
-.cr-row__glow-l2 {
-  stroke-dasharray: 24 76;
-  opacity: 0.22;
-  animation: cr-glow-l2 8s linear infinite;
-  animation-delay: inherit;
-}
-
-.cr-row__glow-l3 {
-  stroke-dasharray: 17 83;
-  opacity: 0.42;
-  animation: cr-glow-l3 8s linear infinite;
-  animation-delay: inherit;
-}
-
-.cr-row__glow-core {
-  stroke: color-mix(in srgb, var(--a-glow) 70%, #ffffff);
-  stroke-dasharray: 11 89;
-  opacity: 0.92;
-  animation: cr-glow-core 8s linear infinite;
-  animation-delay: inherit;
-}
-
-/* Centred on one point: each dash starts half its length behind it. */
-@keyframes cr-glow-l1 {
-  from {
-    stroke-dashoffset: 15;
-  }
-  to {
-    stroke-dashoffset: -85;
-  }
-}
-
-@keyframes cr-glow-l2 {
-  from {
-    stroke-dashoffset: 12;
-  }
-  to {
-    stroke-dashoffset: -88;
-  }
-}
-
-@keyframes cr-glow-l3 {
-  from {
-    stroke-dashoffset: 8.5;
-  }
-  to {
-    stroke-dashoffset: -91.5;
-  }
-}
-
-@keyframes cr-glow-core {
-  from {
-    stroke-dashoffset: 5.5;
-  }
-  to {
-    stroke-dashoffset: -94.5;
-  }
-}
-
 /* ── BUILD ANOTHER / SHARE (and $1B compact rewards) ── */
 .cr__actions {
   position: absolute;
@@ -522,13 +508,13 @@
   transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 
-/* Every run: XP bar under players, CTAs stacked so SHARE stays on-screen. */
-.cr.is-run-rewards {
-  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 920));
-}
-
+/*
+ * Every run: XP + CTAs stack under players. Keep one --u for with/without trivia so
+ * BUILD ANOTHER / SHARE never randomly shrink when trivia appears.
+ */
+.cr.is-run-rewards,
 .cr.is-run-rewards.is-trivia-rewards {
-  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 980));
+  --u: min(calc(100vw / 580), calc((100dvh - var(--st) - var(--sb)) / 920));
 }
 
 .cr.is-run-rewards .cr__actions {
@@ -538,12 +524,22 @@
   left: calc(var(--u) * 22);
   right: calc(var(--u) * 22);
   width: auto;
+  z-index: 4;
+}
+
+/* More air under the total; full-size rows (no scale shrink). */
+.cr.is-run-rewards .cr__total {
+  top: calc(var(--u) * 64);
 }
 
 .cr.is-run-rewards .cr__rows {
-  top: calc(var(--u) * 178);
-  transform: scale(0.86);
-  transform-origin: top center;
+  top: calc(var(--u) * 198);
+  transform: none;
+  gap: calc(var(--u) * 9);
+}
+
+.cr.is-run-rewards .cr-row {
+  height: calc(var(--u) * 64);
 }
 
 .cr__home {
@@ -587,12 +583,15 @@
 
 .cr-rewards {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: calc(var(--u) * 10);
   min-height: 0;
   width: 100%;
+  /* Single vertical stack — never overlap CTAs / trivia / XP. */
+  isolation: isolate;
 }
 
 /* Level / coin meter — sits under the roster, above CTAs. No chrome plate. */
@@ -712,23 +711,29 @@
   left: auto !important;
   top: auto !important;
   width: 100% !important;
+  flex: 0 0 auto !important;
+  z-index: 1;
 }
 
-.cr__again--inline {
-  height: calc(var(--u) * 72) !important;
-  font-size: calc(var(--u) * 38) !important;
+/* Locked CTA sizes — trivia / rewards never change these. */
+.cr__again--inline,
+.cr.is-trivia-rewards .cr__again--inline,
+.cr.is-run-rewards .cr__again--inline {
+  height: 3.55rem !important;
+  min-height: 3.55rem !important;
+  max-height: 3.55rem !important;
+  font-size: 1.65rem !important;
   letter-spacing: -0.03em !important;
 }
 
-.cr.is-trivia-rewards .cr__again--inline {
-  height: calc(var(--u) * 64) !important;
-  font-size: calc(var(--u) * 34) !important;
-}
-
-.cr__share--inline {
-  height: calc(var(--u) * 48) !important;
-  font-size: calc(var(--u) * 20) !important;
-  gap: calc(var(--u) * 12) !important;
+.cr__share--inline,
+.cr.is-trivia-rewards .cr__share--inline,
+.cr.is-run-rewards .cr__share--inline {
+  height: 2.55rem !important;
+  min-height: 2.55rem !important;
+  max-height: 2.55rem !important;
+  font-size: 0.95rem !important;
+  gap: 0.55rem !important;
 }
 
 .cr__share--inline .cr__share-icon {
@@ -885,12 +890,24 @@
 }
 
 .cr__spot {
-  background: radial-gradient(
-    ellipse 62% 78% at 50% -6%,
-    rgba(255, 246, 228, 0.34),
-    rgba(255, 240, 214, 0.12) 46%,
-    transparent 72%
-  );
+  /* Corner cans sit high and wide — beams fall on the wings, not the total. */
+  background:
+    radial-gradient(
+      ellipse 62% 40% at 50% 58%,
+      rgba(255, 220, 160, 0.36),
+      rgba(255, 180, 90, 0.12) 44%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 42% 52% at -6% -18%,
+      rgba(255, 236, 200, 0.32),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 42% 52% at 106% -18%,
+      rgba(255, 236, 200, 0.32),
+      transparent 62%
+    );
   mix-blend-mode: screen;
   opacity: 0;
   animation: cr-spot 1.7s linear forwards;

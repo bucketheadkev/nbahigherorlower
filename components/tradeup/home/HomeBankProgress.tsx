@@ -34,7 +34,11 @@ export function HomeBankProgress({ onOpenWall, onOpenBoard }: HomeBankProgressPr
           aria-label={t('home.bankProgressLabel')}
           onClick={onOpenBoard}
         >
-          <span className="rh5-bank__label">{t('home.bankMoney')}</span>
+          <span className="rh5-bank__label">
+            {t('home.bankMoneyBefore')}
+            <span className="rh5-bank__goal-amt">{t('home.bankMoneyAmt')}</span>
+            {t('home.bankMoneyAfter')}
+          </span>
           <span className="rh5-bank__value">{pending ? '—' : formatCash(balance)}</span>
           <span className="rh5-bank__track" aria-hidden>
             <span className="rh5-bank__fill" style={{ width: `${pct}%` }}>

@@ -4,8 +4,8 @@
    ========================================================= */
 
 :root {
-  /* Floating tab bar: its inset plus the raised active tile. */
-  --hub-tab-bar-h: 4.85rem;
+  /* Midnight pill dock band (safe-area added at use sites). */
+  --hub-tab-bar-h: 4.15rem;
 }
 
 .rh2 {
@@ -729,6 +729,19 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* No text/image selection or iOS copy callout (blue “quad” glitch). */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh3-sheet *,
+.rh3-sheet *::before,
+.rh3-sheet *::after {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 .rh3-sheet__scrim {
@@ -738,31 +751,51 @@
   margin: 0;
   padding: 0;
   border: 0;
+  outline: none;
   background: rgba(4, 10, 22, 0.72);
   animation: rh3-fade 0.22s ease-out both;
   cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .rh3-sheet__panel {
   position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 30rem;
+  max-height: min(78dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 4.5rem));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding:
     0.55rem
     max(1rem, env(safe-area-inset-right, 0px))
-    calc(env(safe-area-inset-bottom, 0px) + 1.1rem)
+    calc(env(safe-area-inset-bottom, 0px) + 1.25rem)
     max(1rem, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
-  border: 1px solid rgba(90, 130, 190, 0.32);
+  border: 1px solid rgba(90, 145, 215, 0.3);
   border-bottom: 0;
   border-radius: 1.45rem 1.45rem 0 0;
+  /* Same mid navy as MODES / dock — not washed-out light blue */
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 28%),
-    linear-gradient(180deg, #243f72 0%, #1a315c 42%, #132447 78%, #0d172e 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, #0d3268 0%, #0a2250 48%, #071838 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 -14px 40px rgba(0, 0, 0, 0.5);
+    0 -14px 40px rgba(0, 0, 0, 0.55);
   animation: rh3-rise 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+html[data-platform="native"] .rh3-sheet {
+  z-index: 120;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+html[data-platform="native"] .rh3-sheet__panel {
+  max-height: min(72dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
 }
 
 .rh3-sheet__grip {
@@ -826,8 +859,8 @@
   border: 1px solid rgba(110, 160, 230, 0.28);
   border-radius: 1rem;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 48%),
-    linear-gradient(180deg, #1a2d52 0%, #121f3c 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #14356a 0%, #0b1c3a 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 8px 18px rgba(0, 0, 0, 0.28);
@@ -836,6 +869,7 @@
   font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform 0.14s ease-out, filter 0.14s ease-out, border-color 0.14s ease-out;
 }
 
@@ -851,6 +885,10 @@
   border-radius: 0.75rem;
   object-fit: cover;
   box-shadow: 0 0 0 1px rgba(110, 160, 230, 0.28);
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .rh3-mode--h2h .rh3-mode__art {
@@ -1124,43 +1162,66 @@ body:has(.settings-drawer) .oneb-tabbar-host {
   overflow: visible;
 }
 
-/* Hub bottom nav — full-width straight horizontal bar */
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar,
-body:has(.oneb-tabbar-host) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri {
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
-  height: auto !important;
-  min-height: 4.35rem !important;
-  margin: 0 !important;
-  padding: 0.4rem 0.45rem calc(0.45rem + env(safe-area-inset-bottom, 0px)) !important;
-  border: 0 !important;
-  border-top: 1px solid var(--rh5-dock-border, rgba(90, 130, 190, 0.28)) !important;
-  border-radius: 0 !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 40%),
-    linear-gradient(
-      180deg,
-      var(--rh5-dock-top, #243f72) 0%,
-      var(--rh5-dock-mid, #1a315c) 55%,
-      var(--rh5-dock-bot, #132447) 100%
-    ) !important;
+/*
+ * Hub bottom nav — floating midnight pill. Selected tab = orange; others cool navy.
+ * No connector lines / arcs.
+ */
+:root {
+  --dock-ink: #050b18;
+  --pill-edge: rgba(140, 185, 255, 0.42);
+  --pill-orange-hi: #ffc04a;
+  --pill-orange-mid: #ff8a14;
+  --pill-orange-lo: #ef5a00;
+}
+
+.oneb-tabbar-host .oneb-tabbar.oneb-tabbar--pill,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--pill,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--pill,
+body:has(.oneb-tabbar-host) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri.oneb-tabbar--pill {
+  left: max(0.85rem, env(safe-area-inset-left, 0px)) !important;
+  right: max(0.85rem, env(safe-area-inset-right, 0px)) !important;
+  bottom: max(0.55rem, calc(env(safe-area-inset-bottom, 0px) + 0.2rem)) !important;
+  width: auto !important;
+  max-width: min(26rem, calc(100vw - 1.7rem)) !important;
+  height: 4rem !important;
+  min-height: 4rem !important;
+  margin: 0 auto !important;
+  padding: 0.28rem !important;
+  border: 1px solid rgba(100, 150, 220, 0.32) !important;
+  border-radius: 1.35rem !important;
+  background: linear-gradient(180deg, #0e1f40 0%, #081428 52%, #050b18 100%) !important;
+  background-image: linear-gradient(180deg, #0e1f40 0%, #081428 52%, #050b18 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 -8px 24px rgba(0, 0, 0, 0.28) !important;
+    0 10px 28px rgba(0, 0, 0, 0.5),
+    0 0 18px rgba(30, 90, 200, 0.12) !important;
   transform: none !important;
   clip-path: none !important;
   overflow: visible !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  gap: 0.2rem !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/*
- * iOS native: kill any leftover floating-dock gap under the bar.
- * Background must paint through the home-indicator inset with no empty strip.
- */
-html[data-platform="native"] .oneb-tabbar-host {
+.oneb-tabbar-host:has(.oneb-tabbar--pill)::before,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host:has(.oneb-tabbar--pill)::before,
+body:has(.rh5) .oneb-tabbar-host:has(.oneb-tabbar--pill)::before {
+  display: block !important;
+  height: calc(5.1rem + env(safe-area-inset-bottom, 0px)) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 11, 24, 0) 0%,
+    rgba(5, 11, 24, 0.45) 48%,
+    rgba(5, 11, 24, 0.82) 100%
+  ) !important;
+}
+
+html[data-platform="native"] .oneb-tabbar-host:has(.oneb-tabbar--pill),
+html[data-platform="native"] .oneb-tabbar-host:has(.oneb-tabbar--ios) {
   position: fixed;
   left: 0;
   right: 0;
@@ -1169,87 +1230,13 @@ html[data-platform="native"] .oneb-tabbar-host {
   pointer-events: none;
 }
 
-html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar {
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--pill,
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--ios {
   pointer-events: auto;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  border-radius: 0 !important;
-  /* Opaque dock floor — never show html/#010814 through the safe area */
-  background-color: var(--rh5-dock-bot, #071838) !important;
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 40%),
-    linear-gradient(
-      180deg,
-      var(--rh5-dock-top, #0d3268) 0%,
-      var(--rh5-dock-mid, #0a2250) 52%,
-      var(--rh5-dock-bot, #071838) 100%
-    ) !important;
-  /*
-   * iOS: same visual tab height as web, plus safe-area padding under the pills
-   * (not stretched into tall stubby buttons with empty dock below).
-   */
-  height: auto !important;
-  min-height: calc(4.55rem + env(safe-area-inset-bottom, 0px)) !important;
-  padding: 0.42rem 0.45rem calc(0.42rem + env(safe-area-inset-bottom, 0px)) !important;
-  align-items: stretch !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 1px 0 0 var(--rh5-dock-bot, #071838),
-    0 40px 0 0 var(--rh5-dock-bot, #071838),
-    0 -8px 24px rgba(0, 0, 0, 0.28) !important;
-}
-
-/* Glider tracks the pill row only — not the home-indicator pad */
-html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar__glider,
-html[data-platform="native"] body:has(.rh5) .oneb-tabbar__glider {
-  top: 0.42rem !important;
-  bottom: calc(0.42rem + env(safe-area-inset-bottom, 0px)) !important;
-}
-
-html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar__glider::before,
-html[data-platform="native"] body:has(.rh5) .oneb-tabbar__glider::before {
-  inset: 0.18rem 0.2rem !important;
-}
-
-/* Full-height pills in the content band (above home indicator), like web */
-html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item,
-html[data-platform="native"] body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item,
-html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar__item {
-  justify-content: center !important;
-  align-self: stretch !important;
-  padding: 0.35rem 0.2rem !important;
-  transform: none !important;
-  min-height: 0 !important;
-  height: auto !important;
-}
-
-html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item.is-active,
-html[data-platform="native"] body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item.is-active,
-html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar__item.is-active,
-html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item--home.is-active,
-html[data-platform="native"] body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item--home.is-active,
-html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar__item--home.is-active {
-  transform: none !important;
-}
-
-html[data-platform="native"] .oneb-tabbar-host::before {
-  display: block !important;
-  height: calc(6.4rem + env(safe-area-inset-bottom, 0px)) !important;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 18, 36, 0) 0%,
-    rgba(10, 34, 72, 0.55) 42%,
-    var(--rh5-dock-bot, #071838) 100%
-  ) !important;
 }
 
 html[data-platform="native"] body:has(.oneb-tabbar-host) {
-  /* Beat boot-style #010814 so no dark strip peeks under the dock */
-  background-color: var(--rh5-dock-bot, #132447) !important;
+  background-color: var(--dock-ink) !important;
 }
 
 html[data-platform="native"] body:has(.oneb-tabbar-host)::after {
@@ -1259,9 +1246,138 @@ html[data-platform="native"] body:has(.oneb-tabbar-host)::after {
   right: 0;
   bottom: 0;
   height: max(env(safe-area-inset-bottom, 0px), 34px);
-  background: var(--rh5-dock-bot, #132447);
+  background: var(--dock-ink);
   z-index: 69;
   pointer-events: none;
+}
+
+/*
+ * iOS-only hub nav — flush to the home indicator, no floating gap.
+ * Selected tab = orange; touch switches on pointerdown (zero click lag).
+ */
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--ios,
+html[data-platform="native"] body:has(.rh5) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--ios,
+html[data-platform="native"] body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--ios {
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: calc(3.25rem + env(safe-area-inset-bottom, 0px)) !important;
+  margin: 0 !important;
+  padding:
+    0.28rem 0.35rem
+    calc(0.22rem + env(safe-area-inset-bottom, 0px)) !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(120, 165, 230, 0.28) !important;
+  border-radius: 0 !important;
+  background: #050b18 !important;
+  background-image: linear-gradient(180deg, #0a162c 0%, #050b18 55%) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35) !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  gap: 0.2rem !important;
+  overflow: visible !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html[data-platform="native"] .oneb-tabbar-host:has(.oneb-tabbar--ios)::before {
+  display: none !important;
+}
+
+/* Sliding orange selection — sways between tabs instead of teleporting */
+html[data-platform="native"] .oneb-tabbar--ios .oneb-tabbar__glider {
+  display: block !important;
+  opacity: 1 !important;
+  top: 0.28rem;
+  bottom: calc(0.22rem + env(safe-area-inset-bottom, 0px));
+  left: 0.35rem;
+  width: calc((100% - 0.7rem) / 3);
+  transform: translate3d(calc(var(--tab-index, 1) * 100%), 0, 0);
+  transition: transform 0.38s cubic-bezier(0.28, 1.15, 0.42, 1);
+  will-change: transform;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-platform="native"] .oneb-tabbar--ios .oneb-tabbar__glider::before {
+  inset: 0 0.18rem;
+  border-radius: 0.85rem;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item {
+  position: relative;
+  z-index: 2;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 3.05rem !important;
+  margin: 0 !important;
+  padding: 0.28rem 0.2rem !important;
+  gap: 0.12rem !important;
+  border: 0 !important;
+  border-radius: 0.85rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(226, 237, 252, 0.97) !important;
+  transform: none !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: color 0.18s ease !important;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item.is-active,
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item--home.is-active {
+  color: #ffffff !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item:active:not(.is-active) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  opacity: 0.92;
+  transform: none !important;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__icon {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  color: inherit !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item.is-active .oneb-tabbar__icon {
+  transform: none !important;
+  filter: drop-shadow(0 1px 1px rgba(120, 40, 0, 0.3));
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__icon svg {
+  width: 1.12rem;
+  height: 1.12rem;
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__label {
+  font-size: 0.58rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.04em !important;
+  color: inherit !important;
+  transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar--ios .oneb-tabbar__item.is-active .oneb-tabbar__label {
+  transform: none !important;
+  text-shadow: 0 1px 1px rgba(100, 30, 0, 0.35);
 }
 
 body:has(.rh4) .oneb-tabbar-host .oneb-tabbar {
@@ -1278,81 +1394,100 @@ body:has(.rh4) .oneb-tabbar-host .oneb-tabbar {
     0 10px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* Separate tab buttons on the straight bar */
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item {
-  color: rgba(255, 255, 255, 0.94) !important;
+/* Pill tabs — planted in the dock; only fill/color animates */
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item {
+  position: relative;
+  z-index: 2;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0.2rem 0.15rem !important;
+  gap: 0.18rem !important;
+  border: 0 !important;
+  border-radius: 1.05rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(218, 230, 248, 0.94) !important;
   transform: none !important;
-  gap: 0.28rem !important;
-  margin: 0 0.22rem !important;
-  border-radius: 0.85rem !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: center !important;
+  align-self: stretch !important;
+  transition:
+    color 0.28s ease,
+    background 0.28s ease,
+    box-shadow 0.28s ease,
+    opacity 0.28s ease !important;
+}
+
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item:active:not(.is-active),
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item:active:not(.is-active),
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item:active:not(.is-active) {
+  opacity: 0.88;
+  background: rgba(255, 255, 255, 0.04) !important;
+  transform: none !important;
+}
+
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active,
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item--home.is-active,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active {
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 220, 170, 0.72) !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%),
-    rgba(8, 16, 34, 0.28);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, var(--pill-orange-hi) 0%, var(--pill-orange-mid) 48%, var(--pill-orange-lo) 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 3px 8px rgba(0, 0, 0, 0.18);
+    inset 0 1px 0 rgba(255, 245, 220, 0.55),
+    0 0 7px rgba(255, 130, 20, 0.2),
+    0 4px 10px rgba(0, 0, 0, 0.38) !important;
+  transform: none !important;
+  filter: none;
 }
 
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item:active:not(.is-active),
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item:active:not(.is-active) {
-  color: #ffffff !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 55%),
-    rgba(12, 24, 48, 0.4);
-}
-
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item.is-active,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item.is-active {
-  color: #ffffff !important;
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-  transform: translate3d(0, -0.28rem, 0) !important;
-}
-
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__item--home.is-active,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__item--home.is-active {
-  transform: translate3d(0, -0.45rem, 0) !important;
-}
-
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__label,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__label {
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__label,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__label,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__label {
+  font-size: 0.58rem !important;
   font-weight: 850 !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.04em !important;
   color: inherit !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transform: none !important;
 }
 
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar__icon,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar__icon {
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__icon,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__icon,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__icon {
+  width: 1.3rem !important;
+  height: 1.3rem !important;
   color: inherit !important;
   opacity: 1 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  filter: none;
+  transform: none !important;
+  transition: filter 0.28s ease !important;
 }
 
-body:has(.home-hub-top.rh5-top) .oneb-tabbar__glider,
-body:has(.rh5) .oneb-tabbar__glider {
-  top: -0.45rem;
-  bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
-  left: 0.4rem;
-  width: calc((100% - 0.8rem) / 3);
-  transform: translate3d(calc(var(--tab-index, 1) * 100%), 0, 0) !important;
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active .oneb-tabbar__icon,
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active .oneb-tabbar__icon,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active .oneb-tabbar__icon {
+  transform: none !important;
+  filter: drop-shadow(0 1px 1px rgba(120, 40, 0, 0.3));
 }
 
-body:has(.home-hub-top.rh5-top) .oneb-tabbar__glider::before,
-body:has(.rh5) .oneb-tabbar__glider::before {
-  inset: 0.12rem 0.22rem !important;
-  border-color: #ffe0a8 !important;
-  border-radius: 0.9rem !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 45%),
-    linear-gradient(180deg, #ffb85a 0%, #ff7e14 55%, #ef5a00 100%) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 240, 210, 0.7),
-    0 0 20px rgba(255, 140, 30, 0.65),
-    0 6px 14px rgba(0, 0, 0, 0.4) !important;
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__icon svg,
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.oneb-tabbar--pill .oneb-tabbar__glider,
+.oneb-tabbar--pill .oneb-tabbar__floor,
+.oneb-tabbar--pill .oneb-tabbar__curve,
+.oneb-tabbar--pill .oneb-tabbar__arc {
+  display: none !important;
 }
 
 .oneb-tabbar__divider {
@@ -1404,8 +1539,8 @@ body:has(.rh5) .oneb-tabbar__glider::before {
   box-shadow:
     inset 0 1.5px 0 rgba(255, 236, 200, 0.6),
     inset 0 -4px 10px rgba(150, 40, 0, 0.4),
-    0 0 18px rgba(255, 115, 20, 0.6),
-    0 6px 14px rgba(0, 0, 0, 0.45);
+    0 0 8px rgba(255, 115, 20, 0.26),
+    0 5px 12px rgba(0, 0, 0, 0.45);
 }
 
 .oneb-tabbar.is-idle .oneb-tabbar__glider {
@@ -1441,24 +1576,10 @@ body:has(.rh5) .oneb-tabbar__glider::before {
   transform: translate3d(0, -0.3rem, 0);
 }
 
-/* Raised center Play — icon only, sits higher like the reference */
-.oneb-tabbar-host .oneb-tabbar__item--home {
-  gap: 0 !important;
-  padding: 0 !important;
-}
-
-.oneb-tabbar-host .oneb-tabbar__item--home .oneb-tabbar__icon {
-  width: 1.65rem !important;
-  height: 1.65rem !important;
-}
-
-.oneb-tabbar-host .oneb-tabbar__item--home .oneb-tabbar__icon svg {
-  width: 1.45rem;
-  height: 1.45rem;
-}
-
-.oneb-tabbar-host .oneb-tabbar__item--home.is-active {
-  transform: translate3d(0, -0.55rem, 0);
+/* Pill keeps buttons planted — selection is fill/color only */
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active,
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item--home.is-active {
+  transform: none !important;
 }
 
 .oneb-tabbar-host .oneb-tabbar__icon {
@@ -1475,6 +1596,10 @@ body:has(.rh5) .oneb-tabbar__glider::before {
 .oneb-tabbar-host .oneb-tabbar__item.is-active .oneb-tabbar__icon {
   transform: scale(1.22);
   filter: drop-shadow(0 1px 2px rgba(120, 30, 0, 0.45));
+}
+
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active .oneb-tabbar__icon {
+  transform: none !important;
 }
 
 .oneb-tabbar-host .oneb-tabbar__label {
@@ -1506,4 +1631,9 @@ body:has(.rh5) .oneb-tabbar__glider::before {
   html:not([data-full-motion]) .oneb-tabbar-host .oneb-tabbar__label {
     transition-duration: 0.01s;
   }
+}
+
+.oneb-tabbar-host .oneb-tabbar--pill .oneb-tabbar__item.is-active .oneb-tabbar__label {
+  transform: none !important;
+  text-shadow: 0 1px 2px rgba(120, 40, 0, 0.35);
 }

@@ -1,19 +1,20 @@
 'use client';
 
 import { useSound } from '@/hooks/useSound';
+import { usePerkInventory } from '@/hooks/usePerkInventory';
+import { useXpProfile } from '@/hooks/useXpProfile';
 import {
   MAX_PERK_USES,
   PERK_DEFS,
-  canAffordPerk,
   type PerkId,
 } from '@/lib/tradeup/perks';
-import { getPerkStock } from '@/lib/tradeup/perkInventory';
 import { PerkIcon } from './PerkIcon';
 
 /** Draft-sheet perks only — Swap stays in the Shop. */
 const DRAFT_PERK_IDS: readonly PerkId[] = ['double_draft', 'xray'];
 
 interface ClassicPerksBarProps {
+  /** Shared Classic boost count (rerolls + perk activations). Cap is MAX_PERK_USES. */
   activationsUsed: number;
   active: Partial<Record<PerkId, boolean>>;
   disabled?: boolean;
@@ -27,6 +28,8 @@ export function ClassicPerksBar({
   onActivate,
 }: ClassicPerksBarProps) {
   const { resume, playTap } = useSound();
+  const inv = usePerkInventory();
+  const { coins } = useXpProfile();
   const remaining = Math.max(0, MAX_PERK_USES - activationsUsed);
   const perks = PERK_DEFS.filter((p) => DRAFT_PERK_IDS.includes(p.id));
 
@@ -35,8 +38,9 @@ export function ClassicPerksBar({
       <div className="perk-bar__row perk-bar__row--pair">
         {perks.map((perk) => {
           const isOn = Boolean(active[perk.id]);
-          const stock = getPerkStock(perk.id);
-          const locked = disabled || remaining <= 0 || isOn || !canAffordPerk(perk.id);
+          const stock = inv[perk.id] ?? 0;
+          const canAfford = stock > 0 || coins >= perk.cost;
+          const locked = disabled || remaining <= 0 || isOn || !canAfford;
           return (
             <button
               key={perk.id}

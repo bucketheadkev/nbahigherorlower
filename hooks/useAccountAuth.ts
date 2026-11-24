@@ -7,6 +7,7 @@ import {
 } from '@/lib/account/accountAuth';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { syncCloudCoinsIntoLocal } from '@/lib/tradeup/xp/cloudCoins';
+import { flushPendingTriviaBonuses } from '@/lib/tradeup/trivia/bankTrivia';
 
 /**
  * App-wide account state: guest / anonymous / permanent / needs_username / loading.
@@ -55,9 +56,6 @@ export function useAccountAuth(): {
           }
           retries = 0;
           setState(next);
-          if (next.status === 'permanent') {
-            void syncCloudCoinsIntoLocal();
-          }
         } catch (err) {
           console.warn('[account] resolve failed', err);
         }
@@ -85,6 +83,26 @@ export function useAccountAuth(): {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Permanent accounts: sync coins + flush device trivia bank credits on login / focus.
+  useEffect(() => {
+    if (state.status !== 'permanent') return;
+    const syncAll = () => {
+      void syncCloudCoinsIntoLocal();
+      void flushPendingTriviaBonuses();
+    };
+    syncAll();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncAll();
+    };
+    const onFocus = () => syncAll();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [state.status]);
 
   return { state, refresh, setState };
 }

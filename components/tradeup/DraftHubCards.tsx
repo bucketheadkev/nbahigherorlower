@@ -450,7 +450,15 @@ export function DraftHubCards({
                 aria-expanded={open || undefined}
                 disabled={analyzing}
                 onPointerDown={(event) => {
+                  if (event.pointerType === 'mouse' && event.button !== 0) return;
                   pressRef.current = { x: event.clientX, y: event.clientY, moved: false };
+                  // Place on pointerdown so jersey apply is instant (no click lag / sheet race).
+                  if (analyzing || !onSlotPress) return;
+                  if (isTarget || (!filled && assignMode)) {
+                    event.preventDefault();
+                    onSlotPress(slot);
+                    pressRef.current = { ...pressRef.current, moved: true };
+                  }
                 }}
                 onPointerMove={(event) => {
                   const press = pressRef.current;
@@ -462,12 +470,15 @@ export function DraftHubCards({
                     press.moved = true;
                   }
                 }}
-                onClick={(event) => {
-                  event.stopPropagation();
+                onPointerUp={(event) => {
+                  if (event.pointerType === 'mouse' && event.button !== 0) return;
                   const dragged = pressRef.current?.moved;
+                  const press = pressRef.current;
                   pressRef.current = null;
-                  if (analyzing || dragged) return;
-                  // A glowing seat is a destination (swap), not a jersey to turn over.
+                  if (analyzing || dragged || !press) return;
+                  // Placement already fired on pointerdown for target/empty seats.
+                  if (onSlotPress && (isTarget || !filled)) return;
+                  // Flip / seat press on pointerup — same frame as lift, no click lag.
                   if (filled && player && !isTarget) {
                     setFlippedSlots((prev) => {
                       const next = new Set(prev);
@@ -485,6 +496,10 @@ export function DraftHubCards({
                     return;
                   }
                   setDetailSlot((prev) => (prev === slot ? null : slot));
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
                 }}
               >
                 {arena ? (

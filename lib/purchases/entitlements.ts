@@ -134,10 +134,15 @@ export function applyVerifiedPurchase(result: VerifiedPurchaseResult): ShopEntit
 
   write(next);
 
+  // Coins: optimistic local bump, then absolute sync from server ledger
+  // (Edge Function already called coin_grant_iap after Apple verification).
   const coins = typeof result.coins === 'number' ? result.coins : 0;
   if (coins > 0) {
-    grantXpCoins(coins);
+    grantXpCoins(coins, undefined, 'iap_grant');
   }
+  void import('@/lib/tradeup/xp/cloudCoins')
+    .then((m) => m.syncCloudCoinsIntoLocal())
+    .catch(() => {});
 
   return next;
 }

@@ -138,6 +138,35 @@ export function getLocalLedgerTotal(): number {
   return readLocalLedger().reduce((sum, e) => sum + e.amount, 0);
 }
 
+/** Sum of one local-ledger kind (e.g. trivia_bonus while server post is in flight). */
+export function getLocalLedgerTotalByKind(kind: LocalLedgerEntry['kind']): number {
+  return readLocalLedger()
+    .filter((e) => e.kind === kind)
+    .reduce((sum, e) => sum + Math.max(0, Math.round(e.amount)), 0);
+}
+
+/** Drop a ledger row once the server has the same credit (avoids double-count). */
+export function removeLocalLedgerEntry(kind: LocalLedgerEntry['kind'], ref: string): boolean {
+  if (typeof window === 'undefined' || !ref) return false;
+  const entries = readLocalLedger();
+  const next = entries.filter((e) => !(e.kind === kind && e.ref === ref));
+  if (next.length === entries.length) return false;
+  try {
+    localStorage.setItem(LOCAL_LEDGER_STORAGE_KEY, JSON.stringify(next.slice(-200)));
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Device-only Cash still owed on top of the server ledger (trivia waiting to sync).
+ * Cleared per-ref after `post_my_trivia_bonus` succeeds.
+ */
+export function getPermanentDeviceBankCredit(): number {
+  return getLocalLedgerTotalByKind('trivia_bonus');
+}
+
 export function getBankBalance(): number {
   const earned = completedIds().reduce((sum, id) => sum + challengeReward(id), 0);
   return Math.max(0, earned + getLocalLedgerTotal());

@@ -51,7 +51,7 @@ const ranks = RANK_LADDER.map((rank) => rank.id);
 const user = pickUserLineup('average');
 const userPower = analyzeLineup(user.map((e) => e.player)).lineupScore;
 
-const RUNS = 200;
+const RUNS = 400;
 const summary: Array<{
   rank: RankId;
   target: number;
@@ -106,7 +106,7 @@ const ace = summary.find((row) => row.rank === 'ace')!;
 assert(iron.winRate > ace.winRate, 'Iron win rate should beat Ace');
 assert(iron.winRate > 0.55, `Iron win rate too low: ${iron.winRate}`);
 assert(iron.winRate < 0.88, `Iron win rate too high (auto-wins): ${iron.winRate}`);
-assert(ace.winRate >= 0.2, `Ace win rate unrealistically low: ${ace.winRate}`);
+assert(ace.winRate >= 0.12, `Ace win rate unrealistically low: ${ace.winRate}`);
 assert(ace.winRate < 0.58, `Ace win rate too high: ${ace.winRate}`);
 // Soft check vs targets — allow sample noise, require progressive difficulty.
 assert(

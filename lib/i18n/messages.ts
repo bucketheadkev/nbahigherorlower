@@ -69,6 +69,9 @@ export type MessageKey =
   | 'home.modes'
   | 'home.modesClose'
   | 'home.bankMoney'
+  | 'home.bankMoneyBefore'
+  | 'home.bankMoneyAmt'
+  | 'home.bankMoneyAfter'
   | 'home.bankGoal'
   | 'home.bankWallHint'
   | 'home.bankProgressLabel'
@@ -154,6 +157,11 @@ export type MessageKey =
   | 'leaderboard.metricWins'
   | 'leaderboard.metricBank'
   | 'leaderboard.boardMetric'
+  | 'leaderboard.filterBoard'
+  | 'leaderboard.filterMode'
+  | 'leaderboard.filterTime'
+  | 'leaderboard.modeClassic'
+  | 'leaderboard.timeLive'
   | 'leaderboard.weekly'
   | 'leaderboard.daily'
   | 'leaderboard.allTime'
@@ -271,6 +279,9 @@ const EN: Record<MessageKey, string> = {
   'home.modes': 'MODE',
   'home.modesClose': 'Close',
   'home.bankMoney': 'Road to $1 Billion · Bank Money',
+  'home.bankMoneyBefore': 'Road to ',
+  'home.bankMoneyAmt': '$1 Billion',
+  'home.bankMoneyAfter': ' · Bank Money',
   'home.bankGoal': 'Progress to $1 Billion',
   'home.bankWallHint': 'Hit $1B → public Wall of Fame. Tap to view.',
   'home.bankProgressLabel': 'Road to $1 Billion bank money',
@@ -363,9 +374,14 @@ const EN: Record<MessageKey, string> = {
   'leaderboard.metricWins': 'Wins',
   'leaderboard.metricBank': 'Bank',
   'leaderboard.boardMetric': 'Board metric',
+  'leaderboard.filterBoard': 'Board',
+  'leaderboard.filterMode': 'Mode',
+  'leaderboard.filterTime': 'Time',
+  'leaderboard.modeClassic': 'Classic',
+  'leaderboard.timeLive': 'Live',
   'leaderboard.weekly': 'Weekly',
   'leaderboard.daily': 'Daily',
-  'leaderboard.allTime': 'All-Time',
+  'leaderboard.allTime': 'All Time',
   'leaderboard.weeklyWins': 'Weekly Wins',
   'leaderboard.dailyWins': 'Daily Wins',
   'leaderboard.allTimeWins': 'All-Time Wins',
@@ -498,6 +514,9 @@ const ES: Record<MessageKey, string> = {
   'home.modes': 'MODO',
   'home.modesClose': 'Cerrar',
   'home.bankMoney': 'Camino a $1B · Banco',
+  'home.bankMoneyBefore': 'Camino a ',
+  'home.bankMoneyAmt': '$1B',
+  'home.bankMoneyAfter': ' · Banco',
   'home.bankGoal': 'Progreso a $1 mil millones',
   'home.bankWallHint': 'Llega a $1B → Muro de la Fama público. Toca para ver.',
   'home.bankProgressLabel': 'Camino a $1B en el Banco',
@@ -591,6 +610,11 @@ const ES: Record<MessageKey, string> = {
   'leaderboard.metricWins': 'Victorias',
   'leaderboard.metricBank': 'Banco',
   'leaderboard.boardMetric': 'Métrica del tablero',
+  'leaderboard.filterBoard': 'Tablero',
+  'leaderboard.filterMode': 'Modo',
+  'leaderboard.filterTime': 'Tiempo',
+  'leaderboard.modeClassic': 'Classic',
+  'leaderboard.timeLive': 'En vivo',
   'leaderboard.weekly': 'Semanal',
   'leaderboard.daily': 'Diario',
   'leaderboard.allTime': 'Histórico',

@@ -1,8 +1,16 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useLocale } from '@/hooks/useLocale';
+import { usePerkInventory } from '@/hooks/usePerkInventory';
 import { useXpProfile } from '@/hooks/useXpProfile';
 import {
   COIN_PACKS,
@@ -15,6 +23,9 @@ import {
   syncPendingPurchases,
   type ShopCatalogProduct,
 } from '@/lib/purchases';
+import { playUiTapSound, warmUiTapSound } from '@/lib/tradeup/gameAudio';
+import { hapticLight, hapticSuccess, hapticTap } from '@/lib/tradeup/haptics';
+import { ConfirmSpendSheet } from './ConfirmSpendSheet';
 import { PERK_DEFS, type PerkId } from '@/lib/tradeup/perks';
 import {
   PERK_BUNDLE_PRICE,
@@ -24,7 +35,6 @@ import {
   addPerkCharges,
   buyPerkPack,
   buyUltimatePerkBundle,
-  getPerkInventory,
   type PerkInventory,
 } from '@/lib/tradeup/perkInventory';
 import { RunCoinIcon } from './xp/RunCoinIcon';
@@ -155,14 +165,18 @@ const ShopPerksPanel = memo(function ShopPerksPanel({
             <li key={perk.id} className="shop-owned__item">
               <ShopPerkIcon id={perk.id} size="lg" />
               <span className="shop-owned__badge">{inv[perk.id]}</span>
+              <em className="shop-owned__name">{perk.shopTitle}</em>
             </li>
           ))}
         </ul>
       </div>
 
       <article className="shop-ultimate">
-        <span className="shop-ultimate__badge">Most Popular</span>
+        <span className="shop-ultimate__badge">Save ~19%</span>
         <h2 className="shop-ultimate__title">Ultimate Perks Bundle</h2>
+        <p className="shop-ultimate__save">
+          10 of each perk · normally 3,700 · now {PERK_BUNDLE_PRICE.toLocaleString('en-US')}
+        </p>
         <div className="shop-ultimate__loot">
           {PERK_DEFS.map((perk, i) => (
             <div key={perk.id} className="shop-ultimate__slot">
@@ -218,34 +232,55 @@ export const ShopScreen = memo(function ShopScreen() {
   const { t } = useLocale();
   const { state: account } = useAccountAuth();
   const { coins } = useXpProfile();
+  const inv = usePerkInventory();
   const permanent = account.status === 'permanent';
   const accountId = permanent ? account.profile.user_id : null;
   const [tab, setTab] = useState<ShopTab>('coins');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [inv, setInv] = useState<PerkInventory>(() => getPerkInventory());
   const configured = shopConfigured();
+  /** Ignore the synthetic click after an already-handled pointerdown. */
+  const tabHandledAt = useRef(0);
+  const tabRef = useRef<ShopTab>(tab);
+  tabRef.current = tab;
+  /** Synchronous purchase lock — state alone can't stop two taps in the same frame. */
+  const busyRef = useRef(false);
+  /** Coin spends (perk packs / bundle) wait for an explicit confirm. */
+  const [confirm, setConfirm] = useState<'bundle' | PerkId | null>(null);
+
+  useEffect(() => {
+    warmUiTapSound();
+  }, []);
 
   const switchTab = useCallback((next: ShopTab) => {
-    setTab((prev) => (prev === next ? prev : next));
+    if (tabRef.current === next) return;
+    tabRef.current = next;
+    // Sound + haptic before paint so Perks→Coins never feels mute/laggy.
+    playUiTapSound();
+    hapticLight();
+    setTab(next);
   }, []);
+
+  const onTabPointerDown = useCallback(
+    (next: ShopTab) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
+      tabHandledAt.current = performance.now();
+      switchTab(next);
+    },
+    [switchTab],
+  );
+
+  const onTabClick = useCallback(
+    (next: ShopTab) => () => {
+      if (performance.now() - tabHandledAt.current < 450) return;
+      switchTab(next);
+    },
+    [switchTab],
+  );
 
   const watchAd = useCallback(() => {
     setMessage(`Watch ads for ${WATCH_AD_COINS} coins — coming soon.`);
   }, []);
-
-  const refreshInv = useCallback(() => setInv(getPerkInventory()), []);
-
-  useEffect(() => {
-    refreshInv();
-    const onInv = () => refreshInv();
-    window.addEventListener('oneb:perk-inventory', onInv);
-    window.addEventListener('storage', onInv);
-    return () => {
-      window.removeEventListener('oneb:perk-inventory', onInv);
-      window.removeEventListener('storage', onInv);
-    };
-  }, [refreshInv]);
 
   useEffect(() => {
     if (!configured || !accountId) return;
@@ -254,8 +289,14 @@ export const ShopScreen = memo(function ShopScreen() {
     });
   }, [configured, accountId]);
 
+  /*
+   * Needs real-iPhone StoreKit QA (sandbox account): buy each coin pack + Starter Bundle, cancel sheet,
+   * interrupted/pending (Ask to Buy) purchase, Restore Purchases, receipt→server verify, and relaunch
+   * with an unfinished transaction (syncPendingPurchases). busyRef guards double-taps.
+   */
   const purchase = useCallback(
     async (product: ShopCatalogProduct) => {
+      if (busyRef.current) return;
       setMessage(null);
       if (!configured) {
         setMessage('Purchases unlock on iOS once StoreKit is configured.');
@@ -265,15 +306,18 @@ export const ShopScreen = memo(function ShopScreen() {
         setMessage('Sign in to buy.');
         return;
       }
+      busyRef.current = true;
+      hapticTap();
       setBusyId(product.productId);
       try {
         const result = await buyProduct(product.productId, accountId);
         if (result.ok) {
           if (product.productId === PREMIUM_PRODUCT.productId) {
+            // addPerkCharges dispatches oneb:perk-inventory → usePerkInventory refreshes.
             addPerkCharges('double_draft', PERK_PACK_QTY);
             addPerkCharges('player_swap', PERK_PACK_QTY);
-            refreshInv();
           }
+          hapticSuccess();
           setMessage('Purchase verified.');
         } else if (result.reason === 'cancelled') {
           setMessage(null);
@@ -283,38 +327,66 @@ export const ShopScreen = memo(function ShopScreen() {
           setMessage('Could not verify purchase — nothing was charged.');
         }
       } finally {
+        busyRef.current = false;
         setBusyId(null);
       }
     },
-    [accountId, configured, refreshInv],
+    [accountId, configured],
   );
 
-  const buyPerk = useCallback(
-    (id: PerkId) => {
-      setMessage(null);
-      setBusyId(`perk:${id}`);
-      const ok = buyPerkPack(id);
-      if (ok) {
-        refreshInv();
-        setMessage(null);
-      } else {
-        setMessage('Not enough coins.');
-      }
-      setBusyId(null);
-    },
-    [refreshInv],
-  );
+  const buyPerk = useCallback((id: PerkId) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setMessage(null);
+    setBusyId(`perk:${id}`);
+    const ok = buyPerkPack(id);
+    if (ok) {
+      hapticSuccess();
+    } else {
+      setMessage('Not enough coins.');
+    }
+    busyRef.current = false;
+    setBusyId(null);
+  }, []);
 
   const buyBundle = useCallback(() => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setMessage(null);
     setBusyId('perk:bundle');
     const ok = buyUltimatePerkBundle();
-    if (ok) refreshInv();
-    else setMessage('Not enough coins.');
+    if (ok) {
+      hapticSuccess();
+    } else {
+      setMessage('Not enough coins.');
+    }
+    busyRef.current = false;
     setBusyId(null);
-  }, [refreshInv]);
+  }, []);
+
+  const askBuyPerk = useCallback((id: PerkId) => {
+    if (busyRef.current) return;
+    hapticTap();
+    setConfirm(id);
+  }, []);
+
+  const askBuyBundle = useCallback(() => {
+    if (busyRef.current) return;
+    hapticTap();
+    setConfirm('bundle');
+  }, []);
+
+  const confirmSpend = useCallback(() => {
+    const pending = confirm;
+    setConfirm(null);
+    if (pending === 'bundle') buyBundle();
+    else if (pending) buyPerk(pending);
+  }, [confirm, buyBundle, buyPerk]);
 
   const restore = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    hapticLight();
     setMessage(null);
     setBusyId('restore');
     try {
@@ -322,9 +394,25 @@ export const ShopScreen = memo(function ShopScreen() {
       if (result.ok) setMessage('Purchases restored.');
       else setMessage('Restore unavailable until iOS StoreKit is connected.');
     } finally {
+      busyRef.current = false;
       setBusyId(null);
     }
   }, []);
+
+  const confirmCopy =
+    confirm === 'bundle'
+      ? {
+          title: 'Ultimate Perks Bundle',
+          copy: `Spend ${PERK_BUNDLE_PRICE.toLocaleString('en-US')} coins for ${PERK_BUNDLE_QTY} of each perk?`,
+          label: `Spend ${PERK_BUNDLE_PRICE.toLocaleString('en-US')}`,
+        }
+      : confirm
+        ? {
+            title: PERK_DEFS.find((p) => p.id === confirm)?.shopTitle ?? 'Perk pack',
+            copy: `Spend ${PERK_PACK_PRICE[confirm].toLocaleString('en-US')} coins for ${PERK_PACK_QTY} charges?`,
+            label: `Spend ${PERK_PACK_PRICE[confirm].toLocaleString('en-US')}`,
+          }
+        : null;
 
   return (
     <div className="tradeup-shell tradeup-shell--hub shop-screen" aria-label={t('nav.shop')}>
@@ -338,7 +426,8 @@ export const ShopScreen = memo(function ShopScreen() {
             role="tab"
             aria-selected={tab === 'coins'}
             className={`shop-tabs__btn ui-tap${tab === 'coins' ? ' is-active' : ''}`}
-            onClick={() => switchTab('coins')}
+            onPointerDown={onTabPointerDown('coins')}
+            onClick={onTabClick('coins')}
           >
             Coins
           </button>
@@ -348,7 +437,8 @@ export const ShopScreen = memo(function ShopScreen() {
             role="tab"
             aria-selected={tab === 'perks'}
             className={`shop-tabs__btn ui-tap${tab === 'perks' ? ' is-active' : ''}`}
-            onClick={() => switchTab('perks')}
+            onPointerDown={onTabPointerDown('perks')}
+            onClick={onTabClick('perks')}
           >
             Perks
           </button>
@@ -361,8 +451,8 @@ export const ShopScreen = memo(function ShopScreen() {
             busyId={busyId}
             coins={coins}
             inv={inv}
-            onBuyPerk={buyPerk}
-            onBuyBundle={buyBundle}
+            onBuyPerk={askBuyPerk}
+            onBuyBundle={askBuyBundle}
           />
         </div>
 
@@ -373,11 +463,20 @@ export const ShopScreen = memo(function ShopScreen() {
             disabled={busyId != null}
             onClick={() => void restore()}
           >
-            {busyId === 'restore' ? 'Restoring…' : 'Restore'}
+            {busyId === 'restore' ? 'Restoring…' : 'Restore Purchases'}
           </button>
           {message ? <p className="shop-ui__msg">{message}</p> : null}
         </footer>
       </div>
+
+      <ConfirmSpendSheet
+        open={confirmCopy != null}
+        title={confirmCopy?.title ?? ''}
+        copy={confirmCopy?.copy ?? ''}
+        confirmLabel={confirmCopy?.label}
+        onConfirm={confirmSpend}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   );
 });

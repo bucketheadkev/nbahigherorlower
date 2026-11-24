@@ -417,6 +417,15 @@
   overscroll-behavior: contain;
 }
 
+/* Collapsed over the court: never intercept jersey taps outside the peek bar. */
+.draft-sheet:not(.is-open).is-present {
+  pointer-events: none;
+}
+
+.draft-sheet:not(.is-open).is-present .draft-sheet__grab {
+  pointer-events: auto;
+}
+
 .draft-sheet:not(.is-present) {
   visibility: hidden;
   pointer-events: none;
@@ -428,32 +437,56 @@
 .draft-sheet__grab {
   position: relative;
   flex: 0 0 auto;
-  touch-action: none;
-  cursor: grab;
+  touch-action: manipulation;
+  cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-}
-
-.draft-sheet__grab:active {
-  cursor: grabbing;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .draft-sheet__handle {
-  display: grid;
-  place-items: center;
-  height: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 2.4rem;
+  padding: 0.35rem 0 0.15rem;
   outline: none;
 }
 
-.draft-sheet__handle span {
-  width: 2.6rem;
-  height: 0.3rem;
+/* Tap affordance: chevron chip — clearer than a bare grab line. */
+.draft-sheet__toggle {
+  display: grid;
+  place-items: center;
+  width: 2.85rem;
+  height: 1.55rem;
   border-radius: 999px;
-  background: rgba(200, 220, 255, 0.38);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(180, 205, 255, 0.14));
+  box-shadow:
+    0 0 0 1px rgba(200, 220, 255, 0.45),
+    0 0 12px rgba(120, 180, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.draft-sheet__handle:focus-visible span {
-  background: rgba(62, 232, 165, 0.9);
+.draft-sheet__toggle-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: #f2f7ff;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.draft-sheet__handle:focus-visible .draft-sheet__toggle {
+  box-shadow:
+    0 0 0 2px rgba(62, 232, 165, 0.95),
+    0 0 14px rgba(62, 232, 165, 0.35);
+}
+
+.draft-sheet__handle:active .draft-sheet__toggle {
+  transform: scale(0.94);
 }
 
 /* Collapsed bar: overlays the top of the list, fades out as the sheet opens. */

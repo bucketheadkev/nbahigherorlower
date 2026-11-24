@@ -36,11 +36,17 @@ export const COINS_WELCOME = 200;
 export const COINS_PERK_COST = 100;
 export const COINS_REROLL_COST = 100;
 
-/** Max perk activations per Classic run (separate from rerolls). */
-export const MAX_PERK_ACTIVATIONS_PER_RUN = 3;
+/**
+ * Shared Classic boost budget: every Team/Era reroll and every perk activation
+ * draws from the same pool of three (first Team + first Era still free within it).
+ */
+export const MAX_BOOSTS_PER_RUN = 3;
 
-/** Max Team/Era rerolls per Classic run (free + paid combined). */
-export const MAX_REROLLS_PER_RUN = 4;
+/** @deprecated Prefer MAX_BOOSTS_PER_RUN — perks share the same pool as rerolls. */
+export const MAX_PERK_ACTIVATIONS_PER_RUN = MAX_BOOSTS_PER_RUN;
+
+/** @deprecated Prefer MAX_BOOSTS_PER_RUN — rerolls share the same pool as perks. */
+export const MAX_REROLLS_PER_RUN = MAX_BOOSTS_PER_RUN;
 
 /** Players start at level 1. */
 export const XP_STARTING_LEVEL = 1;

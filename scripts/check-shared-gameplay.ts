@@ -53,7 +53,7 @@ const corrections: Array<{ key: string; millions: number }> = [
   { key: '2020s|TOR|Scottie Barnes', millions: 183 },
   { key: '2020s|IND|Pascal Siakam', millions: 181 },
   { key: '2020s|TOR|Pascal Siakam', millions: 181 },
-  { key: '1980s|BOS|Larry Bird', millions: 213 },
+  { key: '1980s|BOS|Larry Bird', millions: 204 },
 ];
 
 for (const correction of corrections) {
@@ -130,8 +130,8 @@ const bird80s = card({
   stats: { ppg: 25, rpg: 10.2, apg: 6.1, spg: 1, bpg: 1 },
 });
 assert.notEqual(resolveAuthoritativePlayerValue(bird90s), resolveAuthoritativePlayerValue(bird80s));
-assert.equal(resolveAuthoritativePlayerValue(bird80s), 213_000_000);
-assert.notEqual(resolveAuthoritativePlayerValue(bird90s), 213_000_000);
+assert.equal(resolveAuthoritativePlayerValue(bird80s), 204_000_000);
+assert.notEqual(resolveAuthoritativePlayerValue(bird90s), 204_000_000);
 
 const boshTor = card({
   id: 'hist_2000s_TOR_chris_bosh',
@@ -165,7 +165,7 @@ assert.notEqual(resolveAuthoritativePlayerValue(siakam2010), 181_000_000);
 // Full value at every eligible position: no primary/alternate difference.
 const alternate = getDollarValueForSlot(bird80s, 'SF');
 const primary = getDollarValueForSlot(bird80s, 'PF');
-assert.equal(primary, 213_000_000);
+assert.equal(primary, 204_000_000);
 assert.equal(alternate, primary);
 
 const rounds: H2HRoundPublic[] = [

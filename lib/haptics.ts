@@ -11,6 +11,8 @@ export {
   hapticSuccess,
   hapticWarning,
   hapticError,
+  hapticFail,
+  warmFailHaptics,
   hapticSpinTick,
   hapticSpinStop,
   hapticWheelStart,

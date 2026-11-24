@@ -9,7 +9,23 @@ import {
   resolveRerollPair,
   type TicketRerollKind,
 } from '../lib/tradeup/rerollPair';
-import { COINS_REROLL_COST, MAX_REROLLS_PER_RUN } from '../lib/tradeup/xp/config';
+import { readFileSync } from 'node:fs';
+import {
+  COINS_REROLL_COST,
+  MAX_BOOSTS_PER_RUN,
+  MAX_PERK_ACTIVATIONS_PER_RUN,
+  MAX_REROLLS_PER_RUN,
+} from '../lib/tradeup/xp/config';
+
+// One shared Classic boost pool: perk bar, reroll labels, and engine cap must never drift apart.
+// (perks.ts uses '@/' aliases so it can't load here; MAX_PERK_USES must stay the config alias.)
+assert.equal(MAX_BOOSTS_PER_RUN, MAX_REROLLS_PER_RUN, 'MAX_BOOSTS !== MAX_REROLLS');
+assert.equal(MAX_BOOSTS_PER_RUN, MAX_PERK_ACTIVATIONS_PER_RUN, 'MAX_BOOSTS !== MAX_PERK');
+assert.match(
+  readFileSync(new URL('../lib/tradeup/perks.ts', import.meta.url), 'utf8'),
+  /export const MAX_PERK_USES = MAX_PERK_ACTIVATIONS_PER_RUN;/,
+  'MAX_PERK_USES must alias MAX_PERK_ACTIVATIONS_PER_RUN',
+);
 
 const pairs = listValidSpinPairs();
 assert.ok(pairs.length > 10, 'expected a real spin pool');
@@ -186,7 +202,7 @@ function simulateRerollTaps(opts: {
   assert.equal(r.used, 0);
 }
 
-// Max 4 rerolls
+// Shared Classic boost budget: max 3 (Team/Era rerolls share the pool)
 {
   const r = simulateRerollTaps({
     taps: ['team', 'era', 'team', 'era', 'team'],
@@ -196,9 +212,9 @@ function simulateRerollTaps(opts: {
     used: 0,
     baseline: baseline!,
   });
-  assert.equal(r.used, 4);
+  assert.equal(r.used, 3);
   assert.ok(r.log.includes('blocked-limit'));
-  assert.equal(r.log.filter((x) => x.startsWith('free-') || x.startsWith('paid-')).length, 4);
+  assert.equal(r.log.filter((x) => x.startsWith('free-') || x.startsWith('paid-')).length, 3);
 }
 
 console.log('check-reroll-race: ok');

@@ -40,6 +40,11 @@
     "ios",
     "android",
     "capacitor.config.ts",
-    "supabase/functions"
+    "supabase/functions",
+    "scripts/check-secure-coin-bank-pg.ts",
+    "scripts/check-secure-coin-bank.ts",
+    "scripts/staging-apply-and-validate.ts",
+    "scripts/staging-validate.ts",
+    "tmp"
   ]
 }

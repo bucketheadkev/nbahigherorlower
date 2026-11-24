@@ -12,7 +12,8 @@ import { unlockH2HReactionAudio } from './h2hEmojiSound';
 import { playDigitalWheelLock } from './digitalWheelSound';
 
 /** Team + Era reel duration (initial spin and every Team/Era reroll). */
-export const WHEEL_SPIN_DURATION_MS = 2940;
+/** Classic team/era spinner — ~2s with natural accel/decel in the reel. */
+export const WHEEL_SPIN_DURATION_MS = 2000;
 
 export type GameSoundEvent =
   | 'ui_hover'
@@ -104,7 +105,7 @@ export const SPIN_CLICK_SOUND_PATH = '/sounds/spin-click.wav';
 const SPIN_CLICK_VOLUME = 0.35;
 /** Pixabay: click-21156 (666herohero). In-game only: picking a player, placing or moving him. */
 export const PLACE_CLICK_SOUND_PATH = '/sounds/place-click.mp3';
-const PLACE_CLICK_VOLUME = 0.6;
+const PLACE_CLICK_VOLUME = 0.5;
 
 /**
  * Wheel spin loudness.
@@ -115,6 +116,10 @@ const PLACE_CLICK_VOLUME = 0.6;
 const WHEEL_SPIN_VOLUME_BASE = 0.42;
 const WHEEL_SPIN_VOLUME = WHEEL_SPIN_VOLUME_BASE * 0.6;
 
+/*
+ * Loudness targets (QC): one-shots sit in a ~0.34–0.60 band, with ui_tap (0.48) as the reference.
+ * Defeat and pack stingers were hotter than the tap by 1.2–1.7×; pulled toward mid range.
+ */
 const SOUND_DEFS: Record<SoundId, SoundDef> = {
   ticket_print: {
     path: TICKET_PRINT_SOUND_PATH,
@@ -149,15 +154,16 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
   },
   billion_celebration: {
     path: '/sounds/success-rich.mp3',
-    volume: 0.52,
+    volume: 0.46,
     debounceMs: 600,
   },
-  defeat: { path: '/sounds/reject.mp3', volume: 0.22, debounceMs: 280 },
-  pack_appear: { path: '/sounds/pack-appear.mp3', volume: 0.5, debounceMs: 300 },
-  pack_tap: { path: '/sounds/pack-tap.mp3', volume: 0.6, debounceMs: 150 },
-  pack_riser: { path: '/sounds/pack-riser.mp3', volume: 0.7, debounceMs: 150 },
-  pack_whoosh: { path: '/sounds/pack-whoosh.mp3', volume: 0.8, debounceMs: 150 },
-  pack_goat: { path: '/sounds/pack-goat.mp3', volume: 0.6, debounceMs: 600 },
+  // reject.mp3 is a ~130ms blip — keep as a click layer; the audible sting is synthesized.
+  defeat: { path: '/sounds/reject.mp3', volume: 0.72, debounceMs: 400 },
+  pack_appear: { path: '/sounds/pack-appear.mp3', volume: 0.44, debounceMs: 300 },
+  pack_tap: { path: '/sounds/pack-tap.mp3', volume: 0.5, debounceMs: 150 },
+  pack_riser: { path: '/sounds/pack-riser.mp3', volume: 0.52, debounceMs: 150 },
+  pack_whoosh: { path: '/sounds/pack-whoosh.mp3', volume: 0.52, debounceMs: 150 },
+  pack_goat: { path: '/sounds/pack-goat.mp3', volume: 0.52, debounceMs: 600 },
 };
 
 /**
@@ -973,6 +979,15 @@ export function playUiTapSound(): void {
   playClick('ui_tap');
 }
 
+/** Decode the UI tap sample ahead of Shop / nav so the first press is never silent. */
+export function warmUiTapSound(): void {
+  if (typeof window === 'undefined') return;
+  unlockGameAudio();
+  void ensureClickBuffer('ui_tap');
+  const el = ensurePlayer('ui_tap');
+  if (el && el.readyState === 0) el.load();
+}
+
 /** Stop team/era spin audio (leave screen / new spin / unmount). */
 export function stopWheelSpinSound(): void {
   wheelSpinToken += 1;
@@ -1009,7 +1024,7 @@ export function playTicketReleaseSound(): void {
   playSound('ticket_release');
 }
 
-/** Wheel ticks are haptic-only — no audio. */
+/** Haptic-only on purpose: wheel-tick.mp3 would dual-fire over the continuous wheel_spin sample. */
 export function playWheelTickSound(): void {
   /* intentionally silent */
 }
@@ -1101,6 +1116,92 @@ export function warmResultsRevealSounds(): void {
   if (typeof window === 'undefined') return;
   warmFinalTotalSettleSound();
   void ensureClickBuffer('billion_celebration');
+  void ensureClickBuffer('defeat');
+  unlockGameAudio();
+}
+
+/**
+ * Under $1B settle — audible rejection sting (reject.mp3 alone is ~130ms and easy to miss).
+ * Resumes AudioContext first so a timer-fired settle still plays on iOS WKWebView.
+ */
+export function playResultsDefeatSound(): void {
+  if (typeof window === 'undefined' || getAudioSettings().sfxMuted) return;
+  unlockGameAudio();
+  const audio = getCtx();
+  const fire = () => {
+    playClick('defeat');
+    const ctx = getCtx();
+    if (ctx?.state === 'running') playResultsDefeatStingNow(ctx);
+  };
+  if (audio?.state === 'suspended') {
+    void audio.resume().then(fire).catch(() => fire());
+    return;
+  }
+  fire();
+}
+
+/** Four descending rejection thuds timed with the fail haptic pulses. */
+function playResultsDefeatStingNow(audio: AudioContext): void {
+  const now = audio.currentTime;
+  const level = 0.34 * masterScale();
+  const out = audio.createGain();
+  out.gain.value = level;
+  out.connect(audio.destination);
+
+  const beats = [
+    { at: 0, hz: 155 },
+    { at: 0.15, hz: 118 },
+    { at: 0.3, hz: 88 },
+    { at: 0.5, hz: 62 },
+  ];
+
+  beats.forEach(({ at, hz }) => {
+    const t = now + at;
+    const osc = audio.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(hz, t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(40, hz * 0.55), t + 0.14);
+
+    const filter = audio.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, t);
+    filter.frequency.exponentialRampToValueAtTime(220, t + 0.14);
+
+    const g = audio.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(1, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+
+    osc.connect(filter).connect(g).connect(out);
+    osc.start(t);
+    osc.stop(t + 0.18);
+  });
+
+  // Soft noise slap under the first thud so it reads as a reject, not a tone.
+  const noise = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.12), audio.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const slap = audio.createBufferSource();
+  slap.buffer = noise;
+  const slapFilter = audio.createBiquadFilter();
+  slapFilter.type = 'bandpass';
+  slapFilter.frequency.value = 380;
+  slapFilter.Q.value = 0.8;
+  const slapGain = audio.createGain();
+  slapGain.gain.setValueAtTime(0.0001, now);
+  slapGain.gain.exponentialRampToValueAtTime(0.7, now + 0.01);
+  slapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+  slap.connect(slapFilter).connect(slapGain).connect(out);
+  slap.start(now);
+  slap.stop(now + 0.14);
+
+  window.setTimeout(() => {
+    try {
+      out.disconnect();
+    } catch {
+      /* ignore */
+    }
+  }, 900);
 }
 
 /** Rising pentatonic steps, one per row (PG → C), so the five reveals build. */
@@ -1112,10 +1213,22 @@ const REVEAL_STEPS_HZ = [523.25, 587.33, 659.25, 783.99, 880];
  */
 export function playResultsRowSound(index: number): void {
   if (typeof window === 'undefined' || getAudioSettings().sfxMuted) return;
+  unlockGameAudio();
   const audio = getCtx();
   if (!audio) return;
-  if (audio.state === 'suspended') void audio.resume().catch(() => undefined);
-  if (audio.state !== 'running') return;
+  const fire = () => {
+    const ctx = getCtx();
+    if (!ctx || ctx.state !== 'running') return;
+    playResultsRowSoundNow(ctx, index);
+  };
+  if (audio.state === 'suspended') {
+    void audio.resume().then(fire).catch(() => undefined);
+    return;
+  }
+  fire();
+}
+
+function playResultsRowSoundNow(audio: AudioContext, index: number): void {
   const level = 0.16 * masterScale() * (index >= 4 ? 1.25 : 1);
   const now = audio.currentTime;
 

@@ -15,20 +15,23 @@ import { ClassicRunResults } from '../run/ClassicRunResults';
 /**
  * Dev-only `?runResultsPreview=1`: the real end-of-run screen for a lineup over $1B with its
  * Rollover and a completed sample Run Bonus. `?runResultsPreview=classic` plays the Classic results
- * reveal with the same $1B+ five. Nothing here is submitted or credited.
+ * reveal with the same $1B+ five. `?runResultsPreview=fail` is under $1B (red total). Nothing here
+ * is submitted or credited.
  */
 export function RunResultsPreview() {
-  const [show, setShow] = useState<'1' | 'dynasty' | 'classic' | null>(null);
+  const [show, setShow] = useState<'1' | 'dynasty' | 'classic' | 'fail' | null>(null);
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
     const mode = new URLSearchParams(window.location.search).get('runResultsPreview');
-    setShow(mode === '1' || mode === 'dynasty' || mode === 'classic' ? mode : null);
+    setShow(
+      mode === '1' || mode === 'dynasty' || mode === 'classic' || mode === 'fail' ? mode : null,
+    );
   }, []);
   if (!show) return null;
 
   // `dynasty`: a $1B+ five with Dynasty Road players (2010s Warriors/Heat/Mavericks, '90s Bulls).
   const seats: Array<[TradePlayer, Position]> =
-    show === 'dynasty' || show === 'classic'
+    show === 'dynasty' || show === 'classic' || show === 'fail'
       ? ([
           ['hist_2010s_GSW_stephen_curry', 'PG'],
           ['hist_1990s_CHI_michael_jordan', 'SG'],
@@ -43,17 +46,22 @@ export function RunResultsPreview() {
           [DIRK, 'PF'],
           [EWING, 'C'],
         ];
-  const roster = seats.map(([p, slot]) => ({
-    ...p,
-    dollarValue: getDollarValueForSlot(p, slot),
-    seatedSlot: slot,
-  })) as Array<ValuedPlayer & { seatedSlot: Position }>;
+  const roster = seats.map(([p, slot]) => {
+    const full = getDollarValueForSlot(p, slot);
+    return {
+      ...p,
+      // Fail preview: shrink so the locked total stays under $1B.
+      dollarValue: show === 'fail' ? Math.round(full * 0.72) : full,
+      seatedSlot: slot,
+    };
+  }) as Array<ValuedPlayer & { seatedSlot: Position }>;
   const total = roster.reduce((s, p) => s + p.dollarValue, 0);
 
-  if (show === 'classic') {
+  if (show === 'classic' || show === 'fail') {
     return (
       <ClassicRunResults
         roster={roster}
+        reduceMotion={show === 'fail'}
         onTotalSettled={() => undefined}
         onComplete={() => undefined}
         onPlayAgain={() => setShow(null)}

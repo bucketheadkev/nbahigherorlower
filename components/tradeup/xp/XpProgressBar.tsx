@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { progressFromTotalXp, type LevelProgress } from '@/lib/tradeup/xp';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 
@@ -38,12 +39,25 @@ export function XpProgressBar({
 
   // When leveling within one animation, fill to 100% of the starting segment then settle on end.
   const crossed = end.level > start.level;
+
+  // Level changed while mounted (XP landed after the bar appeared): pop the number + glow once.
+  const prevLevel = useRef(end.level);
+  const [leveledUp, setLeveledUp] = useState(false);
+  useEffect(() => {
+    if (end.level > prevLevel.current) {
+      setLeveledUp(true);
+      const id = window.setTimeout(() => setLeveledUp(false), 1800);
+      prevLevel.current = end.level;
+      return () => window.clearTimeout(id);
+    }
+    prevLevel.current = end.level;
+  }, [end.level]);
   const fillFrom = start.fill;
   const fillTo = crossed ? 1 : end.fill;
 
   return (
     <div
-      className={`xp-meter${compact ? ' is-compact' : ''} ${className}`.trim()}
+      className={`xp-meter${compact ? ' is-compact' : ''}${leveledUp ? ' is-level-up' : ''} ${className}`.trim()}
       role="meter"
       aria-valuemin={0}
       aria-valuemax={end.xpForNext}
@@ -52,7 +66,15 @@ export function XpProgressBar({
     >
       <div className="xp-meter__row">
         <span className="xp-meter__lvl">
-          {levelLabel} <strong>{end.level}</strong>
+          {levelLabel}{' '}
+          <motion.strong
+            key={end.level}
+            initial={leveledUp && !reduceMotion ? { scale: 1.7, opacity: 0.4 } : false}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 15 }}
+          >
+            {end.level}
+          </motion.strong>
         </span>
         <div className="xp-meter__bar-wrap">
           <div className="xp-meter__track" aria-hidden>

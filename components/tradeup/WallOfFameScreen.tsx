@@ -54,6 +54,8 @@ const COPY = {
   eligibleTitle: { en: 'Your place is waiting', es: 'Tu lugar te espera' },
   eligibleSub: { en: 'You built a $1,000,000,000 Bank.', es: 'Construiste un Banco de $1,000,000,000.' },
   signCta: { en: 'SIGN THE WALL', es: 'FIRMA EL MURO' },
+  signLocked: { en: 'LOCKED · SIGN THE WALL', es: 'BLOQUEADO · FIRMA EL MURO' },
+  lockedHint: { en: 'Reach a $1,000,000,000 Bank to unlock your signature.', es: 'Llega a un Banco de $1,000,000,000 para desbloquear tu firma.' },
   signedTitle: { en: 'You’re No. {n} on the wall', es: 'Eres el N.º {n} del muro' },
   signedTitleNoNum: { en: 'You’re on the wall', es: 'Estás en el muro' },
   findMe: { en: 'FIND MY SIGNATURE', es: 'VER MI FIRMA' },
@@ -142,8 +144,14 @@ function WallOfFame({
 }: WallOfFameScreenProps) {
   const { locale } = useLocale();
   const reduceMotion = getPrefersReducedMotion();
-  const wallPreview = useMemo(() => preview || isWallPreview(), [preview]);
-  const bankPreview = useMemo(() => readBankPreview() != null, []);
+  // Defer URL preview flags so SSR and first client paint match (no window reads in render).
+  const [queryWallPreview, setQueryWallPreview] = useState(false);
+  const [bankPreview, setBankPreview] = useState(false);
+  useEffect(() => {
+    setQueryWallPreview(isWallPreview());
+    setBankPreview(readBankPreview() != null);
+  }, []);
+  const wallPreview = preview || queryWallPreview;
   const demo = wallPreview || bankPreview;
   const demoEntries = useMemo(() => (wallPreview ? previewWall() : []), [wallPreview]);
 
@@ -160,6 +168,8 @@ function WallOfFame({
   const entriesRef = useRef<WallEntry[]>([]);
   entriesRef.current = entries;
   const demoSigned = useRef(false);
+  /** Explicit QA override only (?wallPreview=1) — the home CTA's `preview` never forces eligibility. */
+  const forceEligible = queryWallPreview;
 
   const loadMore = useCallback(async (): Promise<WallEntry[]> => {
     if (loadingRef.current) return [];
@@ -196,7 +206,8 @@ function WallOfFame({
   useEffect(() => {
     void loadMore();
     if (demo) {
-      setStatus({ inductedAt: qualifiesForWall(bank) || wallPreview ? new Date().toISOString() : null, signature: null, signedAt: null, number: null });
+      // Demo induction is derived live from `bank` below (never stamped from a stale balance).
+      setStatus({ inductedAt: null, signature: null, signedAt: null, number: null });
       return;
     }
     if (!permanent) return;
@@ -252,9 +263,15 @@ function WallOfFame({
     [loadMore, reduceMotion],
   );
 
-  const eligible = Boolean(status?.inductedAt) && !status?.signature;
   const signed = Boolean(status?.signature);
-  const guestQualified = !permanent && !demo && qualifiesForWall(bank);
+  // Eligible copy only when the backend says inducted (permanent) — or, in demo/preview,
+  // when the visible bank actually reached $1B. Never when bank < 1B without induction.
+  const inducted = demo
+    ? forceEligible || (permanent && qualifiesForWall(bank)) || signed
+    : Boolean(status?.inductedAt);
+  const eligible = inducted && !signed;
+  const lockedPermanent = permanent && !eligible && !signed;
+  const guestQualified = !permanent && !forceEligible && qualifiesForWall(bank);
   const pct = Math.min(1, bank / WALL_OF_FAME_GOAL);
 
   const onSigned = (signature: string, number: number | null) => {
@@ -357,6 +374,23 @@ function WallOfFame({
         <p className="wf-dock__note">
           {fill(pick(COPY.toGo, locale), { amount: formatCash(Math.max(0, WALL_OF_FAME_GOAL - bank)) })}
         </p>
+        {lockedPermanent ? (
+          <>
+            <button
+              type="button"
+              className="wf-btn wf-btn--locked"
+              disabled
+              aria-disabled="true"
+              aria-label={`${pick(COPY.signLocked, locale)}. ${fill(pick(COPY.toGo, locale), { amount: formatCash(Math.max(0, WALL_OF_FAME_GOAL - bank)) })}`}
+            >
+              <svg className="wf-btn__lock" viewBox="0 0 16 16" width="13" height="13" aria-hidden>
+                <path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2M3.5 7h9v6.5h-9z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+              {pick(COPY.signLocked, locale)}
+            </button>
+            <p className="wf-dock__note wf-dock__note--faint">{pick(COPY.lockedHint, locale)}</p>
+          </>
+        ) : null}
       </div>
     );
   }

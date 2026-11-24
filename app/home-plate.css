@@ -5,11 +5,11 @@
 /* Shared nav bar + MODE navy — hub-wide so Home / Board / Shop stay identical */
 body:has(.home-hub-top.rh5-top),
 body:has(.oneb-tabbar-host) {
-  --rh5-dock-top: #0d3268;
-  --rh5-dock-mid: #0a2250;
-  --rh5-dock-bot: #071838;
-  --rh5-dock-border: rgba(90, 145, 215, 0.3);
-  --rh5-dock-sheen: rgba(255, 255, 255, 0.09);
+  --rh5-dock-top: #0a1220;
+  --rh5-dock-mid: #070f1c;
+  --rh5-dock-bot: #050b18;
+  --rh5-dock-border: rgba(168, 196, 240, 0.45);
+  --rh5-dock-sheen: rgba(255, 255, 255, 0.06);
 }
 
 .rh5 {
@@ -21,8 +21,8 @@ body:has(.oneb-tabbar-host) {
   --rh5-green: #6dff3c;
   --rh5-pad-x: max(1rem, env(safe-area-inset-left, 0px));
   --rh5-pad-r: max(1rem, env(safe-area-inset-right, 0px));
-  /* Web: breathing room above the flush dock */
-  --rh5-tab-clear: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+  /* Clear the midnight pill dock */
+  --rh5-tab-clear: calc(5.55rem + env(safe-area-inset-bottom, 0px));
 
   position: relative;
   display: flex;
@@ -34,15 +34,32 @@ body:has(.oneb-tabbar-host) {
   color: #fff;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+  /* Hub is a game surface — no accidental text/image selection quads. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /*
- * iOS App Store build: pull Bank / PLAY / MODES down flush above the dock.
- * Pay safe-area once (dock padding already includes it) — no dead strip.
+ * iOS App Store build: flush bottom nav + home-indicator pad.
  */
 html[data-platform="native"] .rh5 {
-  /* Match iOS dock (web-like pill band + safe-area pad) so CTAs clear it */
-  --rh5-tab-clear: calc(5.15rem + env(safe-area-inset-bottom, 0px));
+  --rh5-tab-clear: calc(4.7rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Baked 1B RUN a little lower under the notch (iOS). */
+html[data-platform="native"] .rh5-bg__photo {
+  background-position: center calc(30.5% + env(safe-area-inset-top, 0px) * 0.42);
+}
+
+/* CHASE $1 BILLION — right under 1B RUN (iOS only; small gap, not touching). */
+html[data-platform="native"] .rh5-fx__subtitle {
+  top: calc(env(safe-area-inset-top, 0px) + clamp(9.2rem, 22.6vh, 12.15rem));
+  font-size: clamp(0.88rem, 3.45vw, 1.08rem);
+  letter-spacing: 0.16em;
+  font-weight: 850;
+  line-height: 1;
 }
 
 /* Generated 1B RUN growth arena — static bars only; live neon FX layered on top */
@@ -91,10 +108,10 @@ html[data-platform="native"] .rh5 {
   width: max-content;
   max-width: 90vw;
   font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
-  font-size: clamp(0.62rem, 2.5vw, 0.78rem);
+  font-size: clamp(0.8rem, 3.1vw, 1.02rem);
   font-weight: 800;
   font-style: italic;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -104,6 +121,15 @@ html[data-platform="native"] .rh5 {
     0 0 12px rgba(210, 225, 255, 0.28),
     0 2px 10px rgba(0, 0, 0, 0.6);
   -webkit-font-smoothing: antialiased;
+}
+
+.rh5-fx__subtitle-amt {
+  /* Match bank progress bar / Bank Money green */
+  color: #5cff9a;
+  text-shadow:
+    0 1px 0 rgba(180, 255, 210, 0.28),
+    0 0 12px rgba(30, 217, 108, 0.4),
+    0 2px 10px rgba(0, 0, 0, 0.55);
 }
 
 .rh5-bg__veil {
@@ -148,18 +174,31 @@ html[data-platform="native"] .rh5 {
   position: absolute;
   bottom: -4%;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.92),
-    rgba(170, 215, 255, 0.42) 55%,
-    rgba(80, 140, 255, 0.05) 100%
-  );
-  box-shadow: 0 0 4px rgba(140, 200, 255, 0.35);
   opacity: 0;
   animation-name: rh5-bubble-rise;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: transform, opacity;
+}
+
+.rh5-bubble--white {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.95),
+    rgba(230, 240, 255, 0.45) 55%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.35);
+}
+
+.rh5-bubble--green {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(190, 255, 220, 0.95),
+    rgba(45, 255, 158, 0.5) 55%,
+    rgba(20, 160, 90, 0.08) 100%
+  );
+  box-shadow: 0 0 5px rgba(46, 255, 160, 0.4);
 }
 
 @keyframes rh5-bubble-rise {
@@ -303,13 +342,13 @@ html[data-platform="native"] .rh5 {
   flex: 1 1 auto;
   min-width: 3.4rem;
   max-width: 6.5rem;
-  height: 0.38rem;
+  height: 0.5rem;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(4, 14, 32, 0.9);
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(100, 170, 255, 0.35);
+    0 0 0 1px rgba(120, 185, 255, 0.45);
 }
 
 .rh5-top .rh4-pxp__fill {
@@ -468,12 +507,20 @@ html[data-platform="native"] .rh5 {
   gap: 0.7rem;
   width: min(100%, 22.5rem);
   margin-bottom: 0.85rem;
+  /* Sit bank card top edge under the hoop support pole; keep bank↔CTA gap. */
+  transform: translate3d(0, -3.15rem, 0);
   pointer-events: auto;
 }
 
 html[data-platform="native"] .rh5-actions {
   margin-bottom: 0.08rem;
   gap: 0.55rem;
+  transform: translate3d(0, -2rem, 0);
+}
+
+/* iOS: PLAY / MODES nudged toward the tab bar (bank card stays under the hoop pole). Nav already includes the home-indicator inset. */
+html[data-platform="native"] .rh5-actions__row {
+  transform: translate3d(0, 0.7rem, 0);
 }
 
 .rh5-actions__row {
@@ -539,7 +586,7 @@ html[data-platform="native"] .rh5-actions {
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(175, 205, 240, 0.72);
+  color: rgba(195, 220, 250, 0.86);
   line-height: 1.2;
 }
 
@@ -548,24 +595,26 @@ html[data-platform="native"] .rh5-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.18rem;
-  max-width: 5.6rem;
+  gap: 0.22rem;
+  max-width: 7.4rem;
   padding-top: 0.05rem;
 }
 
 .rh5-bank__wof {
   appearance: none;
   margin: 0;
-  padding: 0.28rem 0.42rem;
-  border-radius: 0.45rem;
-  border: 1px solid rgba(110, 165, 235, 0.4);
+  padding: 0.42rem 0.68rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(140, 190, 255, 0.62);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 50%),
-    linear-gradient(180deg, #0d3268 0%, #071838 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  font-size: 0.5rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 50%),
+    linear-gradient(180deg, #14418a 0%, #0a2250 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
@@ -581,13 +630,18 @@ html[data-platform="native"] .rh5-actions {
 }
 
 .rh5-bank__wof-blurb {
-  font-size: 0.42rem;
-  font-weight: 700;
+  font-size: 0.5rem;
+  font-weight: 750;
   letter-spacing: 0.02em;
   line-height: 1.2;
   text-align: right;
-  color: rgba(170, 200, 240, 0.7);
+  color: rgba(195, 220, 250, 0.86);
   white-space: nowrap;
+}
+
+.rh5-bank__goal-amt {
+  color: #5cff9a;
+  text-shadow: 0 0 10px rgba(30, 217, 108, 0.28);
 }
 
 .rh5-bank__value {
@@ -618,18 +672,19 @@ html[data-platform="native"] .rh5-actions {
   position: relative;
   display: block;
   width: 100%;
-  height: 0.62rem;
-  margin-top: 0.06rem;
+  height: 0.8rem;
+  margin-top: 0.1rem;
   border-radius: 999px;
   overflow: hidden;
   isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 45%),
-    rgba(0, 6, 16, 0.92);
-  border: 1px solid rgba(120, 170, 220, 0.14);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 45%),
+    rgba(6, 22, 48, 0.95);
+  border: 1px solid rgba(140, 195, 255, 0.4);
   box-shadow:
     inset 0 1px 3px rgba(0, 0, 0, 0.55),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(0, 10, 28, 0.5);
 }
 
 .rh5-bank__fill {
@@ -890,7 +945,7 @@ html[data-platform="native"] .rh5-actions {
     0 0 0 1px rgba(255, 150, 50, 0.22),
     0 10px 28px rgba(0, 0, 0, 0.4),
     0 0 28px rgba(255, 130, 20, 0.38);
-  animation: rh5-play-pulse 2.8s ease-in-out infinite;
+  animation: rh5-play-pulse 7.5s ease-in-out infinite;
 }
 
 .rh5-cta__glow {
@@ -902,7 +957,7 @@ html[data-platform="native"] .rh5-actions {
   opacity: 0.9;
 }
 
-/* MODES — same height as PLAY, narrower flex */
+/* MODES — same height as PLAY, narrower flex (brighter navy, not midnight dock ink) */
 .rh5-cta--modes {
   flex: 1 1 0;
   min-width: 0;
@@ -910,12 +965,13 @@ html[data-platform="native"] .rh5-actions {
   min-height: 4.55rem;
   height: 4.55rem;
   border-radius: 0.95rem;
-  border: 1px solid rgba(120, 165, 230, 0.42);
+  border: 1.5px solid rgba(110, 175, 255, 0.55);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 42%),
-    linear-gradient(180deg, var(--rh5-dock-top) 0%, var(--rh5-dock-mid) 55%, var(--rh5-dock-bot) 100%) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, #0d3268 0%, #0a2250 55%, #071838 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 18px rgba(40, 110, 210, 0.22),
     0 8px 20px rgba(0, 0, 0, 0.34);
 }
 
@@ -929,17 +985,17 @@ html[data-platform="native"] .rh5-actions {
       inset 0 -3px 8px rgba(120, 35, 0, 0.28),
       0 0 0 1px rgba(255, 150, 50, 0.22),
       0 10px 28px rgba(0, 0, 0, 0.4),
-      0 0 26px rgba(255, 130, 20, 0.36);
+      0 0 18px rgba(255, 130, 20, 0.22);
   }
   50% {
-    transform: scale(1.025);
-    filter: brightness(1.07);
+    transform: scale(1.006);
+    filter: brightness(1.015);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.62),
-      inset 0 -3px 8px rgba(120, 35, 0, 0.22),
-      0 0 0 1px rgba(255, 190, 90, 0.35),
-      0 12px 30px rgba(0, 0, 0, 0.36),
-      0 0 38px rgba(255, 150, 40, 0.55);
+      inset 0 1px 0 rgba(255, 255, 255, 0.56),
+      inset 0 -3px 8px rgba(120, 35, 0, 0.26),
+      0 0 0 1px rgba(255, 165, 65, 0.25),
+      0 10px 28px rgba(0, 0, 0, 0.38),
+      0 0 21px rgba(255, 135, 25, 0.27);
   }
 }
 
@@ -966,19 +1022,21 @@ html[data-platform="native"] .rh5-actions {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.08) 28%,
-    rgba(255, 250, 235, 0.55) 50%,
-    rgba(255, 255, 255, 0.1) 72%,
+    rgba(255, 255, 255, 0.03) 28%,
+    rgba(255, 250, 235, 0.18) 50%,
+    rgba(255, 255, 255, 0.04) 72%,
     transparent 100%
   );
   transform: translate3d(-130%, 0, 0) skewX(-18deg);
-  animation: rh5-sheen 2.6s linear infinite;
+  animation: rh5-sheen 8s ease-in-out infinite;
 }
 
+/* Sweep once (~38% of cycle), then rest off-screen before the next pass */
 @keyframes rh5-sheen {
   0% {
     transform: translate3d(-130%, 0, 0) skewX(-18deg);
   }
+  38%,
   100% {
     transform: translate3d(320%, 0, 0) skewX(-18deg);
   }

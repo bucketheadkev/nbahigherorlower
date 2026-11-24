@@ -13,18 +13,25 @@ import {
 import {
   fetchMyWinsRank,
   fetchWinsLeaderboardTop,
-  getDailyWinsResetAt,
   settleDailyWinsPayouts,
   type WinsBoardPeriod,
   type WinsStanding,
 } from '@/lib/account/winsLeaderboardCloud';
+import { useBankBalance } from '@/hooks/useBankBalance';
+import { flushPendingTriviaBonuses } from '@/lib/tradeup/trivia/bankTrivia';
 import { formatCash } from '@/lib/tradeup/bank';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { AccountAuthSheet, type AccountSheetView } from './AccountAuthSheet';
-import { TickerNumber } from './onboarding/ticker';
+import { HomeProfileMark } from './home/HomeProfileMark';
 
 type LoadState = 'loading' | 'ready' | 'empty' | 'unavailable' | 'error';
 type BoardMetric = 'wins' | 'bank';
+
+type BoardSnapshot = {
+  rows: BoardEntry[];
+  mine: BoardEntry | null;
+  state: LoadState;
+};
 
 type BoardEntry = {
   rank: number;
@@ -33,8 +40,8 @@ type BoardEntry = {
   unit: string;
 };
 
+const EMPTY_ROWS: BoardEntry[] = [];
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-const PLACE_LABEL: Record<1 | 2 | 3, string> = { 1: '1ST', 2: '2ND', 3: '3RD' };
 
 function isBoardPreview(): boolean {
   if (typeof window === 'undefined') return false;
@@ -64,20 +71,21 @@ const PREVIEW_DAILY: WinsStanding[] = [
 
 const PREVIEW_ALL_TIME: WinsStanding[] = Array.from({ length: 24 }, (_, i) => ({
   rank: i + 1,
-  username: [
-    'Vaultline',
-    'NorthStar',
-    'Kairo',
-    'Meridian',
-    'Atlas',
-    'Sable',
-    'Onyx',
-    'Halcyon',
-    'Riven',
-    'Solace',
-    'Drift',
-    'Nova',
-  ][i % 12] + (i >= 12 ? String(i) : ''),
+  username:
+    [
+      'Vaultline',
+      'NorthStar',
+      'Kairo',
+      'Meridian',
+      'Atlas',
+      'Sable',
+      'Onyx',
+      'Halcyon',
+      'Riven',
+      'Solace',
+      'Drift',
+      'Nova',
+    ][i % 12] + (i >= 12 ? String(i) : ''),
   wins: Math.max(1, 148 - i * 5),
 }));
 
@@ -112,95 +120,22 @@ function mapBankEntry(row: BankStanding, unit: string): BoardEntry {
   return { rank: row.rank, username: row.username, value: row.bankTotal, unit };
 }
 
-function PodiumCard({
-  entry,
-  place,
-  isYou,
-  youLabel,
-  formatValue,
-  index,
-  reduceMotion,
-  isBank,
-}: {
-  entry: BoardEntry;
-  place: 1 | 2 | 3;
-  isYou: boolean;
-  youLabel: string;
-  formatValue: (n: number) => string;
-  index: number;
-  reduceMotion: boolean;
-  isBank: boolean;
-}) {
-  return (
-    <motion.article
-      className={`wb-podium__card is-place-${place}${isYou ? ' is-you' : ''}${isBank ? ' is-bank' : ''}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, ease: EASE, delay: 0.06 + index * 0.07 }}
-    >
-      <span className="wb-podium__medal">{PLACE_LABEL[place]}</span>
-      <h2 className="wb-podium__name">{entry.username}</h2>
-      {isYou ? <em className="wb-you">{youLabel}</em> : null}
-      <p className={`wb-podium__value${isBank ? ' is-bank-cash' : ''}`}>
-        <TickerNumber value={entry.value} duration={reduceMotion ? 0 : 1000} format={formatValue} />
-      </p>
-      {entry.unit ? <span className="wb-podium__unit">{entry.unit}</span> : null}
-    </motion.article>
-  );
-}
-
-function BoardRow({
-  entry,
-  isYou,
-  youLabel,
-  formatValue,
-  index,
-  reduceMotion,
-  isBank,
-}: {
-  entry: BoardEntry;
-  isYou: boolean;
-  youLabel: string;
-  formatValue: (n: number) => string;
-  index: number;
-  reduceMotion: boolean;
-  isBank: boolean;
-}) {
-  return (
-    <motion.li
-      className={`wb-row${isYou ? ' is-you' : ''}${isBank ? ' is-bank' : ''}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: EASE, delay: Math.min(0.55, 0.16 + index * 0.022) }}
-    >
-      <span className="wb-row__rank">{entry.rank}</span>
-      <span className="wb-row__name">
-        <strong>{entry.username}</strong>
-        {isYou ? <em className="wb-you">{youLabel}</em> : null}
-      </span>
-      <span className={`wb-row__value${isBank ? ' is-bank-cash' : ''}`}>
-        <strong>{formatValue(entry.value)}</strong>
-        {entry.unit ? <small>{entry.unit}</small> : null}
-      </span>
-    </motion.li>
-  );
-}
-
-function BoardMetricMenu({
+function FilterSelect<T extends string>({
+  label,
   value,
+  options,
   onChange,
-  winsLabel,
-  bankLabel,
-  metricLabel,
+  wide,
 }: {
-  value: BoardMetric;
-  onChange: (next: BoardMetric) => void;
-  winsLabel: string;
-  bankLabel: string;
-  metricLabel: string;
+  label: string;
+  value: T;
+  options: readonly { id: T; text: string }[];
+  onChange: (next: T) => void;
+  wide?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const selected = options.find((o) => o.id === value)?.text ?? value;
 
   useEffect(() => {
     if (!open) return;
@@ -218,50 +153,53 @@ function BoardMetricMenu({
     };
   }, [open]);
 
-  const label = value === 'bank' ? bankLabel : winsLabel;
-
   return (
-    <div className={`wb-dd${open ? ' is-open' : ''}`} ref={rootRef}>
+    <div
+      className={`wb-filter${wide ? ' is-wide' : ''}${open ? ' is-open' : ''}`}
+      ref={rootRef}
+    >
       <button
         type="button"
-        className="wb-dd__trigger"
+        className="wb-filter__trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={metricLabel}
+        aria-label={label}
         onClick={() => setOpen((v) => !v)}
       >
-        <span>{label}</span>
-        <svg className="wb-dd__chev" viewBox="0 0 12 8" width="10" height="7" aria-hidden>
-          <path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <span className="wb-filter__value">{selected}</span>
+        <svg className="wb-filter__chev" viewBox="0 0 12 8" width="12" height="8" aria-hidden>
+          <path
+            d="M1 1.5 L6 6.5 L11 1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
       <AnimatePresence>
         {open ? (
           <motion.ul
-            className="wb-dd__menu"
+            className="wb-filter__menu"
             role="listbox"
-            aria-label={metricLabel}
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+            aria-label={label}
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.97 }}
-            transition={{ duration: 0.18, ease: EASE }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.16, ease: EASE }}
           >
-            {(
-              [
-                ['wins', winsLabel],
-                ['bank', bankLabel],
-              ] as const
-            ).map(([id, text]) => (
-              <li key={id} role="option" aria-selected={value === id}>
+            {options.map((opt) => (
+              <li key={opt.id} role="option" aria-selected={value === opt.id}>
                 <button
                   type="button"
-                  className={`wb-dd__option${value === id ? ' is-selected' : ''}`}
+                  className={`wb-filter__option${value === opt.id ? ' is-selected' : ''}`}
                   onClick={() => {
-                    onChange(id);
+                    onChange(opt.id);
                     setOpen(false);
                   }}
                 >
-                  {text}
+                  {opt.text}
                 </button>
               </li>
             ))}
@@ -272,24 +210,101 @@ function BoardMetricMenu({
   );
 }
 
+function PodiumSlot({
+  entry,
+  place,
+  isYou,
+  youLabel,
+  scoreText,
+  isBank,
+  reduceMotion,
+  index,
+}: {
+  entry: BoardEntry;
+  place: 1 | 2 | 3;
+  isYou: boolean;
+  youLabel: string;
+  scoreText: string;
+  isBank: boolean;
+  reduceMotion: boolean;
+  index: number;
+}) {
+  return (
+    <motion.article
+      className={`wb-podium__slot is-place-${place}${isYou ? ' is-you' : ''}`}
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: EASE, delay: 0.05 + index * 0.06 }}
+    >
+      <div className="wb-podium__player">
+        <span className={`wb-podium__mark is-place-${place}`}>
+          <HomeProfileMark label={entry.username} />
+        </span>
+        <h2 className="wb-podium__name">
+          {entry.username}
+          {isYou ? <em className="wb-you">{youLabel}</em> : null}
+        </h2>
+        <p className={`wb-podium__score${isBank ? ' is-bank' : ''}`}>{scoreText}</p>
+      </div>
+      <div className={`wb-podium__plinth is-place-${place}`} aria-hidden>
+        <span className="wb-podium__num">{place}</span>
+      </div>
+    </motion.article>
+  );
+}
+
+function BoardRow({
+  entry,
+  isYou,
+  youLabel,
+  scoreText,
+  isBank,
+  index,
+  reduceMotion,
+}: {
+  entry: BoardEntry;
+  isYou: boolean;
+  youLabel: string;
+  scoreText: string;
+  isBank: boolean;
+  index: number;
+  reduceMotion: boolean;
+}) {
+  return (
+    <motion.li
+      className={`wb-row${isYou ? ' is-you' : ''}`}
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: EASE, delay: Math.min(0.5, 0.12 + index * 0.02) }}
+    >
+      <span className="wb-row__rank">{entry.rank}</span>
+      <span className="wb-row__mark">
+        <HomeProfileMark label={entry.username} />
+      </span>
+      <span className="wb-row__name">
+        <strong>{entry.username}</strong>
+        {isYou ? <em className="wb-you">{youLabel}</em> : null}
+      </span>
+      <span className={`wb-row__score${isBank ? ' is-bank' : ''}`}>{scoreText}</span>
+    </motion.li>
+  );
+}
+
 /** Memoized — hub Shop/Home taps must not rebuild this board on website. */
 export const LeaderboardScreen = memo(function LeaderboardScreen() {
   const { t } = useLocale();
   const reduceMotion = getPrefersReducedMotion();
   const { state: accountState, setState: setAccountState } = useAccountAuth();
-  // Always start 'wins' so SSR matches the first client paint (sessionStorage later).
+  const liveBank = useBankBalance(accountState.status);
   const [boardMetric, setBoardMetric] = useState<BoardMetric>('wins');
   const [period, setPeriod] = useState<WinsBoardPeriod>('daily');
-  const [rows, setRows] = useState<BoardEntry[]>([]);
-  const [mine, setMine] = useState<BoardEntry | null>(null);
-  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [snapshots, setSnapshots] = useState<Record<string, BoardSnapshot>>({});
+  const loadSeq = useRef(0);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
-  const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
-    setNowTick(Date.now());
     try {
       const pref = sessionStorage.getItem('oneb_board_metric');
       if (pref === 'bank' || pref === 'wins') {
@@ -309,61 +324,64 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
   const myUsername = isPermanent ? accountState.profile.username : null;
 
   const winsUnit = t('leaderboard.winsUnit');
-  const formatValue = boardMetric === 'bank' ? formatCash : formatWins;
-
-  const resetAt = useMemo(
-    () => (nowTick > 0 ? getDailyWinsResetAt(new Date(nowTick)) : null),
-    [nowTick],
+  const formatScore = useCallback(
+    (entry: BoardEntry) => {
+      if (boardMetric === 'bank') return formatCash(entry.value);
+      return `${formatWins(entry.value)} ${entry.unit || winsUnit}`;
+    },
+    [boardMetric, winsUnit],
   );
-  const resetLabel = useMemo(() => {
-    if (!resetAt || nowTick <= 0) return t('leaderboard.resetInHours', { hours: 24 });
-    const ms = Math.max(0, resetAt.getTime() - nowTick);
-    const minutes = Math.floor(ms / 60_000);
-    const hours = Math.floor(ms / 3_600_000);
-    const days = Math.floor(hours / 24);
-    const remH = hours % 24;
-    if (days > 0) return t('leaderboard.resetInDays', { days, hours: remH });
-    if (hours < 1) return t('leaderboard.resetInMinutes', { minutes: Math.max(1, minutes) });
-    return t('leaderboard.resetInHours', { hours: Math.max(1, hours) });
-  }, [resetAt, nowTick, t]);
 
-  useEffect(() => {
-    if (boardMetric !== 'wins' || period !== 'daily') return;
-    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
-    return () => window.clearInterval(id);
-  }, [boardMetric, period]);
+  const boardKey = `${boardMetric}-${boardMetric === 'wins' ? period : 'bank'}`;
 
   const load = useCallback(async () => {
-    setLoadState('loading');
+    const seq = ++loadSeq.current;
+    const key = boardKey;
     const unit = boardMetric === 'wins' ? winsUnit : '';
 
+    const commit = (next: BoardSnapshot) => {
+      if (seq !== loadSeq.current) return;
+      setSnapshots((prev) => {
+        const old = prev[key];
+        const failed = next.state === 'error' || next.state === 'unavailable';
+        if (failed && old && old.rows.length > 0) {
+          return { ...prev, [key]: { ...old, state: 'ready' } };
+        }
+        return { ...prev, [key]: next };
+      });
+    };
+
     if (isBoardPreview()) {
-      if (boardMetric === 'bank') {
-        setRows(PREVIEW_BANK.map((row) => mapBankEntry(row, unit)));
-      } else {
-        const preview = period === 'daily' ? PREVIEW_DAILY : PREVIEW_ALL_TIME;
-        setRows(preview.map((row) => mapWinsEntry(row, unit)));
-      }
-      setMine(null);
-      setLoadState('ready');
+      const rows =
+        boardMetric === 'bank'
+          ? PREVIEW_BANK.map((row) => mapBankEntry(row, unit))
+          : (period === 'daily' ? PREVIEW_DAILY : PREVIEW_ALL_TIME).map((row) =>
+              mapWinsEntry(row, unit),
+            );
+      commit({ rows, mine: null, state: 'ready' });
       return;
     }
 
     if (boardMetric === 'bank') {
+      try {
+        await flushPendingTriviaBonuses();
+      } catch {
+        /* offline */
+      }
+      if (seq !== loadSeq.current) return;
       const [top, me] = await Promise.all([fetchBankLeaderboardTop(100), fetchMyBankRank()]);
       if (top.ok === false) {
-        setRows([]);
-        setMine(null);
-        setLoadState(top.reason);
+        commit({ rows: [], mine: null, state: top.reason });
         return;
       }
-      setRows(top.rows.map((row) => mapBankEntry(row, unit)));
-      setMine(me.ok === true && me.standing ? mapBankEntry(me.standing, unit) : null);
-      setLoadState(top.rows.length === 0 ? 'empty' : 'ready');
+      commit({
+        rows: top.rows.map((row) => mapBankEntry(row, unit)),
+        mine: me.ok === true && me.standing ? mapBankEntry(me.standing, unit) : null,
+        state: top.rows.length === 0 ? 'empty' : 'ready',
+      });
       return;
     }
 
-    // Settle prior 24h period (idempotent) before reading the live board.
     void settleDailyWinsPayouts();
 
     const limit = period === 'daily' ? 10 : 100;
@@ -372,37 +390,62 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
       fetchMyWinsRank(period),
     ]);
     if (top.ok === false) {
-      setRows([]);
-      setMine(null);
-      setLoadState(top.reason);
+      commit({ rows: [], mine: null, state: top.reason });
       return;
     }
-    setRows(top.rows.map((row) => mapWinsEntry(row, unit)));
-    setMine(me.ok === true && me.standing ? mapWinsEntry(me.standing, unit) : null);
-    setLoadState(top.rows.length === 0 ? 'empty' : 'ready');
-  }, [boardMetric, period, winsUnit]);
+    commit({
+      rows: top.rows.map((row) => mapWinsEntry(row, unit)),
+      mine: me.ok === true && me.standing ? mapWinsEntry(me.standing, unit) : null,
+      state: top.rows.length === 0 ? 'empty' : 'ready',
+    });
+  }, [boardKey, boardMetric, period, winsUnit]);
 
   useEffect(() => {
     void load();
   }, [load, accountState.status]);
 
+  const snapshot = snapshots[boardKey];
+  const rows = snapshot?.rows ?? EMPTY_ROWS;
+  const mine = snapshot?.mine ?? null;
+  const loadState: LoadState = snapshot?.state ?? 'loading';
+
   const isYou = (entry: BoardEntry) =>
     myUsername != null && entry.username.toLowerCase() === myUsername.toLowerCase();
-  const podium = rows.slice(0, 3);
-  const rest = rows.slice(3);
-  const mineInTop = rows.some(isYou);
-  const showMineBelow = Boolean(mine && !mineInTop && mine.rank > rows.length);
-  const rankLabel = mine
-    ? t('leaderboard.rankOf', { rank: mine.rank.toLocaleString('en-US') })
-    : t('leaderboard.unranked');
-  const myLabel = boardMetric === 'bank' ? t('leaderboard.myBank') : t('leaderboard.myWins');
-  const boardKey = `${boardMetric}-${boardMetric === 'wins' ? period : 'bank'}`;
+
+  const displayMine =
+    boardMetric === 'bank' && mine && liveBank != null && liveBank > mine.value
+      ? { ...mine, value: liveBank }
+      : mine;
+  const syncedRows = useMemo(() => {
+    if (boardMetric !== 'bank' || liveBank == null || !myUsername) return rows;
+    const me = myUsername.toLowerCase();
+    return rows.map((row) =>
+      row.username.toLowerCase() === me && liveBank > row.value
+        ? { ...row, value: liveBank }
+        : row,
+    );
+  }, [boardMetric, liveBank, myUsername, rows]);
+  const podium = syncedRows.slice(0, 3);
+  const rest = syncedRows.slice(3);
+  const mineInTop = syncedRows.some(isYou);
+  const showMineBelow = Boolean(
+    displayMine && !mineInTop && displayMine.rank > syncedRows.length,
+  );
+
+  const boardOptions: { id: BoardMetric; text: string }[] = useMemo(
+    () => [
+      { id: 'wins', text: t('leaderboard.metricWins') },
+      { id: 'bank', text: t('leaderboard.metricBank') },
+    ],
+    [t],
+  );
+  const isBank = boardMetric === 'bank';
 
   return (
     <div className="tradeup-shell tradeup-shell--home tradeup-shell--hub oneb-hub wb-screen">
       <LeaderboardBackdrop />
 
-      <header className="wb-head">
+      <header className="wb-filters">
         <button
           type="button"
           className="wb-help"
@@ -412,31 +455,22 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
         >
           ?
         </button>
-        <p className="wb-head__eyebrow">{t('leaderboard.eyebrow')}</p>
-        <div className="wb-head__title-row">
-          <h1 className="wb-head__title">{t('leaderboard.title')}</h1>
-          <BoardMetricMenu
-            value={boardMetric}
-            onChange={setBoardMetric}
-            winsLabel={t('leaderboard.metricWins')}
-            bankLabel={t('leaderboard.metricBank')}
-            metricLabel={t('leaderboard.boardMetric')}
-          />
-        </div>
-        {boardMetric === 'wins' ? (
-          <p className="wb-head__meta">{t('leaderboard.metaTop')}</p>
-        ) : (
-          <p className="wb-head__meta">{t('leaderboard.metricBank')}</p>
-        )}
-        {helpOpen ? <p className="wb-help__note">{t('leaderboard.helpCopy')}</p> : null}
+
+        <FilterSelect<BoardMetric>
+          wide
+          label={`${t('leaderboard.metricWins')} / ${t('leaderboard.metricBank')}`}
+          value={boardMetric}
+          options={boardOptions}
+          onChange={(next) => setBoardMetric(next)}
+        />
 
         {boardMetric === 'wins' ? (
-          <div className="wb-tabs" role="tablist" aria-label={t('leaderboard.periods')}>
+          <div className="wb-period" role="tablist" aria-label={t('leaderboard.periods')}>
             <button
               type="button"
               role="tab"
               aria-selected={period === 'daily'}
-              className={`wb-tabs__btn${period === 'daily' ? ' is-active' : ''}`}
+              className={`wb-period__btn${period === 'daily' ? ' is-on' : ''}`}
               onClick={() => setPeriod('daily')}
             >
               {t('leaderboard.dailyWins')}
@@ -445,46 +479,18 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
               type="button"
               role="tab"
               aria-selected={period === 'allTime'}
-              className={`wb-tabs__btn${period === 'allTime' ? ' is-active' : ''}`}
+              className={`wb-period__btn${period === 'allTime' ? ' is-on' : ''}`}
               onClick={() => setPeriod('allTime')}
             >
               {t('leaderboard.allTimeWins')}
             </button>
           </div>
         ) : null}
+
+        {helpOpen ? <p className="wb-help__note">{t('leaderboard.helpCopy')}</p> : null}
       </header>
 
       <main className="oneb-hub__scroll wb-main">
-        <motion.section
-          className="wb-mine"
-          aria-label={myLabel}
-          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE }}
-        >
-          <div className="wb-mine__top">
-            <span className="wb-mine__label">{myLabel}</span>
-            <span className={`wb-mine__rank${mine ? ' is-ranked' : ''}`}>
-              {isGuestLike ? t('leaderboard.unranked') : rankLabel}
-            </span>
-          </div>
-          <p className={`wb-mine__balance${boardMetric === 'bank' ? ' is-bank-cash' : ''}`}>
-            <TickerNumber
-              value={mine?.value ?? 0}
-              duration={reduceMotion ? 0 : 900}
-              format={formatValue}
-            />
-            {boardMetric === 'wins' ? (
-              <span className="wb-mine__unit">{winsUnit}</span>
-            ) : null}
-          </p>
-          {boardMetric === 'wins' ? (
-            <p className="wb-mine__goal">
-              {period === 'daily' ? resetLabel : t('leaderboard.allTimeHint')}
-            </p>
-          ) : null}
-        </motion.section>
-
         <AnimatePresence mode="wait">
           <motion.div
             key={boardKey}
@@ -533,20 +539,24 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
             {loadState === 'ready' && podium.length > 0 ? (
               <section className="wb-podium" aria-label={t('leaderboard.world')}>
                 {[podium[1], podium[0], podium[2]]
-                  .filter((entry): entry is BoardEntry => entry != null)
-                  .map((entry, i) => (
-                    <PodiumCard
-                      key={`${boardKey}-${entry.username}`}
-                      entry={entry}
-                      place={entry.rank === 1 ? 1 : entry.rank === 2 ? 2 : 3}
-                      isYou={isYou(entry)}
-                      youLabel={t('leaderboard.you')}
-                      formatValue={formatValue}
-                      index={i}
-                      reduceMotion={reduceMotion}
-                      isBank={boardMetric === 'bank'}
-                    />
-                  ))}
+                  .map((entry, i) => {
+                    if (!entry) return null;
+                    const place = (entry.rank === 1 ? 1 : entry.rank === 2 ? 2 : 3) as 1 | 2 | 3;
+                    return (
+                      <PodiumSlot
+                        key={`${boardKey}-${entry.username}`}
+                        entry={entry}
+                        place={place}
+                        isYou={isYou(entry)}
+                        youLabel={t('leaderboard.you')}
+                        scoreText={formatScore(entry)}
+                        isBank={isBank}
+                        reduceMotion={reduceMotion}
+                        index={i}
+                      />
+                    );
+                  })
+                  .filter(Boolean)}
               </section>
             ) : null}
 
@@ -558,16 +568,16 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
                     entry={entry}
                     isYou={isYou(entry)}
                     youLabel={t('leaderboard.you')}
-                    formatValue={formatValue}
+                    scoreText={formatScore(entry)}
+                    isBank={isBank}
                     index={i}
                     reduceMotion={reduceMotion}
-                    isBank={boardMetric === 'bank'}
                   />
                 ))}
               </ol>
             ) : null}
 
-            {showMineBelow && mine ? (
+            {showMineBelow && displayMine ? (
               <>
                 <div className="wb-gap" aria-hidden>
                   <span />
@@ -576,13 +586,13 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
                 </div>
                 <ol className="wb-list">
                   <BoardRow
-                    entry={mine}
+                    entry={displayMine}
                     isYou
                     youLabel={t('leaderboard.you')}
-                    formatValue={formatValue}
+                    scoreText={formatScore(displayMine)}
+                    isBank={isBank}
                     index={0}
                     reduceMotion={reduceMotion}
-                    isBank={boardMetric === 'bank'}
                   />
                 </ol>
               </>

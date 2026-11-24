@@ -103,18 +103,19 @@ assert.ok(xpToAdvance(10) > xpToAdvance(5));
   const withLevel = expectedCoins + levels * COINS_LEVEL_UP;
   assert.equal(first.breakdown?.coins, withLevel);
   assert.equal(getXpProfile().coins, withLevel);
-  assert.equal(getPendingXpReveals().length, 1);
-  assert.equal(getPendingXpReveals()[0]?.xpFromRun, 250);
+  // Rewards surface on the evaluation screen — no deferred hub XP reveal queue.
+  assert.equal(first.pending, null);
+  assert.equal(getPendingXpReveals().length, 0);
 
   const dup = awardClassicRunXp('run_a', BILLION_GOAL);
   assert.equal(dup.awarded, false);
   assert.equal(dup.reason, 'duplicate');
   assert.equal(getXpProfile().coins, withLevel);
-  assert.equal(getPendingXpReveals().length, 1);
+  assert.equal(getPendingXpReveals().length, 0);
 
   const second = awardClassicRunXp('run_b', BILLION_GOAL);
   assert.equal(second.awarded, true);
-  assert.equal(getPendingXpReveals().length, 2);
+  assert.equal(getPendingXpReveals().length, 0);
 }
 
 console.log('check-xp-rewards: ok');

@@ -3,7 +3,7 @@
 import { memo, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { EraOfferPlayer } from '@/lib/tradeup/billionDollar';
 import { playerFitsSlot } from '@/lib/tradeup/alternatePositions';
-import { hapticMedium } from '@/lib/tradeup/haptics';
+import { hapticMedium, hapticTap } from '@/lib/tradeup/haptics';
 import { contrastOnPrimary, getTeamColors } from '@/lib/tradeup/teamColors';
 import type { Position, TeamInfo } from '@/lib/tradeup/types';
 import type { TicketRerollKind } from '../BallionTicketMachine';
@@ -47,7 +47,7 @@ function RerollIcon() {
 
 /**
  * Classic player selection (inside the draft sheet).
- * Jumbotron already shows team + era — sheet starts with big reroll icons, then a dense player list.
+ * Jumbotron already shows team + era — sheet starts with rerolls + perks, then a spaced player list.
  * Position chip uses the board team's primary color. No top position filters.
  */
 export const ArenaPicker = memo(function ArenaPicker({
@@ -86,12 +86,13 @@ export const ArenaPicker = memo(function ArenaPicker({
         type="button"
         className={`ap-reroll ap-reroll--${kind}${can ? '' : ' is-used'}`}
         disabled={!open}
-        onClick={(e) => {
+        onPointerDown={(e) => {
+          if (e.button !== 0 || !open) return;
           e.preventDefault();
-          if (!open) return;
           hapticMedium();
           onReroll(kind);
         }}
+        onClick={(e) => e.preventDefault()}
       >
         <RerollIcon />
         <span className="ap-reroll__copy">
@@ -143,7 +144,8 @@ export const ArenaPicker = memo(function ArenaPicker({
                 onPointerMove={(e) => {
                   const start = pointer.current;
                   if (!start || start.id !== e.pointerId) return;
-                  if (Math.abs(e.clientX - start.x) > TAP_SLOP_PX || Math.abs(e.clientY - start.y) > TAP_SLOP_PX) {
+                  // Vertical list: only Y travel counts as scroll (ignore X jitter).
+                  if (Math.abs(e.clientY - start.y) > TAP_SLOP_PX) {
                     pointer.current = null;
                     dragged.current = true;
                   }
@@ -152,7 +154,9 @@ export const ArenaPicker = memo(function ArenaPicker({
                   pointer.current = null;
                   dragged.current = true;
                 }}
-                onClick={() => {
+                onPointerUp={(e) => {
+                  const start = pointer.current;
+                  if (!start || start.id !== e.pointerId) return;
                   pointer.current = null;
                   // A scroll that ends on a row is not a pick.
                   if (dragged.current) {
@@ -160,7 +164,12 @@ export const ArenaPicker = memo(function ArenaPicker({
                     return;
                   }
                   if (ineligible || interactionLocked) return;
+                  hapticTap();
                   onSelect(player);
+                }}
+                onClick={(e) => {
+                  // Selection already handled on pointerup (avoids click lag).
+                  e.preventDefault();
                 }}
               >
                 <span className="ap-row__pos" style={{ background: colors.primary, color: ink }}>

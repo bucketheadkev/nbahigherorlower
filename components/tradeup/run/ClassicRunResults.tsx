@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -14,11 +13,11 @@ import { createPortal } from 'react-dom';
 import {
   BILLION_GOAL,
   formatDollarsExact,
-  getDollarValueForSlot,
+  getDollarValue,
   type ValuedPlayer,
 } from '@/lib/tradeup/billionDollar';
 import {
-  playFinalTotalSettleSound,
+  playResultsDefeatSound,
   playResultsRowSound,
   playResultsSuspenseSound,
   playResultsVictorySound,
@@ -26,7 +25,7 @@ import {
   warmResultsRevealSounds,
 } from '@/lib/tradeup/gameAudio';
 import { formatCash } from '@/lib/tradeup/bank';
-import { hapticHeavy, hapticLight, hapticSuccess, hapticTap, hapticWarning } from '@/lib/tradeup/haptics';
+import { hapticFail, hapticHeavy, hapticLight, hapticSuccess, hapticTap, warmFailHaptics } from '@/lib/tradeup/haptics';
 import { holdInterruptions } from '@/lib/tradeup/interruptions';
 import { cancelFrame, easeOutCubic, scheduleFrame } from '@/lib/tradeup/perf/rafClock';
 import { rolloverFor } from '@/lib/tradeup/rollover';
@@ -46,16 +45,16 @@ type SeatedPlayer = ValuedPlayer & { seatedSlot?: Position };
  * then the rows light up PG → C, each adding its value to the total. The fifth only waits a
  * beat when the four-player total is exactly $790M.
  */
-const T_TOTAL_IN = 320;
-const ROW_GAP_MS = 350;
-const T_ROW_FIRST = 450;
+const T_TOTAL_IN = 380;
+const ROW_GAP_MS = 430;
+const T_ROW_FIRST = 540;
 /** Even cadence for all five when there is no $790M suspense beat. */
 const T_ROWS_EVEN = [0, 1, 2, 3, 4].map((i) => T_ROW_FIRST + i * ROW_GAP_MS);
 /** Suspense cadence: same first four, then a held beat before C. */
-const T_ROWS_SUSPENSE = [450, 800, 1150, 1500, 2450];
-const STEP_COUNT_MS = 340;
-const LAST_COUNT_MS = 880;
-const T_ACTIONS_AFTER_FINAL = 260;
+const T_ROWS_SUSPENSE = [540, 970, 1400, 1830, 2850];
+const STEP_COUNT_MS = 400;
+const LAST_COUNT_MS = 1050;
+const T_ACTIONS_AFTER_FINAL = 320;
 /** Only this four-player total unlocks the fifth-row hesitation. */
 const FIFTH_SUSPENSE_AT = 790_000_000;
 
@@ -121,58 +120,6 @@ function millions(value: number): string {
   return `$${Math.round(value / 1_000_000).toLocaleString('en-US')}M`;
 }
 
-/** The team's secondary color travelling around the border: a soft dash on the row's own outline. */
-const BorderGlow = memo(function BorderGlow({ index }: { index: number }) {
-  const ref = useRef<SVGSVGElement | null>(null);
-  const [box, setBox] = useState<{ w: number; h: number; r: number; sw: number } | null>(null);
-  useLayoutEffect(() => {
-    const svg = ref.current;
-    const row = svg?.parentElement;
-    if (!svg || !row) return;
-    const measure = () => {
-      const cs = getComputedStyle(row);
-      const border = parseFloat(cs.borderTopWidth) || 2;
-      setBox({
-        w: row.offsetWidth,
-        h: row.offsetHeight,
-        r: parseFloat(cs.borderTopLeftRadius) || 12,
-        sw: border,
-      });
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(row);
-    return () => ro.disconnect();
-  }, []);
-  const d = useMemo(() => {
-    if (!box) return '';
-    const i = box.sw / 2;
-    const { w, h } = box;
-    const r = Math.max(0, box.r - i);
-    return `M${i + r} ${i}H${w - i - r}A${r} ${r} 0 0 1 ${w - i} ${i + r}V${h - i - r}A${r} ${r} 0 0 1 ${w - i - r} ${h - i}H${i + r}A${r} ${r} 0 0 1 ${i} ${h - i - r}V${i + r}A${r} ${r} 0 0 1 ${i + r} ${i}Z`;
-  }, [box]);
-  return (
-    <svg
-      ref={ref}
-      className="cr-row__glow"
-      width={box?.w ?? 0}
-      height={box?.h ?? 0}
-      viewBox={box ? `0 0 ${box.w} ${box.h}` : undefined}
-      style={{ animationDelay: `${-index * 1.7}s` } as CSSProperties}
-      aria-hidden
-    >
-      {box ? (
-        <>
-          <path className="cr-row__glow-l1" d={d} pathLength={100} strokeWidth={box.sw * 5} />
-          <path className="cr-row__glow-l2" d={d} pathLength={100} strokeWidth={box.sw * 3.2} />
-          <path className="cr-row__glow-l3" d={d} pathLength={100} strokeWidth={box.sw * 1.9} />
-          <path className="cr-row__glow-core" d={d} pathLength={100} strokeWidth={box.sw * 1.05} />
-        </>
-      ) : null}
-    </svg>
-  );
-});
-
 /** The full name on one line; the type shrinks (real font size, so it stays sharp) only if needed. */
 function FitName({ text }: { text: string }) {
   const ref = useRef<HTMLSpanElement | null>(null);
@@ -222,7 +169,7 @@ export function ClassicRunResults({
           {
             pos,
             name: player.name.trim(),
-            value: getDollarValueForSlot(player, pos),
+            value: getDollarValue(player),
             primary: colors.primary,
             accent: colors.accent,
             glow: brightAccent(colors.accent),
@@ -244,7 +191,10 @@ export function ClassicRunResults({
   const rowTimes = holdFifth ? T_ROWS_SUSPENSE : T_ROWS_EVEN;
   const rollover = rolloverFor(teamValue);
   const xpBreakdown = calculateClassicRunRewards(teamValue);
-  /** Trivia BEGIN only when the run banks rollover above $1B. */
+  /**
+   * Trivia only when there is Bank rollover (total strictly above $1B).
+   * Exact $1B is still a win — green celebration, no rollover, no trivia.
+   */
   const showTrivia = isBillion && rollover > 0;
   const { progress } = useXpProfile();
 
@@ -307,8 +257,9 @@ export function ClassicRunResults({
         later(() => setShaking(false), 420);
       }
     } else {
-      playFinalTotalSettleSound();
-      hapticWarning();
+      playResultsDefeatSound();
+      // Multi-pulse rejection after the five-player reveal (heavy · error · heavy · medium).
+      hapticFail();
     }
     onTotalSettled({ teamValue });
     onComplete({ teamValue });
@@ -319,6 +270,7 @@ export function ClassicRunResults({
 
   useEffect(() => {
     warmResultsRevealSounds();
+    warmFailHaptics();
     if (reduceMotion) {
       setTotalIn(true);
       setShown(rows.length);
@@ -399,7 +351,7 @@ export function ClassicRunResults({
     try {
       const blob = await captureRunShareCard(node, {
         pixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
-        backgroundColor: '#03060d',
+        backgroundColor: '#020612',
         exclude: (el) =>
           el.classList.contains('cr__actions') ||
           el.classList.contains('cr__fx') ||
@@ -452,7 +404,7 @@ export function ClassicRunResults({
               <span>Home</span>
             </button>
           ) : null}
-          <p className="cr__title">1B RUN APP</p>
+          <p className="cr__title">1B RUN</p>
           <p className={`cr__total${totalIn ? ' is-in' : ''}`} aria-live="polite">
             <span className="cr__total-num" data-text={formatDollarsExact(display)}>
               {formatDollarsExact(display)}
@@ -482,7 +434,6 @@ export function ClassicRunResults({
                   <FitName text={row.name} />
                 </span>
                 <span className="cr-row__val">{millions(row.value)}</span>
-                <BorderGlow index={index} />
               </li>
             ))}
           </ol>

@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { formatCash } from '@/lib/tradeup/bank';
 import { hapticHeavy, hapticSuccess, hapticTap, hapticWarning } from '@/lib/tradeup/haptics';
-import { payTriviaBonus } from '@/lib/tradeup/trivia/bankTrivia';
+import {
+  answerTriviaChallenge,
+  issueTriviaChallenge,
+  payTriviaBonus,
+} from '@/lib/tradeup/trivia/bankTrivia';
 import {
   pickTriviaQuestion,
   TIMER_SECONDS,
@@ -44,6 +48,7 @@ export function ClassicTriviaSheet({ open, runRef, onDone }: ClassicTriviaSheetP
   const settledRef = useRef(false);
   const difficultyRef = useRef<TriviaDifficulty | null>(null);
   const questionRef = useRef<TriviaQuestion | null>(null);
+  const challengeIdRef = useRef<string | null>(null);
   const finishRef = useRef<(choiceIndex: number | null) => void>(() => {});
 
   difficultyRef.current = difficulty;
@@ -106,17 +111,36 @@ export function ClassicTriviaSheet({ open, runRef, onDone }: ClassicTriviaSheetP
 
   const chooseDifficulty = (d: TriviaDifficulty) => {
     hapticTap();
-    const q = pickTriviaQuestion(d, usedIds.current);
-    if (!q) {
-      closeSafe();
-      return;
-    }
-    usedIds.current = [...usedIds.current, q.id].slice(-80);
     settledRef.current = false;
     setDifficulty(d);
-    setQuestion(q);
     setPicked(null);
-    setPhase('ready');
+    challengeIdRef.current = null;
+    void (async () => {
+      const issued = await issueTriviaChallenge(runRef, d);
+      if (issued?.challengeId && issued.prompt && issued.choices?.length === 4) {
+        challengeIdRef.current = issued.challengeId;
+        usedIds.current = [...usedIds.current, issued.questionId].slice(-80);
+        const q: TriviaQuestion = {
+          id: issued.questionId,
+          difficulty: d,
+          prompt: issued.prompt,
+          choices: issued.choices,
+          // Not authoritative — permanent pay uses trivia_answer.
+          correctIndex: 0,
+        };
+        setQuestion(q);
+        setPhase('ready');
+        return;
+      }
+      const q = pickTriviaQuestion(d, usedIds.current);
+      if (!q) {
+        closeSafe();
+        return;
+      }
+      usedIds.current = [...usedIds.current, q.id].slice(-80);
+      setQuestion(q);
+      setPhase('ready');
+    })();
   };
 
   const finish = (choiceIndex: number | null) => {
@@ -131,6 +155,25 @@ export function ClassicTriviaSheet({ open, runRef, onDone }: ClassicTriviaSheetP
       closeSafe();
       return;
     }
+
+    const challengeId = challengeIdRef.current;
+    if (challengeId) {
+      setPicked(choiceIndex);
+      setPhase('result');
+      void answerTriviaChallenge(challengeId, choiceIndex, runRef, d).then((paid) => {
+        const isCorrect = paid > 0;
+        setCorrect(isCorrect);
+        setBonus(paid);
+        if (isCorrect) {
+          hapticHeavy();
+          window.setTimeout(() => hapticSuccess(), 220);
+        } else {
+          hapticWarning();
+        }
+      });
+      return;
+    }
+
     const isCorrect = choiceIndex != null && choiceIndex === q.correctIndex;
     setPicked(choiceIndex);
     setCorrect(isCorrect);

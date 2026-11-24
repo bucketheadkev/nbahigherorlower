@@ -64,13 +64,48 @@ export function canAffordPerk(idOrCost: PerkId | number = COINS_PERK_COST): bool
 /**
  * Prefer a Shop inventory charge; otherwise spend coins.
  * Pass the perk id so inventory can be consumed correctly.
+ * When `clientRunId` is set, permanent accounts also hit perk_consume /
+ * classic_boost_consume so the shared 3-boost cap is enforced server-side.
  */
 export function purchasePerkActivation(
   idOrCost: PerkId | number = COINS_PERK_COST,
+  clientRunId?: string | null,
 ): boolean {
   if (typeof idOrCost === 'string') {
-    if (consumePerkCharge(idOrCost)) return true;
-    return spendXpCoins(COINS_PERK_COST, 'perk');
+    const run = typeof clientRunId === 'string' ? clientRunId.trim() : '';
+    if (consumePerkCharge(idOrCost)) {
+      if (run) {
+        void import('@/lib/tradeup/classicRunSession')
+          .then((m) => m.consumeServerPerk(idOrCost, run))
+          .catch(() => {});
+      }
+      return true;
+    }
+    const req =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `p${Date.now().toString(36)}`;
+    if (run) {
+      const kind =
+        idOrCost === 'double_draft'
+          ? 'perk_double_draft'
+          : idOrCost === 'xray'
+            ? 'perk_xray'
+            : 'perk_player_swap';
+      // Server owns debit + boost; local coins update after sync.
+      void import('@/lib/tradeup/classicRunSession')
+        .then(async (m) => {
+          const res = await m.consumeClassicBoost(run, kind);
+          if (res.boostsUsed == null) {
+            spendXpCoins(COINS_PERK_COST, `perk_activate:${idOrCost}:${req}`);
+          }
+        })
+        .catch(() => {
+          spendXpCoins(COINS_PERK_COST, `perk_activate:${idOrCost}:${req}`);
+        });
+      return true;
+    }
+    return spendXpCoins(COINS_PERK_COST, `perk_activate:${idOrCost}:${req}`);
   }
-  return spendXpCoins(idOrCost, 'perk');
+  return spendXpCoins(idOrCost, `perk_activate:generic:${Date.now()}`);
 }

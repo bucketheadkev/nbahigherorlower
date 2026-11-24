@@ -141,10 +141,11 @@ export const BarrelReel = memo(function BarrelReel({
         finish();
         return;
       }
-      // Same total time. Cruise, then the same visible slowdown.
+      // Accel → cruise → soft lock (duration from WHEEL_SPIN_DURATION_MS ~2s).
       // Most landings stop on the white window. About 1 in 5 stop just
       // short, then slide into center.
       const travel = target - centerPad;
+      const accel = centerPad + travel * 0.18;
       const cruise = centerPad + travel * 0.86;
       const direction = Math.sign(centerPad - target) || 1;
       const remaining = Math.abs(target - cruise);
@@ -152,15 +153,23 @@ export const BarrelReel = memo(function BarrelReel({
       const near = target + direction * miss;
       el.style.transform = at(centerPad);
       const frames: Keyframe[] = [
-        { transform: at(centerPad), easing: 'linear' },
+        {
+          transform: at(centerPad),
+          easing: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+        },
+        {
+          transform: at(accel),
+          offset: 0.18,
+          easing: 'linear',
+        },
         {
           transform: at(cruise),
-          offset: 0.56,
-          easing: 'cubic-bezier(0.05, 0.42, 0.12, 1)',
+          offset: 0.7,
+          easing: 'cubic-bezier(0.15, 0.85, 0.25, 1)',
         },
         {
           transform: at(near),
-          offset: 0.82,
+          offset: 0.88,
           easing: nudgeSettle ? 'cubic-bezier(0.42, 0, 0.2, 1)' : 'linear',
         },
         { transform: at(target) },

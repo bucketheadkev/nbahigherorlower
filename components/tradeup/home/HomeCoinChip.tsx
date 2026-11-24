@@ -1,7 +1,13 @@
 'use client';
 
 import { animate, useMotionValue, useMotionValueEvent } from 'framer-motion';
-import { useEffect, useState, type MouseEventHandler } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEventHandler,
+  type PointerEventHandler,
+} from 'react';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { RunCoinIcon } from '../xp/RunCoinIcon';
 
@@ -11,13 +17,23 @@ interface HomeCoinChipProps {
   plusLabel: string;
   /** Opens Shop — one handler for the entire pill (coin, balance, empty space, +). */
   onPlus?: MouseEventHandler<HTMLButtonElement>;
+  onPlusPointerDown?: PointerEventHandler<HTMLButtonElement>;
 }
 
 /** Hub coin pill — gold 1B coin, balance, + affordance. Whole chip opens Shop. */
-export function HomeCoinChip({ value, label, plusLabel, onPlus }: HomeCoinChipProps) {
+export function HomeCoinChip({
+  value,
+  label,
+  plusLabel,
+  onPlus,
+  onPlusPointerDown,
+}: HomeCoinChipProps) {
   const safe = Math.max(0, Math.round(value));
   const mv = useMotionValue(safe);
   const [shown, setShown] = useState(safe);
+  /** Only spring-count when coins actually increase from a known prior balance. */
+  const primed = useRef(false);
+  const prev = useRef(safe);
 
   useMotionValueEvent(mv, 'change', (v) => setShown(Math.round(v)));
 
@@ -25,9 +41,21 @@ export function HomeCoinChip({ value, label, plusLabel, onPlus }: HomeCoinChipPr
     if (getPrefersReducedMotion()) {
       mv.set(safe);
       setShown(safe);
+      primed.current = true;
+      prev.current = safe;
       return;
     }
-    const ctrl = animate(mv, safe, { type: 'spring', stiffness: 140, damping: 24 });
+    // First paint / remount / load snap — never roll up from 0 or a stale seed.
+    if (!primed.current || safe < prev.current || safe - prev.current > 50_000) {
+      mv.set(safe);
+      setShown(safe);
+      primed.current = true;
+      prev.current = safe;
+      return;
+    }
+    if (safe === prev.current) return;
+    prev.current = safe;
+    const ctrl = animate(mv, safe, { type: 'spring', stiffness: 160, damping: 26 });
     return () => ctrl.stop();
   }, [safe, mv]);
 
@@ -53,6 +81,7 @@ export function HomeCoinChip({ value, label, plusLabel, onPlus }: HomeCoinChipPr
         type="button"
         className="home-coin ui-tap"
         aria-label={`${plusLabel}. ${label}: ${safe}`}
+        onPointerDown={onPlusPointerDown}
         onClick={onPlus}
       >
         {body}

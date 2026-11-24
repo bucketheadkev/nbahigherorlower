@@ -206,7 +206,8 @@ html[data-platform="native"] .shop-ui {
   max-width: none;
   padding-left: max(0.72rem, env(safe-area-inset-left, 0px));
   padding-right: max(0.72rem, env(safe-area-inset-right, 0px));
-  padding-bottom: calc(4.85rem + env(safe-area-inset-bottom, 0px));
+  /* Curved midnight dock + home indicator */
+  padding-bottom: calc(5.35rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Tabs — centered under chrome, never under coin pill */
@@ -809,25 +810,42 @@ html[data-platform="native"] .shop-ui {
 
 .shop-owned__item {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 3.4rem;
 }
 
 .shop-owned__badge {
   position: absolute;
-  top: -0.2rem;
-  right: -0.35rem;
+  top: -0.28rem;
+  right: -0.2rem;
   z-index: 2;
-  min-width: 1.15rem;
-  height: 1.15rem;
-  padding: 0 0.28rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.32rem;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 900;
   color: #fff;
   background: linear-gradient(180deg, #ff9a30, #e05000);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+
+.shop-owned__name {
+  margin: 0;
+  max-width: 4.6rem;
+  text-align: center;
+  font-size: 0.58rem;
+  font-weight: 750;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: rgba(210, 225, 245, 0.78);
 }
 
 /* Ultimate bundle */
@@ -874,6 +892,15 @@ html[data-platform="native"] .shop-ui {
   text-transform: uppercase;
   color: #fff;
   text-align: center;
+}
+
+.shop-ultimate__save {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 220, 150, 0.82);
 }
 
 .shop-ultimate__loot {
@@ -978,6 +1005,18 @@ html[data-platform="native"] .shop-ui {
   text-transform: uppercase;
   cursor: pointer;
   padding: 0.32rem 0.5rem;
+  min-height: 2.75rem;
+  min-width: 6rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shop-ui__restore:active:not(:disabled) {
+  color: rgba(214, 228, 255, 0.85);
+}
+
+.shop-ui__restore:disabled {
+  opacity: 0.5;
 }
 
 .shop-ui__msg {

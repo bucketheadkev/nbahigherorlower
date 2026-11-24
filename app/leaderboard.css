@@ -1,17 +1,20 @@
 /* =========================================================
-   Wins board — home navy theme (no gold)
-   Weekly top 10 · All-time top 100 · $1B Classic wins
+   Leaderboard — reference podium layout, 1B Run navy palette
    ========================================================= */
 
 .oneb-hub.wb-screen {
   --wb-ink: #060e1c;
   --wb-panel: #121f3c;
   --wb-panel-2: #0d172e;
-  --wb-line: rgba(110, 160, 230, 0.28);
+  --wb-line: rgba(110, 160, 230, 0.22);
   --wb-orange: #ff8a18;
   --wb-orange-hot: #ffc35a;
   --wb-ice: #e8f1ff;
-  --wb-muted: rgba(200, 214, 235, 0.62);
+  --wb-muted: rgba(180, 198, 220, 0.55);
+  --wb-score: #7eb6ff;
+  --wb-gold: #e8c25a;
+  --wb-silver: #b8c4d4;
+  --wb-bronze: #c8884a;
   --wb-font: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   background:
     radial-gradient(90% 70% at 50% 12%, rgba(36, 72, 140, 0.28) 0%, transparent 58%),
@@ -20,7 +23,6 @@
   font-family: var(--wb-font);
 }
 
-/* Soft navy backdrop (no gold court art) */
 .wb-backdrop {
   position: absolute;
   inset: 0;
@@ -51,195 +53,189 @@
     linear-gradient(180deg, transparent 70%, rgba(4, 8, 18, 0.88) 100%);
 }
 
-/* Header */
-.wb-head {
+/* —— Filters: Wins/Bank + optional Daily/All-Time —— */
+.wb-filters {
   position: relative;
-  z-index: 2;
+  z-index: 30;
   flex: none;
-  padding: 0.85rem 1.1rem 0.35rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.35rem 1rem 0.55rem;
+  isolation: isolate;
 }
 
-.wb-head__eyebrow {
-  margin: 0;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(160, 190, 235, 0.7);
+.wb-filter {
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
 
-.wb-head__title-row {
+.wb-filter.is-open {
+  z-index: 40;
+}
+
+.wb-filter__trigger {
+  appearance: none;
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.55rem 0.75rem;
-  margin: 0.25rem 0 0;
-}
-
-.wb-head__title {
+  justify-content: space-between;
+  gap: 0.65rem;
   margin: 0;
-  font-size: clamp(1.75rem, 7vw, 2.2rem);
-  font-weight: 850;
-  font-style: italic;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-}
-
-/* Custom in-game metric dropdown (replaces native <select>) */
-.wb-dd {
-  position: relative;
-  flex: 0 0 auto;
-  z-index: 5;
-}
-
-.wb-dd__trigger {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0.4rem 0.7rem 0.4rem 0.75rem;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(255, 138, 24, 0.5);
+  padding: 0.7rem 0.95rem;
+  min-height: 3.15rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid rgba(120, 160, 210, 0.38);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #1c3258 0%, #121f3c 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(180deg, #1a2d52 0%, #121f3c 100%);
   color: #fff;
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-align: left;
   cursor: pointer;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 14px rgba(255, 130, 20, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.28);
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.wb-dd.is-open .wb-dd__trigger {
-  border-color: var(--wb-orange-hot, #ff9a2e);
+.wb-filter.is-open .wb-filter__trigger {
+  border-color: rgba(140, 185, 255, 0.55);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 0 0 2px rgba(255, 138, 24, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 2px rgba(70, 120, 200, 0.28);
 }
 
-.wb-dd__chev {
-  display: block;
-  color: var(--wb-orange, #ff8a18);
+.wb-filter__value {
+  font-size: clamp(1rem, 3.8vw, 1.15rem);
+  font-weight: 850;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-filter__chev {
+  flex: none;
+  color: rgba(230, 240, 255, 0.85);
   transition: transform 0.18s ease;
 }
 
-.wb-dd.is-open .wb-dd__chev {
+.wb-filter.is-open .wb-filter__chev {
   transform: rotate(180deg);
 }
 
-.wb-dd__menu {
+.wb-filter__menu {
   position: absolute;
-  top: calc(100% + 0.35rem);
+  top: calc(100% + 0.4rem);
+  left: 0;
   right: 0;
-  min-width: 100%;
+  z-index: 50;
   margin: 0;
   padding: 0.3rem;
   list-style: none;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 150, 50, 0.4);
+  border-radius: 0.8rem;
+  border: 1px solid rgba(120, 165, 230, 0.4);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 40%),
     linear-gradient(180deg, #1a2d52 0%, #0e1a34 100%);
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(20, 40, 80, 0.5);
-  transform-origin: top right;
+    0 14px 32px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(40, 70, 120, 0.35);
+  transform-origin: top center;
 }
 
-.wb-dd__option {
+.wb-filter__option {
   appearance: none;
   width: 100%;
   display: block;
   margin: 0;
-  padding: 0.55rem 0.75rem;
+  padding: 0.65rem 0.8rem;
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: 0.55rem;
   background: transparent;
   color: rgba(210, 225, 255, 0.85);
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.wb-dd__option.is-selected {
+.wb-filter__option.is-selected {
   color: #fff;
-  background: linear-gradient(90deg, rgba(255, 138, 24, 0.28), rgba(255, 138, 24, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(255, 150, 50, 0.35);
+  background: linear-gradient(90deg, rgba(80, 130, 210, 0.38), rgba(50, 90, 160, 0.16));
 }
 
-.wb-dd__option:active {
-  background: rgba(255, 138, 24, 0.18);
+/* Wins period: Daily / All-Time */
+.wb-period {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  padding: 0.28rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(120, 160, 210, 0.32);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 50%),
+    linear-gradient(180deg, #152744 0%, #0f1c36 100%);
 }
 
-/* Premium green Bank cash amounts — richer, brighter green */
-.wb-mine__balance.is-bank-cash,
-.wb-podium__value.is-bank-cash,
-.wb-row__value.is-bank-cash strong {
-  color: #1ae066;
-  text-shadow: 0 0 10px rgba(18, 180, 80, 0.28);
+.wb-period__btn {
+  appearance: none;
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.62rem 0.55rem;
+  background: transparent;
+  color: rgba(200, 215, 240, 0.55);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.wb-mine__balance.is-bank-cash {
-  background: linear-gradient(180deg, #7dffaa 0%, #1ad968 40%, #0f9a45 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-  filter: drop-shadow(0 0 6px rgba(16, 160, 70, 0.28));
-}
-
-.wb-podium__value.is-bank-cash {
-  background: linear-gradient(180deg, #7dffaa 0%, #1ad968 40%, #0f9a45 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-}
-
-.wb-head__meta {
-  margin: 0.45rem 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--wb-muted);
+.wb-period__btn.is-on {
+  color: #fff;
+  background: linear-gradient(180deg, #2a4a7e 0%, #1a335c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(120, 170, 240, 0.28);
 }
 
 .wb-help {
   position: absolute;
-  top: 0.75rem;
-  right: 0.85rem;
-  width: 1.7rem;
-  height: 1.7rem;
+  top: 0.15rem;
+  right: 0.35rem;
+  z-index: 6;
+  width: 1.55rem;
+  height: 1.55rem;
   border-radius: 50%;
   border: 1px solid var(--wb-line);
-  background: rgba(18, 31, 60, 0.9);
+  background: rgba(18, 31, 60, 0.92);
   color: rgba(220, 235, 255, 0.85);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
 }
 
 .wb-help__note {
-  margin: 0.65rem auto 0;
-  max-width: 22rem;
+  margin: 0.15rem 0 0;
   padding: 0.65rem 0.8rem;
   border-radius: 0.75rem;
   border: 1px solid var(--wb-line);
@@ -250,271 +246,229 @@
   text-align: left;
 }
 
-/* Period tabs — orange active */
-.wb-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  margin: 0.95rem auto 0.25rem;
-  max-width: 20rem;
-  padding: 0.28rem;
-  border-radius: 0.9rem;
-  border: 1px solid var(--wb-line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 45%),
-    linear-gradient(180deg, #1a2d52 0%, #121f3c 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.wb-tabs__btn {
-  appearance: none;
-  border: 0;
-  border-radius: 0.7rem;
-  padding: 0.55rem 0.75rem;
-  background: transparent;
-  color: rgba(210, 222, 240, 0.55);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.wb-tabs__btn.is-active {
-  color: #fff;
-  background: linear-gradient(180deg, var(--wb-orange-hot) 0%, var(--wb-orange) 55%, #e85a00 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 0 16px rgba(255, 130, 20, 0.35);
-}
-
-/* Main scroll */
+/* —— Main —— */
 .wb-main {
   position: relative;
   z-index: 1;
-  padding: 0.55rem 0.9rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.35rem 1rem calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  overflow: visible;
 }
 
-/* My wins — navy card */
-.wb-mine {
-  position: relative;
-  margin: 0.35rem 0 1rem;
-  padding: 0.95rem 1rem 0.85rem;
-  border-radius: 0.95rem;
-  border: 1px solid var(--wb-line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 40%),
-    linear-gradient(165deg, #1a2d52 0%, #121f3c 55%, #0d172e 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 12px 28px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-}
-
-.wb-mine::before {
-  display: none;
-}
-
-.wb-mine__top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.wb-mine__label {
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(170, 200, 240, 0.75);
-}
-
-.wb-mine__rank {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(180, 198, 220, 0.5);
-}
-
-.wb-mine__rank.is-ranked {
-  color: var(--wb-orange-hot);
-}
-
-.wb-mine__balance {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  margin: 0.45rem 0 0;
-  font-size: clamp(2rem, 9vw, 2.55rem);
-  font-weight: 850;
-  font-style: italic;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-}
-
-.wb-mine__unit {
-  font-size: 0.85rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(170, 200, 240, 0.7);
-}
-
-.wb-mine__goal {
-  margin: 0.4rem 0 0;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--wb-muted);
-}
-
-/* Compact top-3 strip (navy, no gold) */
+/* —— Podium (2 · 1 · 3) —— */
 .wb-podium {
   display: grid;
-  grid-template-columns: 1fr 1.08fr 1fr;
-  gap: 0.4rem;
+  grid-template-columns: 1fr 1.14fr 1fr;
   align-items: end;
-  margin: 0.35rem 0 0.9rem;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1.15rem;
+  min-height: 15.2rem;
+  overflow: visible;
 }
 
-.wb-podium__card {
-  position: relative;
+.wb-podium__slot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.12rem;
-  min-height: 6.6rem;
-  padding: 0.75rem 0.3rem 0.7rem;
-  border-radius: 0.8rem;
-  border: 1px solid var(--wb-line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 42%),
-    linear-gradient(180deg, #1a2d52 0%, #0d172e 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 10px 22px rgba(0, 0, 0, 0.32);
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.wb-podium__player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0 0.1rem 0.5rem;
   text-align: center;
-  container-type: inline-size;
 }
 
-.wb-podium__card.is-place-1 {
-  min-height: 7.5rem;
-  border-color: rgba(255, 160, 60, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 12px 26px rgba(0, 0, 0, 0.36),
-    0 0 18px rgba(255, 130, 20, 0.18);
+.wb-podium__slot.is-place-1 .wb-podium__player {
+  padding-bottom: 0.65rem;
 }
 
-.wb-podium__card.is-you {
-  outline: 1px solid rgba(120, 180, 255, 0.45);
+.wb-podium__mark {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
 }
 
-.wb-podium__medal {
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.14em;
-  color: rgba(180, 205, 240, 0.75);
+.wb-podium__mark .home-profile,
+.wb-podium__mark .home-profile__svg {
+  display: block;
+  width: 3.25rem;
+  height: 3.25rem;
 }
 
-.wb-podium__card.is-place-1 .wb-podium__medal {
-  color: #fff;
+.wb-podium__mark.is-place-1 .home-profile,
+.wb-podium__mark.is-place-1 .home-profile__svg {
+  width: 4rem;
+  height: 4rem;
+}
+
+.wb-podium__slot.is-you .wb-podium__mark {
+  filter:
+    drop-shadow(0 0 0 2px rgba(126, 182, 255, 0.55))
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4));
 }
 
 .wb-podium__name {
-  margin: 0.12rem 0 0;
+  margin: 0.4rem 0 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: clamp(0.72rem, 4.2vw, 0.9rem);
+  font-size: clamp(0.78rem, 3.2vw, 0.92rem);
   font-weight: 800;
-  color: #f2f6ff;
-}
-
-.wb-podium__card.is-place-1 .wb-podium__name {
-  font-size: clamp(0.8rem, 4.5vw, 1rem);
-}
-
-.wb-podium__value {
-  margin: 0.18rem 0 0;
-  max-width: 100%;
-  font-size: clamp(0.95rem, 12cqi, 1.4rem);
-  font-weight: 850;
-  font-variant-numeric: tabular-nums;
   color: #fff;
+  line-height: 1.15;
 }
 
-.wb-podium__unit {
-  font-size: 0.58rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(170, 195, 230, 0.5);
+.wb-podium__slot.is-place-1 .wb-podium__name {
+  font-size: clamp(0.88rem, 3.5vw, 1.02rem);
+}
+
+.wb-podium__score {
+  margin: 0.2rem 0 0;
+  max-width: 100%;
+  font-size: clamp(0.68rem, 2.8vw, 0.78rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-score);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-podium__score.is-bank {
+  color: #5cff9a;
+  text-shadow: 0 0 10px rgba(30, 217, 108, 0.28);
+}
+
+.wb-podium__slot.is-place-1 .wb-podium__score {
+  font-size: clamp(0.74rem, 3vw, 0.86rem);
+}
+
+/* Angular trapezoid pillars — flat top, wider base */
+.wb-podium__plinth {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.4);
+}
+
+.wb-podium__plinth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+}
+
+.wb-podium__plinth.is-place-1 {
+  height: 6.1rem;
+  background:
+    linear-gradient(180deg, #ffe7a0 0%, #efc24e 24%, #d4a028 55%, #a87818 100%);
+}
+
+.wb-podium__plinth.is-place-2 {
+  height: 4.4rem;
+  background:
+    linear-gradient(180deg, #eef3f9 0%, #b7c5d6 30%, #8496ad 70%, #5f7088 100%);
+}
+
+.wb-podium__plinth.is-place-3 {
+  height: 3.5rem;
+  background:
+    linear-gradient(180deg, #efc090 0%, #c8884a 32%, #a05e2c 70%, #7a4520 100%);
+}
+
+.wb-podium__num {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(2rem, 9vw, 2.7rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.58);
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.2),
+    0 8px 14px rgba(0, 0, 0, 0.28);
+  user-select: none;
+}
+
+.wb-podium__plinth.is-place-1 .wb-podium__num {
+  font-size: clamp(2.4rem, 11vw, 3.2rem);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .wb-you {
   display: inline-block;
   margin-left: 0.25rem;
   font-style: normal;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--wb-orange-hot);
+  vertical-align: middle;
 }
 
-/* List rows */
+/* —— List rows (rank 4+) —— */
 .wb-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
 }
 
 .wb-row {
   display: grid;
-  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  grid-template-columns: 1.6rem 2.2rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(110, 160, 230, 0.16);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 50%),
-    linear-gradient(100deg, rgba(22, 40, 74, 0.92) 0%, rgba(12, 22, 42, 0.95) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 5px 12px rgba(0, 0, 0, 0.28);
+  gap: 0.65rem;
+  padding: 0.78rem 0.15rem;
+  border: 0;
+  border-bottom: 1px solid rgba(100, 140, 200, 0.14);
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.wb-list > .wb-row:nth-child(-n + 7):not(.is-you) {
-  border-color: rgba(110, 160, 230, 0.22);
+.wb-list > .wb-row:last-child {
+  border-bottom: 0;
 }
 
 .wb-row.is-you {
-  border-color: rgba(255, 150, 50, 0.45);
-  background:
-    linear-gradient(180deg, rgba(255, 160, 60, 0.1), transparent 55%),
-    linear-gradient(100deg, rgba(28, 48, 86, 0.95), rgba(14, 26, 48, 0.96));
+  background: linear-gradient(90deg, rgba(80, 130, 210, 0.12), transparent 70%);
+  border-radius: 0.5rem;
+  margin: 0 -0.25rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
 }
 
 .wb-row__rank {
-  font-size: 0.78rem;
-  font-weight: 850;
+  font-size: 0.82rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
-  color: rgba(170, 195, 230, 0.55);
+  color: rgba(160, 180, 210, 0.55);
   text-align: center;
 }
 
-.wb-list > .wb-row:nth-child(-n + 7) .wb-row__rank {
-  color: rgba(210, 225, 255, 0.85);
+.wb-row__mark {
+  display: block;
+  line-height: 0;
+}
+
+.wb-row__mark .home-profile,
+.wb-row__mark .home-profile__svg {
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
 }
 
 .wb-row__name {
@@ -522,31 +476,27 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 750;
   color: #f2f6ff;
 }
 
-.wb-row__value {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.05rem;
-  font-variant-numeric: tabular-nums;
+.wb-row__name strong {
+  font-weight: 800;
 }
 
-.wb-row__value strong {
-  font-size: 0.98rem;
-  font-weight: 850;
-  color: #fff;
-}
-
-.wb-row__value small {
-  font-size: 0.58rem;
+.wb-row__score {
+  font-size: 0.88rem;
   font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(170, 195, 230, 0.5);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-score);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.wb-row__score.is-bank {
+  color: #5cff9a;
+  text-shadow: 0 0 8px rgba(30, 217, 108, 0.22);
 }
 
 .wb-gap {
@@ -592,10 +542,12 @@
 
 .wb-state {
   margin: 1.5rem 0.25rem;
-  padding: 1.25rem 1rem;
+  padding: 1.6rem 1.1rem;
   border-radius: 0.95rem;
   border: 1px solid var(--wb-line);
-  background: rgba(13, 23, 46, 0.88);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 130, 20, 0.1), rgba(255, 130, 20, 0) 60%),
+    rgba(13, 23, 46, 0.88);
   text-align: center;
 }
 
@@ -608,7 +560,8 @@
 }
 
 .wb-state__copy {
-  margin: 0.55rem 0 0;
+  margin: 0.55rem auto 0;
+  max-width: 24rem;
   font-size: 0.9rem;
   line-height: 1.45;
   color: var(--wb-muted);
@@ -648,6 +601,45 @@
   font-size: 0.88rem;
   line-height: 1.4;
   color: var(--wb-muted);
+}
+
+@media (max-width: 380px) {
+  .wb-podium {
+    min-height: 14rem;
+    gap: 0.3rem;
+  }
+
+  .wb-podium__mark .home-profile,
+  .wb-podium__mark .home-profile__svg {
+    width: 2.85rem;
+    height: 2.85rem;
+  }
+
+  .wb-podium__mark.is-place-1 .home-profile,
+  .wb-podium__mark.is-place-1 .home-profile__svg {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .wb-podium__plinth.is-place-1 {
+    height: 5.1rem;
+  }
+
+  .wb-podium__plinth.is-place-2 {
+    height: 3.7rem;
+  }
+
+  .wb-podium__plinth.is-place-3 {
+    height: 3rem;
+  }
+
+  .wb-filters {
+    padding-inline: 0.75rem;
+  }
+
+  .wb-main {
+    padding-inline: 0.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

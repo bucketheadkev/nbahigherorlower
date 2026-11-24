@@ -9,6 +9,7 @@ export {
   COINS_WELCOME,
   COINS_PERK_COST,
   COINS_REROLL_COST,
+  MAX_BOOSTS_PER_RUN,
   MAX_PERK_ACTIVATIONS_PER_RUN,
   MAX_REROLLS_PER_RUN,
   XP_STARTING_LEVEL,
@@ -35,6 +36,7 @@ export {
   ensureWelcomeCoins,
   spendXpCoins,
   grantXpCoins,
+  setXpCoins,
   getPendingXpReveals,
   getPendingLevelUps,
   enqueuePendingXpReveal,
@@ -51,4 +53,9 @@ export {
 
 export { awardClassicRunXp, type ClassicXpAwardResult } from './award';
 
-export { syncCloudCoinsIntoLocal } from './cloudCoins';
+export {
+  syncCloudCoinsIntoLocal,
+  claimWelcomeCoins,
+  awardClassicRunCoins,
+  spendRerollCoins,
+} from './cloudCoins';

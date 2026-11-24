@@ -38,8 +38,10 @@ interface SoundSettingsProps {
 export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSettingsProps) {
   const {
     muted,
+    musicMuted,
     hapticsEnabled,
     toggleMute,
+    toggleMusicMute,
     toggleHaptics,
     resume,
   } = useSound();
@@ -262,6 +264,40 @@ export function SoundSettings({ variant = 'text', links, linksLabel }: SoundSett
                 resume();
                 hapticTap();
                 toggleMute();
+              })}
+            >
+              <span className="sound-settings__toggle-knob" aria-hidden />
+            </button>
+          </label>
+
+          <label className="sound-settings__row sound-settings__row--toggle sound-settings__row--music">
+            <span className="sound-settings__row-icon sound-settings__row-icon--music" aria-hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M9 18V6.4l10-2.2V16"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="7" cy="18" r="2.4" fill="currentColor" />
+                <circle cx="17" cy="16" r="2.4" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="sound-settings__row-copy">
+              <strong>Music</strong>
+              <em>Home atmosphere and menus</em>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!musicMuted}
+              aria-label={musicMuted ? 'Music off' : 'Music on'}
+              className={`settings-ctrl sound-settings__toggle-track${musicMuted ? '' : ' is-on'}`}
+              onClick={press(() => {
+                resume();
+                hapticTap();
+                toggleMusicMute();
               })}
             >
               <span className="sound-settings__toggle-knob" aria-hidden />

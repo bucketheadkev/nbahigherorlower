@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEventHandler } from 'react';
+import type { MouseEventHandler, PointerEventHandler } from 'react';
 import { useXpProfile } from '@/hooks/useXpProfile';
 import { SoundSettings, type SettingsLink } from '../SoundSettings';
 import { HomeCoinChip } from './HomeCoinChip';
@@ -15,7 +15,9 @@ interface HomeHubTopChromeProps {
   menuLinks: SettingsLink[];
   menuLinksLabel: string;
   onProfile: MouseEventHandler<HTMLButtonElement>;
+  onProfilePointerDown?: PointerEventHandler<HTMLButtonElement>;
   onCoinPlus?: MouseEventHandler<HTMLButtonElement>;
+  onCoinPlusPointerDown?: PointerEventHandler<HTMLButtonElement>;
 }
 
 /**
@@ -29,14 +31,20 @@ export function HomeHubTopChrome({
   menuLinks,
   menuLinksLabel,
   onProfile,
+  onProfilePointerDown,
   onCoinPlus,
+  onCoinPlusPointerDown,
 }: HomeHubTopChromeProps) {
   const { coins, progress } = useXpProfile();
 
   return (
     <header className="home-hub-top home-hub-top--live rh5-top" aria-label="Player status">
       <div className="rh5-player">
-        <HomeProfileMark label={profileLabel} onClick={onProfile} />
+        <HomeProfileMark
+          label={profileLabel}
+          onClick={onProfile}
+          onPointerDown={onProfilePointerDown}
+        />
         <div className="rh5-player__meta">
           <p className="rh5-player__name" title={username}>
             {username}
@@ -45,7 +53,13 @@ export function HomeHubTopChrome({
         </div>
       </div>
       <div className="rh5-toolbar">
-        <HomeCoinChip value={coins} label={coinsLabel} plusLabel={coinPlusLabel} onPlus={onCoinPlus} />
+        <HomeCoinChip
+          value={coins}
+          label={coinsLabel}
+          plusLabel={coinPlusLabel}
+          onPlus={onCoinPlus}
+          onPlusPointerDown={onCoinPlusPointerDown}
+        />
         <SoundSettings variant="gear" links={menuLinks} linksLabel={menuLinksLabel} />
       </div>
     </header>

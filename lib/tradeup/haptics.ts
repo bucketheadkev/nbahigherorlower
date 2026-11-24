@@ -20,6 +20,8 @@ type CapacitorHapticsModule = {
   Haptics: {
     impact: (opts: { style: string }) => Promise<void>;
     notification: (opts: { type: string }) => Promise<void>;
+    /** Real device buzz (iOS CoreHaptics / Android Vibrator). */
+    vibrate: (opts?: { duration?: number }) => Promise<void>;
     selectionStart?: () => Promise<void>;
     selectionChanged: () => Promise<void>;
     selectionEnd?: () => Promise<void>;
@@ -117,8 +119,21 @@ async function loadCapacitorHaptics(): Promise<CapacitorHapticsModule | null> {
       return null;
     }
     const mod = (await import('@capacitor/haptics')) as CapacitorHapticsModule;
-    capacitorHaptics = mod;
-    return mod;
+    if (mod.Haptics) {
+      capacitorHaptics = mod;
+      return mod;
+    }
+    const bridge = (
+      window as Window & {
+        Capacitor?: { Plugins?: { Haptics?: CapacitorHapticsModule['Haptics'] } };
+      }
+    ).Capacitor?.Plugins?.Haptics;
+    if (bridge) {
+      capacitorHaptics = { Haptics: bridge };
+      return capacitorHaptics;
+    }
+    capacitorHaptics = null;
+    return null;
   } catch {
     capacitorHaptics = null;
     return null;
@@ -156,7 +171,8 @@ function notificationVibratePattern(type: NotificationType): number | number[] {
     case 'warning':
       return [24, 40, 24];
     case 'error':
-      return [40, 50, 40];
+      // Stronger fail buzz (evaluation miss / under $1B).
+      return [55, 40, 55, 35, 70];
     default:
       return 24;
   }
@@ -252,6 +268,84 @@ export function hapticWarning(): void {
 
 export function hapticError(): void {
   void hapticNotification('error');
+}
+
+/**
+ * Under-$1B evaluation miss: four quick rejection pulses with the defeat sting.
+ *
+ * Native (Capacitor): UIKit/Android impact + ERROR notification — `Haptics.vibrate` alone is
+ * unreliable on iOS (CoreHaptics engine can deallocate before you feel it).
+ * Android web / WebView: one multi-pulse `navigator.vibrate` pattern.
+ * iPhone Safari: cannot vibrate from script (only real switch taps) — needs the Cap app.
+ */
+export function hapticFail(): void {
+  if (!hapticsAllowed() || !isBrowser()) return;
+  // Android pattern first (sync). iOS Safari no-ops here; Cap path fills in below.
+  vibrateFailPattern();
+  void playFailHapticsNative();
+}
+
+/** Prefetch the native Haptics plugin so the fail buzz is not waiting on import. */
+export function warmFailHaptics(): void {
+  if (!isBrowser() || !hapticsAllowed()) return;
+  void loadCapacitorHaptics();
+}
+
+/** Android Chrome + Capacitor Android WebView. iPhone Safari cannot vibrate. */
+function vibrateFailPattern(): void {
+  if (!hapticsAllowed() || !isBrowser() || isIosWeb()) return;
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+  try {
+    // Four tight buzzes timed with the defeat sting.
+    navigator.vibrate([0, 70, 50, 70, 50, 70, 50, 95]);
+  } catch {
+    /* unsupported / no activation */
+  }
+}
+
+async function playFailHapticsNative(): Promise<void> {
+  if (!hapticsAllowed() || !isBrowser()) return;
+
+  const cap = await loadCapacitorHaptics();
+  const H = cap?.Haptics;
+  if (!H) return;
+
+  lastImpactAt = performance.now();
+  lastImpactStyle = 'heavy';
+  lastNotifyAt = performance.now();
+
+  const impact = () => {
+    void H.impact({ style: IMPACT_STYLE_MAP.heavy }).catch(() => undefined);
+  };
+  const error = () => {
+    void H.notification({ type: NOTIFY_TYPE_MAP.error }).catch(() => undefined);
+  };
+  const buzz = (duration: number) => {
+    if (typeof H.vibrate !== 'function') return;
+    void H.vibrate({ duration }).catch(() => undefined);
+  };
+
+  // Fire-and-forget pulses (do not await) so a failed vibrate never blocks the next hit.
+  // Cadence matches the four thuds in playResultsDefeatStingNow.
+  error();
+  impact();
+  buzz(70);
+  window.setTimeout(() => {
+    impact();
+    buzz(70);
+  }, 75);
+  window.setTimeout(() => {
+    error();
+    impact();
+    buzz(70);
+  }, 150);
+  window.setTimeout(() => {
+    impact();
+    buzz(100);
+  }, 230);
+
+  lastImpactAt = performance.now() + 300;
+  lastNotifyAt = performance.now() + 300;
 }
 
 /** Call once when a prize wheel / ticket reel begins spinning. */

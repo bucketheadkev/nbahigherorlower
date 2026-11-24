@@ -188,7 +188,6 @@ World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
 Mitch Richmond | SG | 22.0 PPG | 5.9 RPG | 4.2 APG
 Terry Teagle | SG | 15.3 PPG | 3.2 RPG | 2.0 APG
 Phil Smith | SG | 15.5 PPG | 3.0 RPG | 4.0 APG
-Eric "Sleepy" Whitehead | PG | 10.0 PPG | 3.0 RPG | 5.0 APG
 Sam Williams | PF | 14.5 PPG | 8.0 RPG | 1.5 APG
 Ricky Pierce | SG | 14.0 PPG | 2.8 RPG | 2.2 APG
 Tom Tolbert | PF | 8.0 PPG | 5.0 RPG | 2.0 APG
@@ -261,7 +260,6 @@ Larry Drew | PG | 8.0 PPG | 2.5 RPG | 7.0 APG
 Sleepy Floyd | PG | 17.0 PPG | 2.7 RPG | 8.0 APG
 Phil Ford | PG | 11.0 PPG | 2.5 RPG | 6.5 APG
 Kenny Smith | PG | 13.1 PPG | 2.1 RPG | 7.1 APG
-Lionel Simmons | SF | 18.0 PPG | 8.0 RPG | 4.0 APG
 Wayman Tisdale | PF | 18.5 PPG | 7.5 RPG | 1.2 APG
 LaSalle Thompson | PF | 12.5 PPG | 8.5 RPG | 1.2 APG
 Joe Kleine | C | 7.5 PPG | 6.0 RPG | 1.0 APG
@@ -269,7 +267,6 @@ Sam Lacey | C | 12.0 PPG | 9.0 RPG | 4.0 APG
 Mark Olberding | PF | 10.5 PPG | 6.5 RPG | 2.0 APG
 Larry Smith | PF | 8.5 PPG | 9.0 RPG | 1.2 APG
 Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
-Billy Owens | SF | 14.3 PPG | 8.0 RPG | 2.4 APG
 Rory Sparrow | PG | 10.0 PPG | 2.5 RPG | 6.5 APG
 Danny Ainge | SG | 12.0 PPG | 3.0 RPG | 5.0 APG
 Ed Pinckney | C | 8.0 PPG | 6.0 RPG | 1.0 APG
@@ -281,7 +278,7 @@ Norm Nixon | PG | 17.0 PPG | 2.8 RPG | 8.8 APG
 Ron Harper | SG | 22.9 PPG | 5.9 RPG | 4.8 APG
 World B. Free | SG | 22.5 PPG | 2.6 RPG | 3.7 APG
 Quintin Dailey | SG | 20.3 PPG | 3.9 RPG | 3.1 APG
-Michael Brooks | PG | 16.8 PPG | 3.0 RPG | 6.5 APG
+Michael Brooks | SF | 16.8 PPG | 3.0 RPG | 6.5 APG
 Derek Smith | SF | 15.0 PPG | 4.5 RPG | 3.5 APG
 Marques Johnson | SF | 20.3 PPG | 7.0 RPG | 3.6 APG
 Michael Cage | PF | 11.0 PPG | 11.0 RPG | 1.5 APG
@@ -424,7 +421,6 @@ Sam Bowie | C | 10.9 PPG | 7.1 RPG | 2.1 APG
 Jim Paxson | SG | 20.0 PPG | 3.0 RPG | 2.5 APG
 Kenny Carr | PF | 12.0 PPG | 5.5 RPG | 1.5 APG
 Wayne Cooper | C | 9.0 PPG | 6.0 RPG | 1.2 APG
-Mike Schuler | SG | 8.0 PPG | 2.0 RPG | 2.0 APG
 
 ========================================================================
 SAN ANTONIO SPURS

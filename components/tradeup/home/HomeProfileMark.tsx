@@ -1,14 +1,15 @@
 'use client';
 
-import { useId, type MouseEventHandler } from 'react';
+import { useId, type MouseEventHandler, type PointerEventHandler } from 'react';
 
 interface HomeProfileMarkProps {
   label: string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
+  onPointerDown?: PointerEventHandler<HTMLButtonElement>;
 }
 
 /** Premium circular profile — gold bezel, cool face, soft inner glow. */
-export function HomeProfileMark({ label, onClick }: HomeProfileMarkProps) {
+export function HomeProfileMark({ label, onClick, onPointerDown }: HomeProfileMarkProps) {
   const uid = useId().replace(/:/g, '');
   const ring = `${uid}-ring`;
   const face = `${uid}-face`;
@@ -52,7 +53,13 @@ export function HomeProfileMark({ label, onClick }: HomeProfileMarkProps) {
   }
 
   return (
-    <button type="button" className="home-profile home-profile--btn ui-tap" aria-label={label} onClick={onClick}>
+    <button
+      type="button"
+      className="home-profile home-profile--btn ui-tap"
+      aria-label={label}
+      onPointerDown={onPointerDown}
+      onClick={onClick}
+    >
       {body}
     </button>
   );

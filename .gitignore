@@ -4,6 +4,7 @@ node_modules
 .next-dev-stash
 out
 dist
+tmp
 *.local
 .DS_Store
 next-env.d.ts

@@ -149,7 +149,7 @@ export function generateOpponentLineup(
 
   const swing = (Math.random() * 2 - 1) * difficulty.powerVariance;
   // Keep opponents near the user's real strength — rank only shifts the bias.
-  const maxAboveUser = rankId === 'ace' ? 7 : rankId === 'diamond' ? 5 : 3;
+  const maxAboveUser = rankId === 'ace' || rankId === 'diamond' ? 2 : 3;
   const baseTarget = clamp(
     userPower - difficulty.powerOffset + swing,
     Math.max(difficulty.strengthFloor, userPower - 16),
@@ -226,7 +226,8 @@ function tuneOpponentTowardTarget(
         ? targetPower - 3 - Math.random() * 4
         : targetPower + 2 + Math.random() * 3;
     const replacement = pickForSlot(slot, usedIds, slotTarget, {
-      preferElite: delta < 0 && getRankIndex(rankId) >= 3,
+      // Avoid stacking elites when closing a deficit at high ranks (was crushing Ace WR).
+      preferElite: delta < 0 && getRankIndex(rankId) >= 3 && getRankIndex(rankId) < 5,
       preferWeak: delta > 0 && getRankIndex(rankId) <= 1,
       rankId,
     });

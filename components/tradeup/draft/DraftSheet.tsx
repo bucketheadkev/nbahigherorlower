@@ -11,11 +11,10 @@ import {
   useState,
 } from 'react';
 
-const DRAG_SLOP_PX = 6;
-/** px/ms — a flick this fast decides the snap regardless of where it was released. */
-const FLICK_VELOCITY = 0.35;
 /** Sit tight under the jumbotron so rerolls read as the first sheet content. */
 const GAP_BELOW_ANCHOR_PX = 4;
+/** Ignore tiny finger jitter so a tap never becomes a drag onto the booth behind. */
+const TAP_SLOP_PX = 12;
 
 type Props = {
   /** Mounted and on screen (a spin has landed). When false the sheet slides fully away. */
@@ -25,7 +24,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** Collapsed bar content. */
   peek: ReactNode;
-  /** Shown under the handle while expanded (e.g. "drag down to see your court"). */
+  /** Shown under the handle while expanded (e.g. "tap to see your court"). */
   cue?: ReactNode;
   children: ReactNode;
   /** The expanded sheet stops just below the first of these that exists. */
@@ -34,8 +33,8 @@ type Props = {
 };
 
 /**
- * Bottom sheet that slides over the lower court. Only the handle strip (and the peek bar when
- * collapsed) drags it, so scrolling the list inside never moves or closes the sheet.
+ * Bottom sheet over the lower court. Open/close is tap-only on the handle / peek bar —
+ * no drag or flick — so gestures never leak into the booth spinners behind the sheet.
  */
 export function DraftSheet({ present, open, onOpenChange, peek, cue, children, anchorSelectors, label }: Props) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -43,14 +42,7 @@ export function DraftSheet({ present, open, onOpenChange, peek, cue, children, a
   const peekRef = useRef<HTMLDivElement | null>(null);
   const safeRef = useRef<HTMLSpanElement | null>(null);
   const [top, setTop] = useState<number | null>(null);
-  const dragRef = useRef<{
-    id: number;
-    startY: number;
-    baseY: number;
-    y: number;
-    dragging: boolean;
-    samples: Array<{ y: number; t: number }>;
-  } | null>(null);
+  const pressRef = useRef<{ id: number; x: number; y: number } | null>(null);
 
   // Keep the last content on screen while the sheet slides away.
   const lastPeek = useRef(peek);
@@ -102,75 +94,54 @@ export function DraftSheet({ present, open, onOpenChange, peek, cue, children, a
   }, [measure, present]);
 
   useLayoutEffect(() => {
-    if (dragRef.current?.dragging) return;
-    place(restingY(), true);
-  }, [place, restingY, top]);
+    // Collapse instantly when closing over the court so jersey taps are not blocked
+    // by the sheet for ~380ms (felt like a massive place delay).
+    const animate = open || !present;
+    place(restingY(), animate);
+  }, [open, place, present, restingY, top]);
 
   useEffect(() => {
     const onResize = () => {
       measure();
-      if (!dragRef.current?.dragging) place(restingY(), false);
+      place(restingY(), false);
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, [measure, place, restingY]);
 
+  const toggle = useCallback(() => {
+    if (!present) return;
+    onOpenChange(!open);
+  }, [onOpenChange, open, present]);
+
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!present || (event.pointerType === 'mouse' && event.button !== 0)) return;
-    const baseY = open ? 0 : closedY();
-    dragRef.current = {
-      id: event.pointerId,
-      startY: event.clientY,
-      baseY,
-      y: baseY,
-      dragging: false,
-      samples: [{ y: event.clientY, t: event.timeStamp }],
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    pressRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
   };
 
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.id !== event.pointerId) return;
-    const dy = event.clientY - drag.startY;
-    if (!drag.dragging && Math.abs(dy) < DRAG_SLOP_PX) return;
-    drag.dragging = true;
-    const maxY = closedY();
-    let y = drag.baseY + dy;
-    // Soft resistance past either end.
-    if (y < 0) y = y / 4;
-    if (y > maxY) y = maxY + (y - maxY) / 4;
-    drag.y = y;
-    drag.samples.push({ y: event.clientY, t: event.timeStamp });
-    if (drag.samples.length > 5) drag.samples.shift();
-    place(y, false);
+  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const press = pressRef.current;
+    pressRef.current = null;
+    if (!press || press.id !== event.pointerId) return;
+    if (
+      Math.abs(event.clientX - press.x) > TAP_SLOP_PX ||
+      Math.abs(event.clientY - press.y) > TAP_SLOP_PX
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    toggle();
   };
 
-  const finish = (event: ReactPointerEvent<HTMLDivElement>, cancelled: boolean) => {
-    const drag = dragRef.current;
-    if (!drag || drag.id !== event.pointerId) return;
-    dragRef.current = null;
-    if (!drag.dragging) {
-      if (!cancelled) onOpenChange(!open);
-      return;
-    }
-    if (cancelled) {
-      place(restingY(), true);
-      return;
-    }
-    const first = drag.samples[0]!;
-    const last = drag.samples[drag.samples.length - 1]!;
-    const velocity = (last.y - first.y) / Math.max(1, last.t - first.t);
-    const next =
-      velocity <= -FLICK_VELOCITY ? true : velocity >= FLICK_VELOCITY ? false : drag.y < closedY() / 2;
-    if (next === open) place(restingY(), true);
-    else onOpenChange(next);
+  const onPointerCancel = () => {
+    pressRef.current = null;
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onOpenChange(!open);
+      toggle();
     }
   };
 
@@ -185,9 +156,9 @@ export function DraftSheet({ present, open, onOpenChange, peek, cue, children, a
       <div
         className="draft-sheet__grab"
         onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={(e) => finish(e, false)}
-        onPointerCancel={(e) => finish(e, true)}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onClick={(e) => e.preventDefault()}
       >
         <div
           ref={grabRef}
@@ -195,10 +166,14 @@ export function DraftSheet({ present, open, onOpenChange, peek, cue, children, a
           role="button"
           tabIndex={present ? 0 : -1}
           aria-expanded={open}
-          aria-label={open ? 'Show the court' : 'Show players'}
+          aria-label={open ? 'Tap to show the court' : 'Tap to show players'}
           onKeyDown={onKeyDown}
         >
-          <span aria-hidden="true" />
+          <span className="draft-sheet__toggle" aria-hidden="true">
+            <svg className="draft-sheet__toggle-icon" viewBox="0 0 24 24">
+              {open ? <path d="M6 9.5l6 6 6-6" /> : <path d="M6 14.5l6-6 6 6" />}
+            </svg>
+          </span>
           {cue ? (
             <span className="draft-sheet__cue" aria-hidden={!open || undefined}>
               {cue}

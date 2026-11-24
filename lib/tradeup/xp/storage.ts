@@ -129,26 +129,45 @@ export function ensureWelcomeCoins(amount: number): number {
     coins: profile.coins + gift,
     welcomeGranted: true,
   });
+  // Permanent accounts: server pays a fixed 200 once (no client-chosen amount).
+  void import('./cloudCoins')
+    .then((mod) => mod.claimWelcomeCoins())
+    .catch(() => {});
   return gift;
 }
 
 /** Spend coins once. Returns false if balance is insufficient. */
-export function spendXpCoins(amount: number, _ref?: string): boolean {
+export function spendXpCoins(amount: number, ref?: string): boolean {
   const cost = Math.max(0, Math.floor(amount));
   if (cost <= 0) return true;
   const profile = getXpProfile();
   if (profile.coins < cost) return false;
   saveXpProfile({ ...profile, coins: profile.coins - cost });
+  // Permanent accounts: mirror to cloud so web ↔ app stay aligned.
+  void import('./cloudCoins')
+    .then((mod) => mod.mirrorCoinSpend(cost, ref))
+    .catch(() => {});
   return true;
 }
 
-/** Credit coins outside a Classic run award (shop restore hooks, etc.). */
-export function grantXpCoins(amount: number): number {
+/**
+ * Local coin credit (guest / optimistic UI).
+ * Permanent IAP must go through the service-role edge grant — never a client mint RPC.
+ */
+export function grantXpCoins(amount: number, _ref?: string, _kind: 'run_award' | 'welcome' | 'iap_grant' = 'iap_grant'): number {
   const gain = Math.max(0, Math.floor(amount));
   if (gain <= 0) return 0;
   const profile = getXpProfile();
   saveXpProfile({ ...profile, coins: profile.coins + gain });
   return gain;
+}
+
+/** Replace local coin cache (cloud sync). */
+export function setXpCoins(balance: number): void {
+  const next = Math.max(0, Math.floor(balance));
+  const profile = getXpProfile();
+  if (profile.coins === next) return;
+  saveXpProfile({ ...profile, coins: next });
 }
 
 export function getXpProgress(): LevelProgress {

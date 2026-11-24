@@ -1,8 +1,15 @@
 'use client';
 
-import { type MouseEvent as ReactMouseEvent, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useLocale } from '@/hooks/useLocale';
+import { playUiTapSound, warmUiTapSound } from '@/lib/tradeup/gameAudio';
 import { hapticLight } from '@/lib/tradeup/haptics';
 import { AccountAuthSheet, type AccountSheetView } from '../AccountAuthSheet';
 import type { SettingsLink } from '../SoundSettings';
@@ -20,6 +27,11 @@ export function HomeHubChromeHost({ onOpenShop }: HomeHubChromeHostProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetView, setSheetView] = useState<AccountSheetView>('menu');
   const lockRef = useRef(false);
+  const handledAt = useRef(0);
+
+  useEffect(() => {
+    warmUiTapSound();
+  }, []);
 
   const username = permanent
     ? accountState.profile.username
@@ -27,19 +39,31 @@ export function HomeHubChromeHost({ onOpenShop }: HomeHubChromeHostProps) {
       ? '…'
       : 'Guest';
 
-  const go = (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
+  const fire = (fn: () => void) => {
     if (lockRef.current) return;
     lockRef.current = true;
     try {
-      // Paint navigation only — no audio unlock/preload (website Coins hitch).
-      fn();
+      playUiTapSound();
       hapticLight();
+      // Defer navigation paint so the tap sound always starts in-gesture.
+      requestAnimationFrame(() => fn());
     } finally {
       window.setTimeout(() => {
         lockRef.current = false;
-      }, 800);
+      }, 220);
     }
+  };
+
+  const go = (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    if (performance.now() - handledAt.current < 450) return;
+    fire(fn);
+  };
+
+  const goPointer = (fn: () => void) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    handledAt.current = performance.now();
+    fire(fn);
   };
 
   const openSheet = (view: AccountSheetView) => {
@@ -66,7 +90,9 @@ export function HomeHubChromeHost({ onOpenShop }: HomeHubChromeHostProps) {
         menuLinks={menuLinks}
         menuLinksLabel={t('home.menuPlayer')}
         onProfile={go(() => openSheet(permanent ? 'menu' : 'signup'))}
+        onProfilePointerDown={goPointer(() => openSheet(permanent ? 'menu' : 'signup'))}
         onCoinPlus={onOpenShop ? go(onOpenShop) : undefined}
+        onCoinPlusPointerDown={onOpenShop ? goPointer(onOpenShop) : undefined}
       />
       <AccountAuthSheet
         open={sheetOpen}

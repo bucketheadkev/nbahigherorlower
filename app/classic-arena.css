@@ -912,21 +912,37 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 0 4px;
-  cursor: grab;
-  touch-action: none;
+  gap: 5px;
+  padding: 10px 0 5px;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
-/* A grip you can see from across the room: wide, bright, lit from above. */
-.billion-shell--arena .draft-sheet__handle > span:first-child {
-  width: 64px;
-  height: 6px;
+/* Bright chevron chip — reads as “tap me,” not a drag rail. */
+.billion-shell--arena .draft-sheet__toggle {
+  width: 72px;
+  height: 28px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff, #c9d8f5);
+  background: linear-gradient(180deg, #ffffff 0%, #d7e6ff 55%, #b8cdf0 100%);
   box-shadow:
-    0 0 10px rgba(150, 200, 255, 0.45),
-    0 1px 2px rgba(0, 0, 0, 0.5);
+    0 0 14px rgba(150, 200, 255, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.billion-shell--arena .draft-sheet__toggle-icon {
+  width: 18px;
+  height: 18px;
+  stroke: #0a1a38;
+  stroke-width: 3;
+}
+
+.billion-shell--arena .draft-sheet.is-open .draft-sheet__toggle-icon {
+  animation: ap-nudge-down 1.4s ease-in-out infinite;
+}
+
+.billion-shell--arena .draft-sheet:not(.is-open) .draft-sheet__toggle-icon {
+  animation: ap-nudge-up 1.4s ease-in-out infinite;
 }
 
 .billion-shell--arena .draft-sheet__handle .draft-sheet__cue {
@@ -967,7 +983,7 @@
   }
 }
 
-/* Collapsed: a clear bar to tap (or swipe up) for the list. */
+/* Collapsed: a clear bar to tap for the list. */
 .billion-shell--arena .draft-sheet__peek {
   height: 72px;
   padding: 0 12px 10px;
@@ -1067,7 +1083,7 @@
 .ap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   flex: 1;
   min-height: 0;
   font-family: var(--ap-font);
@@ -1186,10 +1202,10 @@
 .ap__list {
   list-style: none;
   margin: 0;
-  padding: 0 0 8px;
+  padding: 0 0 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -1210,10 +1226,10 @@
   width: 100%;
   margin: 0;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 26px;
+  grid-template-columns: 46px minmax(0, 1fr) 28px;
   align-items: center;
-  gap: 10px;
-  padding: 7px 10px 7px 8px;
+  gap: 12px;
+  padding: 10px 12px 10px 10px;
   box-sizing: border-box;
   border-radius: 13px;
   border: 1px solid rgba(140, 190, 255, 0.22);
@@ -1247,12 +1263,12 @@
 
 /* Primary-position chip in the board team's color (no top filter row). */
 .ap-row__pos {
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
   border-radius: 11px;
-  font-size: 14px;
+  font-size: 15.5px;
   font-weight: 800;
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.26), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
@@ -1261,7 +1277,7 @@
 .ap-row__meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -1269,7 +1285,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15.5px;
+  font-size: 17.5px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.005em;
@@ -1281,7 +1297,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-style: normal;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
@@ -1321,21 +1337,21 @@
   }
 
   .ap-row {
-    padding: 6px 9px 6px 7px;
+    padding: 8px 10px 8px 8px;
   }
 
   .ap-row__pos {
-    width: 36px;
-    height: 36px;
-    font-size: 13px;
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
   }
 
   .ap-row__meta {
-    gap: 2px;
+    gap: 4px;
   }
 
   .ap-row__meta strong {
-    font-size: 14.5px;
+    font-size: 15.5px;
   }
 
   .billion-shell--arena .draft-sheet__peek {

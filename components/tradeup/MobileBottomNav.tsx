@@ -1,8 +1,18 @@
 'use client';
 
-import { useCallback, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { useLocale } from '@/hooks/useLocale';
 import type { MessageKey } from '@/lib/i18n/messages';
+import { isNativeApp } from '@/lib/platform/isNativeApp';
+import { playUiTapSound } from '@/lib/tradeup/gameAudio';
 import { hapticLight } from '@/lib/tradeup/haptics';
 
 /** Official hub nav: Leaderboard · Play · Shop. */
@@ -53,45 +63,85 @@ const TABS: { id: HubTab; label: MessageKey; icon: ReactNode }[] = [
   },
 ];
 
+const TAB_INDEX: Partial<Record<HubTab, number>> = {
+  board: 0,
+  home: 1,
+  shop: 2,
+};
+
+/**
+ * Hub bottom nav.
+ * - Web: floating midnight pill
+ * - iOS: flush bar + sliding orange glider; optimistic local select for zero lag
+ */
 export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
   const { t } = useLocale();
-  const index = TABS.findIndex((tab) => tab.id === active);
+  const native = isNativeApp();
+  /** Ignore the synthetic click that follows an already-handled pointerdown. */
+  const handledAt = useRef(0);
+  /** Instant highlight / glider — updates before hub content catches up. */
+  const [visual, setVisual] = useState(active);
 
-  const go = useCallback(
-    (tab: HubTab) => (e: ReactMouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      if (tab === active) return;
-      // Nav is paint-only — never unlock/preload audio here (website Shop hitch).
-      onChange(tab);
+  useEffect(() => {
+    setVisual(active);
+  }, [active]);
+
+  const activate = useCallback(
+    (tab: HubTab) => {
+      if (tab === visual) return;
+      // Sound + optimistic glider first; defer hub pane swap so Shop paint
+      // never eats the tap gesture (silent / delayed Shop opens).
+      playUiTapSound();
       hapticLight();
+      setVisual(tab);
+      requestAnimationFrame(() => onChange(tab));
     },
-    [active, onChange],
+    [visual, onChange],
   );
+
+  const onPointerDown = useCallback(
+    (tab: HubTab) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
+      if (!native && e.pointerType === 'mouse') return;
+      handledAt.current = performance.now();
+      activate(tab);
+    },
+    [activate, native],
+  );
+
+  const onClick = useCallback(
+    (tab: HubTab) => () => {
+      if (performance.now() - handledAt.current < 450) return;
+      activate(tab);
+    },
+    [activate],
+  );
+
+  const tabIndex = TAB_INDEX[visual] ?? 1;
 
   return (
     <nav
-      className={`oneb-tabbar oneb-tabbar--tri${index < 0 ? ' is-idle' : ''}`}
+      className={`oneb-tabbar oneb-tabbar--tri ${native ? 'oneb-tabbar--ios' : 'oneb-tabbar--pill'}`}
       aria-label={t('nav.main')}
-      style={{ '--tab-index': Math.max(0, index) } as CSSProperties}
+      style={{ ['--tab-index' as string]: tabIndex } as CSSProperties}
     >
-      <span className="oneb-tabbar__glider" aria-hidden />
+      {native ? <span className="oneb-tabbar__glider" aria-hidden /> : null}
       {TABS.map((tab) => {
-        const on = tab.id === active;
+        const on = tab.id === visual;
         return (
           <button
             key={tab.id}
             type="button"
-            className={`oneb-tabbar__item oneb-tabbar__item--${tab.id} ui-tap${on ? ' is-active' : ''}`}
+            className={`oneb-tabbar__item oneb-tabbar__item--${tab.id}${on ? ' is-active' : ''}`}
             aria-current={on ? 'page' : undefined}
-            onClick={go(tab.id)}
+            aria-label={t(tab.label)}
+            onPointerDown={onPointerDown(tab.id)}
+            onClick={onClick(tab.id)}
           >
             <span className="oneb-tabbar__icon" aria-hidden>
               {tab.icon}
             </span>
-            {/* Raised center Play is icon-only in the reference; keep labels for side tabs. */}
-            {tab.id === 'home' ? null : (
-              <span className="oneb-tabbar__label">{t(tab.label)}</span>
-            )}
+            <span className="oneb-tabbar__label">{t(tab.label)}</span>
           </button>
         );
       })}

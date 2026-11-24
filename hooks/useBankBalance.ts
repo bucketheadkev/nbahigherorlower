@@ -8,16 +8,17 @@ import {
   BANK_CHANGED_EVENT,
   bindOptimisticBankCredit,
   getBankBalance,
+  getPermanentDeviceBankCredit,
   readBankPreview,
 } from '@/lib/tradeup/bank';
 import {
-  balanceFromCacheForUser,
   isBankAuthLoading,
   isBankPermanent,
   shouldUseGuestBank,
   type BankAuthStatus,
 } from '@/lib/tradeup/bankDisplay';
 import { CLASSIC_PROGRESS_EVENT } from '@/lib/tradeup/storage';
+import { flushPendingTriviaBonuses } from '@/lib/tradeup/trivia/bankTrivia';
 
 /**
  * Server credits can land well after the event that announced them (a run is recorded, an
@@ -28,23 +29,27 @@ const CHANGE_RECHECK_MS = [0, 1500, 4000, 10_000];
 const POLL_MS = 20_000;
 const CACHE_KEY = 'oneb_bank_server_cache_v1';
 
+type BankCache = { userId: string; balance: number; floor: number | null };
+
 /**
  * One shared server balance for every screen (signed-in players). Rules that keep it from ever
  * freezing / flashing the wrong number:
  *   - a failed or slow read never replaces the balance with $0 / guest;
  *   - cache is applied only when cached.userId matches the live session user;
  *   - an older response can never overwrite a newer one;
- *   - account switches clear the prior balance before the next pull lands.
+ *   - account switches clear the prior balance before the next pull lands;
+ *   - display = max(server + device-only local credit, persisted floor) so trivia /
+ *     rollover actually stick until the server ledger catches up (or forever for trivia).
  */
 const store = {
-  value: null as number | null,
+  /** Raw server ledger (never includes device-only trivia). */
+  server: null as number | null,
   userId: null as string | null,
   started: 0,
   applied: 0,
   /**
-   * Optimistic floor after local trivia / rollover credits. Pull must not paint a
-   * lower server balance until the ledger has caught up (otherwise Bank Money
-   * looks stuck / snaps back after a $1B run or trivia win).
+   * Persisted floor after rollover (and any optimistic bump). Survives remount.
+   * Cleared only when server + device credit has caught up.
    */
   floor: null as number | null,
   listeners: new Set<() => void>(),
@@ -57,31 +62,44 @@ function emit() {
   store.listeners.forEach((fn) => fn());
 }
 
-function readCache(): { userId: string; balance: number } | null {
+function readCache(): BankCache | null {
   try {
     const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as {
       userId?: unknown;
       balance?: unknown;
+      floor?: unknown;
     } | null;
-    return raw && typeof raw.userId === 'string' && typeof raw.balance === 'number'
-      ? { userId: raw.userId, balance: raw.balance }
-      : null;
+    if (!raw || typeof raw.userId !== 'string' || typeof raw.balance !== 'number') return null;
+    const floor =
+      typeof raw.floor === 'number' && Number.isFinite(raw.floor) ? Math.round(raw.floor) : null;
+    return { userId: raw.userId, balance: raw.balance, floor };
   } catch {
     return null;
   }
 }
 
-function writeCache(userId: string, balance: number) {
+function writeCache(userId: string, balance: number, floor: number | null = store.floor) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ userId, balance }));
+    const payload: BankCache = { userId, balance, floor };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
   } catch {
     /* private mode */
   }
 }
 
+/** Permanent Bank Money shown in UI (server + device trivia, floored through rollover). */
+function displayBalance(): number | null {
+  if (store.server == null && store.floor == null) return null;
+  const server = store.server ?? 0;
+  const device = getPermanentDeviceBankCredit();
+  const base = Math.max(0, server + device);
+  if (store.floor != null) return Math.max(base, store.floor);
+  return base;
+}
+
 function clearDisplay(emitChange = true) {
-  const changed = store.value != null || store.userId != null || store.floor != null;
-  store.value = null;
+  const changed = store.server != null || store.userId != null || store.floor != null;
+  store.server = null;
   store.userId = null;
   store.floor = null;
   store.applied = store.started;
@@ -89,33 +107,32 @@ function clearDisplay(emitChange = true) {
 }
 
 /**
- * Instant Bank bump for signed-in players (trivia win, $1B rollover) while the
- * server ledger catches up. Guests ignore this — they use the local ledger path.
+ * Instant Bank bump for signed-in players (trivia win, $1B rollover).
+ * Raises a persisted floor so remount / server lag cannot erase the credit.
  */
 function applyOptimisticBankCredit(amount: number): void {
   if (typeof window === 'undefined' || !(amount > 0)) return;
   if (!store.wired) wire();
+  const bump = Math.round(amount);
   if (!store.userId) {
-    // Session not known yet — still raise a floor from cache when available.
     const cached = readCache();
     if (cached) {
       store.userId = cached.userId;
-      store.value = cached.balance + amount;
-      store.floor = store.value;
-      writeCache(cached.userId, store.value);
-      emit();
+      store.server = cached.balance;
+      store.floor = cached.floor;
     }
-    return;
   }
-  const base =
-    store.value ??
-    balanceFromCacheForUser(readCache(), store.userId) ??
-    0;
-  const next = base + Math.round(amount);
-  store.value = next;
+  const current = displayBalance() ?? store.server ?? 0;
+  const next = current + bump;
   store.floor = Math.max(store.floor ?? 0, next);
-  writeCache(store.userId, next);
+  if (store.userId) writeCache(store.userId, store.server ?? 0, store.floor);
   emit();
+}
+
+function maybeClearFloor(serverBalance: number): void {
+  if (store.floor == null) return;
+  const caughtUp = serverBalance + getPermanentDeviceBankCredit() >= store.floor;
+  if (caughtUp) store.floor = null;
 }
 
 async function pull(): Promise<void> {
@@ -129,51 +146,57 @@ async function pull(): Promise<void> {
   }
 
   if (!userId) {
-    // Signed out: never keep another account's Bank on screen.
     clearDisplay(true);
     return;
   }
 
   if (store.userId && store.userId !== userId) {
-    // Another account signed in on this device: never show the previous player's Bank.
-    store.value = null;
+    store.server = null;
     store.floor = null;
     store.applied = 0;
     emit();
   }
   store.userId = userId;
 
-  // Only the matching account's cache may paint before the network returns.
-  if (store.value == null) {
-    const cachedBalance = balanceFromCacheForUser(readCache(), userId);
-    if (cachedBalance != null) {
-      store.value = cachedBalance;
+  if (store.server == null) {
+    const cached = readCache();
+    if (cached && cached.userId === userId) {
+      store.server = cached.balance;
+      if (store.floor == null && cached.floor != null) store.floor = cached.floor;
+      emit();
+    }
+  } else if (store.floor == null) {
+    const cached = readCache();
+    if (cached && cached.userId === userId && cached.floor != null) {
+      store.floor = cached.floor;
       emit();
     }
   }
 
+  // Push on-device trivia credits to the server ledger before reading bank_total
+  // so Home and Leaderboard converge on one authoritative balance.
+  try {
+    await flushPendingTriviaBonuses();
+  } catch {
+    /* network — still pull whatever the server already has */
+  }
+
   const result = await fetchMyBankBalance();
   if (result.ok !== true || seq < store.applied) return;
-  // Session may have changed while the request was in flight.
   if (store.userId !== userId) return;
   store.applied = seq;
 
-  let next = result.balance;
-  if (store.floor != null) {
-    if (next >= store.floor) {
-      // Server caught up to the optimistic credit.
-      store.floor = null;
-    } else {
-      // Keep the higher optimistic number until the ledger posts.
-      next = store.floor;
-    }
-  }
+  store.server = result.balance;
+  maybeClearFloor(result.balance);
+  writeCache(userId, result.balance, store.floor);
+  emit();
+}
 
-  if (store.value !== next) {
-    store.value = next;
-    emit();
-  }
-  writeCache(userId, result.balance);
+function onBankChanged() {
+  // Trivia / local ledger updates must refresh permanent display immediately
+  // (device credit is read inside displayBalance).
+  emit();
+  recheckSoon();
 }
 
 function recheckSoon() {
@@ -185,7 +208,6 @@ const onVisible = () => {
   if (document.visibilityState === 'visible') void pull();
 };
 const onFocus = () => void pull();
-/** Signed out / data deleted on this device: forget the old balance before anyone else signs in. */
 const onCleared = () => {
   clearDisplay(false);
   try {
@@ -200,9 +222,8 @@ const onCleared = () => {
 function wire() {
   if (store.wired) return;
   store.wired = true;
-  // Do not hydrate from cache here — userId is unknown until pull().
   bindOptimisticBankCredit(applyOptimisticBankCredit);
-  window.addEventListener(BANK_CHANGED_EVENT, recheckSoon);
+  window.addEventListener(BANK_CHANGED_EVENT, onBankChanged);
   window.addEventListener(CLASSIC_PROGRESS_EVENT, recheckSoon);
   window.addEventListener('focus', onFocus);
   window.addEventListener('online', onFocus);
@@ -218,7 +239,7 @@ function unwire() {
   if (!store.wired) return;
   store.wired = false;
   bindOptimisticBankCredit(null);
-  window.removeEventListener(BANK_CHANGED_EVENT, recheckSoon);
+  window.removeEventListener(BANK_CHANGED_EVENT, onBankChanged);
   window.removeEventListener(CLASSIC_PROGRESS_EVENT, recheckSoon);
   window.removeEventListener('focus', onFocus);
   window.removeEventListener('online', onFocus);
@@ -239,7 +260,7 @@ function subscribe(listener: () => void): () => void {
 }
 
 const noop = () => () => {};
-const getServer = () => store.value;
+const getDisplay = () => displayBalance();
 const getNull = () => null;
 
 export type { BankAuthStatus };
@@ -247,7 +268,7 @@ export type { BankAuthStatus };
 /**
  * Bank balance to display.
  * - Auth still loading / unavailable → null (never guest, never forced $0).
- * - Permanent → server ledger (cache only when userId matches).
+ * - Permanent → server ledger + device-only credits (trivia), floored through rollover.
  * - Guest / anonymous → on-device total once auth has resolved.
  */
 export function useBankBalance(
@@ -266,12 +287,10 @@ export function useBankBalance(
 
   const [local, setLocal] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
-  // Subscribe whenever we may need the server number (permanent, or loading so a
-  // cold signed-in launch can hydrate the matching cache as soon as the session is known).
   const subscribeServer = permanent || authLoading;
-  const server = useSyncExternalStore(
+  const serverDisplay = useSyncExternalStore(
     subscribeServer ? subscribe : noop,
-    subscribeServer ? getServer : getNull,
+    subscribeServer ? getDisplay : getNull,
     getNull,
   );
 
@@ -296,18 +315,12 @@ export function useBankBalance(
     };
   }, [useGuest]);
 
-  // Permanent account (or switch): refresh so cache/userId stay aligned.
   useEffect(() => {
     if (permanent) void pull();
-    if (!permanent && !authLoading) {
-      // Left a permanent session — drop server display; guest path uses local.
-      // Keep store for a later sign-in; pull() will mismatch-clear if needed.
-    }
   }, [permanent, authLoading]);
 
   if (preview != null) return preview;
-  // Auth unresolved: never guest, never a leftover account's Bank, never forced $0.
   if (authLoading) return null;
-  if (permanent) return server;
+  if (permanent) return serverDisplay;
   return local;
 }

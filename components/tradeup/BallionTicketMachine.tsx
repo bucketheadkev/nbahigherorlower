@@ -330,26 +330,32 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
 
   const handleRoll = useCallback(() => {
     if (rollLocked || busyRef.current || mode === 'spinning') return;
-    hapticLight();
     busyRef.current = true;
+    // Reels commit first in this gesture — parent session / RPC must never gate motion.
+    const localPair = pickFairResult(allPairs);
+    const spunAt = performance.now();
+    beginSpin(localPair, { team: true, era: true }, { playSound: false });
+    hapticLight();
     // Unlock + arm spin audio in this tap (WKWebView userActivation is unreliable).
-    // Audio is not gated by reduced-motion — only reel timing is.
     playSpinClickSound();
     startWheelSpinSound(WHEEL_SPIN_DURATION_MS);
     onPrint();
-    if (resolveRoll) {
-      void resolveRoll().then((pair) => {
-        if (pair) beginSpin(pair, { team: true, era: true }, { playSound: false });
-        else {
-          busyRef.current = false;
-          stopWheelSpinSound();
-        }
-      });
-      return;
-    }
-    const pair = pickFairResult(allPairs);
-    beginSpin(pair, { team: true, era: true }, { playSound: false });
-  }, [allPairs, beginSpin, mode, onPrint, resolveRoll, rollLocked]);
+
+    if (!resolveRoll) return;
+    void resolveRoll().then((pair) => {
+      if (!pair) return;
+      const same = pair.team.id === localPair.team.id && pair.era === localPair.era;
+      if (same) return;
+      // Early server answer: restart onto the ledger result so land matches.
+      if (performance.now() - spunAt < teamMs * 0.45 && busyRef.current) {
+        beginSpin(pair, { team: true, era: true }, { playSound: false });
+        return;
+      }
+      // Late: keep the visual strip, commit server pair for game state.
+      pendingRef.current = pair;
+      setResult(pair);
+    });
+  }, [allPairs, beginSpin, mode, onPrint, resolveRoll, rollLocked, teamMs]);
 
   // One-sided auto-reroll from pick screen. Re-arms once consumed so a later reroll of the
   // other reel runs on this same (already landed) board.
@@ -497,10 +503,12 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
           <button
             type="button"
             className="cj__spin"
-            onClick={(e) => {
+            onPointerDown={(e) => {
+              if (e.button !== 0) return;
               e.preventDefault();
               handleRoll();
             }}
+            onClick={(e) => e.preventDefault()}
           >
             <span className="cj__spin-label">{t('game.roll')}</span>
           </button>
@@ -597,10 +605,12 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
             type="button"
             className="ter__roll"
             disabled={busy}
-            onClick={(e) => {
+            onPointerDown={(e) => {
+              if (e.button !== 0 || busy) return;
               e.preventDefault();
               handleRoll();
             }}
+            onClick={(e) => e.preventDefault()}
           >
             <span className="ter__roll-sheen" aria-hidden />
             <span className="ter__roll-label">{t('game.roll')}</span>

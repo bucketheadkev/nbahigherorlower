@@ -22,21 +22,21 @@
   background-repeat: no-repeat, repeat;
 }
 
-/* Dock / secondary buttons */
+/* Dock / secondary buttons — midnight ink to match curved hub nav reference */
 body:has(.oneb-tabbar-host),
 body:has(.home-hub-top.rh5-top) {
-  --rh5-dock-top: #0d3268;
-  --rh5-dock-mid: #0a2250;
-  --rh5-dock-bot: #071838;
-  --rh5-dock-border: rgba(90, 145, 215, 0.3);
-  --rh5-dock-sheen: rgba(255, 255, 255, 0.09);
+  --rh5-dock-top: #0a1220;
+  --rh5-dock-mid: #070f1c;
+  --rh5-dock-bot: #050b18;
+  --rh5-dock-border: rgba(168, 196, 240, 0.45);
+  --rh5-dock-sheen: rgba(255, 255, 255, 0.06);
 }
 
-/* Bottom nav — brushed navy (matched chrome) */
-.oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri,
-body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar,
-body:has(.rh5) .oneb-tabbar-host .oneb-tabbar,
-html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar {
+/* Pill / iOS / orbit / curve hub nav paints itself — don't force brushed navy over it */
+.oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri:not(.oneb-tabbar--curve):not(.oneb-tabbar--orbit):not(.oneb-tabbar--pill):not(.oneb-tabbar--ios),
+body:has(.home-hub-top.rh5-top) .oneb-tabbar-host .oneb-tabbar:not(.oneb-tabbar--curve):not(.oneb-tabbar--orbit):not(.oneb-tabbar--pill):not(.oneb-tabbar--ios),
+body:has(.rh5) .oneb-tabbar-host .oneb-tabbar:not(.oneb-tabbar--curve):not(.oneb-tabbar--orbit):not(.oneb-tabbar--pill):not(.oneb-tabbar--ios),
+html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar:not(.oneb-tabbar--curve):not(.oneb-tabbar--orbit):not(.oneb-tabbar--pill):not(.oneb-tabbar--ios) {
   background-color: var(--theme-navy-deep) !important;
   background-image:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
@@ -49,7 +49,7 @@ html[data-platform="native"] .oneb-tabbar-host .oneb-tabbar {
 
 html[data-platform="native"] body:has(.oneb-tabbar-host),
 html[data-platform="native"] body:has(.oneb-tabbar-host)::after {
-  background-color: var(--theme-navy-deep) !important;
+  background-color: #050b18 !important;
 }
 
 /* Trivia panel */

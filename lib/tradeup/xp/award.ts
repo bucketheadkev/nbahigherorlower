@@ -54,6 +54,15 @@ export function awardClassicRunXp(runRef: string, teamValue: number): ClassicXpA
   }
 
   const coinsFromRun = breakdown.coins + levelCoins;
+  // Permanent: server awards from verified leaderboard run (fixed 20 / 50).
+  // Level-up coins stay local until a server level system exists.
+  if (breakdown.coins > 0) {
+    void import('./cloudCoins')
+      .then((mod) => mod.awardClassicRunCoins(ref))
+      .catch(() => {
+        /* node scripts / offline — local credit already applied */
+      });
+  }
 
   return {
     awarded: true,
