@@ -5,31 +5,30 @@ import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
 
 /**
  * Single coordinated timeline (ms). CSS keyframe % = ms / INTRO_TOTAL_MS.
- * Tune here and keep `--oneb-intro-ms` / keyframes in oneb-theme.css in sync.
+ * Keep `--oneb-intro-ms` in splash-intro.css in sync.
  */
-export const INTRO_TOTAL_MS = 3400;
+export const INTRO_TOTAL_MS = 3600;
 
 export const INTRO_MARKS = {
   atmosphereEnd: 100,
-  logoRevealStart: 0,
-  logoRevealEnd: 620,
-  loadBarStart: 1360,
-  loadBarFull: 2720,
-  logoHoldEnd: 2800,
-  homeRevealEnd: 3400,
+  logoRevealStart: 60,
+  logoRevealEnd: 720,
+  loadBarStart: 900,
+  loadBarFull: 2850,
+  logoHoldEnd: 3000,
+  homeRevealEnd: 3600,
 } as const;
 
 /** Longest the intro waits near the end of the bar for the app to be ready. */
 export const INTRO_HOLD_MAX_MS = 4000;
 
-/** Bar fill window as fractions of the timeline; it may only pass HOLD_AT once the app is ready. */
-const BAR_START = 0.4;
-const BAR_FULL = 0.8;
-const HOLD_AT = 0.7;
+const BAR_START = 0.26;
+const BAR_FULL = 0.82;
+const HOLD_AT = 0.72;
 
 function barProgress(elapsed: number, duration: number): number {
   const p = Math.min(1, Math.max(0, (elapsed / duration - BAR_START) / (BAR_FULL - BAR_START)));
-  return 1 - (1 - p) * (1 - p);
+  return 1 - (1 - p) ** 2.4;
 }
 
 export const INTRO_EASING = {
@@ -44,24 +43,17 @@ interface BallionSplashProps {
   appReady?: boolean;
 }
 
-/** Survives Strict Mode remounts within one page load. */
 let introFinishedThisLoad = false;
 
-/** Parent shell reads this so HMR can't re-show a finished intro. */
 export function hasIntroFinishedThisLoad(): boolean {
   return introFinishedThisLoad;
 }
 
-/** Hard refresh / ?replaySplash=1 — allow the intro to run again this load. */
 export function resetIntroFinishedThisLoad(): void {
   introFinishedThisLoad = false;
   clearModuleFailsafe();
 }
 
-/**
- * Module-level hard stop — must NOT live in a ref cleared by effect cleanup,
- * or Strict Mode / HMR can leave the z-index 200 navy veil forever.
- */
 let moduleFailsafeId: number | null = null;
 let moduleFailsafeBound: (() => void) | null = null;
 
@@ -80,6 +72,14 @@ function armModuleFailsafe(finish: () => void, ms: number) {
     moduleFailsafeId = null;
     moduleFailsafeBound?.();
   }, ms);
+}
+
+export function clearBootVeil(): void {
+  try {
+    document.documentElement.classList.remove('oneb-booting');
+  } catch {
+    /* ignore */
+  }
 }
 
 async function preloadIntroAssets(): Promise<void> {
@@ -114,15 +114,13 @@ async function preloadIntroAssets(): Promise<void> {
 }
 
 /**
- * Launch intro — 1B Run logo + load bar → home.
+ * Launch intro — soft dramatic light, logo, machined load bar → home.
  */
 export function BallionSplash({
   onDone,
   reduceMotion = false,
   appReady = true,
 }: BallionSplashProps) {
-  // Start the timeline immediately — never sit on blank navy boot.
-  const [boot, setBoot] = useState(false);
   const [run, setRun] = useState(true);
   const [done, setDone] = useState(introFinishedThisLoad);
   const [exiting, setExiting] = useState(false);
@@ -132,6 +130,7 @@ export function BallionSplash({
   const timersRef = useRef<number[]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const fillRef = useRef<HTMLSpanElement | null>(null);
+  const pctRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     onDoneRef.current = onDone;
@@ -141,18 +140,17 @@ export function BallionSplash({
     appReadyRef.current = appReady;
   }, [appReady]);
 
-  // Sync parent before paint when HMR remounts after a finished intro —
-  // otherwise showSplash stays true with a null splash and dead pointer-events.
   useLayoutEffect(() => {
     if (introFinishedThisLoad || finishedRef.current) {
       finishedRef.current = true;
       introFinishedThisLoad = true;
+      clearBootVeil();
       setExiting(true);
       setDone(true);
       onDoneRef.current();
       return;
     }
-    setBoot(false);
+    clearBootVeil();
     setRun(true);
   }, []);
 
@@ -173,6 +171,7 @@ export function BallionSplash({
       introFinishedThisLoad = true;
       clearTimers();
       clearModuleFailsafe();
+      clearBootVeil();
       setExiting(true);
       setDone(true);
       onDoneRef.current();
@@ -182,6 +181,7 @@ export function BallionSplash({
       finishedRef.current = true;
       introFinishedThisLoad = true;
       clearModuleFailsafe();
+      clearBootVeil();
       setExiting(true);
       setDone(true);
       onDoneRef.current();
@@ -189,18 +189,14 @@ export function BallionSplash({
     }
 
     const duration = reduceMotion ? 720 : INTRO_TOTAL_MS;
-    // Nuclear: survive Strict Mode timer clears — must outlast the full intro and its longest hold.
     armModuleFailsafe(finish, duration + INTRO_HOLD_MAX_MS + 1000);
 
-    setBoot(false);
     setRun(true);
     let assetsReady = false;
     void preloadIntroAssets().then(() => {
       assetsReady = true;
     });
 
-    // The bar tracks real readiness: it fills on the timeline, but past HOLD_AT the whole intro
-    // pauses (CSS included) until the app is ready, then the bar completes and the intro exits.
     let elapsed = 0;
     let held = 0;
     let last = performance.now();
@@ -213,7 +209,9 @@ export function BallionSplash({
       rootRef.current?.classList.toggle('is-holding', holding);
       if (holding) held += dt;
       else elapsed += dt;
-      if (fillRef.current) fillRef.current.style.transform = `scaleX(${barProgress(elapsed, duration)})`;
+      const progress = barProgress(elapsed, duration);
+      if (fillRef.current) fillRef.current.style.transform = `scaleX(${progress})`;
+      if (pctRef.current) pctRef.current.textContent = `${Math.round(progress * 100)}`;
       if (elapsed >= duration) {
         finish();
         return;
@@ -222,13 +220,11 @@ export function BallionSplash({
     };
     raf = window.requestAnimationFrame(tick);
 
-    // Backgrounded tabs don't run frames; never leave the veil up.
     schedule(finish, duration + INTRO_HOLD_MAX_MS + 800);
 
     return () => {
       window.cancelAnimationFrame(raf);
       clearTimers();
-      // Intentionally do NOT clear moduleFailsafe — Strict Mode must not kill it.
     };
   }, [reduceMotion]);
 
@@ -239,7 +235,6 @@ export function BallionSplash({
       ref={rootRef}
       className={[
         'oneb-intro',
-        boot ? 'oneb-intro--boot' : '',
         run ? 'oneb-intro--run' : '',
         reduceMotion ? 'oneb-intro--reduced' : '',
         exiting ? 'is-exiting' : '',
@@ -252,36 +247,38 @@ export function BallionSplash({
       <div className="oneb-intro__veil" />
 
       <div className="oneb-intro__atmosphere" aria-hidden>
-        <div className="oneb-intro__atm-glow" />
-        <div className="oneb-intro__atm-wash" />
+        <div className="oneb-intro__bloom oneb-intro__bloom--cool" />
+        <div className="oneb-intro__bloom oneb-intro__bloom--warm" />
+        <div className="oneb-intro__bloom oneb-intro__bloom--spot" />
+        <div className="oneb-intro__shaft oneb-intro__shaft--a" />
+        <div className="oneb-intro__shaft oneb-intro__shaft--b" />
+        <div className="oneb-intro__vignette" />
         <div className="oneb-intro__atm-grain" />
-        <div className="oneb-intro__core-glow" />
       </div>
 
       <div className="oneb-intro__stage">
         <div className="oneb-intro__brand">
           <div className="oneb-intro__logo-stage">
-            <div className="oneb-intro__logo-pulse" aria-hidden />
             <div className="oneb-intro__logo-glow" aria-hidden />
-            <div className="oneb-intro__logo-tilt">
-              <div className="oneb-intro__logo-mark">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="oneb-intro__logo"
-                  src={BALLION_SPLASH_LOGO_SRC}
-                  alt=""
-                  width={1024}
-                  height={1024}
-                  decoding="sync"
-                  fetchPriority="high"
-                  draggable={false}
-                  onContextMenu={(event) => event.preventDefault()}
-                />
-                <span className="oneb-intro__logo-illum" aria-hidden />
-                <span className="oneb-intro__logo-sweep" aria-hidden />
-              </div>
+            <div className="oneb-intro__logo-mark">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="oneb-intro__logo"
+                src={BALLION_SPLASH_LOGO_SRC}
+                alt=""
+                width={1024}
+                height={1024}
+                decoding="sync"
+                fetchPriority="high"
+                draggable={false}
+                onContextMenu={(event) => event.preventDefault()}
+              />
+              <span className="oneb-intro__logo-illum" aria-hidden />
+              <span className="oneb-intro__logo-sweep" aria-hidden />
             </div>
           </div>
+
+          <p className="oneb-intro__wordmark">1B RUN</p>
 
           <div className="oneb-intro__load" role="status" aria-label="Loading">
             <div className="oneb-intro__bar">
@@ -290,7 +287,12 @@ export function BallionSplash({
                 <span className="oneb-intro__bar-sheen" aria-hidden />
               </span>
             </div>
-            <p className="oneb-intro__load-label">Loading</p>
+            <div className="oneb-intro__load-meta">
+              <p className="oneb-intro__load-label">Loading</p>
+              <p className="oneb-intro__load-pct">
+                <span ref={pctRef}>0</span>%
+              </p>
+            </div>
           </div>
         </div>
       </div>

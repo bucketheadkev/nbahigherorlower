@@ -3,6 +3,7 @@ export type Locale = 'en' | 'es';
 export type MessageKey =
   | 'nav.myRuns'
   | 'nav.play'
+  | 'nav.home'
   | 'nav.challenges'
   | 'nav.leaderboard'
   | 'nav.shop'
@@ -10,6 +11,10 @@ export type MessageKey =
   | 'nav.main'
   | 'shop.comingSoon'
   | 'shop.comingSoonCopy'
+  | 'shop.coins'
+  | 'shop.perks'
+  | 'shop.restore'
+  | 'shop.restoring'
   | 'home.draftA'
   | 'home.oneBillion'
   | 'home.teamWord'
@@ -120,6 +125,47 @@ export type MessageKey =
   | 'runs.emptyTitle'
   | 'settings.language'
   | 'settings.languageHint'
+  | 'settings.title'
+  | 'settings.menu'
+  | 'settings.playSection'
+  | 'settings.soundEffects'
+  | 'settings.soundOn'
+  | 'settings.soundOff'
+  | 'settings.haptics'
+  | 'settings.hapticsOn'
+  | 'settings.hapticsOff'
+  | 'settings.h2hName'
+  | 'settings.h2hNameTitle'
+  | 'settings.h2hNameCopy'
+  | 'settings.h2hUsername'
+  | 'settings.privacy'
+  | 'settings.support'
+  | 'settings.contactUs'
+  | 'settings.deleteAccount'
+  | 'settings.deleteTitle'
+  | 'settings.deleteCopy'
+  | 'settings.deleteConfirm'
+  | 'settings.deleting'
+  | 'settings.deleteSuccessTitle'
+  | 'settings.deleteSuccessCopy'
+  | 'settings.signOut'
+  | 'settings.signOutTitle'
+  | 'settings.signOutCopy'
+  | 'settings.signingOut'
+  | 'settings.logIn'
+  | 'settings.createAccount'
+  | 'settings.guest'
+  | 'settings.joined'
+  | 'settings.signInHint'
+  | 'settings.cancel'
+  | 'settings.save'
+  | 'settings.close'
+  | 'settings.ok'
+  | 'settings.nameErrorChars'
+  | 'settings.nameErrorTaken'
+  | 'settings.editName'
+  | 'settings.socials'
+  | 'settings.legal'
   | 'challenges.eyebrow'
   | 'challenges.title'
   | 'challenges.completeLabel'
@@ -213,11 +259,16 @@ export type MessageKey =
 const EN: Record<MessageKey, string> = {
   'nav.myRuns': 'My Runs',
   'nav.play': 'Play',
+  'nav.home': 'Home',
   'nav.challenges': 'Achievements',
   'nav.leaderboard': 'Leaderboard',
   'nav.shop': 'Shop',
   'shop.comingSoon': 'Coming Soon',
   'shop.comingSoonCopy': 'The Shop opens soon. Your coins stay safe.',
+  'shop.coins': 'Coins',
+  'shop.perks': 'Perks',
+  'shop.restore': 'Restore Purchases',
+  'shop.restoring': 'Restoring…',
   'home.draftA': 'BUILD A',
   'home.oneBillion': '$1 BILLION',
   'home.teamWord': 'TEAM',
@@ -333,6 +384,49 @@ const EN: Record<MessageKey, string> = {
   'runs.emptyTitle': 'No billion runs yet',
   'settings.language': 'Language',
   'settings.languageHint': 'Game text and guides',
+  'settings.title': 'Settings',
+  'settings.menu': 'Menu',
+  'settings.playSection': 'Play',
+  'settings.soundEffects': 'Sound Effects',
+  'settings.soundOn': 'Sound effects on',
+  'settings.soundOff': 'Sound effects off',
+  'settings.haptics': 'Haptics',
+  'settings.hapticsOn': 'Haptics on',
+  'settings.hapticsOff': 'Haptics off',
+  'settings.h2hName': 'Head-to-Head Name',
+  'settings.h2hNameTitle': 'Head-to-Head Name',
+  'settings.h2hNameCopy': 'This is the name opponents will see.',
+  'settings.h2hUsername': 'YOUR USERNAME',
+  'settings.privacy': 'Privacy Policy',
+  'settings.support': 'Player Support',
+  'settings.contactUs': 'Contact Us',
+  'settings.deleteAccount': 'Delete Account',
+  'settings.deleteTitle': 'Delete Account?',
+  'settings.deleteCopy':
+    'This permanently deletes your multiplayer identity, display name, game progress, preferences, and other data associated with this installation. This cannot be undone.',
+  'settings.deleteConfirm': 'Delete Permanently',
+  'settings.deleting': 'Deleting…',
+  'settings.deleteSuccessTitle': 'Your data has been deleted',
+  'settings.deleteSuccessCopy': 'A new anonymous session was created. You can keep playing.',
+  'settings.signOut': 'Sign Out',
+  'settings.signOutTitle': 'Sign Out?',
+  'settings.signOutCopy':
+    'You’ll need to log back in to sync progress across devices. Local play still works as a guest.',
+  'settings.signingOut': 'Signing out…',
+  'settings.logIn': 'Log In',
+  'settings.createAccount': 'Create Account',
+  'settings.guest': 'Guest',
+  'settings.joined': 'Joined {date}',
+  'settings.signInHint': 'Sign in to save progress across devices',
+  'settings.cancel': 'Cancel',
+  'settings.save': 'Save',
+  'settings.close': 'Close',
+  'settings.ok': 'OK',
+  'settings.nameErrorChars': 'Use 2–16 letters or numbers.',
+  'settings.nameErrorTaken': 'That name can’t be used.',
+  'settings.editName': 'Edit head-to-head name',
+  'settings.socials': 'Social',
+  'settings.legal': 'Legal',
   'challenges.eyebrow': 'SEASON GOALS',
   'challenges.title': 'Achievements',
   'challenges.completeLabel': 'complete',
@@ -448,11 +542,16 @@ const EN: Record<MessageKey, string> = {
 const ES: Record<MessageKey, string> = {
   'nav.myRuns': 'Mis Partidas',
   'nav.play': 'Jugar',
+  'nav.home': 'Inicio',
   'nav.challenges': 'Logros',
   'nav.leaderboard': 'Clasificación',
   'nav.shop': 'Tienda',
   'shop.comingSoon': 'Próximamente',
   'shop.comingSoonCopy': 'La tienda abre pronto. Tus monedas están seguras.',
+  'shop.coins': 'Monedas',
+  'shop.perks': 'Ventajas',
+  'shop.restore': 'Restaurar compras',
+  'shop.restoring': 'Restaurando…',
   'home.draftA': 'CONSTRUYE UN',
   'home.oneBillion': '$1 BILLÓN',
   'home.teamWord': 'EQUIPO',
@@ -569,6 +668,49 @@ const ES: Record<MessageKey, string> = {
   'runs.emptyTitle': 'Aún no hay partidas de mil millones',
   'settings.language': 'Idioma',
   'settings.languageHint': 'Textos del juego y guías',
+  'settings.title': 'Ajustes',
+  'settings.menu': 'Menú',
+  'settings.playSection': 'Jugar',
+  'settings.soundEffects': 'Efectos de sonido',
+  'settings.soundOn': 'Efectos de sonido activados',
+  'settings.soundOff': 'Efectos de sonido desactivados',
+  'settings.haptics': 'Háptica',
+  'settings.hapticsOn': 'Háptica activada',
+  'settings.hapticsOff': 'Háptica desactivada',
+  'settings.h2hName': 'Nombre cara a cara',
+  'settings.h2hNameTitle': 'Nombre cara a cara',
+  'settings.h2hNameCopy': 'Este es el nombre que verán tus rivales.',
+  'settings.h2hUsername': 'TU NOMBRE DE USUARIO',
+  'settings.privacy': 'Política de privacidad',
+  'settings.support': 'Soporte al jugador',
+  'settings.contactUs': 'Contáctanos',
+  'settings.deleteAccount': 'Eliminar cuenta',
+  'settings.deleteTitle': '¿Eliminar cuenta?',
+  'settings.deleteCopy':
+    'Esto elimina de forma permanente tu identidad multijugador, nombre, progreso, preferencias y otros datos de esta instalación. No se puede deshacer.',
+  'settings.deleteConfirm': 'Eliminar permanentemente',
+  'settings.deleting': 'Eliminando…',
+  'settings.deleteSuccessTitle': 'Tus datos se han eliminado',
+  'settings.deleteSuccessCopy': 'Se creó una sesión anónima nueva. Puedes seguir jugando.',
+  'settings.signOut': 'Cerrar sesión',
+  'settings.signOutTitle': '¿Cerrar sesión?',
+  'settings.signOutCopy':
+    'Tendrás que volver a iniciar sesión para sincronizar el progreso entre dispositivos. Puedes seguir jugando como invitado.',
+  'settings.signingOut': 'Cerrando sesión…',
+  'settings.logIn': 'Iniciar sesión',
+  'settings.createAccount': 'Crear cuenta',
+  'settings.guest': 'Invitado',
+  'settings.joined': 'Se unió {date}',
+  'settings.signInHint': 'Inicia sesión para guardar el progreso entre dispositivos',
+  'settings.cancel': 'Cancelar',
+  'settings.save': 'Guardar',
+  'settings.close': 'Cerrar',
+  'settings.ok': 'OK',
+  'settings.nameErrorChars': 'Usa 2–16 letras o números.',
+  'settings.nameErrorTaken': 'Ese nombre no se puede usar.',
+  'settings.editName': 'Editar nombre cara a cara',
+  'settings.socials': 'Redes',
+  'settings.legal': 'Legal',
   'challenges.eyebrow': 'METAS DE TEMPORADA',
   'challenges.title': 'Logros',
   'challenges.completeLabel': 'completados',

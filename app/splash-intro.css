@@ -1,0 +1,674 @@
+/* ══ Premium 1B Run launch intro — soft light, no hard geometry ══
+   Duration must match INTRO_TOTAL_MS in BallionSplash.tsx (3600ms). */
+
+.oneb-intro {
+  --oneb-intro-ms: 3600ms;
+  --oneb-intro-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --oneb-intro-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --oneb-intro-soften: cubic-bezier(0.4, 0, 0.2, 1);
+
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  width: 100%;
+  min-height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  display: block;
+  overflow: hidden;
+  background: #010814;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: none;
+  isolation: isolate;
+}
+
+.oneb-intro.oneb-intro--run:not(.is-exiting) {
+  pointer-events: auto;
+}
+
+.oneb-intro.is-exiting {
+  pointer-events: none !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.32s ease, visibility 0.32s ease;
+}
+
+.oneb-intro:not(.oneb-intro--run):not(.is-exiting) {
+  animation: oneb-intro-boot-failsafe 0.15s linear 1.2s forwards;
+}
+
+@keyframes oneb-intro-boot-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.oneb-intro__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #010814;
+  opacity: 1;
+  will-change: opacity;
+}
+
+.oneb-intro__atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Soft volumetric blooms — no hard edges */
+.oneb-intro__bloom {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  border-radius: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  opacity: 0;
+  will-change: opacity, transform;
+  filter: blur(28px);
+}
+
+.oneb-intro__bloom--cool {
+  width: min(160vw, 52rem);
+  height: min(160vw, 52rem);
+  background: radial-gradient(
+    circle,
+    rgba(40, 110, 255, 0.38) 0%,
+    rgba(20, 70, 180, 0.14) 35%,
+    transparent 68%
+  );
+  filter: blur(36px);
+}
+
+.oneb-intro__bloom--warm {
+  width: min(100vw, 28rem);
+  height: min(100vw, 28rem);
+  top: 46%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 110, 40, 0.28) 0%,
+    rgba(229, 86, 34, 0.1) 40%,
+    transparent 70%
+  );
+  filter: blur(32px);
+}
+
+.oneb-intro__bloom--spot {
+  width: min(55vw, 15rem);
+  height: min(55vw, 15rem);
+  background: radial-gradient(
+    circle,
+    rgba(180, 210, 255, 0.55) 0%,
+    rgba(80, 140, 255, 0.18) 40%,
+    transparent 72%
+  );
+  filter: blur(22px);
+}
+
+/* Soft light shafts — heavily blurred, never read as lines */
+.oneb-intro__shaft {
+  position: absolute;
+  left: 50%;
+  top: -10%;
+  width: min(42vw, 12rem);
+  height: 120%;
+  transform-origin: 50% 0%;
+  opacity: 0;
+  will-change: opacity, transform;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(140, 190, 255, 0.16) 0%,
+    rgba(90, 150, 255, 0.06) 35%,
+    transparent 75%
+  );
+  filter: blur(40px);
+}
+
+.oneb-intro__shaft--a {
+  transform: translate3d(-50%, 0, 0) rotate(-11deg);
+}
+
+.oneb-intro__shaft--b {
+  width: min(34vw, 9rem);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 150, 80, 0.12) 0%,
+    rgba(255, 120, 50, 0.05) 40%,
+    transparent 70%
+  );
+  transform: translate3d(-50%, 0, 0) rotate(9deg);
+  filter: blur(48px);
+}
+
+.oneb-intro__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 45%, transparent 20%, rgba(1, 8, 20, 0.55) 100%);
+  opacity: 0;
+  will-change: opacity;
+}
+
+.oneb-intro__atm-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  will-change: opacity;
+}
+
+.oneb-intro__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  place-content: center;
+  padding: max(1rem, env(safe-area-inset-top, 0px)) 1.25rem max(1.5rem, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.oneb-intro__brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(82vw, 20rem);
+}
+
+.oneb-intro__studio,
+.oneb-intro__ring,
+.oneb-intro__logo-pulse,
+.oneb-intro__logo-tilt,
+.oneb-intro__mote,
+.oneb-intro__aurora,
+.oneb-intro__atm-glow,
+.oneb-intro__atm-wash,
+.oneb-intro__core-glow {
+  display: none !important;
+}
+
+.oneb-intro__logo-stage {
+  position: relative;
+  width: min(44vw, 11rem);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  filter: blur(20px);
+  transform: scale(0.88);
+  will-change: opacity, transform, filter;
+  backface-visibility: hidden;
+}
+
+.oneb-intro__logo-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  height: 160%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(80, 150, 255, 0.42) 0%,
+    rgba(255, 120, 50, 0.14) 42%,
+    transparent 70%
+  );
+  opacity: 0;
+  transform: translate3d(-50%, -50%, 0) scale(0.75);
+  pointer-events: none;
+  filter: blur(18px);
+  will-change: opacity, transform;
+}
+
+.oneb-intro__logo-mark {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 22.37%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5);
+}
+
+.oneb-intro__logo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.oneb-intro__logo-illum {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    150deg,
+    rgba(160, 200, 255, 0.28) 0%,
+    transparent 45%,
+    rgba(255, 140, 70, 0.18) 100%
+  );
+  opacity: 0;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.oneb-intro__logo-sweep {
+  position: absolute;
+  inset: -20% -55%;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.22) 49%,
+    rgba(140, 190, 255, 0.14) 52%,
+    transparent 64%
+  );
+  opacity: 0;
+  transform: translate3d(-85%, 0, 0);
+  pointer-events: none;
+  filter: blur(2px);
+  will-change: opacity, transform;
+}
+
+.oneb-intro__wordmark {
+  margin: 1.15rem 0 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(2rem, 10vw, 3rem);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 0.95;
+  color: #f5f8fc;
+  text-align: center;
+  text-shadow: 0 0 40px rgba(80, 140, 255, 0.25);
+  opacity: 0;
+  filter: blur(14px);
+  transform: translate3d(0, 0.55rem, 0);
+  will-change: opacity, transform, filter;
+  backface-visibility: hidden;
+}
+
+.oneb-intro__load {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.58rem;
+  width: min(68vw, 15.5rem);
+  margin-top: 1.7rem;
+  opacity: 0;
+  transform: translate3d(0, 0.4rem, 0);
+  will-change: opacity, transform;
+}
+
+.oneb-intro__bar {
+  position: relative;
+  width: 100%;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.oneb-intro__bar-track {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.oneb-intro__bar-fill {
+  position: relative;
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #b45309 0%,
+    #e55622 35%,
+    #ff7a3a 70%,
+    #ffc08a 100%
+  );
+  box-shadow:
+    0 0 14px rgba(255, 120, 50, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.oneb-intro__bar-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 75%
+  );
+  transform: translate3d(-130%, 0, 0);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.oneb-intro__load-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.05rem;
+}
+
+.oneb-intro__load-label,
+.oneb-intro__load-pct {
+  margin: 0;
+  font-family: "Avenir Next Condensed", "Avenir Next", "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-size: clamp(0.66rem, 2.5vw, 0.76rem);
+  font-weight: 750;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.oneb-intro__load-label {
+  color: rgba(200, 214, 235, 0.68);
+  text-indent: 0.24em;
+}
+
+.oneb-intro__load-pct {
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 175, 120, 0.85);
+}
+
+/* —— Timeline —— */
+.oneb-intro--run .oneb-intro__veil {
+  animation: oneb-intro-veil var(--oneb-intro-ms) linear forwards;
+}
+
+.oneb-intro--run .oneb-intro__bloom--cool {
+  animation: oneb-intro-bloom-cool var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__bloom--warm {
+  animation: oneb-intro-bloom-warm var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__bloom--spot {
+  animation: oneb-intro-bloom-spot var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__shaft--a {
+  animation: oneb-intro-shaft-a var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__shaft--b {
+  animation: oneb-intro-shaft-b var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__vignette {
+  animation: oneb-intro-vignette var(--oneb-intro-ms) linear forwards;
+}
+
+.oneb-intro--run .oneb-intro__atm-grain {
+  animation: oneb-intro-grain var(--oneb-intro-ms) linear forwards;
+}
+
+.oneb-intro--run .oneb-intro__logo-stage {
+  animation: oneb-intro-logo var(--oneb-intro-ms) var(--oneb-intro-settle) forwards;
+}
+
+.oneb-intro--run .oneb-intro__logo-glow {
+  animation: oneb-intro-logo-glow var(--oneb-intro-ms) var(--oneb-intro-ease) forwards;
+}
+
+.oneb-intro--run .oneb-intro__logo-illum {
+  animation: oneb-intro-logo-illum var(--oneb-intro-ms) var(--oneb-intro-soften) forwards;
+}
+
+.oneb-intro--run .oneb-intro__logo-sweep {
+  animation: oneb-intro-logo-sweep var(--oneb-intro-ms) var(--oneb-intro-soften) forwards;
+}
+
+.oneb-intro--run .oneb-intro__wordmark {
+  animation: oneb-intro-wordmark var(--oneb-intro-ms) var(--oneb-intro-settle) forwards;
+}
+
+.oneb-intro--run .oneb-intro__load {
+  animation: oneb-intro-load var(--oneb-intro-ms) var(--oneb-intro-soften) forwards;
+}
+
+.oneb-intro--run .oneb-intro__bar-sheen {
+  animation: oneb-intro-bar-sheen var(--oneb-intro-ms) linear forwards;
+}
+
+.oneb-intro.is-holding,
+.oneb-intro.is-holding * {
+  animation-play-state: paused !important;
+}
+
+.oneb-intro--reduced .oneb-intro__atm-grain,
+.oneb-intro--reduced .oneb-intro__logo-sweep,
+.oneb-intro--reduced .oneb-intro__logo-illum,
+.oneb-intro--reduced .oneb-intro__shaft,
+.oneb-intro--reduced .oneb-intro__bloom--warm {
+  display: none;
+}
+
+.oneb-intro--reduced.oneb-intro--run .oneb-intro__logo-stage {
+  animation: oneb-intro-logo-reduced 0.7s ease forwards;
+  filter: none;
+}
+
+.oneb-intro--reduced.oneb-intro--run .oneb-intro__wordmark {
+  animation: oneb-intro-wordmark-reduced 0.7s ease forwards;
+  filter: none;
+}
+
+.oneb-intro--reduced.oneb-intro--run .oneb-intro__load {
+  animation: oneb-intro-load 0.7s ease forwards;
+}
+
+.oneb-intro--reduced.oneb-intro--run .oneb-intro__veil {
+  animation: oneb-intro-veil-reduced 0.7s ease 0.35s forwards;
+}
+
+@keyframes oneb-intro-veil {
+  0%, 84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes oneb-intro-veil-reduced {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes oneb-intro-bloom-cool {
+  0% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(0.88); }
+  8% { opacity: 0.85; transform: translate3d(-50%, -50%, 0) scale(1); }
+  50% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(1.06); }
+  84% { opacity: 0.4; transform: translate3d(-50%, -50%, 0) scale(1.1); }
+  100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.14); }
+}
+
+@keyframes oneb-intro-bloom-warm {
+  0%, 6% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(0.9); }
+  18% { opacity: 0.7; transform: translate3d(-50%, -50%, 0) scale(1); }
+  55% { opacity: 0.55; transform: translate3d(-50%, -50%, 0) scale(1.08); }
+  100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.16); }
+}
+
+@keyframes oneb-intro-bloom-spot {
+  0%, 4% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(0.6); }
+  14% { opacity: 0.9; transform: translate3d(-50%, -50%, 0) scale(1); }
+  40% { opacity: 0.55; transform: translate3d(-50%, -50%, 0) scale(1.15); }
+  70% { opacity: 0.25; transform: translate3d(-50%, -50%, 0) scale(1.3); }
+  100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.45); }
+}
+
+@keyframes oneb-intro-shaft-a {
+  0%, 4% { opacity: 0; }
+  16% { opacity: 0.55; }
+  60% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+@keyframes oneb-intro-shaft-b {
+  0%, 10% { opacity: 0; }
+  24% { opacity: 0.4; }
+  65% { opacity: 0.22; }
+  100% { opacity: 0; }
+}
+
+@keyframes oneb-intro-vignette {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+@keyframes oneb-intro-grain {
+  0% { opacity: 0; }
+  10% { opacity: 0.045; }
+  80% { opacity: 0.035; }
+  100% { opacity: 0; }
+}
+
+@keyframes oneb-intro-logo {
+  0%, 2% {
+    opacity: 0;
+    filter: blur(22px);
+    transform: scale(0.86);
+  }
+  14% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1.03);
+  }
+  20% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes oneb-intro-logo-glow {
+  0%, 2% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(0.7); }
+  14% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(1.08); }
+  40% { opacity: 0.65; transform: translate3d(-50%, -50%, 0) scale(1); }
+  82% { opacity: 0.25; transform: translate3d(-50%, -50%, 0) scale(1.02); }
+  100% { opacity: 0; transform: translate3d(-50%, -50%, 0) scale(1.08); }
+}
+
+@keyframes oneb-intro-logo-illum {
+  0%, 6% { opacity: 0; }
+  16% { opacity: 0.9; }
+  40% { opacity: 0.25; }
+  82%, 100% { opacity: 0; }
+}
+
+@keyframes oneb-intro-logo-sweep {
+  0%, 12% { opacity: 0; transform: translate3d(-85%, 0, 0); }
+  18% { opacity: 0.9; }
+  30% { opacity: 0; transform: translate3d(85%, 0, 0); }
+  100% { opacity: 0; transform: translate3d(85%, 0, 0); }
+}
+
+@keyframes oneb-intro-wordmark {
+  0%, 10% {
+    opacity: 0;
+    filter: blur(14px);
+    transform: translate3d(0, 0.65rem, 0);
+  }
+  22% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+  82% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, -0.25rem, 0);
+  }
+}
+
+@keyframes oneb-intro-logo-reduced {
+  from { opacity: 0; transform: scale(1); filter: none; }
+  55% { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1); }
+}
+
+@keyframes oneb-intro-wordmark-reduced {
+  from { opacity: 0; transform: none; filter: none; }
+  55% { opacity: 1; transform: none; }
+  to { opacity: 0; transform: none; }
+}
+
+@keyframes oneb-intro-load {
+  0%, 22% {
+    opacity: 0;
+    transform: translate3d(0, 0.4rem, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  82% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -0.2rem, 0);
+  }
+}
+
+@keyframes oneb-intro-bar-sheen {
+  0%, 28% { transform: translate3d(-130%, 0, 0); opacity: 0; }
+  36% { opacity: 0.9; }
+  60% { transform: translate3d(15%, 0, 0); opacity: 0.55; }
+  84% { transform: translate3d(130%, 0, 0); opacity: 0; }
+  100% { transform: translate3d(130%, 0, 0); opacity: 0; }
+}

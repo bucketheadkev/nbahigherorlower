@@ -17,7 +17,7 @@ import { teamRowStyle } from '@/lib/tradeup/teamColors';
 import { TEAMS } from '@/lib/tradeup/teams';
 import type { PlayerTier } from '@/lib/tradeup/tiers';
 import type { Position } from '@/lib/tradeup/types';
-import { FINAL_TOTAL, KOBE, LEBRON, LEBRON_LAL, seatedValue, type IntroPlayer } from './onboarding/introData';
+import { FINAL_TOTAL, LEBRON, LEBRON_LAL, seatedValue, type IntroPlayer } from './onboarding/introData';
 
 interface SettingsGuidePageProps {
   guideId: GuideId;
@@ -103,17 +103,7 @@ function GuideGlyph({ icon }: { icon: GuideIcon }) {
   );
 }
 
-function PlayerCard({
-  player,
-  slot,
-  tag,
-  tone,
-}: {
-  player: IntroPlayer;
-  slot: Position;
-  tag?: string;
-  tone?: 'good' | 'warn';
-}) {
+function PlayerCard({ player, slot }: { player: IntroPlayer; slot: Position }) {
   const team = TEAMS.find((entry) => entry.id === player.teamId);
   return (
     <li className="run-ledger__player-row sgx-card" style={teamRowStyle(player.teamId) as CSSProperties}>
@@ -126,7 +116,6 @@ function PlayerCard({
       </span>
       <span className="sgx-card__right">
         <span className="run-ledger__val">{formatCash(seatedValue(player, slot))}</span>
-        {tag ? <span className={`sgx-card__tag sgx-card__tag--${tone ?? 'good'}`}>{tag}</span> : null}
       </span>
     </li>
   );
@@ -139,14 +128,6 @@ function Example({ example, locale }: { example: GuideExample; locale: string })
       <ul className="sgx-cards">
         <PlayerCard player={LEBRON} slot={LEBRON.primaryPosition} />
         <PlayerCard player={LEBRON_LAL} slot={LEBRON_LAL.primaryPosition} />
-      </ul>
-    );
-  }
-  if (example === 'position') {
-    return (
-      <ul className="sgx-cards">
-        <PlayerCard player={KOBE} slot="SG" tag={nav.fullValue} tone="good" />
-        <PlayerCard player={KOBE} slot="SF" tag={nav.fullValue} tone="good" />
       </ul>
     );
   }

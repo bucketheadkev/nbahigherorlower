@@ -15,7 +15,7 @@ import { isNativeApp } from '@/lib/platform/isNativeApp';
 import { playUiTapSound } from '@/lib/tradeup/gameAudio';
 import { hapticLight } from '@/lib/tradeup/haptics';
 
-/** Official hub nav: Leaderboard · Play · Shop. */
+/** Official hub nav: Leaderboard · Home · Shop. */
 export type HubTab = 'home' | 'board' | 'shop' | 'rank' | 'runs' | 'challenges';
 
 interface MobileBottomNavProps {
@@ -37,10 +37,10 @@ const TABS: { id: HubTab; label: MessageKey; icon: ReactNode }[] = [
   },
   {
     id: 'home',
-    label: 'nav.play',
+    label: 'nav.home',
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden>
-        <path d="M8 5.6c0-.8.9-1.3 1.6-.9l9.3 6.4c.6.4.6 1.3 0 1.7l-9.3 6.4c-.7.5-1.6 0-1.6-.9V5.6Z" />
+        <path d="M4.2 11.2 12 4.6l7.8 6.6v8.2a1.2 1.2 0 0 1-1.2 1.2h-4.1v-5.1h-5v5.1H5.4a1.2 1.2 0 0 1-1.2-1.2v-8.2Z" />
       </svg>
     ),
   },

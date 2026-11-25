@@ -19,7 +19,7 @@ export type GuideIcon =
 export type GuideRow = { icon: GuideIcon; title: string; line: string };
 
 /** Worked examples drawn from real cards and the game's own pricing. */
-export type GuideExample = 'versions' | 'position' | 'rollover';
+export type GuideExample = 'versions' | 'rollover';
 
 export type GuideSection =
   | { kind: 'steps'; label: string; items: GuideRow[] }
@@ -46,7 +46,11 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
       items: [
         { icon: 'spin', title: 'Spin', line: 'Tap SPIN. The reels land on an NBA team and an era.' },
         { icon: 'pick', title: 'Pick a player', line: 'Choose one player from that roster in the player sheet.' },
-        { icon: 'place', title: 'Tap a jersey', line: 'Seat your player at an open position on the court.' },
+        {
+          icon: 'place',
+          title: 'Seat them',
+          line: 'Tap an open jersey. Players can only be placed in positions they are eligible for.',
+        },
         { icon: 'move', title: 'Move or swap', line: 'Tap a placed player, then another jersey to move or swap.' },
         { icon: 'value', title: 'See your value', line: 'Fill all five seats and your team value adds up.' },
       ],
@@ -55,11 +59,27 @@ const HOW_TO_PLAY_EN: GuidePageContent = {
       kind: 'list',
       label: 'Climb the board',
       items: [
-        { icon: 'rollover', title: 'Hit $1B', line: 'Finish a Classic Run at $1,000,000,000 or more to score a win.' },
-        { icon: 'bonus', title: 'Run Bonuses', line: 'Complete the bonus challenge on a run for extra rewards.' },
+        {
+          icon: 'rollover',
+          title: 'Hit $1B',
+          line: 'Finish a Classic Run at $1,000,000,000 or more to score a win. Every dollar over $1B rolls into your Bank.',
+        },
+        {
+          icon: 'bonus',
+          title: 'Run Bonuses',
+          line: 'After a Classic win, play trivia for an extra Bank bonus — Easy, Medium, or Hard.',
+        },
         { icon: 'achievement', title: 'Achievements', line: 'Hit milestones to earn more.' },
-        { icon: 'leaderboard', title: 'Leaderboard', line: 'Ranked by $1B Classic wins — weekly and all-time.' },
-        { icon: 'wall', title: 'Wall of Fame', line: 'Hit $1,000,000,000 in Classic to earn your place.' },
+        {
+          icon: 'leaderboard',
+          title: 'Leaderboard',
+          line: 'Rank by Classic wins (daily and all-time) or by total Bank Money.',
+        },
+        {
+          icon: 'wall',
+          title: 'Wall of Fame',
+          line: 'Accumulate $1,000,000,000 in Bank Money to earn your place on the Wall of Fame.',
+        },
       ],
     },
     {
@@ -87,16 +107,9 @@ const HOW_VALUES_EN: GuidePageContent = {
     },
     {
       kind: 'example',
-      label: 'Position',
-      title: 'Every position he plays = full value.',
-      line: 'Seat a player at any position he is eligible for and he keeps his full value.',
-      example: 'position',
-    },
-    {
-      kind: 'example',
       label: 'Team value',
       title: 'Five values. One total.',
-      line: 'Clear $1,000,000,000 to lock in a Classic win on the leaderboard.',
+      line: 'Clear $1,000,000,000 for a Classic win. Money above $1B rolls into your Bank.',
       example: 'rollover',
     },
     {
@@ -127,7 +140,11 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
       items: [
         { icon: 'spin', title: 'Gira', line: 'Toca GIRAR. Los rodillos marcan un equipo NBA y una era.' },
         { icon: 'pick', title: 'Elige un jugador', line: 'Escoge un jugador de ese roster en la lista.' },
-        { icon: 'place', title: 'Toca una camiseta', line: 'Coloca a tu jugador en una posición libre de la cancha.' },
+        {
+          icon: 'place',
+          title: 'Colócalo',
+          line: 'Toca una camiseta libre. Solo puedes colocar jugadores en posiciones para las que son elegibles.',
+        },
         { icon: 'move', title: 'Mueve o cambia', line: 'Toca un jugador colocado y luego otra camiseta para moverlo o cambiarlo.' },
         { icon: 'value', title: 'Mira tu valor', line: 'Llena los cinco puestos y se suma el valor del equipo.' },
       ],
@@ -136,11 +153,27 @@ const HOW_TO_PLAY_ES: GuidePageContent = {
       kind: 'list',
       label: 'Sube en la tabla',
       items: [
-        { icon: 'rollover', title: 'Llega a $1B', line: 'Termina un Classic Run en $1,000,000,000 o más para sumar una victoria.' },
-        { icon: 'bonus', title: 'Bonos de partida', line: 'Cumple el reto de bono de una partida para ganar más.' },
+        {
+          icon: 'rollover',
+          title: 'Llega a $1B',
+          line: 'Termina un Classic Run en $1,000,000,000 o más para sumar una victoria. Cada dólar por encima de $1B pasa a tu Banco.',
+        },
+        {
+          icon: 'bonus',
+          title: 'Bonos de partida',
+          line: 'Tras una victoria Classic, juega trivia para un bono extra de Banco — Fácil, Medio o Difícil.',
+        },
         { icon: 'achievement', title: 'Logros', line: 'Alcanza hitos para ganar más.' },
-        { icon: 'leaderboard', title: 'Clasificación', line: 'Se ordena por victorias Classic de $1B — semanal e histórico.' },
-        { icon: 'wall', title: 'Muro de la Fama', line: 'Llega a $1,000,000,000 en Classic para entrar.' },
+        {
+          icon: 'leaderboard',
+          title: 'Clasificación',
+          line: 'Ordena por victorias Classic (diarias e históricas) o por dinero total del Banco.',
+        },
+        {
+          icon: 'wall',
+          title: 'Muro de la Fama',
+          line: 'Acumula $1,000,000,000 en dinero del Banco para entrar en el Muro de la Fama.',
+        },
       ],
     },
     {
@@ -168,16 +201,9 @@ const HOW_VALUES_ES: GuidePageContent = {
     },
     {
       kind: 'example',
-      label: 'Posición',
-      title: 'Cada posición que juega = valor completo.',
-      line: 'Colócalo en cualquier posición en la que puede jugar y conserva su valor completo.',
-      example: 'position',
-    },
-    {
-      kind: 'example',
       label: 'Valor del equipo',
       title: 'Cinco valores. Un total.',
-      line: 'Supera $1,000,000,000 para asegurar una victoria Classic en la clasificación.',
+      line: 'Supera $1,000,000,000 para una victoria Classic. El dinero por encima de $1B pasa a tu Banco.',
       example: 'rollover',
     },
     {
@@ -223,7 +249,6 @@ export const GUIDE_NAV: Record<
     teamValue: string;
     goal: string;
     toBank: string;
-    fullValue: string;
   }
 > = {
   en: {
@@ -235,7 +260,6 @@ export const GUIDE_NAV: Record<
     teamValue: 'Team value',
     goal: 'Goal',
     toBank: 'To your Bank',
-    fullValue: 'Full value',
   },
   es: {
     howToPlay: 'Cómo jugar',
@@ -246,6 +270,5 @@ export const GUIDE_NAV: Record<
     teamValue: 'Valor del equipo',
     goal: 'Meta',
     toBank: 'A tu Banco',
-    fullValue: 'Valor completo',
   },
 };

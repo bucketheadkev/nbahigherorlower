@@ -21,6 +21,7 @@ import {
 } from '@/lib/account/howItWorksStorage';
 import {
   BallionSplash,
+  clearBootVeil,
   hasIntroFinishedThisLoad,
   INTRO_HOLD_MAX_MS,
   INTRO_TOTAL_MS,
@@ -68,6 +69,7 @@ let parentSplashFailsafeId: number | null = null;
 
 function markSplashDone() {
   splashDoneThisLoad = true;
+  clearBootVeil();
 }
 
 function clearParentSplashFailsafe() {

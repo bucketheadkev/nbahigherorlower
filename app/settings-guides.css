@@ -5,6 +5,13 @@
   padding-bottom: calc(var(--home-tabbar-h, 0px) + 0.4rem);
 }
 
+/* Full-screen menu/settings: no orange top rail (overrides globals). */
+.settings-drawer__panel--screen::before,
+.settings-drawer__panel--screen::after {
+  content: none !important;
+  display: none !important;
+}
+
 .settings-drawer__header {
   align-items: center;
   margin-bottom: 0.85rem;
@@ -628,16 +635,18 @@
   color: #ffffff;
 }
 
-.sgx-tier--d { --tier: #7eb0d8; }
-.sgx-tier--c { --tier: #5ec4a8; }
-.sgx-tier--b { --tier: #4aa0ff; }
-.sgx-tier--a { --tier: #9b6dff; }
-.sgx-tier--s { --tier: #ff3b4a; }
-.sgx-tier--goat { --tier: #e8c45a; }
+/* Match lib/tradeup/tierStyles.ts display colors */
+.sgx-tier--f { --tier: #fca5a5; }
+.sgx-tier--d { --tier: #fdba74; }
+.sgx-tier--c { --tier: #fde047; }
+.sgx-tier--b { --tier: #93c5fd; }
+.sgx-tier--a { --tier: #6ee7b7; }
+.sgx-tier--s { --tier: #f5d77a; }
+.sgx-tier--goat { --tier: #e9d5ff; }
 
 .sgx-tier--goat .sgx-tier__badge {
-  color: #1a1406;
-  background: linear-gradient(160deg, #f0dd9a, #c9a227);
+  color: #1a0a2e;
+  background: linear-gradient(160deg, #e9d5ff, #a855f7);
 }
 
 @media (max-width: 350px) {

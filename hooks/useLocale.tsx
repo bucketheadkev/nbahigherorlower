@@ -32,13 +32,28 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
 
   useEffect(() => {
-    setLocaleState(readStoredLocale());
+    const stored = readStoredLocale();
+    setLocaleState(stored);
+    try {
+      document.documentElement.lang = stored;
+    } catch {
+      /* ignore */
+    }
   }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.lang = locale;
+    } catch {
+      /* ignore */
+    }
+  }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
     try {
       window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
+      document.documentElement.lang = next;
     } catch {
       /* ignore */
     }
@@ -50,6 +65,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       const next = prev === 'en' ? 'es' : 'en';
       try {
         window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
+        document.documentElement.lang = next;
       } catch {
         /* ignore */
       }

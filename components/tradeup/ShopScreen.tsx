@@ -429,7 +429,7 @@ export const ShopScreen = memo(function ShopScreen() {
             onPointerDown={onTabPointerDown('coins')}
             onClick={onTabClick('coins')}
           >
-            Coins
+            {t('shop.coins')}
           </button>
           <span className="shop-tabs__rule" aria-hidden />
           <button
@@ -440,7 +440,7 @@ export const ShopScreen = memo(function ShopScreen() {
             onPointerDown={onTabPointerDown('perks')}
             onClick={onTabClick('perks')}
           >
-            Perks
+            {t('shop.perks')}
           </button>
         </div>
 
@@ -463,7 +463,7 @@ export const ShopScreen = memo(function ShopScreen() {
             disabled={busyId != null}
             onClick={() => void restore()}
           >
-            {busyId === 'restore' ? 'Restoring…' : 'Restore Purchases'}
+            {busyId === 'restore' ? t('shop.restoring') : t('shop.restore')}
           </button>
           {message ? <p className="shop-ui__msg">{message}</p> : null}
         </footer>

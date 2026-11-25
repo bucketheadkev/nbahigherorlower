@@ -6,6 +6,7 @@ import { FULL_MOTION_BOOT_SCRIPT } from '@/lib/tradeup/motionPreference';
 import './globals.css';
 import './game-ui.css';
 import './oneb-theme.css';
+import './splash-intro.css';
 import './oneb-economy.css';
 import './franchises.css';
 import './wall-of-fame.css';
@@ -28,6 +29,7 @@ import './home-plate.css';
 import './theme-navy.css';
 import './my-runs.css';
 import './settings-guides.css';
+import './settings-menu.css';
 import './franchise-opening.css';
 import './franchise-v5.css';
 import './dynasty.css';
@@ -76,23 +78,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
 html,body{background:#010814!important}
-.oneb-intro{position:fixed;inset:0;z-index:200;width:100%;height:100dvh;overflow:hidden;background:transparent;pointer-events:none;touch-action:none}
+html.oneb-booting body::before{content:"";position:fixed;inset:0;z-index:10050;background:#010814;pointer-events:none}
+.oneb-intro{position:fixed;inset:0;z-index:200;width:100%;height:100dvh;overflow:hidden;background:#010814;pointer-events:none;touch-action:none}
 .oneb-intro.oneb-intro--run:not(.is-exiting){pointer-events:auto}
 .oneb-intro.is-exiting{pointer-events:none!important;opacity:0;visibility:hidden}
 .oneb-intro__veil{position:absolute;inset:0;background:#010814;z-index:0}
 .oneb-intro__stage{position:absolute;inset:0;z-index:2;display:grid;place-items:center;place-content:center}
-.oneb-intro__studio,.oneb-intro__brand{grid-area:1/1;justify-self:center;align-self:center;margin:0;transform-origin:center center}
+.oneb-intro__brand{justify-self:center;align-self:center;margin:0;transform-origin:center center}
 .oneb-intro__studio{display:none!important}
-.oneb-intro__logo-stage{opacity:0;filter:blur(14px);transform:scale(0.82);width:min(72vw,17.5rem);aspect-ratio:1/1}
-.oneb-intro__load{opacity:0}
+.oneb-intro__logo-stage{opacity:0;filter:blur(20px);transform:scale(0.88);width:min(44vw,11rem);aspect-ratio:1/1}
+.oneb-intro__wordmark,.oneb-intro__load{opacity:0}
+.oneb-intro__ring,.oneb-intro__logo-pulse,.oneb-intro__mote{display:none!important}
 .oneb-intro__logo{width:100%;height:100%;display:block;object-fit:contain;background:transparent;-webkit-touch-callout:none;user-select:none}
-.ballion-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0;background:#010814!important;opacity:1!important}
-.ballion-splash__logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
-.ballion-splash__mark{width:min(72vw,17.5rem);aspect-ratio:1/1;border-radius:22.37%;overflow:hidden}
-.ballion-splash__logo{width:100%!important;height:100%!important;display:block;object-fit:contain;background:transparent!important;opacity:1!important;transform:none!important;border-radius:0!important;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .run-home{position:relative;overflow:hidden;min-height:100dvh;background:#010814}
 .run-home__ui{position:relative;z-index:2}
 `.replace(/\n/g, ''),
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add('oneb-booting');`,
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: FULL_MOTION_BOOT_SCRIPT }} />

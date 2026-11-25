@@ -996,15 +996,18 @@ html[data-platform="native"] .shop-ui {
 
 .shop-ui__restore {
   appearance: none;
+  display: block;
+  margin: 0.35rem auto 0;
   border: 0;
   background: transparent;
-  color: rgba(180, 205, 240, 0.45);
-  font-size: 0.65rem;
+  color: rgba(180, 205, 240, 0.42);
+  font-size: 0.62rem;
   font-weight: 750;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  text-align: center;
   cursor: pointer;
-  padding: 0.32rem 0.5rem;
+  padding: 0.4rem 0.65rem;
   min-height: 2.75rem;
   min-width: 6rem;
   touch-action: manipulation;
