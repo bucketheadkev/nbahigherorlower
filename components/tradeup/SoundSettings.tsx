@@ -11,6 +11,12 @@ import { requestIntroReplay } from '@/lib/account/howItWorksStorage';
 import { ONEB_SOCIALS } from '@/lib/brand/socials';
 import { openExternal } from '@/lib/brand/openExternal';
 import { GUIDE_NAV, type GuideId } from '@/lib/i18n/guides';
+import {
+  playAccountSuccessSound,
+  playUiBackSound,
+  playUiConfirmSound,
+  playUiTapSound,
+} from '@/lib/tradeup/gameAudio';
 import { hapticTap } from '@/lib/tradeup/haptics';
 import {
   getH2HUsername,
@@ -186,12 +192,19 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
   ]);
 
   const press =
-    (fn: () => void, opts?: { skipWhen?: () => boolean }) =>
+    (
+      fn: () => void,
+      opts?: { skipWhen?: () => boolean; tone?: 'tap' | 'confirm' | 'back' | 'none' },
+    ) =>
     (e: ReactMouseEvent<HTMLButtonElement>) => {
       if (e.button !== 0) return;
       if (opts?.skipWhen?.()) return;
       e.preventDefault();
       e.stopPropagation();
+      const tone = opts?.tone ?? 'tap';
+      if (tone === 'tap') playUiTapSound();
+      else if (tone === 'confirm') playUiConfirmSound();
+      else if (tone === 'back') playUiBackSound();
       fn();
     };
 
@@ -270,6 +283,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
 
   const saveName = (e?: FormEvent) => {
     e?.preventDefault();
+    playUiConfirmSound();
     if (!isValidH2HUsername(draftName)) {
       setNameError(t('settings.nameErrorChars'));
       return;
@@ -283,6 +297,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
     setEditingName(false);
     setNameError(null);
     hapticTap();
+    playAccountSuccessSound();
   };
 
   const openNameModal = () => {
@@ -326,6 +341,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
       setSignOutConfirmOpen(false);
       setAccountState(result.state);
       hapticTap();
+      playAccountSuccessSound();
     })();
   };
 
@@ -645,7 +661,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         type="button"
         className="settings-ctrl settings-name-modal__scrim"
         aria-label={t('settings.close')}
-        onClick={press(closeNameModal)}
+        onClick={press(closeNameModal, { tone: 'back' })}
       />
       <form className="settings-name-modal__card" onSubmit={saveName}>
         <p className="settings-name-modal__kicker">1V1</p>
@@ -672,7 +688,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-name-modal__cancel"
-            onClick={press(closeNameModal)}
+            onClick={press(closeNameModal, { tone: 'back' })}
           >
             {t('settings.cancel')}
           </button>
@@ -697,7 +713,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         className="settings-ctrl settings-name-modal__scrim"
         aria-label={t('settings.close')}
         disabled={deleteBusy}
-        onClick={press(cancelDelete, { skipWhen: () => deleteBusy })}
+        onClick={press(cancelDelete, { skipWhen: () => deleteBusy, tone: 'back' })}
       />
       <div className="settings-name-modal__card">
         <p className="settings-name-modal__kicker">{t('settings.legal')}</p>
@@ -717,7 +733,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__cancel"
             disabled={deleteBusy}
-            onClick={press(cancelDelete, { skipWhen: () => deleteBusy })}
+            onClick={press(cancelDelete, { skipWhen: () => deleteBusy, tone: 'back' })}
           >
             {t('settings.cancel')}
           </button>
@@ -725,7 +741,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
             disabled={deleteBusy}
-            onClick={press(confirmDelete, { skipWhen: () => deleteBusy })}
+            onClick={press(confirmDelete, { skipWhen: () => deleteBusy, tone: 'confirm' })}
           >
             {deleteBusy ? t('settings.deleting') : t('settings.deleteConfirm')}
           </button>
@@ -746,7 +762,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         type="button"
         className="settings-ctrl settings-name-modal__scrim"
         aria-label={t('settings.close')}
-        onClick={press(closeDeleteSuccess)}
+        onClick={press(closeDeleteSuccess, { tone: 'confirm' })}
       />
       <div className="settings-name-modal__card">
         <p className="settings-name-modal__kicker settings-name-modal__kicker--success">OK</p>
@@ -760,7 +776,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
           <button
             type="button"
             className="settings-ctrl settings-name-modal__save"
-            onClick={press(closeDeleteSuccess)}
+            onClick={press(closeDeleteSuccess, { tone: 'confirm' })}
           >
             {t('settings.ok')}
           </button>
@@ -782,7 +798,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
         className="settings-ctrl settings-name-modal__scrim"
         aria-label={t('settings.close')}
         disabled={signOutBusy}
-        onClick={press(cancelSignOut, { skipWhen: () => signOutBusy })}
+        onClick={press(cancelSignOut, { skipWhen: () => signOutBusy, tone: 'back' })}
       />
       <div className="settings-name-modal__card">
         <p className="settings-name-modal__kicker">{t('settings.menu')}</p>
@@ -802,7 +818,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__cancel"
             disabled={signOutBusy}
-            onClick={press(cancelSignOut, { skipWhen: () => signOutBusy })}
+            onClick={press(cancelSignOut, { skipWhen: () => signOutBusy, tone: 'back' })}
           >
             {t('settings.cancel')}
           </button>
@@ -810,7 +826,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
             type="button"
             className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
             disabled={signOutBusy}
-            onClick={press(confirmSignOut, { skipWhen: () => signOutBusy })}
+            onClick={press(confirmSignOut, { skipWhen: () => signOutBusy, tone: 'confirm' })}
           >
             {signOutBusy ? t('settings.signingOut') : t('settings.signOut')}
           </button>
@@ -850,7 +866,7 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
                             type="button"
                             className="sm-icon-btn"
                             aria-label={t('settings.close')}
-                            onClick={press(close)}
+                            onClick={press(close, { tone: 'back' })}
                           >
                             <svg viewBox="0 0 24 24">
                               <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
@@ -866,12 +882,15 @@ export function SoundSettings({ variant = 'text' }: SoundSettingsProps) {
                             type="button"
                             className="sm-icon-btn sm-icon-btn--back"
                             aria-label={guideNav.back}
-                            onClick={press(() => {
+                            onClick={press(
+                              () => {
                               resume();
                               hapticTap();
                               setScreen('menu');
                               setStatusMsg(null);
-                            })}
+                            },
+                              { tone: 'back' },
+                            )}
                           >
                             <svg viewBox="0 0 24 24">
                               <path d="M14.5 6.5 9 12l5.5 5.5" />

@@ -21,6 +21,7 @@ import {
   resetAccountPromptSeen,
 } from '@/lib/account/accountPromptStorage';
 import { preloadClassicArena } from '@/lib/tradeup/classicArenaAssets';
+import { playBallBounceSound } from '@/lib/tradeup/gameAudio';
 import { AccountAuthSheet, type AccountSheetView } from './AccountAuthSheet';
 import { AccountProgressPrompt } from './AccountProgressPrompt';
 import { HomeModesSheet } from './HomeModesSheet';
@@ -46,12 +47,12 @@ interface TradeUpHomeProps {
 const WORDMARK = ['1', 'B', ' ', 'R', 'U', 'N'];
 
 /** Center-circle centre in the stage art (fractions of plate width / height). */
-const PLATE_SPOT = { x: 0.507, y: 0.474 };
+const PLATE_SPOT = { x: 0.503, y: 0.482 };
 const PLATE_RATIO = 9 / 16;
 
 /**
- * Premium home body — "Center Stage": cobalt arena floor, spotlit hero ball in a machined
- * progress bezel (Bank → $1B), live wordmark, slanted CTAs.
+ * Premium home body — "Center Stage": cobalt arena floor, the game ball on the spotlit centre
+ * circle (tap = dribble, flick up = tip off a run), Bank readout, live wordmark, slanted CTAs.
  * All Home motion is GSAP; framer-motion stays in sheets/chrome only.
  * Top chrome lives in HomeHubChromeHost (shared).
  * Memoized so hub Shop taps don't rebuild the home tree on website.
@@ -135,7 +136,7 @@ export const TradeUpHome = memo(function TradeUpHome({
       const h = Math.max(s.height * 1.12, (s.width * 1.06) / PLATE_RATIO);
       const w = h * PLATE_RATIO;
       const cx = d.left - s.left + d.width / 2;
-      const cy = d.top - s.top + d.height * 0.84;
+      const cy = d.top - s.top + d.height * 0.9;
       const left = Math.min(0, Math.max(s.width - w, cx - w * PLATE_SPOT.x));
       const top = Math.min(0, Math.max(s.height - h, cy - h * PLATE_SPOT.y));
       plate.style.width = `${w.toFixed(1)}px`;
@@ -208,11 +209,7 @@ export const TradeUpHome = memo(function TradeUpHome({
       const impact = q('.rh9-impact');
       const word = q('.rh9-logo__word');
       const chars = q('.rh9-logo__char');
-      const ribbon = q('.rh9-tagline__plate');
-      const tagline = q('.rh9-tagline__text');
-      const dial = q('.rh9-vault__dial');
-      const ticks = q('.rh9-vault__ticks line');
-      const glint = q('.rh9-vault__glint');
+      const tagline = q('.rh9-tagline__word');
       const orb = q('.rh9-vault__orb');
       const ball = q('.rh9-vault__ball');
       const shadow = q('.rh9-vault__shadow');
@@ -228,11 +225,7 @@ export const TradeUpHome = memo(function TradeUpHome({
         impact,
         word,
         chars,
-        ribbon,
         tagline,
-        dial,
-        ticks,
-        glint,
         orb,
         ball,
         shadow,
@@ -251,16 +244,12 @@ export const TradeUpHome = memo(function TradeUpHome({
 
       if (introPlayed.current) return;
 
-      gsap.set(glint, { rotation: -40, svgOrigin: '100 100' });
       gsap.set(lift, { autoAlpha: 1 });
       gsap.set(plate, { scale: 1.14, transformOrigin: '50% 47%' });
       gsap.set(spot, { autoAlpha: 0 });
       gsap.set(cone, { autoAlpha: 0 });
       gsap.set(chars, { yPercent: 150 });
-      gsap.set(ribbon, { scaleX: 0 });
-      gsap.set(tagline, { y: 8, autoAlpha: 0 });
-      gsap.set(dial, { scale: 0.7, autoAlpha: 0 });
-      gsap.set(ticks, { autoAlpha: 0 });
+      gsap.set(tagline, { y: 10, autoAlpha: 0 });
       gsap.set(orb, { y: -260, autoAlpha: 0 });
       gsap.set(ball, { rotation: -120 });
       gsap.set(shadow, { scale: 0.3, autoAlpha: 0 });
@@ -283,7 +272,6 @@ export const TradeUpHome = memo(function TradeUpHome({
           .to(cone, { autoAlpha: 0.7, duration: 4.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0.6)
           .to(orb, { y: -7, duration: 2.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0)
           .to(shadow, { scale: 0.9, autoAlpha: 0.75, duration: 2.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }, 0)
-          .to(glint, { rotation: 320, duration: 9, ease: 'none', repeat: -1 }, 0)
           .fromTo(
             sweep,
             { xPercent: -120 },
@@ -311,18 +299,14 @@ export const TradeUpHome = memo(function TradeUpHome({
           /* Arena light hits the centre circle: two-stage flicker, then settles. */
           .to(spot, { keyframes: { autoAlpha: [0, 0.7, 0.25, 1] }, duration: 0.42, ease: 'none' }, 0.22)
           .to(cone, { keyframes: { autoAlpha: [0, 0.6, 0.2, 1] }, duration: 0.42, ease: 'none' }, 0.24)
-          .to(dial, { scale: 1, autoAlpha: 1, duration: 0.95, ease: 'back.out(1.5)' }, 0.38)
-          .to(ticks, { autoAlpha: 1, duration: 0.2, stagger: { each: 0.012, from: 'start' }, ease: 'none' }, 0.5)
           .to(orb, { autoAlpha: 1, duration: 0.12, ease: 'none' }, 0.5)
           .to(orb, { y: 0, duration: 0.95, ease: 'bounce.out' }, 0.5)
           .to(ball, { rotation: 0, duration: 1.3, ease: 'power3.out' }, 0.5)
           .to(shadow, { scale: 1, autoAlpha: 1, duration: 0.95, ease: 'bounce.out' }, 0.5)
-          .to(glint, { rotation: 0, duration: 1.6, ease: 'power3.out' }, 0.5)
           .to(chars, { yPercent: 0, duration: 0.75, stagger: 0.05 }, 0.7)
           .fromTo(impact, { autoAlpha: 0.5 }, { autoAlpha: 0, duration: 0.6, ease: 'power2.out', immediateRender: false }, 0.84)
           .to(word, { keyframes: { y: [0, 3, -1, 0] }, duration: 0.28, ease: 'none' }, 0.95)
-          .to(ribbon, { scaleX: 1, duration: 0.7 }, 1.0)
-          .to(tagline, { y: 0, autoAlpha: 1, duration: 0.7 }, 1.08)
+          .to(tagline, { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.12 }, 1.0)
           .to(readout, { y: 0, autoAlpha: 1, duration: 0.85 }, 1.15)
           .to(wof, { y: 0, autoAlpha: 1, duration: 0.85 }, 1.25)
           .to(ctas, { y: 0, autoAlpha: 1, duration: 0.9, stagger: 0.08, ease: 'back.out(1.4)' }, 1.3);
@@ -437,9 +421,9 @@ export const TradeUpHome = memo(function TradeUpHome({
     setPromptOpen(false);
   };
 
-  const ballTap = () => {
+  const ballTap = (gain: number) => {
     resume();
-    playTap();
+    playBallBounceSound(gain);
   };
 
   return (
@@ -477,10 +461,8 @@ export const TradeUpHome = memo(function TradeUpHome({
               </span>
             </h1>
             <p className="rh9-tagline">
-              <span className="rh9-tagline__plate" aria-hidden />
-              <span className="rh9-tagline__text">
-                CHASE <span className="rh9-tagline__amt">$1 BILLION</span>
-              </span>
+              <span className="rh9-tagline__word rh9-tagline__chase">CHASE</span>
+              <span className="rh9-tagline__word rh9-tagline__amt">$1 BILLION</span>
             </p>
           </header>
 
@@ -488,7 +470,9 @@ export const TradeUpHome = memo(function TradeUpHome({
             revealed={revealed}
             onOpenBoard={onOpenBoard ? go(onOpenBoard) : undefined}
             onOpenWall={go(() => setWallOpen(true))}
-            onBallTap={ballTap}
+            locked={playShake}
+            onTipOff={launchClassic}
+            onDribble={ballTap}
             onPressIn={pressIn}
             onPressOut={pressOut}
           />

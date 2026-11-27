@@ -29,6 +29,7 @@ import './home-plate.css';
 import './theme-navy.css';
 import './home-rh7.css';
 import './home-rh9.css';
+import './rh10-system.css';
 import './my-runs.css';
 import './settings-guides.css';
 import './settings-menu.css';
@@ -37,6 +38,7 @@ import './franchise-v5.css';
 import './dynasty.css';
 import './classic-arena.css';
 import './classic-results.css';
+import './rh11-system.css';
 
 export const metadata: Metadata = {
   title: '1B Run',

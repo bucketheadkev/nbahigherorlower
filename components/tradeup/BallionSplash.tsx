@@ -8,7 +8,7 @@ import { BALLION_SPLASH_LOGO_SRC } from './TradeUpLogo';
 gsap.registerPlugin(useGSAP);
 
 /** Decoded during the intro so Home's art is ready when the splash lifts. */
-const HOME_ART = ['/images/home-v9/rh9-stage@2x.webp', '/images/home-v9/rh9-ball.webp'];
+const HOME_ART = ['/images/home-v10/rh10-court@2x.webp', '/images/home-v9/rh9-ball.webp'];
 /** Exit transition before handing off to Home. */
 const EXIT_MS = 460;
 

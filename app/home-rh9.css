@@ -5,7 +5,7 @@
    Bank's run at $1B. Orange = action, green = money.
    Builds on .rh7 (root, tokens, hub chrome, nav).
    GSAP owns all motion here — no CSS transforms on GSAP targets.
-   Restore previous Home: design/home-backup-rh8.
+   Restore previous Home: design/home-backup-rh9 (ringed bezel) / -rh8.
    ========================================================= */
 
 .rh9-stage {
@@ -43,11 +43,11 @@
 .rh9-plate__floor {
   inset: 0;
   background-color: var(--cb-royal);
-  background-image: url('/images/home-v9/rh9-stage@2x.jpg');
+  background-image: url('/images/home-v10/rh10-court@2x.jpg');
   background-image: image-set(
-    url('/images/home-v9/rh9-stage@2x.webp') type('image/webp') 2x,
-    url('/images/home-v9/rh9-stage.webp') type('image/webp') 1x,
-    url('/images/home-v9/rh9-stage@2x.jpg') 2x
+    url('/images/home-v10/rh10-court@2x.webp') type('image/webp') 2x,
+    url('/images/home-v10/rh10-court.webp') type('image/webp') 1x,
+    url('/images/home-v10/rh10-court@2x.jpg') 2x
   );
   background-size: 100% 100%;
 }
@@ -194,52 +194,42 @@
 }
 
 .rh9-tagline {
-  position: relative;
-  display: grid;
-  place-items: center;
-  margin: 0.45rem 0 0;
-  padding: 0.42rem 1.2rem 0.4rem;
-}
-
-.rh9-tagline__plate {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
-}
-
-.rh9-tagline__plate::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 0.36rem;
-  transform: skewX(-14deg);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #0b2fcf 0%, var(--cb-mid) 58%, var(--cb-deep) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(160, 190, 255, 0.6),
-    0 0 0 1px rgba(0, 6, 55, 0.45),
-    0 8px 18px rgba(0, 6, 55, 0.4);
-}
-
-.rh9-tagline__text {
-  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.55em;
+  margin: 0.6rem 0 0;
   font-family: var(--rh7-display);
-  font-size: clamp(0.86rem, 3.6vw, 1.02rem);
   font-weight: 900;
   font-style: italic;
-  letter-spacing: 0.2em;
-  padding-left: 0.2em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
-  color: #ffffff;
-  text-shadow: 0 1px 0 rgba(0, 6, 55, 0.6);
+}
+
+.rh9-tagline__word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.rh9-tagline__chase {
+  font-size: clamp(0.92rem, 3.9vw, 1.08rem);
+  letter-spacing: 0.34em;
+  padding-left: 0.34em;
+  color: rgba(236, 242, 255, 0.92);
+  text-shadow: 0 1px 0 rgba(0, 6, 55, 0.7), 0 2px 10px rgba(0, 6, 55, 0.35);
 }
 
 .rh9-tagline__amt {
+  font-size: clamp(1.24rem, 5.4vw, 1.48rem);
+  letter-spacing: 0.06em;
   color: var(--rh7-green);
-  text-shadow: 0 1px 0 rgba(0, 40, 20, 0.6);
+  text-shadow:
+    0 0.03em 0 #b6ffd9,
+    0 0.06em 0 #12a463,
+    0 0.1em 0 #0b7a48,
+    0 0.14em 0 #06522f,
+    0 0.24em 0.4em rgba(0, 6, 55, 0.5);
 }
 
 /* ---------- Hero vault ---------- */
@@ -272,43 +262,43 @@
 .rh9-vault__dial {
   position: relative;
   flex: none;
-  width: min(64vw, 33vh, 17rem);
+  width: min(58vw, 30vh, 15.5rem);
   aspect-ratio: 1;
-  border-radius: 50%;
-  box-shadow:
-    0 26px 44px rgba(0, 6, 55, 0.55),
-    0 8px 14px rgba(0, 6, 55, 0.35);
-  will-change: transform;
+  margin-top: clamp(0.6rem, 2.4vh, 1.4rem);
 }
 
-.rh9-vault__svg {
+.rh9-vault__pool {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  left: 12%;
+  top: 80%;
+  width: 76%;
+  height: 17%;
+  will-change: transform, opacity;
 }
 
 .rh9-vault__shadow {
   position: absolute;
-  left: 23%;
-  top: 72%;
-  width: 54%;
-  height: 14%;
+  inset: 0;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 4, 40, 0.72), rgba(0, 4, 40, 0));
+  background: radial-gradient(closest-side, rgba(0, 4, 40, 0.78), rgba(0, 4, 40, 0.32) 55%, rgba(0, 4, 40, 0));
   will-change: transform, opacity;
 }
 
 .rh9-vault__ball-btn {
   position: absolute;
-  left: 15%;
-  top: 14%;
-  width: 70%;
-  height: 70%;
+  left: 6%;
+  top: 0;
+  width: 88%;
+  height: 88%;
   border-radius: 50%;
   pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Squash happens against the floor, not around the ball's centre. */
+  transform-origin: 50% 96%;
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 .rh9-vault__orb {
@@ -343,19 +333,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: clamp(0.7rem, 2.1vh, 1.15rem);
+  margin-top: clamp(1.7rem, 4vh, 2.3rem);
   padding: 0.2rem 0.9rem;
   pointer-events: auto;
   isolation: isolate;
 }
 
-/* Soft ink pool so the readout holds on the lit floor. */
+/*
+ * Shadow pool under the readout — deep enough that the centre-circle arc and half-court line
+ * fall away beneath the type instead of slicing through it. Reads as the spotlight's falloff.
+ */
 .rh9-vault__readout::before {
   content: "";
   position: absolute;
-  inset: -0.6rem -2.2rem -0.5rem;
+  inset: -1.5rem -3.6rem -1.3rem;
   z-index: -1;
-  background: radial-gradient(closest-side, rgba(0, 8, 64, 0.62), rgba(0, 8, 64, 0.3) 60%, rgba(0, 8, 64, 0));
+  background: radial-gradient(
+    closest-side,
+    rgba(2, 12, 74, 0.94) 0%,
+    rgba(2, 12, 74, 0.9) 48%,
+    rgba(2, 12, 74, 0.55) 74%,
+    rgba(2, 12, 74, 0) 100%
+  );
   pointer-events: none;
 }
 
@@ -398,6 +397,29 @@
     0 0.09em 0 #0b7a48,
     0 0.12em 0 #06522f,
     0 0.2em 0.3em rgba(0, 6, 55, 0.5);
+}
+
+.rh9-vault__rail {
+  position: relative;
+  display: block;
+  width: min(13.5rem, 62vw);
+  height: 0.32rem;
+  margin-top: 0.55rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 6, 55, 0.7);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 4, 40, 0.8),
+    0 1px 0 rgba(170, 198, 255, 0.22);
+}
+
+.rh9-vault__rail-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--rh7-green-lo) 0%, var(--rh7-green) 70%, var(--rh7-green-hi) 100%);
+  box-shadow: 0 0 8px rgba(41, 228, 144, 0.55);
+  will-change: transform;
 }
 
 .rh9-vault.is-pending .rh9-vault__value {
@@ -595,18 +617,16 @@
   }
 
   .rh9-tagline {
-    margin-top: 0.35rem;
-    padding-top: 0.34rem;
-    padding-bottom: 0.32rem;
+    margin-top: 0.4rem;
   }
 
   .rh9-vault__dial {
-    width: min(52vw, 26.5vh, 14rem);
-    margin-top: 0.5rem;
+    width: min(48vw, 25vh, 13rem);
+    margin-top: 0.4rem;
   }
 
   .rh9-vault__readout {
-    margin-top: 0.55rem;
+    margin-top: 1.5rem;
   }
 
   .rh9-actions {

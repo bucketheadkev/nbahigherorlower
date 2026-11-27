@@ -1,6 +1,7 @@
 'use client';
 
 import type { MouseEvent as ReactMouseEvent } from 'react';
+import { playUiBackSound, playUiConfirmSound, playUiTapSound } from '@/lib/tradeup/gameAudio';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
 interface AccountProgressPromptProps {
@@ -20,10 +21,12 @@ export function AccountProgressPrompt({
   if (!open) return null;
 
   const press =
-    (fn: () => void) => (e: ReactMouseEvent<HTMLButtonElement>) => {
+    (fn: () => void, sound: () => void = playUiTapSound) =>
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
       if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
+      sound();
       hapticTap();
       fn();
     };
@@ -54,7 +57,7 @@ export function AccountProgressPrompt({
           <button
             type="button"
             className="settings-ctrl settings-name-modal__save account-sheet__full account-progress-prompt__primary"
-            onClick={press(onCreateAccount)}
+            onClick={press(onCreateAccount, playUiConfirmSound)}
           >
             Create Account
           </button>
@@ -69,7 +72,7 @@ export function AccountProgressPrompt({
             <button
               type="button"
               className="settings-ctrl account-progress-prompt__guest"
-              onClick={press(onContinueAsGuest)}
+              onClick={press(onContinueAsGuest, playUiBackSound)}
             >
               Continue as Guest →
             </button>

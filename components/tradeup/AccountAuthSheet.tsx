@@ -17,6 +17,11 @@ import {
 import { markAccountPromptSeen } from '@/lib/account/accountPromptStorage';
 import { USERNAME_MAX } from '@/lib/account/username';
 import { useSound } from '@/hooks/useSound';
+import {
+  playAccountSuccessSound,
+  playUiBackSound,
+  playUiConfirmSound,
+} from '@/lib/tradeup/gameAudio';
 import { hapticTap } from '@/lib/tradeup/haptics';
 
 export type AccountSheetView = 'menu' | 'signup' | 'login' | 'forgot' | 'claim';
@@ -61,16 +66,32 @@ export function AccountAuthSheet({
   }, [open, initialView, state.status]);
 
   const press =
-    (fn: () => void, opts?: { skipWhen?: () => boolean }) =>
+    (fn: () => void, opts?: { skipWhen?: () => boolean; tone?: 'tap' | 'confirm' | 'back' }) =>
     (e: ReactMouseEvent<HTMLButtonElement>) => {
       if (e.button !== 0) return;
       if (opts?.skipWhen?.()) return;
       e.preventDefault();
       e.stopPropagation();
       void resume();
-      playTap();
+      const tone = opts?.tone ?? 'tap';
+      if (tone === 'confirm') {
+        playUiConfirmSound();
+        hapticTap();
+      } else if (tone === 'back') {
+        playUiBackSound();
+        hapticTap();
+      } else {
+        playTap();
+      }
       fn();
     };
+
+  /** Form submit is still inside the tap — play the confirm click before awaiting. */
+  const beginSubmit = () => {
+    void resume();
+    playUiConfirmSound();
+    hapticTap();
+  };
 
   const go = (next: AccountSheetView) => {
     setError(null);
@@ -88,6 +109,7 @@ export function AccountAuthSheet({
   const handleSignUp = async (e?: FormEvent) => {
     e?.preventDefault();
     if (busy) return;
+    beginSubmit();
     setBusy(true);
     setError(null);
     const result = await signUpWithEmail({ username, email, password });
@@ -98,6 +120,7 @@ export function AccountAuthSheet({
     }
     markAccountPromptSeen();
     hapticTap();
+    playAccountSuccessSound();
     onStateChange(result.state);
     close();
   };
@@ -105,6 +128,7 @@ export function AccountAuthSheet({
   const handleLogIn = async (e?: FormEvent) => {
     e?.preventDefault();
     if (busy) return;
+    beginSubmit();
     setBusy(true);
     setError(null);
     const result = await signInWithEmail({ email, password });
@@ -115,6 +139,7 @@ export function AccountAuthSheet({
     }
     markAccountPromptSeen();
     hapticTap();
+    playAccountSuccessSound();
     if (result.state.status === 'needs_username') {
       setView('claim');
       onStateChange(result.state);
@@ -127,6 +152,7 @@ export function AccountAuthSheet({
   const handleClaim = async (e?: FormEvent) => {
     e?.preventDefault();
     if (busy) return;
+    beginSubmit();
     setBusy(true);
     setError(null);
     const result = await completeUsernameForSession(username);
@@ -137,6 +163,7 @@ export function AccountAuthSheet({
     }
     markAccountPromptSeen();
     hapticTap();
+    playAccountSuccessSound();
     onStateChange(result.state);
     close();
   };
@@ -144,6 +171,7 @@ export function AccountAuthSheet({
   const handleForgot = async (e?: FormEvent) => {
     e?.preventDefault();
     if (busy) return;
+    beginSubmit();
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -153,6 +181,7 @@ export function AccountAuthSheet({
       setError(result.message);
       return;
     }
+    playAccountSuccessSound();
     setInfo(
       'If an account exists for that email, a reset link was sent. Open it to choose a new password.',
     );
@@ -169,6 +198,7 @@ export function AccountAuthSheet({
       return;
     }
     hapticTap();
+    playAccountSuccessSound();
     setView('menu');
     onStateChange(result.state);
   };
@@ -204,7 +234,7 @@ export function AccountAuthSheet({
         className="settings-ctrl settings-name-modal__scrim"
         aria-label="Close"
         disabled={busy}
-        onClick={press(close, { skipWhen: () => busy })}
+        onClick={press(close, { skipWhen: () => busy, tone: 'back' })}
       />
       <div className="settings-name-modal__card account-sheet__card">
         {showSignedIn ? (
@@ -220,7 +250,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onClick={press(close, { skipWhen: () => busy })}
+                onClick={press(close, { skipWhen: () => busy, tone: 'back' })}
               >
                 Close
               </button>
@@ -228,7 +258,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__save settings-name-modal__save--danger"
                 disabled={busy}
-                onClick={press(handleLogOut, { skipWhen: () => busy })}
+                onClick={press(handleLogOut, { skipWhen: () => busy, tone: 'confirm' })}
               >
                 {busy ? 'Logging out…' : 'Log Out'}
               </button>
@@ -248,7 +278,7 @@ export function AccountAuthSheet({
               <button
                 type="button"
                 className="settings-ctrl settings-name-modal__save account-sheet__full"
-                onClick={press(() => go('signup'))}
+                onClick={press(() => go('signup'), { tone: 'confirm' })}
               >
                 Create Account
               </button>
@@ -262,7 +292,7 @@ export function AccountAuthSheet({
               <button
                 type="button"
                 className="settings-ctrl account-sheet__text-link"
-                onClick={press(close)}
+                onClick={press(close, { tone: 'back' })}
               >
                 Close
               </button>
@@ -315,7 +345,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onClick={press(() => go('menu'), { skipWhen: () => busy })}
+                onClick={press(() => go('menu'), { skipWhen: () => busy, tone: 'back' })}
               >
                 Back
               </button>
@@ -363,7 +393,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onClick={press(() => go('menu'), { skipWhen: () => busy })}
+                onClick={press(() => go('menu'), { skipWhen: () => busy, tone: 'back' })}
               >
                 Back
               </button>
@@ -414,7 +444,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onClick={press(() => go('login'), { skipWhen: () => busy })}
+                onClick={press(() => go('login'), { skipWhen: () => busy, tone: 'back' })}
               >
                 Back
               </button>
@@ -450,7 +480,7 @@ export function AccountAuthSheet({
                 type="button"
                 className="settings-ctrl settings-name-modal__cancel"
                 disabled={busy}
-                onClick={press(handleLogOut, { skipWhen: () => busy })}
+                onClick={press(handleLogOut, { skipWhen: () => busy, tone: 'confirm' })}
               >
                 Log out
               </button>

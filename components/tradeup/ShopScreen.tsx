@@ -38,9 +38,8 @@ import {
   type PerkInventory,
 } from '@/lib/tradeup/perkInventory';
 import { RunCoinIcon } from './xp/RunCoinIcon';
-import { ShopAtmosphere } from './shop/ShopAtmosphere';
 import { ShopCoinPile } from './shop/ShopCoinPile';
-import { ShopGoldCoin, ShopGoldCoinSprite } from './shop/ShopGoldCoin';
+import { ShopBubbles } from './shop/ShopBubbles';
 import { ShopPerkIcon } from './shop/ShopPerkIcon';
 
 type ShopTab = 'coins' | 'perks';
@@ -74,7 +73,7 @@ const ShopCoinsPanel = memo(function ShopCoinsPanel({
           </div>
           <div className="shop-starter__item">
             <span className="shop-starter__ico shop-starter__ico--coin" aria-hidden>
-              <ShopGoldCoin />
+              <RunCoinIcon size={44} />
             </span>
             <em>{(PREMIUM_PRODUCT.coins ?? 500).toLocaleString('en-US')}</em>
           </div>
@@ -194,7 +193,7 @@ const ShopPerksPanel = memo(function ShopPerksPanel({
           disabled={busyId != null || coins < PERK_BUNDLE_PRICE}
           onClick={onBuyBundle}
         >
-          <RunCoinIcon size={20} tone="gold" />
+          <RunCoinIcon size={22} />
           {busyId === 'perk:bundle' ? '…' : PERK_BUNDLE_PRICE.toLocaleString('en-US')}
         </button>
       </article>
@@ -213,7 +212,7 @@ const ShopPerksPanel = memo(function ShopPerksPanel({
                 disabled={busyId != null || coins < price}
                 onClick={() => onBuyPerk(perk.id)}
               >
-                <RunCoinIcon size={16} tone="gold" />
+                <RunCoinIcon size={18} glint={false} />
                 {busyId === `perk:${perk.id}` ? '…' : price.toLocaleString('en-US')}
               </button>
             </article>
@@ -416,8 +415,7 @@ export const ShopScreen = memo(function ShopScreen() {
 
   return (
     <div className="tradeup-shell tradeup-shell--hub shop-screen" aria-label={t('nav.shop')}>
-      <ShopGoldCoinSprite />
-      <ShopAtmosphere />
+      <ShopBubbles />
 
       <div className="shop-ui">
         <div className="shop-tabs" role="tablist" aria-label="Shop sections">

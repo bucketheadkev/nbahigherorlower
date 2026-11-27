@@ -74,6 +74,9 @@ type SoundId =
   | 'spin_click'
   | 'place_click'
   | 'ui_tap'
+  | 'ui_confirm_click'
+  | 'ui_back_click'
+  | 'ball_bounce'
   | 'success_peak'
   | 'success_soft'
   | 'results_cheer'
@@ -139,6 +142,11 @@ const SOUND_DEFS: Record<SoundId, SoundDef> = {
   place_click: { path: PLACE_CLICK_SOUND_PATH, volume: PLACE_CLICK_VOLUME, debounceMs: 0 },
   /** Home / modes UI tap — shared click for PLAY, CHOOSE MODE, and mode picks. */
   ui_tap: { path: '/sounds/ui-tap.mp3', volume: 0.48, debounceMs: 40 },
+  /** Menu / account dialogs: primary confirm and dismiss/back. */
+  ui_confirm_click: { path: '/sounds/ui-confirm.mp3', volume: 0.46, debounceMs: 40 },
+  ui_back_click: { path: '/sounds/ui-back.mp3', volume: 0.4, debounceMs: 40 },
+  /** Freesound #319785 "Basketball 3" (zmobie, CC0). Home ball dribble. */
+  ball_bounce: { path: '/sounds/ball-bounce.wav', volume: 0.62, debounceMs: 0 },
   success_peak: { path: '/sounds/success-peak.mp3', volume: 0.34, debounceMs: 400 },
   success_soft: { path: '/sounds/success-soft.mp3', volume: 0.4, debounceMs: 400, maxPlayMs: 1800 },
   /** Legacy alias — final total uses cash_register. */
@@ -357,7 +365,7 @@ function ensureClickBuffer(id: SoundId): Promise<AudioBuffer | null> {
  * Play a short click from its decoded buffer (own GainNode, so it layers over other game audio
  * and honours the SFX volume on iOS). Before the buffer is warm, the element plays instead.
  */
-function playClick(id: SoundId): void {
+function playClick(id: SoundId, gainScale = 1): void {
   if (typeof window === 'undefined') return;
   if (getAudioSettings().sfxMuted) return;
 
@@ -374,7 +382,7 @@ function playClick(id: SoundId): void {
   const buf = clickBuffers.get(id);
   if (buf && audio?.state === 'running') {
     const gain = audio.createGain();
-    gain.gain.value = Math.min(1, SOUND_DEFS[id].volume * masterScale());
+    gain.gain.value = Math.min(1, SOUND_DEFS[id].volume * masterScale() * gainScale);
     gain.connect(audio.destination);
     const src = audio.createBufferSource();
     src.buffer = buf;
@@ -395,6 +403,7 @@ function playClick(id: SoundId): void {
     }
   }
 
+  if (gainScale < 1) return;
   playSound(id, { force: true });
 }
 
@@ -629,6 +638,10 @@ export function unlockGameAudio(): void {
   void ensureClickBuffer('spin_click');
   void ensureClickBuffer('place_click');
   void ensureClickBuffer('ui_tap');
+  void ensureClickBuffer('ball_bounce');
+  void ensureClickBuffer('ui_confirm_click');
+  void ensureClickBuffer('ui_back_click');
+  void ensureClickBuffer('success_soft');
   // Do not call element.load() here. Every spin used to reload the sample
   // immediately before play(), which aborts the tap on iPhone Safari so the
   // spin is silent or starts late. Preload warms the file once.
@@ -977,6 +990,26 @@ export function playPlaceClickSound(): void {
 /** Shared home UI click — PLAY, CHOOSE MODE, and mode sheet picks. Call from the tap. */
 export function playUiTapSound(): void {
   playClick('ui_tap');
+}
+
+/** Menu / account primary action (Save, Log In, Create Account, Confirm). Call from the tap. */
+export function playUiConfirmSound(): void {
+  playClick('ui_confirm_click');
+}
+
+/** Menu / account dismiss (Cancel, Back, Close). Call from the tap. */
+export function playUiBackSound(): void {
+  playClick('ui_back_click');
+}
+
+/** Account action completed (signed in, account created, signed out, name saved). */
+export function playAccountSuccessSound(): void {
+  playClick('success_soft', 0.9);
+}
+
+/** Real hardwood basketball bounce — Home ball taps. Call from the tap. */
+export function playBallBounceSound(gain = 1): void {
+  playClick('ball_bounce', gain);
 }
 
 /** Decode the UI tap sample ahead of Shop / nav so the first press is never silent. */

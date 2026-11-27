@@ -1,40 +1,54 @@
 'use client';
 
-import { useRef, type MouseEventHandler, type PointerEventHandler } from 'react';
+import {
+  useRef,
+  type MouseEventHandler,
+  type PointerEvent as ReactPointerEvent,
+  type PointerEventHandler,
+} from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAccountAuth } from '@/hooks/useAccountAuth';
 import { useBankBalance } from '@/hooks/useBankBalance';
 import { useLocale } from '@/hooks/useLocale';
 import { formatCash } from '@/lib/tradeup/bank';
+import { hapticLight, hapticMedium } from '@/lib/tradeup/haptics';
 import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { ROLLOVER_GOAL } from '@/lib/tradeup/rollover';
 
 gsap.registerPlugin(useGSAP);
 
-const R = 80;
-const CIRC = 2 * Math.PI * R;
-const TICKS = Array.from({ length: 40 }, (_, i) => i);
+/** Upward flick that counts as a tip-off (px of travel, or px/ms of release speed). */
+const TIP_DISTANCE = 64;
+const TIP_SPEED = 0.55;
+const TAP_SLOP = 8;
 
 interface HomeVaultProps {
-  /** Splash is gone — arc + counter run once the hero has landed. */
+  /** Splash is gone — counter + rail run once the hero has landed. */
   revealed?: boolean;
+  /** Blocks the ball while Home is already launching a run. */
+  locked?: boolean;
   onOpenBoard?: MouseEventHandler<HTMLButtonElement>;
   onOpenWall?: MouseEventHandler<HTMLButtonElement>;
-  onBallTap?: () => void;
+  /** Ball was flicked upward — start a Classic run. */
+  onTipOff?: () => void;
+  /** Ball hit the floor during a dribble — `gain` is 1 for the hard bounce, lower for the rebound. */
+  onDribble?: (gain: number) => void;
   onPressIn?: PointerEventHandler<HTMLButtonElement>;
   onPressOut?: PointerEventHandler<HTMLButtonElement>;
 }
 
 /**
- * Home hero — the ball in a machined bezel. The green arc is Bank progress toward $1B.
- * Bank readout opens the Bank board; Wall of Fame opens the wall preview.
+ * Home hero — the game ball on the centre circle. Tap to dribble, flick up to tip off a run.
+ * Bank readout (amount + rail toward $1B) opens the Bank board; Wall of Fame opens the wall preview.
  */
 export function HomeVault({
   revealed = true,
+  locked = false,
   onOpenBoard,
   onOpenWall,
-  onBallTap,
+  onTipOff,
+  onDribble,
   onPressIn,
   onPressOut,
 }: HomeVaultProps) {
@@ -44,17 +58,20 @@ export function HomeVault({
   const pending = balance == null;
   const fill = pending ? 0 : Math.min(1, Math.max(0, balance / ROLLOVER_GOAL));
   const hasFill = !pending && fill > 0.004;
-  const shown = hasFill ? Math.max(fill, 0.012) : 0;
+  const shown = hasFill ? Math.max(fill, 0.02) : 0;
 
   const rootRef = useRef<HTMLDivElement>(null);
   const countRef = useRef({ v: 0 });
   const swept = useRef(false);
+  const drag = useRef<{ id: number; y0: number; t0: number; y: number; t: number; vy: number } | null>(null);
+  const flying = useRef(false);
+  const lockedRef = useRef(locked);
+  lockedRef.current = locked;
 
   const { contextSafe } = useGSAP(
     () => {
       const q = gsap.utils.selector(rootRef);
-      const arc = q('.rh9-vault__arc');
-      const tip = q('.rh9-vault__tip');
+      const rail = q('.rh9-vault__rail-fill');
       const value = rootRef.current?.querySelector<HTMLElement>('.rh9-vault__value');
       const target = pending ? 0 : balance;
       const write = () => {
@@ -62,15 +79,13 @@ export function HomeVault({
       };
 
       if (!revealed) {
-        gsap.set(arc, { strokeDashoffset: CIRC, autoAlpha: 0 });
-        gsap.set(tip, { rotation: 0, svgOrigin: '100 100', autoAlpha: 0 });
+        gsap.set(rail, { xPercent: -100, x: 0 });
         countRef.current.v = 0;
         write();
         return;
       }
       if (getPrefersReducedMotion() || pending) {
-        gsap.set(arc, { strokeDashoffset: CIRC * (1 - shown), autoAlpha: hasFill ? 1 : 0 });
-        gsap.set(tip, { rotation: shown * 360, svgOrigin: '100 100', autoAlpha: hasFill ? 1 : 0 });
+        gsap.set(rail, { xPercent: -(1 - shown) * 100, x: 0 });
         countRef.current.v = target;
         write();
         return;
@@ -79,118 +94,155 @@ export function HomeVault({
       swept.current = true;
       const delay = first ? 1.35 : 0;
       const duration = first ? 1.8 : 0.9;
-      gsap.set(arc, { autoAlpha: hasFill ? 1 : 0, delay });
-      gsap.to(arc, { strokeDashoffset: CIRC * (1 - shown), duration, delay, ease: 'expo.out', overwrite: 'auto' });
-      gsap.to(tip, {
-        rotation: shown * 360,
-        svgOrigin: '100 100',
-        autoAlpha: hasFill ? 1 : 0,
-        duration,
-        delay,
-        ease: 'expo.out',
-        overwrite: 'auto',
-      });
+      gsap.to(rail, { xPercent: -(1 - shown) * 100, x: 0, duration, delay, ease: 'expo.out', overwrite: 'auto' });
       gsap.to(countRef.current, { v: target, duration, delay, ease: 'expo.out', onUpdate: write, overwrite: 'auto' });
     },
-    { scope: rootRef, dependencies: [revealed, pending, balance, shown, hasFill] },
+    { scope: rootRef, dependencies: [revealed, pending, balance, shown] },
   );
 
-  const bounceBall = contextSafe(() => {
-    onBallTap?.();
-    if (getPrefersReducedMotion()) return;
-    const q = gsap.utils.selector(rootRef);
-    const btn = rootRef.current?.querySelector('.rh9-vault__ball-btn');
-    if (!btn) return;
-    gsap
+  const parts = () => {
+    const root = rootRef.current;
+    return {
+      btn: root?.querySelector<HTMLElement>('.rh9-vault__ball-btn') ?? null,
+      ball: root?.querySelector<HTMLElement>('.rh9-vault__ball') ?? null,
+      pool: root?.querySelector<HTMLElement>('.rh9-vault__pool') ?? null,
+    };
+  };
+
+  /*
+   * Gravity-correct dribble: quad-in falls, quad-out rises, squash only at floor contact.
+   * One live timeline — a new tap kills the old one and continues from wherever the ball is,
+   * so rapid taps never stack competing tweens (the old jitter).
+   */
+  const dribbleTl = useRef<gsap.core.Timeline | null>(null);
+  const dribble = contextSafe(() => {
+    const { btn, ball, pool } = parts();
+    if (getPrefersReducedMotion() || !btn || !ball || !pool) {
+      onDribble?.(1);
+      hapticLight();
+      return;
+    }
+    dribbleTl.current?.kill();
+    const contact = (gain: number, heavy: boolean) => () => {
+      onDribble?.(gain);
+      if (heavy) hapticLight();
+    };
+    gsap.killTweensOf([btn, pool]);
+    dribbleTl.current = gsap
       .timeline()
-      .to(btn, { scaleY: 0.9, scaleX: 1.06, duration: 0.08, ease: 'power2.out' })
-      .to(btn, { y: -34, scaleY: 1.04, scaleX: 0.97, rotation: '+=40', duration: 0.26, ease: 'power2.out' })
-      .to(btn, { y: 0, scaleY: 1, scaleX: 1, duration: 0.5, ease: 'bounce.out' });
+      .to(btn, { y: 10, scaleX: 1, scaleY: 1, duration: 0.09, ease: 'power2.in' }, 0)
+      .add(contact(1, true), 0.09)
+      .to(btn, { scaleX: 1.08, scaleY: 0.9, duration: 0.045, ease: 'power1.out' }, 0.09)
+      .to(btn, { y: -54, duration: 0.3, ease: 'power2.out' }, 0.135)
+      .to(btn, { scaleX: 1, scaleY: 1, duration: 0.16, ease: 'sine.out' }, 0.135)
+      .to(btn, { y: 6, duration: 0.27, ease: 'power2.in' }, 0.435)
+      .add(contact(0.3, false), 0.705)
+      .to(btn, { scaleX: 1.04, scaleY: 0.95, duration: 0.04, ease: 'power1.out' }, 0.705)
+      .to(btn, { y: -11, duration: 0.15, ease: 'power2.out' }, 0.745)
+      .to(btn, { scaleX: 1, scaleY: 1, duration: 0.1, ease: 'sine.out' }, 0.745)
+      .to(btn, { y: 0, duration: 0.14, ease: 'power2.in' }, 0.895)
+      .to(pool, { scale: 1.08, autoAlpha: 1, duration: 0.09, ease: 'power2.in' }, 0)
+      .to(pool, { scale: 0.62, autoAlpha: 0.5, duration: 0.3, ease: 'power2.out' }, 0.135)
+      .to(pool, { scale: 1.04, autoAlpha: 1, duration: 0.27, ease: 'power2.in' }, 0.435)
+      .to(pool, { scale: 0.92, autoAlpha: 0.88, duration: 0.15, ease: 'power2.out' }, 0.745)
+      .to(pool, { scale: 1, autoAlpha: 1, duration: 0.14, ease: 'power2.in' }, 0.895)
+      .to(ball, { rotation: '+=36', duration: 0.9, ease: 'power2.out' }, 0.09);
   });
+
+  const springBack = contextSafe(() => {
+    const { btn, pool } = parts();
+    gsap.to(btn, { y: 0, scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.5)', overwrite: 'auto' });
+    gsap.to(pool, { scale: 1, autoAlpha: 1, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+  });
+
+  const tipOff = contextSafe(() => {
+    flying.current = true;
+    dribbleTl.current?.kill();
+    hapticMedium();
+    const { btn, ball, pool } = parts();
+    if (getPrefersReducedMotion() || !btn || !ball || !pool) {
+      onTipOff?.();
+      flying.current = false;
+      return;
+    }
+    const rise = -(btn.getBoundingClientRect().bottom + 40);
+    gsap
+      .timeline({
+        onComplete: () => {
+          gsap.set(btn, { y: -260, scale: 1 });
+          gsap.set(pool, { scale: 0.3, autoAlpha: 0 });
+          gsap
+            .timeline({ delay: 0.9, onComplete: () => void (flying.current = false) })
+            .to(btn, { y: 0, duration: 0.9, ease: 'bounce.out' })
+            .to(pool, { scale: 1, autoAlpha: 1, duration: 0.9, ease: 'bounce.out' }, 0);
+        },
+      })
+      .to(btn, { y: rise, scale: 0.56, duration: 0.5, ease: 'power2.in', overwrite: 'auto' })
+      .to(ball, { rotation: '-=540', duration: 0.5, ease: 'power1.in' }, 0)
+      .to(pool, { scale: 0.3, autoAlpha: 0, duration: 0.35, ease: 'power2.out', overwrite: 'auto' }, 0)
+      .add(() => onTipOff?.(), 0.16);
+  });
+
+  const onDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0 || flying.current || lockedRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const now = performance.now();
+    drag.current = { id: e.pointerId, y0: e.clientY, t0: now, y: e.clientY, t: now, vy: 0 };
+  };
+
+  const onMove = contextSafe((e: ReactPointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const now = performance.now();
+    const dt = Math.max(1, now - d.t);
+    d.vy = d.vy * 0.4 + ((e.clientY - d.y) / dt) * 0.6;
+    d.y = e.clientY;
+    d.t = now;
+    if (getPrefersReducedMotion()) return;
+    const dy = e.clientY - d.y0;
+    const { btn, pool } = parts();
+    const y = dy < 0 ? Math.max(-130, dy * 0.62) : dy * 0.14;
+    const lift = Math.min(1, Math.max(0, -y / 130));
+    gsap.set(btn, { y, scale: 1 + lift * 0.05 });
+    gsap.set(pool, { scale: 1 - lift * 0.35, autoAlpha: 1 - lift * 0.45 });
+  });
+
+  const onUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    const dy = e.clientY - d.y0;
+    const quick = performance.now() - d.t0 < 320;
+    if (!lockedRef.current && (dy < -TIP_DISTANCE || (dy < -20 && d.vy < -TIP_SPEED))) {
+      tipOff();
+    } else if (Math.abs(dy) < TAP_SLOP && quick) {
+      dribble();
+    } else {
+      springBack();
+    }
+  };
+
+  const onCancel = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (drag.current?.id !== e.pointerId) return;
+    drag.current = null;
+    springBack();
+  };
 
   return (
     <div ref={rootRef} className={`rh9-vault${hasFill ? ' has-fill' : ''}${pending ? ' is-pending' : ''}`}>
       <div className="rh9-vault__dial">
-        <svg className="rh9-vault__svg" viewBox="0 0 200 200" aria-hidden>
-          <defs>
-            <linearGradient id="rh9-bezel" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#ffffff" />
-              <stop offset="0.32" stopColor="#d3dbea" />
-              <stop offset="0.5" stopColor="#7f8db0" />
-              <stop offset="0.68" stopColor="#eef2f9" />
-              <stop offset="1" stopColor="#97a5c4" />
-            </linearGradient>
-            <radialGradient id="rh9-well" cx="0.5" cy="0.42" r="0.6">
-              <stop offset="0" stopColor="#0a2bb8" />
-              <stop offset="0.7" stopColor="#011b96" />
-              <stop offset="1" stopColor="#000a4a" />
-            </radialGradient>
-            <linearGradient id="rh9-arc" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#13a865" />
-              <stop offset="0.55" stopColor="#29e490" />
-              <stop offset="1" stopColor="#7dffc0" />
-            </linearGradient>
-          </defs>
-          <circle cx="100" cy="100" r="99" fill="url(#rh9-bezel)" />
-          <circle cx="100" cy="100" r="99.4" fill="none" stroke="rgba(0,6,55,0.55)" strokeWidth="0.8" />
-          <circle cx="100" cy="100" r="91.5" fill="#000a4a" />
-          <circle cx="100" cy="100" r="90.5" fill="url(#rh9-well)" />
-          <g className="rh9-vault__ticks">
-            {TICKS.map((i) => {
-              const major = i % 4 === 0;
-              return (
-                <line
-                  key={i}
-                  x1="100"
-                  y1={major ? 3.5 : 4.5}
-                  x2="100"
-                  y2={major ? 9.5 : 7.5}
-                  stroke={major ? '#0a1f7a' : 'rgba(10,31,122,0.6)'}
-                  strokeWidth={major ? 1.6 : 0.9}
-                  strokeLinecap="round"
-                  transform={`rotate(${i * 9} 100 100)`}
-                />
-              );
-            })}
-          </g>
-          <g className="rh9-vault__glint">
-            <path
-              d="M75.4 8.2 A95 95 0 0 1 124.6 8.2"
-              fill="none"
-              stroke="rgba(255,255,255,0.75)"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </g>
-          <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(0,6,55,0.85)" strokeWidth="5.5" />
-          <circle cx="100" cy="100" r={R + 3.2} fill="none" stroke="rgba(150,182,255,0.28)" strokeWidth="0.6" />
-          <circle
-            className="rh9-vault__arc"
-            cx="100"
-            cy="100"
-            r={R}
-            fill="none"
-            stroke="url(#rh9-arc)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeDasharray={CIRC}
-            strokeDashoffset={CIRC}
-            opacity={0}
-            transform="rotate(-90 100 100)"
-          />
-          <g className="rh9-vault__tip">
-            <circle cx="100" cy={100 - R} r="6" fill="rgba(125,255,192,0.28)" />
-            <circle cx="100" cy={100 - R} r="3" fill="#eafff5" />
-          </g>
-        </svg>
-
-        <span className="rh9-vault__shadow" aria-hidden />
+        <span className="rh9-vault__pool" aria-hidden>
+          <span className="rh9-vault__shadow" />
+        </span>
         <button
           type="button"
           className="rh9-vault__ball-btn"
-          aria-hidden
-          tabIndex={-1}
-          onClick={bounceBall}
+          aria-label={t('home.tipOffHint')}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onCancel}
+          onContextMenu={(e) => e.preventDefault()}
         >
           <span className="rh9-vault__orb">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -223,6 +275,9 @@ export function HomeVault({
           {t('home.bankMoneyAfter')}
         </span>
         <span className="rh9-vault__value">{pending ? '—' : formatCash(0)}</span>
+        <span className="rh9-vault__rail" aria-hidden>
+          <span className="rh9-vault__rail-fill" />
+        </span>
       </button>
 
       <div className="rh9-vault__wof-wrap">

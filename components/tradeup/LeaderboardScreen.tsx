@@ -237,7 +237,9 @@ function PodiumSlot({
       transition={{ duration: 0.5, ease: EASE, delay: 0.05 + index * 0.06 }}
     >
       <div className="wb-podium__player">
+        {place === 1 ? <PodiumCrown /> : null}
         <span className={`wb-podium__mark is-place-${place}`}>
+          <span className="wb-podium__ring" aria-hidden />
           <HomeProfileMark label={entry.username} />
         </span>
         <h2 className="wb-podium__name">
@@ -247,9 +249,35 @@ function PodiumSlot({
         <p className={`wb-podium__score${isBank ? ' is-bank' : ''}`}>{scoreText}</p>
       </div>
       <div className={`wb-podium__plinth is-place-${place}`} aria-hidden>
+        <span className="wb-podium__cap" />
         <span className="wb-podium__num">{place}</span>
+        <span className="wb-podium__shine" />
       </div>
     </motion.article>
+  );
+}
+
+function PodiumCrown() {
+  return (
+    <svg className="wb-podium__crown" viewBox="0 0 40 26" width="34" height="22" aria-hidden>
+      <defs>
+        <linearGradient id="wb-crown-gold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff3c4" />
+          <stop offset="0.45" stopColor="#f2c64a" />
+          <stop offset="1" stopColor="#a87818" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M3 9.5 11 15.5 20 3 29 15.5 37 9.5 34 23H6Z"
+        fill="url(#wb-crown-gold)"
+        stroke="#7a5410"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <circle cx="3" cy="9" r="2.4" fill="#fff3c4" />
+      <circle cx="20" cy="2.6" r="2.4" fill="#fff3c4" />
+      <circle cx="37" cy="9" r="2.4" fill="#fff3c4" />
+    </svg>
   );
 }
 
@@ -538,6 +566,7 @@ export const LeaderboardScreen = memo(function LeaderboardScreen() {
 
             {loadState === 'ready' && podium.length > 0 ? (
               <section className="wb-podium" aria-label={t('leaderboard.world')}>
+                <span className="wb-podium__beam" aria-hidden />
                 {[podium[1], podium[0], podium[2]]
                   .map((entry, i) => {
                     if (!entry) return null;

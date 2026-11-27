@@ -1,14 +1,12 @@
 'use client';
 
 /**
- * Wins board backdrop — home navy field (no gold court art).
- * Static: nothing animates or scrolls.
+ * Board backdrop — the Home arena (court plate is the screen background); this adds the rig light.
  */
 export function LeaderboardBackdrop() {
   return (
     <div className="arena-atmo wb-backdrop" aria-hidden>
-      <div className="wb-backdrop__void" />
-      <div className="wb-backdrop__vignette" />
+      <div className="rh10-cone" />
     </div>
   );
 }

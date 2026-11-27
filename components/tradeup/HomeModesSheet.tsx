@@ -58,7 +58,7 @@ export function HomeModesSheet({ open, onClose, onClassic, onHeadToHead }: HomeM
 
   // Portal to body so hub overflow / transforms never clip the sheet on iOS.
   return createPortal(
-    <div className="rh3-sheet" role="dialog" aria-modal="true" aria-labelledby="rh3-sheet-title">
+    <div className="rh3-sheet rh10-modes" role="dialog" aria-modal="true" aria-labelledby="rh3-sheet-title">
       {/* Non-focusable scrim — a full-screen <button> left a selectable highlight quad. */}
       <div className="rh3-sheet__scrim" aria-hidden onClick={dismiss} />
       <section className="rh3-sheet__panel">

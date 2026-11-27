@@ -53,6 +53,7 @@ export type MessageKey =
   | 'home.profileLabel'
   | 'home.wallOfFame'
   | 'home.wallOfFameBlurb'
+  | 'home.tipOffHint'
   | 'xp.level'
   | 'xp.toNext'
   | 'xp.congrats'
@@ -309,6 +310,7 @@ const EN: Record<MessageKey, string> = {
   'home.profileLabel': 'Profile',
   'home.wallOfFame': 'Wall of Fame',
   'home.wallOfFameBlurb': 'For $1B Bank holders',
+  'home.tipOffHint': 'Swipe up to tip off',
   'xp.level': 'LVL',
   'xp.toNext': 'XP to next level',
   'xp.congrats': 'CONGRATULATIONS',
@@ -592,6 +594,7 @@ const ES: Record<MessageKey, string> = {
   'home.profileLabel': 'Perfil',
   'home.wallOfFame': 'Muro de la Fama',
   'home.wallOfFameBlurb': 'Para titulares Bank $1B',
+  'home.tipOffHint': 'Desliza arriba para el salto',
   'xp.level': 'NVL',
   'xp.toNext': 'XP al siguiente nivel',
   'xp.congrats': 'FELICIDADES',
