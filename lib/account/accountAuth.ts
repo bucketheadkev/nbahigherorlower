@@ -163,14 +163,38 @@ export function pendingUsernameForState(state: AccountAuthState): string {
   return state.status === 'needs_username' ? (pendingSignupUsername(state.user) ?? '') : '';
 }
 
+const PRODUCTION_SUPABASE_REF = 'rqogjyjfatnyuoorvyix';
+const PRODUCTION_SITE_ORIGIN = 'https://1brun.com';
+const NON_PRODUCTION_AUTH_FALLBACK = 'http://localhost:3000';
+
+function isProductionSiteOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    return host === '1brun.com' || host.endsWith('.1brun.com');
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Origin for links inside auth emails. The native shell's origin (capacitor://localhost)
  * cannot be opened from Mail, so iOS points at the website instead.
+ * A non-production backend never links to the production website: its reset page would
+ * try to use staging tokens against the production project.
  */
 function authEmailOrigin(): string {
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '');
-  if (isNativeApp()) return site || 'https://1brun.com';
-  return (typeof window !== 'undefined' && window.location?.origin) || site || 'https://1brun.com';
+  const clean = (v: string | undefined) => v?.trim().replace(/\/$/, '') || '';
+  const site = clean(process.env.NEXT_PUBLIC_SITE_URL);
+  const override = clean(process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN);
+  const windowOrigin =
+    !isNativeApp() && typeof window !== 'undefined' ? clean(window.location?.origin) : '';
+  const origin = windowOrigin || override || site || PRODUCTION_SITE_ORIGIN;
+
+  const productionBackend = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').includes(
+    PRODUCTION_SUPABASE_REF,
+  );
+  if (productionBackend || !isProductionSiteOrigin(origin)) return origin;
+  return override && !isProductionSiteOrigin(override) ? override : NON_PRODUCTION_AUTH_FALLBACK;
 }
 
 /**

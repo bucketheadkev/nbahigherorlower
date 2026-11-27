@@ -366,6 +366,19 @@ npm run staging:apply
 
 **Status (2026-11-23):** Staging apply paused until closer to Apple launch. UI/gameplay work is unblocked; resume backend from this section.
 
+### Read-only checks (run before and after any apply)
+
+- `npm run staging:probe` — Auth settings + whether every table/RPC the client calls exists (public key, GET only, refuses production).
+- `supabase/admin/STAGING_AUDIT_READONLY.sql` — paste into the staging SQL Editor; lists missing tables, functions, triggers, policies, RLS-disabled tables and unsafe grants. SELECT only.
+
+### Migration order (staging apply)
+
+`tmp/staging-migration-chunks/` holds byte-identical copies of `supabase/migrations/*.sql`, renumbered `001_…061_`. Filename order is correct except one file: `20260810_fix_room_players_rls_recursion.sql` must run **right after** `20260810_phase1_private_1v1_rooms.sql` (it patches the recursive room policies phase1 creates). SECURE REVIEW runs last.
+
+### Auth email links (never hit production from staging)
+
+`lib/account/accountAuth.ts` builds confirmation / reset links. When `NEXT_PUBLIC_SUPABASE_URL` is not the production project, links never point at `1brun.com`: they use `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` if set, else `http://localhost:3000` (dev server on staging). Staging Auth → URL Configuration must allow those URLs.
+
 ### Resume checklist (when restarting staging)
 
 1. Paste **one clean** staging Database URI into `.env.staging.local` → `STAGING_DATABASE_URL=`  

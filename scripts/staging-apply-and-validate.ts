@@ -23,6 +23,14 @@ const PROD_REF = 'rqogjyjfatnyuoorvyix';
 const STAGING_REF = 'wxifsgypdyrruxybcrcw';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+const envFile = path.join(root, '.env.staging.local');
+if (fs.existsSync(envFile)) {
+  for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*(STAGING_[A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+  }
+}
+
 const stagingUrl = (process.env.STAGING_SUPABASE_URL ?? '').trim();
 const anon = (process.env.STAGING_SUPABASE_ANON_KEY ?? '').trim();
 const service = (process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
