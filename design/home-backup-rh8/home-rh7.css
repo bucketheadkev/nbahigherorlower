@@ -1,0 +1,887 @@
+/* =========================================================
+   Home — "Cobalt Rooftop"
+   Identity: the $1B app logo. Cobalt field, white type,
+   orange for action, green for money.
+   Plate = sky · drifting clouds · skyline cutout (true depth).
+   GSAP drives all Home motion — never put CSS transforms on
+   an element GSAP animates (use a ::before for static skew).
+   Restore older Homes: design/home-backup-rh5 / -rh6 / -rh7.
+   ========================================================= */
+
+:root {
+  /* Sampled from the 1B Run logo */
+  --cb-bright: #003beb;
+  --cb: #0039e2;
+  --cb-royal: #002dc8;
+  --cb-mid: #011b96;
+  --cb-deep: #00157b;
+  --cb-ink: #000637;
+  --cb-hi: #3d6bff;
+  --cb-edge: rgba(150, 182, 255, 0.5);
+  --cb-hair: rgba(170, 196, 255, 0.32);
+}
+
+.rh7 {
+  --rh7-orange: #e55622;
+  --rh7-orange-hi: #ff8b4a;
+  --rh7-orange-lo: #b9390c;
+  --rh7-green: var(--money-green, #29e490);
+  --rh7-green-hi: #7dffc0;
+  --rh7-green-lo: #13a865;
+  --rh7-display: "Avenir Next Condensed", "AvenirNextCondensed-Heavy", "Avenir Next", "Helvetica Neue", sans-serif;
+  --rh7-ui: "Avenir Next", "Avenir", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --rh7-tab-clear: calc(var(--home-tabbar-h, calc(5.4rem + env(safe-area-inset-bottom, 0px))) + 0.85rem);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 0 !important;
+  overflow: hidden;
+  background: var(--cb-royal);
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh7-stage {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------- Plate (9:16 art, covers the screen, children map to art %) ---------- */
+
+.rh7-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--cb-royal);
+  container-type: size;
+}
+
+.rh7-plate {
+  --w: max(104cqw, calc(104cqh * 0.5625));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--w);
+  height: calc(var(--w) * 1.77778);
+  margin-left: calc(var(--w) * -0.5);
+  margin-top: calc(var(--w) * -0.88889);
+  transform-origin: 50% 42%;
+  will-change: transform;
+}
+
+.rh7-plate > * {
+  position: absolute;
+}
+
+.rh7-plate__sky {
+  inset: 0;
+  background-color: var(--cb);
+  background-image: url('/images/home-v8/rh8-rooftop@2x.jpg');
+  background-image: image-set(
+    url('/images/home-v8/rh8-rooftop@2x.webp') type('image/webp') 2x,
+    url('/images/home-v8/rh8-rooftop.webp') type('image/webp') 1x,
+    url('/images/home-v8/rh8-rooftop@2x.jpg') 2x
+  );
+  background-size: 100% 100%;
+}
+
+.rh7-plate__clouds {
+  top: 3%;
+  left: -8%;
+  width: 165%;
+  height: 34%;
+  opacity: 0.26;
+  background: url('/images/home-v8/rh8-clouds.webp?v=2') center / 100% 100% no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 70%, transparent 100%);
+  will-change: transform, opacity;
+}
+
+/* Warm horizon between the towers (sits under the skyline cutout). */
+.rh7-plate__glow {
+  left: 34%;
+  top: 40%;
+  width: 40%;
+  height: 16%;
+  background: radial-gradient(50% 50% at 50% 70%, rgba(255, 150, 70, 0.55) 0%, rgba(255, 120, 50, 0.18) 45%, transparent 75%);
+  will-change: opacity;
+}
+
+.rh7-plate__city {
+  left: 0;
+  top: 29.6875%;
+  width: 100%;
+  height: 70.3125%;
+  background-image: url('/images/home-v8/rh8-skyline@2x.webp');
+  background-image: image-set(
+    url('/images/home-v8/rh8-skyline@2x.webp') type('image/webp') 2x,
+    url('/images/home-v8/rh8-skyline.webp') type('image/webp') 1x
+  );
+  background-size: 100% 100%;
+  will-change: transform;
+}
+
+/* Light passing across the glossy court. */
+.rh7-plate__sheen {
+  left: 0;
+  top: 57%;
+  width: 55%;
+  height: 43%;
+  background: linear-gradient(
+    100deg,
+    transparent 15%,
+    rgba(210, 228, 255, 0.07) 38%,
+    rgba(235, 244, 255, 0.2) 50%,
+    rgba(210, 228, 255, 0.07) 62%,
+    transparent 85%
+  );
+  will-change: transform;
+}
+
+/* Aviation beacons on the spires. */
+.rh7-plate__beacon {
+  width: 0.3rem;
+  height: 0.3rem;
+  margin: -0.15rem 0 0 -0.15rem;
+  border-radius: 50%;
+  opacity: 0.15;
+  background: #ffd7c4;
+  box-shadow:
+    0 0 3px 1px rgba(255, 96, 52, 0.95),
+    0 0 10px 3px rgba(255, 84, 40, 0.4);
+  will-change: opacity;
+}
+
+/* Gentle shaping only — keeps the art bright. */
+.rh7-bg__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 21, 123, 0.5) 0%, rgba(0, 21, 123, 0) 14%),
+    linear-gradient(0deg, rgba(0, 14, 92, 0.62) 0%, rgba(0, 21, 123, 0.18) 22%, rgba(0, 21, 123, 0) 38%);
+}
+
+/* Intro "lights up" curtain. */
+.rh7-bg__lift {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  background: var(--cb-deep);
+}
+
+/* ---------- Layout ---------- */
+
+.rh7-main {
+  position: relative;
+  z-index: 3;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 4.55rem)
+    max(1.1rem, env(safe-area-inset-right, 0px))
+    var(--rh7-tab-clear)
+    max(1.1rem, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.rh7-spacer {
+  flex: 1 1 auto;
+  min-height: 1rem;
+}
+
+/* ---------- Wordmark — white on cobalt, extruded like the logo ---------- */
+
+.rh7-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: clamp(0.3rem, 2.2vh, 1.4rem);
+}
+
+.rh7-logo {
+  margin: 0;
+  font-family: var(--rh7-display);
+  font-size: clamp(4.3rem, 22vw, 6.1rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.86;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.rh7-logo__word {
+  display: flex;
+  align-items: baseline;
+  padding: 0.02em 0.06em 0.14em 0.02em;
+}
+
+.rh7-logo__char {
+  display: inline-block;
+  color: #ffffff;
+  text-shadow:
+    0 0.016em 0 #dfe7ff,
+    0 0.034em 0 #2a52ec,
+    0 0.05em 0 #2247e0,
+    0 0.066em 0 #1a3cd0,
+    0 0.082em 0 #1332bd,
+    0 0.098em 0 #0c28a6,
+    0 0.114em 0 #071f92,
+    0 0.2em 0.22em rgba(0, 6, 55, 0.5),
+    0 0.32em 0.6em rgba(0, 6, 55, 0.25);
+}
+
+.rh7-logo__gap {
+  display: inline-block;
+  width: 0.2em;
+}
+
+.rh7-tagline {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 1.35rem 0.48rem;
+}
+
+.rh7-tagline__plate {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.rh7-tagline__plate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.4rem;
+  transform: skewX(-14deg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #0b2fcf 0%, var(--cb-mid) 58%, var(--cb-deep) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(160, 190, 255, 0.6),
+    0 0 0 1px rgba(0, 6, 55, 0.45),
+    0 8px 18px rgba(0, 6, 55, 0.4);
+}
+
+.rh7-tagline__text {
+  position: relative;
+  font-family: var(--rh7-display);
+  font-size: clamp(0.95rem, 3.9vw, 1.14rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.18em;
+  padding-left: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgba(0, 6, 55, 0.6);
+}
+
+.rh7-tagline__amt {
+  color: var(--rh7-green);
+  text-shadow: 0 1px 0 rgba(0, 40, 20, 0.6);
+}
+
+/* ---------- Actions ---------- */
+
+.rh7-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  width: min(100%, 23rem);
+  pointer-events: auto;
+}
+
+.rh7-press,
+.rh7-cta {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Bank card — deep royal enamel */
+.rh7-bank {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1px auto;
+  align-items: center;
+  column-gap: 0.7rem;
+  padding: 0.78rem 0.75rem 0.82rem 0.95rem;
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, rgba(4, 36, 178, 0.95) 0%, rgba(1, 27, 150, 0.96) 55%, rgba(0, 21, 123, 0.97) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.55),
+    inset 0 0 0 1px var(--cb-hair),
+    0 16px 32px rgba(0, 6, 55, 0.45),
+    0 2px 6px rgba(0, 6, 55, 0.35);
+}
+
+.rh7-bank__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.32rem;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  text-align: left;
+}
+
+.rh7-bank__label {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--rh7-ui);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: rgba(220, 230, 255, 0.82);
+}
+
+.rh7-bank__goal-amt {
+  color: var(--rh7-green);
+}
+
+.rh7-bank__value {
+  font-family: var(--rh7-display);
+  font-size: clamp(1.6rem, 7.4vw, 1.95rem);
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--rh7-green);
+  text-shadow: 0 2px 0 rgba(0, 40, 30, 0.45), 0 4px 12px rgba(0, 6, 55, 0.4);
+}
+
+.rh7-bank__track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 0.42rem;
+  margin-top: 0.16rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 6, 55, 0.6);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 6, 55, 0.8),
+    0 0 0 1px rgba(170, 198, 255, 0.18);
+}
+
+.rh7-bank__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--rh7-green-lo) 0%, var(--rh7-green) 70%, var(--rh7-green-hi) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  will-change: transform;
+}
+
+.rh7-bank:not(.has-fill) .rh7-bank__fill {
+  visibility: hidden;
+}
+
+.rh7-bank__cap {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-top: -0.21rem;
+  border-radius: 50%;
+  background: #eafff5;
+  box-shadow: 0 0 5px 1px rgba(125, 255, 192, 0.5);
+}
+
+.rh7-bank__divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 0.1rem 0;
+  background: linear-gradient(180deg, transparent, var(--cb-hair) 20%, var(--cb-hair) 80%, transparent);
+}
+
+.rh7-bank__wof-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+/* Wall of Fame — polished silver plaque */
+.rh7-bank__wof {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 5.9rem;
+  height: 2.45rem;
+  padding: 0 0.75rem;
+  border-radius: 0.8rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #eef2fb 32%, #c3cde2 54%, #d9e0ee 72%, #f6f8fd 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    inset 0 -2px 0 rgba(30, 50, 120, 0.28),
+    0 0 0 1px rgba(0, 10, 70, 0.5),
+    0 6px 14px rgba(0, 6, 55, 0.4);
+}
+
+.rh7-bank__wof-label {
+  font-family: var(--rh7-display);
+  font-size: 0.82rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--cb-deep);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.rh7-bank__wof-blurb {
+  font-family: var(--rh7-ui);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(220, 230, 255, 0.75);
+}
+
+/* CTAs */
+.rh7-actions__row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 0.6rem;
+}
+
+.rh7-cta {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 4.05rem;
+  padding: 0;
+  border-radius: 1.15rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.rh7-cta__label {
+  position: relative;
+  z-index: 3;
+  font-family: var(--rh7-display);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rh7-cta__gloss {
+  position: absolute;
+  inset: 0 0 52% 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.04) 100%);
+  pointer-events: none;
+}
+
+.rh7-cta--play {
+  background:
+    radial-gradient(90% 120% at 50% 120%, rgba(120, 28, 0, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, var(--rh7-orange-hi) 0%, #f26a2c 30%, var(--rh7-orange) 60%, var(--rh7-orange-lo) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 200, 0.8),
+    inset 0 -3px 0 rgba(110, 26, 0, 0.4),
+    0 0 0 1px rgba(100, 26, 0, 0.55),
+    0 12px 24px rgba(0, 6, 55, 0.45);
+}
+
+.rh7-cta--play .rh7-cta__label {
+  font-size: clamp(1.6rem, 7vw, 1.85rem);
+  letter-spacing: 0.12em;
+  padding-left: 0.12em;
+  color: #fff;
+  text-shadow:
+    0 2px 0 rgba(120, 32, 0, 0.55),
+    0 4px 12px rgba(90, 20, 0, 0.3);
+}
+
+.rh7-cta__sheen {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -35%;
+  z-index: 2;
+  width: 30%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.rh7-cta__sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: skewX(-22deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 244, 230, 0.4), transparent);
+}
+
+/* MODES — deep royal enamel with a bright cobalt rim */
+.rh7-cta--modes {
+  background:
+    linear-gradient(180deg, #1440f0 0%, var(--cb-royal) 46%, var(--cb-mid) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(190, 210, 255, 0.75),
+    inset 0 0 0 1.5px rgba(150, 182, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 6, 55, 0.35),
+    0 0 0 1px rgba(0, 6, 55, 0.45),
+    0 12px 24px rgba(0, 6, 55, 0.45);
+}
+
+.rh7-cta--modes .rh7-cta__gloss {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.rh7-cta--modes .rh7-cta__label {
+  font-size: clamp(1.15rem, 5vw, 1.32rem);
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 10, 80, 0.55);
+}
+
+/* PLAY launch flash */
+.rh7-flash,
+.rh7-impact {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.rh7-flash {
+  background: radial-gradient(70% 40% at 40% 88%, rgba(255, 150, 80, 0.34) 0%, rgba(229, 86, 34, 0.12) 40%, transparent 72%);
+}
+
+/* Wordmark landing flash */
+.rh7-impact {
+  background: radial-gradient(70% 26% at 50% 19%, rgba(255, 255, 255, 0.85) 0%, rgba(140, 175, 255, 0.3) 45%, transparent 75%);
+}
+
+.rh7.is-launching .rh7-actions {
+  pointer-events: none;
+}
+
+@media (max-height: 700px) {
+  .rh7-logo {
+    font-size: clamp(3.5rem, 17.5vw, 4.7rem);
+  }
+
+  .rh7-brand {
+    margin-top: 0.1rem;
+  }
+
+  .rh7-tagline {
+    margin-top: 0.55rem;
+  }
+
+  .rh7-cta {
+    height: 3.6rem;
+  }
+
+  .rh7-bank {
+    padding-top: 0.62rem;
+    padding-bottom: 0.66rem;
+  }
+}
+
+/* =========================================================
+   Hub chrome + nav — cobalt materials (hub always mounts Home)
+   ========================================================= */
+
+body:has(.rh7) .rh5-top,
+body:has(.rh7) .home-hub-top--live.rh5-top {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 21, 123, 0.6) 0%,
+    rgba(0, 21, 123, 0.3) 55%,
+    rgba(0, 21, 123, 0) 100%
+  ) !important;
+}
+
+body:has(.rh7) .rh5-top .rh5-player__name {
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 0 rgba(0, 6, 55, 0.6);
+}
+
+body:has(.rh7) .rh5-top .rh4-pxp__lvl {
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgba(0, 6, 55, 0.6);
+}
+
+body:has(.rh7) .rh5-top .rh4-pxp__track {
+  height: 0.42rem;
+  background: rgba(0, 6, 55, 0.6);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 6, 55, 0.7),
+    0 0 0 1px rgba(170, 198, 255, 0.35);
+}
+
+body:has(.rh7) .rh5-top .rh4-pxp__fill {
+  background: linear-gradient(90deg, #c4420f 0%, #e55622 55%, #ff9a5c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 190, 0.45);
+}
+
+body:has(.rh7) .rh5-top .home-coin,
+body:has(.rh7) .rh5-top .sound-settings__gear {
+  border: 0 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #0a2fcf 0%, var(--cb-mid) 60%, var(--cb-deep) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px var(--cb-hair),
+    0 6px 14px rgba(0, 6, 55, 0.4) !important;
+}
+
+body:has(.rh7) .rh5-top .home-coin__plus {
+  background: linear-gradient(180deg, #7dffc0 0%, #29e490 48%, #13a865 100%) !important;
+  color: #03281a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 3px rgba(0, 6, 55, 0.35) !important;
+}
+
+/* ---------- Bottom nav: shared materials ---------- */
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__glider {
+  display: block !important;
+  opacity: 1 !important;
+  transition: none !important;
+  transform-origin: 50% 60%;
+  will-change: transform;
+  pointer-events: none;
+  z-index: 1;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__glider::before {
+  content: "";
+  position: absolute;
+  inset: 0 0.14rem;
+  border: 0;
+  border-radius: 1.05rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 48%),
+    linear-gradient(180deg, #ff8b4a 0%, #f26a2c 34%, #e55622 64%, #c4420f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 204, 0.8),
+    inset 0 -2px 0 rgba(110, 26, 0, 0.35),
+    0 0 0 1px rgba(100, 26, 0, 0.5),
+    0 6px 12px rgba(0, 6, 55, 0.45);
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item {
+  position: relative;
+  z-index: 2;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(214, 226, 255, 0.72) !important;
+  transition: color 0.25s ease !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item.is-active,
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item--home.is-active {
+  color: #ffffff !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item:active:not(.is-active) {
+  color: #ffffff !important;
+  background: transparent !important;
+  opacity: 1;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__icon {
+  filter: none !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__icon svg {
+  width: 1.18rem;
+  height: 1.18rem;
+  will-change: transform;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item.is-active .oneb-tabbar__icon {
+  filter: drop-shadow(0 1px 1px rgba(110, 26, 0, 0.45)) !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__label {
+  font-family: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", sans-serif !important;
+  font-size: 0.64rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  text-shadow: none !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri .oneb-tabbar__item.is-active .oneb-tabbar__label {
+  text-shadow: 0 1px 0 rgba(110, 26, 0, 0.45) !important;
+}
+
+/* ---------- Web: floating cobalt dock ---------- */
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri.oneb-tabbar--pill {
+  height: 4.15rem !important;
+  min-height: 4.15rem !important;
+  max-width: min(23.5rem, calc(100vw - 2rem)) !important;
+  padding: 0.32rem !important;
+  gap: 0 !important;
+  border: 0 !important;
+  border-radius: 1.45rem !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 45%),
+    linear-gradient(180deg, #0a2fcf 0%, var(--cb-mid) 55%, var(--cb-deep) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px var(--cb-hair),
+    0 16px 34px rgba(0, 6, 55, 0.55),
+    0 2px 6px rgba(0, 6, 55, 0.35) !important;
+}
+
+body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri.oneb-tabbar--pill .oneb-tabbar__glider {
+  position: absolute;
+  top: 0.32rem;
+  bottom: 0.32rem;
+  left: 0.32rem;
+  width: calc((100% - 0.64rem) / 3);
+}
+
+body:has(.rh7) .oneb-tabbar-host:has(.oneb-tabbar--pill)::before {
+  background: linear-gradient(180deg, rgba(0, 21, 123, 0) 0%, rgba(0, 21, 123, 0.35) 55%, rgba(0, 14, 92, 0.6) 100%) !important;
+}
+
+/* ---------- iOS: flush cobalt bar ---------- */
+
+html[data-platform="native"] body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri.oneb-tabbar--ios {
+  border: 0 !important;
+  background:
+    linear-gradient(180deg, #0a2fcf 0%, var(--cb-mid) 40%, var(--cb-deep) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.55),
+    0 -10px 26px rgba(0, 6, 55, 0.4) !important;
+}
+
+html[data-platform="native"] body:has(.rh7) .oneb-tabbar-host .oneb-tabbar.oneb-tabbar--tri.oneb-tabbar--ios .oneb-tabbar__glider::before {
+  border-radius: 0.95rem;
+}
+
+html[data-platform="native"] body:has(.rh7) {
+  --dock-ink: var(--cb-deep);
+}
+
+/* =========================================================
+   Launch splash — cobalt identity. The veil stays the native
+   launch-screen ink (#010814) and lifts into cobalt.
+   ========================================================= */
+
+.oneb-intro.oneb-intro--run {
+  background:
+    radial-gradient(120% 75% at 50% 42%, var(--cb-bright) 0%, var(--cb-royal) 42%, var(--cb-mid) 78%, var(--cb-deep) 100%);
+}
+
+.oneb-intro--run .oneb-intro__veil {
+  animation-name: cb-intro-veil;
+}
+
+@keyframes cb-intro-veil {
+  0%,
+  5% {
+    opacity: 1;
+  }
+  24%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.oneb-intro__bloom--cool {
+  background: radial-gradient(circle, rgba(120, 165, 255, 0.4) 0%, rgba(40, 90, 255, 0.14) 38%, transparent 68%);
+}
+
+.oneb-intro__vignette {
+  background: radial-gradient(ellipse 75% 60% at 50% 45%, transparent 30%, rgba(0, 12, 80, 0.55) 100%);
+}
+
+.oneb-intro__shaft--a {
+  background: linear-gradient(180deg, rgba(200, 220, 255, 0.2) 0%, rgba(140, 180, 255, 0.07) 35%, transparent 75%);
+}
+
+.oneb-intro__logo-glow {
+  background: radial-gradient(circle, rgba(170, 200, 255, 0.45) 0%, rgba(255, 130, 60, 0.12) 42%, transparent 70%);
+}
+
+.oneb-intro__logo-mark {
+  box-shadow:
+    inset 0 0 0 1px rgba(170, 198, 255, 0.35),
+    0 24px 50px rgba(0, 6, 55, 0.55),
+    0 4px 12px rgba(0, 6, 55, 0.35);
+}
+
+.oneb-intro__wordmark {
+  color: #ffffff;
+  text-shadow:
+    0 0.03em 0 #1a3cd0,
+    0 0.06em 0 #0c28a6,
+    0 0.16em 0.3em rgba(0, 6, 55, 0.5);
+}
+
+.oneb-intro__bar {
+  background: rgba(0, 6, 55, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(170, 198, 255, 0.28);
+}
+
+.oneb-intro__load-label {
+  color: rgba(225, 234, 255, 0.85);
+}
+
+.oneb-intro__load-pct {
+  color: #ffffff;
+}

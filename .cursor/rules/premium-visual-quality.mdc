@@ -1,0 +1,21 @@
+---
+description: Apply 1B Run premium mobile visual, brand, motion, and iPhone QA skills on UI work
+alwaysApply: true
+---
+
+# Premium visual quality
+
+1B Run targets **professionally polished mobile sports-game UI**, not generic AI website design.
+
+When the task involves UI, UX, layout, typography, color, splash, menus, motion, animation, or visual polish:
+
+1. Read and follow project skills as needed:
+   - `oneb-brand-visual` — brand lock (wins over generic design advice)
+   - `premium-mobile-gaming-ui` — hierarchy, touch, spacing, depth
+   - `cinematic-motion-graphics` — intentional motion; no dependency installs unless asked
+   - `ios-visual-qa` — physical iPhone / Xcode as acceptance
+2. Also use `frontend-design` for craft — but **never** override 1B Run tokens, Avenir stack, or arena identity.
+3. GSAP + `@gsap/react` are installed — follow the `gsap-*` skills (useGSAP, scoped, contextSafe). Do not mix GSAP and Motion on one element.
+4. Preserve established brand and existing functionality. Do not redesign unrelated screens.
+5. Classify website / iOS / shared per `PLATFORM.md` before editing.
+6. Final visual acceptance is the **physical iPhone build**, not localhost alone.

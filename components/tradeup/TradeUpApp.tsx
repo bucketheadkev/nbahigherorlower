@@ -337,7 +337,7 @@ export function TradeUpApp() {
           onJoinCodeConsumed={() => setPendingH2HJoinCode(null)}
         />
       ) : (
-        <div className="hub-shell">
+        <div className="hub-shell" data-hub-tab={hubTab}>
           {/* Keep hub panes laid out — display:none on Shop killed the glider animation. */}
           <div
             className={`hub-pane${hubTab === 'home' ? ' is-active' : ''}`}
@@ -349,6 +349,8 @@ export function TradeUpApp() {
               onOpenShop={handleOpenShop}
               onOpenBoard={handleOpenBoard}
               allowAccountPrompt={!showSplash && !showGuide && hubTab === 'home'}
+              active={hubTab === 'home'}
+              revealed={!showSplash}
             />
           </div>
           {/* Mount Shop/Board as soon as splash ends so website taps aren't a cold mount.

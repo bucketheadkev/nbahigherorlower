@@ -8,3 +8,10 @@ tmp
 *.local
 .DS_Store
 next-env.d.ts
+# Local MCP / Stitch secrets — never ship or commit
+.cursor/mcp.json
+.env
+.env.local
+.env.*.local
+!.cursor/mcp.json.example
+*.pem

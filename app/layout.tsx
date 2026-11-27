@@ -27,6 +27,8 @@ import './home-v2.css';
 import './home-official.css';
 import './home-plate.css';
 import './theme-navy.css';
+import './home-rh7.css';
+import './home-rh9.css';
 import './my-runs.css';
 import './settings-guides.css';
 import './settings-menu.css';
@@ -72,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <link rel="preload" as="image" href="/images/1b-run-app-icon-squircle.png?v=1" />
+        <link rel="preload" as="image" href="/images/1b-run-logo-cobalt.webp?v=1" />
         <link rel="preload" as="image" href="/images/arena/draft-court.jpg" media="(max-width: 767px)" />
         <meta name="theme-color" content="#010814" />
         <style

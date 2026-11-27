@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>1B Run - Championship Spotlight Home</title>
+<!-- Tailwind CSS v3 CDN with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#1A7DFF',
+              blueHover: '#1565D8',
+              moneyGreen: '#00E676',
+              gold: '#FFD700',
+              glassDark: 'rgba(13, 17, 23, 0.72)',
+              glassBorder: 'rgba(255, 255, 255, 0.12)',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow-blue': '0 8px 24px -4px rgba(26, 125, 255, 0.45)',
+            'glow-green': '0 0 12px rgba(0, 230, 118, 0.6)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="custom-layout-and-glass">
+    /* iOS Safe Areas & Full Viewport Lock */
+    body {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* Apple-Grade Specular Highlight for Primary Button */
+    .specular-sheen {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(0, 0, 0, 0.15) 100%);
+    }
+
+    /* Subtle Glass Border Highlight */
+    .border-glass-subtle {
+      border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-black text-white antialiased min-h-screen flex items-center justify-center p-0 m-0 overflow-x-hidden font-sans select-none">
+<!-- BEGIN: Phone Mockup Container -->
+<!-- Designed precisely for native iPhone viewport aspect ratio ~393x852 -->
+<div class="relative w-full max-w-[420px] h-[100dvh] max-h-[900px] overflow-hidden bg-black flex flex-col justify-between shadow-2xl" data-purpose="mobile-viewport">
+<!-- Background Arena Graphic with Spotlights -->
+<div class="absolute inset-0 z-0 pointer-events-none" data-purpose="background-layer">
+<img alt="Championship Basketball Arena" class="w-full h-full object-cover object-center filter brightness-[0.92] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/ALJJyrBjDopo2RCMfFteoWRXjhDZcWpTOB5MrvOqCkdpT58rhEgqqI9DlX5G_aYy9U9wfa93cSV4gzqNT1MRTqnG2dfqN_XNJK8N9Hlz-GnB6iMO5wliGq_h72mPgcilr4jANqX3k3Y3CdWFHPpZkGPuyj4QI4JmnXkHDncElXrGIFCHSrPV2JNyXmzlplTZ5o7REAglQVn_qbNi_8e72KnnznlTdwOXmL8TBDxiNGGUekA"/>
+<!-- Soft Vignette and Shadow Mask -->
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/80"></div>
+<div class="absolute inset-0 bg-radial from-transparent via-transparent to-black/70"></div>
+</div>
+<!-- BEGIN: Top Thin Chrome (Header) -->
+<header class="relative z-20 pt-safe-top px-4 pt-12 flex items-center justify-between gap-2" data-purpose="top-navigation-chrome">
+<!-- Profile Capsule (Left) -->
+<div class="flex items-center bg-[#0d121cdb] backdrop-blur-md border border-white/10 rounded-full py-1.5 pl-1.5 pr-3 shadow-lg" data-purpose="user-profile-badge">
+<!-- Avatar with Level Bubble -->
+<div class="relative w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-500 flex items-center justify-center border border-white/20 shrink-0">
+<svg class="w-4 h-4 text-white/90" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+</svg>
+<!-- Level 14 Tag -->
+<span class="absolute -bottom-1 -right-1 bg-white text-black font-extrabold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-black shadow">
+            14
+          </span>
+</div>
+<!-- Name & XP Progress Bar -->
+<div class="ml-2.5 flex flex-col justify-center">
+<span class="text-xs font-semibold text-white tracking-tight leading-none mb-1">K. Bryant</span>
+<!-- Slim XP Progress Line -->
+<div class="w-16 h-1 bg-white/15 rounded-full overflow-hidden">
+<div class="h-full bg-cyan-400 rounded-full w-[65%] shadow-[0_0_6px_#22d3ee]"></div>
+</div>
+</div>
+</div>
+<!-- Right Controls: Balance Capsule & Menu Button -->
+<div class="flex items-center gap-2">
+<!-- Cash Capsule -->
+<div class="flex items-center bg-[#0d121cdb] backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3 shadow-lg gap-2" data-purpose="currency-capsule">
+<!-- Gold Coin Icon -->
+<div class="w-5 h-5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 flex items-center justify-center text-[11px] font-black text-amber-950 shadow-inner">
+            $
+          </div>
+<!-- Balance -->
+<span class="text-xs font-bold tracking-tight text-white font-mono">148,250</span>
+<!-- Add Button (+) -->
+<button aria-label="Add Currency" class="w-4 h-4 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition flex items-center justify-center text-white/80 text-xs font-semibold leading-none ml-0.5" type="button">
+            +
+          </button>
+</div>
+<!-- Minimal Dark Circle Hamburger Menu Icon -->
+<button aria-label="Open Menu" class="w-9 h-9 rounded-full bg-[#0d121cdb] backdrop-blur-md border border-white/10 flex flex-col items-center justify-center gap-[3px] active:scale-95 transition shadow-lg" type="button">
+<span class="w-3.5 h-[1.5px] bg-white/90 rounded-full"></span>
+<span class="w-3.5 h-[1.5px] bg-white/90 rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- END: Top Thin Chrome -->
+<!-- BEGIN: Centered Hero Branding -->
+<div class="relative z-10 flex flex-col items-center text-center mt-3 mb-auto select-none pointer-events-none" data-purpose="hero-branding">
+<!-- Title -->
+<h1 class="text-5xl font-black tracking-tight text-white uppercase drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+        1B RUN
+      </h1>
+<!-- Subtitle -->
+<p class="mt-1 text-xs font-bold uppercase tracking-[0.25em] text-white/90 drop-shadow-md">
+        CHASE <span class="text-[#00E676] drop-shadow-[0_0_8px_rgba(0,230,118,0.5)]">$1 BILLION</span>
+</p>
+</div>
+<!-- END: Centered Hero Branding -->
+<!-- BEGIN: Bottom Interactive Zone -->
+<div class="relative z-20 px-5 flex flex-col gap-4 pb-2" data-purpose="bottom-content-group">
+<!-- BEGIN: Road to $1 Billion Cluster -->
+<div class="w-full bg-[#0b0e14c7] backdrop-blur-xl border-glass-subtle rounded-2xl p-3.5 shadow-2xl" data-purpose="road-to-billion-card">
+<!-- Top Row: Metrics & Wall of Fame Pill -->
+<div class="flex items-center justify-between mb-2.5">
+<div class="flex flex-col">
+<span class="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">ROAD TO $1 BILLION</span>
+<span class="text-xs font-bold text-white tracking-tight font-mono mt-0.5">$34,800,000 <span class="text-slate-500 font-normal">/ $1B</span></span>
+</div>
+<!-- Wall of Fame Button -->
+<button aria-label="Wall of Fame" class="flex items-center gap-1.5 bg-white/[0.08] hover:bg-white/[0.12] active:scale-95 transition-all border border-white/10 rounded-full px-3 py-1" type="button">
+<span class="text-amber-400 text-xs">★</span>
+<span class="text-[11px] font-medium text-slate-200">Wall of Fame</span>
+<span class="text-slate-400 text-xs leading-none">›</span>
+</button>
+</div>
+<!-- Sleek Linear Progress Track (35% filled) -->
+<div class="relative w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/5">
+<div class="absolute left-0 top-0 bottom-0 w-[35%] bg-gradient-to-r from-emerald-500 to-[#00E676] rounded-full shadow-glow-green"></div>
+</div>
+</div>
+<!-- END: Road to $1 Billion Cluster -->
+<!-- BEGIN: Primary & Secondary Action Buttons -->
+<div class="flex flex-col gap-2.5" data-purpose="action-buttons-group">
+<!-- Primary Button: PLAY -->
+<button aria-label="Start Game" class="relative w-full h-14 bg-brand-blue active:bg-brand-blueHover hover:brightness-105 active:scale-[0.98] transition-all rounded-2xl flex items-center justify-center gap-2 font-bold text-base tracking-wide text-white shadow-glow-blue overflow-hidden" type="button">
+<!-- Specular Light Effect -->
+<div class="absolute inset-0 specular-sheen pointer-events-none"></div>
+<svg class="w-4 h-4 fill-white translate-y-[-0.5px]" viewbox="0 0 24 24">
+<path d="M8 5v14l11-7z"></path>
+</svg>
+<span>PLAY</span>
+</button>
+<!-- Secondary Button: MODES -->
+<button aria-label="Select Game Modes" class="w-full h-12 bg-white/[0.06] hover:bg-white/[0.1] active:bg-white/[0.12] active:scale-[0.98] transition-all border-glass-subtle backdrop-blur-xl rounded-2xl flex items-center justify-center gap-2 font-semibold text-sm tracking-wider text-slate-200 uppercase" type="button">
+<!-- 4-Square Modes Icon -->
+<svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="7" rx="1.5" width="7" x="3" y="3"></rect>
+<rect height="7" rx="1.5" width="7" x="14" y="3"></rect>
+<rect height="7" rx="1.5" width="7" x="3" y="14"></rect>
+<rect height="7" rx="1.5" width="7" x="14" y="14"></rect>
+</svg>
+<span>MODES</span>
+</button>
+</div>
+<!-- END: Primary & Secondary Action Buttons -->
+<!-- BEGIN: Refined Bottom Navigation Dock -->
+<nav class="w-full mt-1 mb-3 bg-[#0d121ae6] backdrop-blur-2xl border-glass-subtle rounded-full px-2 py-1.5 flex items-center justify-around shadow-2xl" data-purpose="bottom-tab-bar">
+<!-- Tab 1: Leaderboard -->
+<button aria-label="Go to Leaderboard" class="flex flex-col items-center justify-center py-1.5 px-4 text-slate-400 hover:text-white transition group active:scale-95" type="button">
+<!-- Podium / Trophy Icon -->
+<svg class="w-5 h-5 text-slate-400 group-hover:text-white transition mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M16 8v10M8 12v6M12 4v14M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-medium tracking-tight">Leaderboard</span>
+</button>
+<!-- Tab 2: Home (Active State) -->
+<button aria-label="Active Tab Home" class="relative flex flex-col items-center justify-center py-1.5 px-6 rounded-full bg-white/[0.12] text-white shadow-inner border border-white/10 active:scale-95 transition" type="button">
+<!-- Home Icon -->
+<svg class="w-5 h-5 text-white mb-0.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
+</svg>
+<span class="text-[10px] font-bold tracking-tight">Home</span>
+<!-- Active Dot -->
+<span class="absolute -bottom-0.5 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_6px_#22d3ee]"></span>
+</button>
+<!-- Tab 3: Shop -->
+<button aria-label="Go to Shop" class="flex flex-col items-center justify-center py-1.5 px-4 text-slate-400 hover:text-white transition group active:scale-95" type="button">
+<!-- Shopping Bag Icon -->
+<svg class="w-5 h-5 text-slate-400 group-hover:text-white transition mb-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[10px] font-medium tracking-tight">Shop</span>
+</button>
+</nav>
+<!-- END: Refined Bottom Navigation Dock -->
+</div>
+<!-- END: Bottom Interactive Zone -->
+<!-- iOS Home Indicator bar for native aesthetic -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full pointer-events-none z-30" data-purpose="ios-home-indicator"></div>
+</div>
+<!-- END: Phone Mockup Container -->
+</body></html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>1B Run - Ambient Hardwood Native Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif'],
+          },
+          colors: {
+            money: '#22c55e',
+            cobalt: {
+              400: '#38bdf8',
+              500: '#1d4ed8',
+              600: '#1e40af',
+              700: '#1d3ca6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      background-color: #05070a;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    /* Subtle sheen highlight on primary CTA */
+    .cobalt-pill {
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 45%, #173db0 100%);
+      box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.35) inset,
+                  0 -2px 6px 0 rgba(0, 0, 0, 0.4) inset,
+                  0 12px 28px -6px rgba(29, 78, 216, 0.55),
+                  0 4px 12px -2px rgba(29, 78, 216, 0.35);
+    }
+    .cobalt-pill:active {
+      transform: scale(0.985);
+      background: linear-gradient(180deg, #1d4ed8 0%, #173db0 100%);
+      box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.2) inset,
+                  0 6px 16px -4px rgba(29, 78, 216, 0.5);
+    }
+
+    /* Smoky translucent capsule */
+    .smoky-capsule {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(12, 16, 24, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+                  0 10px 24px -4px rgba(0, 0, 0, 0.5);
+    }
+    .smoky-capsule:active {
+      transform: scale(0.985);
+      background: rgba(18, 24, 38, 0.85);
+    }
+
+    /* Ambient progress cluster */
+    .road-card {
+      background: linear-gradient(180deg, rgba(16, 20, 30, 0.78) 0%, rgba(8, 11, 18, 0.84) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.65), 0 1px 0 0 rgba(255, 255, 255, 0.05) inset;
+    }
+
+    /* Floating segmented island capsule nav */
+    .island-nav {
+      background: linear-gradient(180deg, rgba(18, 23, 33, 0.88) 0%, rgba(10, 13, 20, 0.94) 100%);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.75), 0 1px 0 0 rgba(255, 255, 255, 0.12) inset;
+    }
+  </style>
+</head>
+<body class="h-full w-full overflow-hidden text-white flex justify-center items-center">
+
+  <!-- iPhone Native App Frame Container (Portrait 390px scale) -->
+  <div class="relative w-full h-full max-w-[430px] mx-auto overflow-hidden flex flex-col justify-between select-none">
+
+    <!-- ATMOSPHERIC BACKGROUND (Overhead Hardwood Court - IMAGE_11) -->
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <img 
+        src="https://lh3.googleusercontent.com/aida/ALJJyrAfeZabn3u0lTP4gGUCLuiYf-hM6X8-CGOBIheofMydeSgBXt-10dnnK-Dg9U89Pnlr4sm7lZ0iCQweh8NYIjsIUD7HNJnKJCDUz6bdSv9D-Jq1C0BejJpldyXg_PnQppQPdPuL-3uwbX5zkFf9SOLvxnJOMwKvYRfW2p7FQSCwvdvlEXtAJfKGQxZJXLwBrCli4J1LlsCPR1IqRwXKwKaf6Vh6mhb7HH4KERsNv7Sx" 
+        alt="Elevated overhead center court basketball arena" 
+        class="w-full h-full object-cover object-center scale-[1.03] transition-transform duration-700"
+      />
+      <!-- Sophisticated lighting vignette & depth gradients -->
+      <div class="absolute inset-0 bg-gradient-to-b from-[#05070a]/90 via-transparent to-[#05070a]/95"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,transparent_35%,rgba(5,7,10,0.85)_100%)]"></div>
+      <!-- Soft ambient court glow reflection -->
+      <div class="absolute top-[28%] left-1/2 -translate-x-1/2 w-72 h-72 bg-amber-500/10 rounded-full blur-[80px]"></div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <div class="relative z-10 flex flex-col h-full justify-between pt-12 pb-5 px-5">
+
+      <!-- TOP THIN CHROME -->
+      <header class="flex items-center justify-between w-full pt-1">
+        
+        <!-- Left: Avatar + Username + Level + XP Bar -->
+        <div class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-full bg-black/45 backdrop-blur-xl border border-white/10 shadow-lg">
+          <!-- Avatar + Level badge -->
+          <div class="relative">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-600 border border-white/20 flex items-center justify-center overflow-hidden">
+              <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-black border border-white/30 text-[9px] font-bold font-display flex items-center justify-center text-white">
+              14
+            </div>
+          </div>
+
+          <!-- Name & XP bar -->
+          <div class="flex flex-col pr-1">
+            <span class="text-[12px] font-semibold tracking-tight text-white/95 leading-tight">K. Bryant</span>
+            <div class="w-14 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden relative">
+              <div class="h-full bg-gradient-to-r from-cyan-400 to-sky-400 rounded-full w-[65%]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center / Right: Coin balance + "+" & Hamburger Menu -->
+        <div class="flex items-center gap-2">
+          
+          <!-- Coin Balance + Plus -->
+          <div class="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full bg-black/45 backdrop-blur-xl border border-white/10 shadow-lg">
+            <div class="w-5 h-5 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-black flex items-center justify-center font-black text-[10px] shadow-sm">
+              $
+            </div>
+            <span class="text-[13px] font-bold font-display tracking-tight text-white">148,250</span>
+            <button aria-label="Add coins" class="w-5 h-5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 flex items-center justify-center ml-0.5 transition-all">
+              <svg class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Menu Hamburger Button -->
+          <button aria-label="Menu" class="w-9 h-9 rounded-full bg-black/45 backdrop-blur-xl border border-white/10 flex flex-col items-center justify-center gap-1 hover:bg-black/60 active:scale-95 transition-all shadow-lg">
+            <span class="w-4 h-[1.5px] bg-white/90 rounded-full"></span>
+            <span class="w-4 h-[1.5px] bg-white/90 rounded-full"></span>
+          </button>
+        </div>
+
+      </header>
+
+      <!-- CENTER BRAND IDENTITY -->
+      <div class="flex flex-col items-center justify-center pt-2">
+        <h1 class="text-[44px] leading-none font-black tracking-[-0.035em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)] font-display uppercase">
+          1B RUN
+        </h1>
+        <div class="mt-2 text-[12px] font-extrabold tracking-[0.24em] uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] flex items-center gap-1.5">
+          <span class="text-white/80">CHASE</span>
+          <span class="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">$1 BILLION</span>
+        </div>
+      </div>
+
+      <!-- SPACER FOR ARENA VIEW VISIBILITY -->
+      <div class="flex-1 min-h-[90px]"></div>
+
+      <!-- BOTTOM INTERACTIVE CORE (Road to $1B, PLAY, MODES, Island Nav) -->
+      <div class="flex flex-col w-full gap-3 pb-1">
+
+        <!-- SIMPLE ROAD TO $1 BILLION CLUSTER -->
+        <div class="road-card rounded-2xl p-4 w-full">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">ROAD TO $1 BILLION</div>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="text-[20px] font-extrabold font-display tracking-tight text-white">$34,800,000</span>
+                <span class="text-[12px] font-semibold text-zinc-400">/ $1B</span>
+              </div>
+            </div>
+
+            <!-- Wall of Fame Readable Control -->
+            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 border border-white/[0.12] transition-all">
+              <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+              <span class="text-[11.5px] font-semibold text-white/95 tracking-tight">Wall of Fame</span>
+              <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Single clean progress bar -->
+          <div class="w-full h-2 bg-black/60 rounded-full overflow-hidden p-[1px] border border-white/[0.06]">
+            <div class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full w-[35%] shadow-[0_0_10px_rgba(52,211,153,0.55)]"></div>
+          </div>
+        </div>
+
+        <!-- PRIMARY BUTTON: PLAY (Fully rounded capsule with cobalt sheen) -->
+        <button class="cobalt-pill w-full h-[58px] rounded-full flex items-center justify-center gap-2.5 transition-all text-white font-black font-display text-[17px] tracking-wider uppercase group">
+          <svg class="w-5 h-5 fill-current transition-transform duration-200 group-hover:scale-110 drop-shadow-sm" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <span class="drop-shadow-sm">PLAY</span>
+        </button>
+
+        <!-- SECONDARY BUTTON: MODES (Smoky translucent capsule) -->
+        <button class="smoky-capsule w-full h-[52px] rounded-full flex items-center justify-center gap-2.5 transition-all text-white/90 hover:text-white font-bold font-display text-[15px] tracking-wider uppercase border border-white/[0.08]">
+          <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          </svg>
+          <span>MODES</span>
+        </button>
+
+        <!-- FLOATING SEGMENTED ISLAND CAPSULE NAV (Leaderboard, Home active, Shop) -->
+        <nav class="island-nav mt-1 w-full h-[64px] rounded-full p-1.5 flex items-center justify-between">
+          
+          <!-- Tab 1: Leaderboard -->
+          <button class="flex-1 h-full rounded-full flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span class="text-[10px] font-semibold tracking-tight">Leaderboard</span>
+          </button>
+
+          <!-- Tab 2: Home (Active Segment Island) -->
+          <button class="flex-1 h-full rounded-full bg-white/[0.12] border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.4),0_0_12px_rgba(37,99,235,0.25)] flex flex-col items-center justify-center gap-0.5 text-white transition-all">
+            <div class="relative flex items-center justify-center">
+              <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+              </svg>
+            </div>
+            <span class="text-[10px] font-bold tracking-tight text-white">Home</span>
+            <!-- Active indicator pip -->
+            <span class="w-1 h-1 rounded-full bg-sky-400 shadow-[0_0_6px_#38bdf8]"></span>
+          </button>
+
+          <!-- Tab 3: Shop -->
+          <button class="flex-1 h-full rounded-full flex flex-col items-center justify-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="text-[10px] font-semibold tracking-tight">Shop</span>
+          </button>
+
+        </nav>
+
+        <!-- iPhone Home Indicator Bar -->
+        <div class="w-full flex justify-center pt-1 pb-0.5">
+          <div class="w-32 h-1 bg-white/25 rounded-full"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

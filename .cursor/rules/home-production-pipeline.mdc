@@ -1,0 +1,18 @@
+---
+description: Home visual work — approve before implement; Stitch optional/disabled by default
+alwaysApply: true
+---
+
+# Home production pipeline
+
+For 1B Run **Home** visual concepts, redesigns, or premium UI passes:
+
+1. Follow skill `home-production-pipeline` (Stitch is **optional** and **not** the default).
+2. Prefer evolving the **existing Home** (layout, brand, assets) with `oneb-brand-visual`, `premium-mobile-gaming-ui`, `frontend-design`, and `cinematic-motion-graphics`.
+3. Do **not** call Google Stitch / `stitch::*` unless the user explicitly asks for Stitch.
+4. Do **not** implement Home redesigns until the user approves a concept.
+5. Do **not** invent hero art with SVG/Canvas/CSS “courts” when the task needs photographic/authored artwork — use or commission real assets instead.
+6. Keep brand locks: **1B RUN**, **CHASE $1 BILLION** ($1 BILLION green), navy / orange / money-green.
+7. Physical iPhone remains acceptance for implementation (`ios`).
+
+Setup notes: `design/PIPELINE-SETUP.md`.

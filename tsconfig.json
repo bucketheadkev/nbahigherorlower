@@ -45,6 +45,10 @@
     "scripts/check-secure-coin-bank.ts",
     "scripts/staging-apply-and-validate.ts",
     "scripts/staging-validate.ts",
-    "tmp"
+    "tmp",
+    "design/home-backup-rh5",
+    "design/home-backup-rh6",
+    "design/home-backup-rh7",
+    "design/home-backup-rh8"
   ]
 }

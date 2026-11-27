@@ -250,16 +250,13 @@ html[data-platform="native"] body:has(.oneb-tabbar-host)::after {
   pointer-events: none;
 }
 
-/* Pause motion in inactive hub panes (home FX + shop atmosphere). */
-.hub-pane:not(.is-active) .shop-atmo__mote,
-.hub-pane:not(.is-active) .shop-atmo__spot,
-.hub-pane:not(.is-active) .shop-atmo__sheen,
-.hub-pane:not(.is-active) .shop-atmo__court,
-.hub-pane:not(.is-active) .shop-atmo__rim,
-.hub-pane:not(.is-active) .home-rising-bubbles,
-.hub-pane:not(.is-active) .home-arena-live,
-.hub-pane:not(.is-active) [class*='bubble'],
-.hub-pane:not(.is-active) [class*='LiveFx'] {
+/*
+ * Pause ALL CSS animations in inactive hub panes (Home / Board / Shop stay mounted).
+ * Incomplete selector lists left Shop pile/spark/motess running on Home — expensive on iPhone.
+ */
+.hub-pane:not(.is-active) *,
+.hub-pane:not(.is-active) *::before,
+.hub-pane:not(.is-active) *::after {
   animation-play-state: paused !important;
 }
 

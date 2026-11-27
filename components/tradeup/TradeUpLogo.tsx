@@ -4,7 +4,8 @@
 export const ONEB_APP_ICON_SRC = '/images/1b-run-app-icon-squircle.png?v=1';
 /** Alias for all legacy logo imports. */
 export const BALLION_LOGO_SRC = ONEB_APP_ICON_SRC;
-export const BALLION_SPLASH_LOGO_SRC = ONEB_APP_ICON_SRC;
+/** Launch splash mark — cobalt $1B logo (brand identity source). */
+export const BALLION_SPLASH_LOGO_SRC = '/images/1b-run-logo-cobalt.webp?v=1';
 
 const SIZE_CLASS = {
   hero: 'tradeup-logo--hero tradeup-logo--app',

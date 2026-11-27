@@ -1,0 +1,27 @@
+{
+  "projectId": "7667919937029619401",
+  "projectUrl": "https://stitch.google.com/projects/7667919937029619401",
+  "concepts": [
+    {
+      "name": "Championship Spotlight",
+      "thesis": "Empty court under one floodlight; frosted floating tab dock.",
+      "screenId": "67728b51092d4bd3aeeee38059a6044d",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/minimal-v2/present_championship.png",
+      "screenUrl": "https://stitch.google.com/projects/7667919937029619401/screens/67728b51092d4bd3aeeee38059a6044d"
+    },
+    {
+      "name": "Obsidian Halo",
+      "thesis": "Low-angle arena rafters / halo jumbotron; flush architectural bottom bar.",
+      "screenId": "bab2c7cb1bfb449f8262447ddf98cab2",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/minimal-v2/present_obsidian.png",
+      "screenUrl": "https://stitch.google.com/projects/7667919937029619401/screens/bab2c7cb1bfb449f8262447ddf98cab2"
+    },
+    {
+      "name": "Ambient Hardwood",
+      "thesis": "Warm overhead hardwood; capsule PLAY/MODES + island tab bar.",
+      "screenId": "e756bf5673b94bb6b59fb630e6c6cd03",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/minimal-v2/present_ambient.png",
+      "screenUrl": "https://stitch.google.com/projects/7667919937029619401/screens/e756bf5673b94bb6b59fb630e6c6cd03"
+    }
+  ]
+}

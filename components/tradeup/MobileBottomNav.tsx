@@ -9,9 +9,12 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { useLocale } from '@/hooks/useLocale';
 import type { MessageKey } from '@/lib/i18n/messages';
 import { isNativeApp } from '@/lib/platform/isNativeApp';
+import { getPrefersReducedMotion } from '@/lib/tradeup/motionPreference';
 import { playUiTapSound } from '@/lib/tradeup/gameAudio';
 import { hapticLight } from '@/lib/tradeup/haptics';
 
@@ -62,6 +65,8 @@ const TABS: { id: HubTab; label: MessageKey; icon: ReactNode }[] = [
     ),
   },
 ];
+
+gsap.registerPlugin(useGSAP);
 
 const TAB_INDEX: Partial<Record<HubTab, number>> = {
   board: 0,
@@ -118,14 +123,43 @@ export function MobileBottomNav({ active, onChange }: MobileBottomNavProps) {
   );
 
   const tabIndex = TAB_INDEX[visual] ?? 1;
+  const navRef = useRef<HTMLElement>(null);
+  const placed = useRef(false);
+
+  useGSAP(
+    () => {
+      const glider = navRef.current?.querySelector<HTMLElement>('.oneb-tabbar__glider');
+      if (!glider) return;
+      if (!placed.current || getPrefersReducedMotion()) {
+        placed.current = true;
+        gsap.set(glider, { x: 0, xPercent: tabIndex * 100, scaleX: 1, scaleY: 1 });
+        return;
+      }
+      gsap
+        .timeline({ defaults: { overwrite: 'auto' } })
+        .to(glider, { xPercent: tabIndex * 100, duration: 0.5, ease: 'back.out(1.3)' }, 0)
+        .to(glider, { scaleX: 1.14, scaleY: 0.92, duration: 0.14, ease: 'power2.out' }, 0)
+        .to(glider, { scaleX: 1, scaleY: 1, duration: 0.5, ease: 'elastic.out(1, 0.55)' }, 0.14);
+      const icon = navRef.current?.querySelector('.oneb-tabbar__item.is-active .oneb-tabbar__icon svg');
+      if (icon) {
+        gsap.fromTo(
+          icon,
+          { scale: 0.78, y: 2 },
+          { scale: 1, y: 0, duration: 0.55, ease: 'back.out(2.4)', overwrite: 'auto' },
+        );
+      }
+    },
+    { scope: navRef, dependencies: [tabIndex] },
+  );
 
   return (
     <nav
+      ref={navRef}
       className={`oneb-tabbar oneb-tabbar--tri ${native ? 'oneb-tabbar--ios' : 'oneb-tabbar--pill'}`}
       aria-label={t('nav.main')}
       style={{ ['--tab-index' as string]: tabIndex } as CSSProperties}
     >
-      {native ? <span className="oneb-tabbar__glider" aria-hidden /> : null}
+      <span className="oneb-tabbar__glider" aria-hidden />
       {TABS.map((tab) => {
         const on = tab.id === visual;
         return (

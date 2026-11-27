@@ -1,0 +1,52 @@
+{
+  "projectId": "12385181708820586880",
+  "projectTitle": "1B Run \u2014 Next-Gen Home Evolution",
+  "projectUrl": "https://stitch.google.com/projects/12385181708820586880",
+  "concepts": [
+    {
+      "name": "Wealth Geometry",
+      "screenId": "e53a08b5389c4c7aa975d6b157372d18",
+      "title": "1B RUN - Wealth Geometry (Refined)",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/nextgen-v3/01_wealth_geometry.png",
+      "screenUrl": "https://stitch.google.com/projects/12385181708820586880/screens/e53a08b5389c4c7aa975d6b157372d18",
+      "checks": {
+        "CHASE": true,
+        "MODES": true,
+        "CHOOSE MODE": true,
+        "APY": false,
+        "1B RUN": true,
+        "Wall of Fame": true
+      }
+    },
+    {
+      "name": "Molten Dynasty",
+      "screenId": "1fc8185784c245c1a5515a7589dca4d2",
+      "title": "1B RUN - Molten Dynasty (Refined)",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/nextgen-v3/02_molten_dynasty.png",
+      "screenUrl": "https://stitch.google.com/projects/12385181708820586880/screens/1fc8185784c245c1a5515a7589dca4d2",
+      "checks": {
+        "CHASE": true,
+        "MODES": true,
+        "CHOOSE MODE": false,
+        "APY": false,
+        "1B RUN": true,
+        "Wall of Fame": true
+      }
+    },
+    {
+      "name": "Midnight Executive",
+      "screenId": "b4613748ae2e4668874aa88414351edf",
+      "title": "1B RUN - Midnight Executive (Refined)",
+      "screenshotLocal": "/Users/kevinsherman/Downloads/nba-perfect-run/design/stitch-home-concepts/nextgen-v3/03_midnight_executive.png",
+      "screenUrl": "https://stitch.google.com/projects/12385181708820586880/screens/b4613748ae2e4668874aa88414351edf",
+      "checks": {
+        "CHASE": true,
+        "MODES": true,
+        "CHOOSE MODE": true,
+        "APY": false,
+        "1B RUN": true,
+        "Wall of Fame": true
+      }
+    }
+  ]
+}

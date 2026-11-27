@@ -1,0 +1,17 @@
+---
+description: Mobile animation performance — compositor props, cleanup, reduced motion, iPhone gate
+globs: app/**/*.{css,tsx}, components/**/*.{tsx,css,ts}
+alwaysApply: false
+---
+
+# Animation performance
+
+- Prefer **transform** and **opacity**. Avoid animating layout (top/left/width/height) and heavy filters on large layers.
+- One orchestrated cinematic moment > many competing loops.
+- Honor `prefers-reduced-motion`; keep meaning without flourishes.
+- Cancel timelines / rAF / Motion subscriptions on unmount or route exit.
+- Reuse existing CSS (`--oneb-intro-*`) and `framer-motion` before proposing new libraries.
+- GSAP + @gsap/react are installed. Do not install Rive or other animation runtimes unless the user explicitly asks.
+- Never animate one element with both GSAP and framer-motion; pause GSAP idle loops when the hub pane is inactive.
+- After non-trivial motion changes, treat **Xcode / physical iPhone** (`npm run build:ios` when user says `ios`) as the performance gate.
+- Follow `cinematic-motion-graphics` and `gsap-performance` for deeper guidance.

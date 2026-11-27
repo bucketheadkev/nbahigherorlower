@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="mobile_tab" name="shell-type"/>
+<title>1B RUN - Molten Dynasty</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&amp;family=Inter:wght@400;500;600;700;800&amp;family=Public+Sans:wght@700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF5E00',
+            'primary-glow': '#FF7A1A',
+            emerald: {
+              400: '#00FF7F',
+              500: '#00E673',
+            },
+            navy: {
+              950: '#020611',
+              900: '#050D24',
+              850: '#081432',
+              800: '#0D1E45'
+            },
+            chrome: '#DCE5F2'
+          },
+          fontFamily: {
+            athletic: ['"Barlow Condensed"', 'sans-serif'],
+            display: ['"Public Sans"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body {
+        width: 100vw;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        background-color: #020611;
+        color: #F0F4FC;
+        font-family: 'Inter', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+      }
+      body {
+        overscroll-behavior-y: none;
+      }
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
+      .pt-safe { padding-top: env(safe-area-inset-top, 10px); }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Carbon fiber background texture */
+    .carbon-texture {
+      background-color: #050d1e;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(45deg, #040916 25%, transparent 25%, transparent 75%, #040916 75%, #040916),
+        linear-gradient(45deg, #040916 25%, #08142c 25%, #08142c 75%, #040916 75%, #040916);
+      background-size: 8px 8px, 12px 12px, 12px 12px;
+      background-position: 0 0, 0 0, 6px 6px;
+    }
+
+    /* Court parquet perspective accent */
+    .court-parquet-floor {
+      background: 
+        linear-gradient(to top, rgba(2, 6, 17, 0.95) 0%, rgba(5, 13, 36, 0.7) 45%, rgba(2, 6, 17, 0.3) 100%),
+        repeating-linear-gradient(65deg, rgba(166, 85, 30, 0.18) 0px, rgba(166, 85, 30, 0.18) 18px, rgba(120, 56, 14, 0.24) 18px, rgba(120, 56, 14, 0.24) 36px);
+    }
+
+    /* Polished chrome text with neon molten aura */
+    .chrome-molten-text {
+      background: linear-gradient(180deg, #FFFFFF 0%, #D4E1F4 40%, #768AA8 65%, #354763 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 16px rgba(255, 94, 0, 0.55)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.9));
+    }
+
+    /* Hexagon avatar clip */
+    .hex-clip {
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    }
+
+    /* Dynamic pulsing molten ring animation */
+    @keyframes orbitRotate {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.03); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .animate-orbit {
+      animation: orbitRotate 16s linear infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
+    }
+    .animate-molten {
+      animation: pulseGlow 3.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-navy-950 text-chrome flex flex-col min-h-screen relative selection:bg-primary selection:text-white">
+<!-- TOP HEADER / PLAYER & CURRENCY HUD -->
+<header class="fixed top-0 inset-x-0 z-50 pt-safe bg-[#020611]/90 backdrop-blur-2xl border-b border-white/5">
+<div class="h-16 px-4 flex items-center justify-between max-w-md mx-auto">
+<!-- Player Profile: Hexagonal Frame for KEVBUCKET -->
+<div class="flex items-center gap-2.5">
+<div class="relative w-11 h-11 flex items-center justify-center">
+<!-- Hex Metallic Gold/Chrome Border Outer -->
+<div class="absolute inset-0 bg-gradient-to-tr from-[#FF5E00] via-[#F6C042] to-[#FFE28A] hex-clip p-[2px] shadow-[0_0_14px_rgba(255,94,0,0.5)]">
+<!-- Hex Inner BG -->
+<div class="w-full h-full bg-[#050D24] hex-clip flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[20px]">person</span>
+</div>
+</div>
+</div>
+<!-- Name & Level with Molten Gauge -->
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-athletic font-black text-sm tracking-wider text-white uppercase drop-shadow-sm">KEVBUCKET</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-athletic text-[11px] font-black text-[#A0B0CD] tracking-widest leading-none">LV. 8</span>
+<!-- Molten Orange Progress Meter Capsule -->
+<div class="w-16 h-2 bg-[#081533] rounded-full p-[1px] border border-white/10 shadow-inner overflow-hidden">
+<div class="h-full w-[65%] rounded-full bg-gradient-to-r from-[#FF3B00] via-[#FF8C00] to-[#FFD000] shadow-[0_0_8px_#FF6A00]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Center-Right: Beveled Metallic 3D Coin Capsule (125) & Menu Trigger -->
+<div class="flex items-center gap-2.5">
+<!-- Beveled Metallic 3D Coin Capsule -->
+<div class="h-9 pl-2 pr-1.5 rounded-full bg-gradient-to-b from-[#1C2C4E] via-[#0E1A33] to-[#070F20] border border-cyan-300/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_12px_rgba(0,0,0,0.6)] flex items-center gap-2">
+<!-- Embossed 1B Gold Coin -->
+<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#8E650C] via-[#FFD700] to-[#FFF3A3] p-[1px] shadow-[0_0_8px_rgba(255,215,0,0.6)] flex items-center justify-center">
+<div class="w-full h-full rounded-full bg-gradient-to-b from-[#E0A814] to-[#8C6000] flex items-center justify-center">
+<span class="font-athletic text-[9px] font-black text-[#281800] leading-none tracking-tighter">1B</span>
+</div>
+</div>
+<!-- Currency Count -->
+<span class="font-athletic text-base font-black tracking-tight text-white drop-shadow">125</span>
+<!-- Tactile Molten Orange '+' Button -->
+<button class="w-6 h-6 rounded-full bg-gradient-to-b from-[#FF7A1A] via-[#FF5E00] to-[#C93B00] flex items-center justify-center text-white shadow-[0_0_8px_rgba(255,94,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.4)] active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[15px] font-bold">add</span>
+</button>
+</div>
+<!-- Minimalist Gloss Menu Trigger -->
+<button class="w-9 h-9 rounded-xl bg-gradient-to-b from-[#1B2844] to-[#081226] border border-white/15 flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_4px_10px_rgba(0,0,0,0.5)] active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-chrome text-[20px]">menu</span>
+</button>
+</div>
+</div>
+</header>
+<!-- MAIN VIEWPORT -->
+<main class="flex-1 flex flex-col items-center justify-between pt-16 pb-28 px-4 w-full max-w-md mx-auto relative select-none">
+<!-- BACKGROUND ATMOSPHERE: Volumetric stadium cones, floating embers, court parquet -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+<!-- Upper Stadium Volumetric Cones -->
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 w-[420px] h-[360px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/25 via-primary/15 to-transparent blur-2xl"></div>
+<!-- Ascending Holographic Dollar-Green Rays -->
+<div class="absolute inset-x-8 top-16 h-72 bg-[conic-gradient(from_0deg_at_50%_0%,transparent_40%,rgba(0,255,127,0.12)_48%,rgba(0,255,127,0.24)_50%,rgba(0,255,127,0.12)_52%,transparent_60%)] blur-lg opacity-70"></div>
+<!-- Floating golden dust / ember particles -->
+<div class="absolute top-24 left-10 w-1.5 h-1.5 rounded-full bg-[#FFD700] blur-[0.5px] shadow-[0_0_8px_#FFD700] animate-pulse"></div>
+<div class="absolute top-36 right-14 w-2 h-2 rounded-full bg-primary blur-[0.5px] shadow-[0_0_10px_#FF5E00] opacity-80"></div>
+<div class="absolute top-52 left-20 w-1 h-1 rounded-full bg-[#00FF7F] blur-[0.5px] shadow-[0_0_6px_#00FF7F]"></div>
+<div class="absolute top-64 right-8 w-1.5 h-1.5 rounded-full bg-[#FFC043] blur-[0.5px] shadow-[0_0_6px_#FFC043] animate-pulse"></div>
+<!-- Court Parquet Base Perspective -->
+<div class="absolute bottom-0 inset-x-0 h-64 court-parquet-floor mask-image:linear-gradient(to_bottom,transparent,black)"></div>
+<div class="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#020611] via-[#020611]/80 to-transparent"></div>
+</div>
+<!-- UPPER HERO SECTION: Orbit Rings, Molten Basketball Core, Aggressive Typography -->
+<div class="w-full flex flex-col items-center pt-2">
+<!-- Molten Basketball with Platinum Orbit Rings & Coronal Flare -->
+<div class="relative w-44 h-44 flex items-center justify-center my-1">
+<!-- Coronal Orange Flare Blast -->
+<div class="absolute inset-2 rounded-full bg-gradient-to-tr from-[#FF3B00] via-[#FF6A00] to-[#FFAA00] blur-xl opacity-80 animate-molten"></div>
+<div class="absolute inset-6 rounded-full bg-[#00FF7F]/20 blur-2xl"></div>
+<!-- Metallic Platinum / Silver Championship Orbit Rings -->
+<div class="absolute inset-0 rounded-full border-[1.5px] border-dashed border-[#D4E1F4]/40 animate-orbit" style="box-shadow: 0 0 20px rgba(212,225,244,0.2);"></div>
+<div class="absolute inset-3 rounded-full border border-emerald-400/30 rotate-45 [filter:drop-shadow(0_0_8px_rgba(0,255,127,0.3))]"></div>
+<!-- Stylized Luminous Molten Basketball -->
+<div class="relative w-28 h-28 rounded-full bg-gradient-to-br from-[#FFA033] via-[#FF5E00] to-[#7A1E00] shadow-[0_0_35px_rgba(255,94,0,0.85),inset_0_2px_8px_rgba(255,255,255,0.7)] flex items-center justify-center overflow-hidden border border-[#FFE2B8]">
+<!-- Basketball Seam Ribs -->
+<svg class="absolute inset-0 w-full h-full text-black/60 opacity-70" fill="none" stroke="currentColor" stroke-width="3.5" viewbox="0 0 100 100">
+<line x1="50" x2="50" y1="0" y2="100"></line>
+<line x1="0" x2="100" y1="50" y2="50"></line>
+<path d="M 12,20 C 35,42 35,58 12,80"></path>
+<path d="M 88,20 C 65,42 65,58 88,80"></path>
+</svg>
+<!-- Internal Glowing Ember Core -->
+<div class="w-10 h-10 rounded-full bg-white/40 blur-md"></div>
+<!-- Golden Championship Star Accent -->
+</div>
+<!-- Ascending Emerald Sparks / Currency Nodes -->
+</div>
+<!-- AGGRESSIVE HERO WORDMARK & MOTTO -->
+<div class="text-center mt-1">
+<h1 class="font-athletic text-6xl font-black italic tracking-tighter uppercase chrome-molten-text leading-none scale-y-110">
+          1B RUN
+        </h1>
+<div class="flex items-center justify-center gap-2 mt-2">
+<span class="font-athletic text-xs font-black tracking-[0.26em] text-white/80 uppercase">CHASE</span>
+<span class="font-athletic text-sm font-black tracking-[0.2em] text-[#00FF7F] drop-shadow-[0_0_12px_rgba(0,255,127,0.9)] uppercase animate-pulse">
+            $1 BILLION
+          </span>
+</div>
+</div>
+</div>
+<!-- CENTER PROGRESSION: "ROAD TO $1 BILLION" HIGH-ROLLER VAULT METER -->
+<div class="w-full carbon-texture rounded-2xl p-3.5 border border-white/10 shadow-[0_16px_36px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)] my-2">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<!-- Vault Icon -->
+<div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0B2144] to-[#040C1A] border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+<div>
+<div class="font-athletic text-[11px] font-black tracking-[0.18em] text-chrome uppercase">ROAD TO $1 BILLION</div>
+</div>
+</div>
+<!-- Sleek "Wall of Fame" Quick Link with Laurel Wreath Icon -->
+<button class="h-7 px-2.5 rounded-full bg-gradient-to-b from-[#1C2942] to-[#0A1324] border border-[#DCE5F2]/25 flex items-center gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)] active:scale-95 transition-transform group">
+<span class="material-symbols-outlined text-white text-[15px] group-hover:rotate-12 transition-transform">workspace_premium</span>
+<span class="font-athletic text-[10px] font-black tracking-wider text-white uppercase">WALL OF FAME</span>
+</button>
+</div>
+<!-- Vault Meter Gauge & Amount -->
+<div class="flex items-baseline justify-between pt-0.5 pb-1.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-athletic text-2xl font-black tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" id="vaultAmount">
+            $24,480,000
+          </span>
+<span class="font-athletic text-xs font-bold text-white/50">/ $1,000,000,000</span>
+</div>
+</div>
+<!-- High Precision Neon Money-Green Vault Bar -->
+<div class="w-full h-3 bg-[#020610] rounded-full p-[2px] border border-emerald-500/20 shadow-inner relative overflow-hidden">
+<div class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-[#00FF7F] to-[#7BFFB9] shadow-[0_0_14px_rgba(0,255,127,0.85)] relative" style="width: 24.5%;">
+<div class="absolute right-0 top-0 bottom-0 w-2.5 bg-white rounded-full blur-[0.5px]"></div>
+</div>
+</div>
+</div>
+<!-- CALL TO ACTIONS (PRIMARY VIBRANT ORANGE PLAY BUTTON & SECONDARY MODES) -->
+<div class="w-full space-y-3 pt-1">
+<!-- MASSIVE ULTRA-GLOSSY VIBRANT ORANGE PILL BUTTON -->
+<button class="group relative w-full h-[68px] rounded-full bg-gradient-to-b from-[#FFA726] via-[#FF5E00] to-[#BF360C] p-[2px] shadow-[0_12px_40px_rgba(255,94,0,0.65),0_0_24px_rgba(255,122,26,0.5)] active:translate-y-0.5 active:shadow-[0_6px_20px_rgba(255,94,0,0.5)] transition-all overflow-hidden" id="btnPlay">
+<!-- Internal Ultra-Gloss Bevel & Liquid Lighting -->
+<div class="w-full h-full rounded-full bg-gradient-to-b from-[#FF7A1A] via-[#FF5E00] to-[#CC4400] flex items-center justify-center relative px-6">
+<!-- Top Specular Sheen Ribbon -->
+<div class="absolute top-1 inset-x-8 h-[3px] bg-gradient-to-r from-transparent via-white/80 to-transparent rounded-full blur-[0.5px]"></div>
+<!-- Shimmer Sweep -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+<!-- Embossed Athletic "PLAY" Text & Icons -->
+<div class="flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-white text-[32px] drop-shadow-md group-hover:scale-110 transition-transform">sports_basketball</span>
+<span class="font-athletic text-3xl font-black italic tracking-widest text-white uppercase drop-shadow-[0_3px_6px_rgba(0,0,0,0.7)]">
+              PLAY
+            </span>
+<span class="material-symbols-outlined text-white text-[26px] drop-shadow-md group-hover:translate-x-1 transition-transform">play_arrow</span>
+</div>
+</div>
+</button>
+<!-- SECONDARY: FROSTED SAPPHIRE / MIDNIGHT GLASS "MODES" PILL -->
+<button class="w-full h-13 py-3 rounded-full bg-gradient-to-r from-[#07132B]/90 via-[#0B1E45]/90 to-[#07132B]/90 backdrop-blur-xl border border-blue-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_6px_20px_rgba(0,0,0,0.5)] flex items-center justify-between px-6 active:scale-[0.99] transition-transform group"><div class="flex items-center gap-3"><div class="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-cyan-300"><span class="material-symbols-outlined text-[18px]">layers</span></div><span class="font-athletic text-lg font-black tracking-widest text-white uppercase">MODES</span></div><span class="material-symbols-outlined text-white/70 group-hover:translate-x-1 transition-transform text-[20px]">chevron_right</span></button>
+</div>
+</main>
+<!-- DISTINCTIVE CURVED BOTTOM NAVIGATION (HOME, LEADERBOARD, SHOP) -->
+<nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-[#020611]/95 backdrop-blur-2xl border-t border-white/10 shadow-[0_-10px_35px_rgba(0,0,0,0.8)]">
+<div class="flex justify-around items-center h-18 px-6 max-w-md mx-auto relative">
+<!-- LEADERBOARD TAB (Sleek Metallic Line Icon) -->
+<a class="flex flex-col items-center justify-center gap-1 min-w-[72px] h-14 text-white/60 hover:text-white transition-colors group" data-path="leaderboard" href="#">
+<span class="material-symbols-outlined text-[24px] text-chrome group-hover:scale-110 transition-transform">leaderboard</span>
+<span class="font-athletic text-[11px] font-black tracking-widest uppercase">LEADERBOARD</span>
+</a>
+<!-- HOME ACTIVE TAB (NEON INDICATOR & GLOWING MOLTEN PILL) -->
+<a aria-current="page" class="relative flex flex-col items-center justify-center min-w-[84px] h-14 -top-1 group" data-path="home" href="#">
+<!-- Curved Bezel Embedded Halo & Active Indicator Bar -->
+<div class="absolute -top-1 w-10 h-1 rounded-full bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_10px_#FF5E00]"></div>
+<!-- Center Neon Highlight Pill -->
+<div class="w-14 h-9 rounded-2xl bg-gradient-to-b from-primary via-[#E04B00] to-[#992B00] border border-white/30 flex items-center justify-center shadow-[0_0_18px_rgba(255,94,0,0.7)] group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-white text-[22px]">play_arrow</span>
+</div>
+<span class="font-athletic text-[10px] font-black tracking-widest uppercase text-white mt-1">HOME</span>
+</a>
+<!-- SHOP TAB (Luxury Store Icon) -->
+<a class="flex flex-col items-center justify-center gap-1 min-w-[72px] h-14 text-white/60 hover:text-white transition-colors group" data-path="shop" href="#">
+<span class="material-symbols-outlined text-[24px] text-chrome group-hover:scale-110 transition-transform">shopping_cart</span>
+<span class="font-athletic text-[11px] font-black tracking-widest uppercase">SHOP</span>
+</a>
+</div>
+</nav>
+<script>
+    // Tactile Interaction Feedback
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnPlay = document.getElementById('btnPlay');
+      if (btnPlay) {
+        btnPlay.addEventListener('click', () => {
+          btnPlay.classList.add('scale-95');
+          setTimeout(() => btnPlay.classList.remove('scale-95'), 140);
+        });
+      }
+    });
+  </script>
+</body></html>

@@ -2,7 +2,7 @@
 
 /**
  * Home arena overlays — CHASE $1 BILLION subtitle under 1B RUN.
- * Rising bubbles live in HomeRisingBubbles (green + white).
+ * Rising motes live in HomeRisingBubbles.
  */
 export function HomeArenaLiveFx() {
   return (
