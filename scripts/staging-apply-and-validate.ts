@@ -17,11 +17,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const PROD_REF = 'rqogjyjfatnyuoorvyix';
 const STAGING_REF = 'wxifsgypdyrruxybcrcw';
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const stagingUrl = (process.env.STAGING_SUPABASE_URL ?? '').trim();
 const anon = (process.env.STAGING_SUPABASE_ANON_KEY ?? '').trim();

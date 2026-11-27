@@ -443,6 +443,9 @@ export const BallionTicketMachine = memo(function BallionTicketMachine({
         }`}
         aria-label="Team and era roll"
       >
+        <span className="cj__logo" aria-hidden>
+          1B RUN
+        </span>
         {/* Live vector text on the Jumbotron's curve (sharp on any screen); reference px coordinates. */}
         <h2 className="cj__headline" aria-label="Build a $1,000,000,000 team">
           <svg viewBox="60 110 460 80" aria-hidden>

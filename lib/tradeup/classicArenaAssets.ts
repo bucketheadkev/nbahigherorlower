@@ -1,5 +1,5 @@
-/** The Classic arena art (scripts/build-classic-arena.py), warmed before the draft opens. */
-export const CLASSIC_ARENA_IMAGES = ['/images/classic/arena-plate.webp', '/images/classic/results-bg.webp'];
+/** The Classic arena art (scripts/build-classic-arena-rh11.mjs), warmed before the draft opens. */
+export const CLASSIC_ARENA_IMAGES = ['/images/classic/arena-plate-rh11.webp', '/images/classic/results-bg-rh11.jpg'];
 
 let warmed = false;
 

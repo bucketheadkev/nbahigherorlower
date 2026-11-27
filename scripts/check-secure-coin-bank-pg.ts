@@ -9,9 +9,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sqlPath = path.join(root, 'supabase/admin/2026-11-23_SECURE_coin_bank_REVIEW.sql');
 
 const results: { name: string; ok: boolean; detail?: string }[] = [];

@@ -53,6 +53,9 @@ const HeadToHeadFlow = dynamic(
 
 type Screen = 'hub' | 'engine' | 'h2h';
 
+/** Home's GSAP reveal (TradeUpHome) runs ~2.4 s; deferred warm-up work waits for it. */
+const HOME_REVEAL_SETTLE_MS = 2600;
+
 const HOME_ART = [
   '/images/home-v2/arena-navy@3x.webp',
   '/images/home-v2/classic.jpg',
@@ -268,6 +271,15 @@ export function TradeUpApp() {
       if (!hasSeenHowItWorks()) setShowGuide(true);
     }, ms);
   }, [showSplash, reduceMotion]);
+
+  /* Fetch + parse the Classic engine chunk after Home's reveal, so PLAY isn't a cold load. */
+  useEffect(() => {
+    if (showSplash) return;
+    const id = window.setTimeout(() => {
+      void import('./BillionTradeEngine');
+    }, HOME_REVEAL_SETTLE_MS);
+    return () => window.clearTimeout(id);
+  }, [showSplash]);
 
   useEffect(() => {
     const replay = () => {

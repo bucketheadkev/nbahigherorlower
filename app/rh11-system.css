@@ -1011,3 +1011,514 @@ body .spend-confirm__btn--go:active {
     animation: none !important;
   }
 }
+
+/* =========================================================
+   Classic gameplay — cobalt arena
+   Plate: public/images/classic/arena-plate-rh11.webp (scripts/build-classic-arena-rh11.mjs),
+   same geometry as the original plate so every live element keeps its reference spot.
+   ========================================================= */
+
+.billion-shell .cj-arena {
+  background-color: #01061f;
+  background-image: url("/images/classic/arena-plate-rh11.webp");
+}
+
+@media (min-aspect-ratio: 3/4) {
+  .billion-shell .cj-arena::after {
+    background: linear-gradient(
+      90deg,
+      #01061f calc(var(--stage-x) - var(--u) * 60),
+      transparent calc(var(--stage-x) + var(--u) * 6),
+      transparent calc(var(--stage-x) + var(--stage-w) - var(--u) * 6),
+      #01061f calc(var(--stage-x) + var(--stage-w) + var(--u) * 60)
+    );
+  }
+}
+
+.billion-shell--arena {
+  background: #01061f !important;
+}
+
+/* The Jumbotron's logo plate (blank in the art): live type so it stays sharp. */
+.cj__logo {
+  position: absolute;
+  left: calc(var(--u) * 201);
+  top: calc(var(--u) * 78);
+  width: calc(var(--u) * 174);
+  height: calc(var(--u) * 56);
+  display: grid;
+  place-items: center;
+  font-family: var(--rh10-ui);
+  font-size: calc(var(--u) * 34);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #f4f7ff;
+  text-shadow:
+    0 calc(var(--u) * 1.5) 0 rgba(0, 8, 40, 0.85),
+    0 0 calc(var(--u) * 10) rgba(80, 150, 255, 0.65);
+  pointer-events: none;
+}
+
+.billion-shell--arena .cj__panel {
+  background: linear-gradient(180deg, #08207e 0%, #061a6a 50%, #04135a 100%);
+}
+
+.billion-shell--arena .cj.is-pristine .cj__panel {
+  background: linear-gradient(
+    180deg,
+    #08207e 0%,
+    #0a2488 29.5%,
+    #030e46 29.5%,
+    #020b3c 70.5%,
+    #08207e 70.5%,
+    #061a6a 100%
+  );
+}
+
+.billion-shell--arena .cj__panel--team.is-team,
+.billion-shell--arena .cj.is-pristine .cj__panel--team.is-team {
+  background: var(--team-accent);
+}
+
+/* ---------- SPIN: orange enamel with a hard lip, light sweep, sinks while the reels run ---------- */
+
+.billion-shell--arena .cj__spin {
+  overflow: hidden;
+  isolation: isolate;
+  border: 0;
+  border-radius: calc(var(--u) * 18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #ff9a52 0%, #f8732f 32%, #e85a22 64%, #c9440f 100%);
+  box-shadow:
+    inset 0 calc(var(--u) * 1.5) 0 rgba(255, 232, 210, 0.9),
+    inset 0 calc(var(--u) * -3) 0 rgba(120, 28, 0, 0.28),
+    0 calc(var(--u) * 6) 0 var(--rh11-or-lip),
+    0 calc(var(--u) * 8) calc(var(--u) * 3) rgba(0, 6, 55, 0.5),
+    0 calc(var(--u) * 16) calc(var(--u) * 30) rgba(0, 6, 55, 0.55),
+    0 0 calc(var(--u) * 34) rgba(255, 110, 40, 0.38);
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear, filter 0.12s linear;
+}
+
+.billion-shell--arena .cj__spin:not(.is-off) {
+  animation: rh11-spin-ready 0.36s var(--rh11-ease-pop) backwards;
+}
+
+.billion-shell--arena .cj__spin:not(.is-off)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: -34%;
+  width: 26%;
+  background: linear-gradient(100deg, transparent, rgba(255, 246, 232, 0.5), transparent);
+  transform: translate3d(0, 0, 0) skewX(-18deg);
+  animation: rh11-spin-shine 3.6s var(--rh11-ease-out) 0.9s infinite;
+  pointer-events: none;
+}
+
+.billion-shell--arena .cj__spin:active,
+.billion-shell--arena .cj.is-spinning .cj__spin.is-off {
+  transform: translate3d(0, calc(var(--u) * 4), 0);
+  filter: none;
+  box-shadow:
+    inset 0 calc(var(--u) * 1.5) 0 rgba(255, 232, 210, 0.7),
+    inset 0 calc(var(--u) * -2) 0 rgba(120, 28, 0, 0.28),
+    0 calc(var(--u) * 2) 0 var(--rh11-or-lip),
+    0 calc(var(--u) * 6) calc(var(--u) * 14) rgba(0, 6, 55, 0.5);
+}
+
+.billion-shell--arena .cj__spin.is-off {
+  opacity: 1;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #2a46a8 0%, #1c3388 100%);
+  box-shadow:
+    inset 0 calc(var(--u) * 1.5) 0 rgba(170, 198, 255, 0.35),
+    0 calc(var(--u) * 5) 0 #0c1d5e,
+    0 calc(var(--u) * 10) calc(var(--u) * 20) rgba(0, 6, 55, 0.45);
+}
+
+.billion-shell--arena .cj.is-spinning .cj__spin.is-off {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #e8692c 0%, #d4521c 60%, #b23d0c 100%);
+}
+
+.billion-shell--arena .cj__spin.is-off .cj__spin-label {
+  opacity: 0.6;
+}
+
+.billion-shell--arena .cj__spin-label {
+  font-family: var(--rh10-display);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  padding-left: 0.2em;
+  text-shadow:
+    0 calc(var(--u) * 2.5) 0 #9c3208,
+    0 calc(var(--u) * 5) calc(var(--u) * 10) rgba(80, 20, 0, 0.35);
+}
+
+@keyframes rh11-spin-ready {
+  from {
+    transform: translate3d(0, calc(var(--u) * 4), 0) scale(0.97);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rh11-spin-shine {
+  0% {
+    transform: translate3d(0, 0, 0) skewX(-18deg);
+  }
+  30%,
+  100% {
+    transform: translate3d(620%, 0, 0) skewX(-18deg);
+  }
+}
+
+/* ---------- Court: navy-glass empty jerseys, cobalt position pills ---------- */
+
+.draft-hub-court--arena .draft-hub-court__slot:not(.is-target) .aj.is-empty {
+  --aj-body: #2142a8 !important;
+  --aj-trim: #d4e2ff !important;
+}
+
+.draft-hub-court--arena .draft-hub-court__seat-pos,
+.draft-hub-court--arena .draft-hub-court__seat-pos.is-empty {
+  border: 0 !important;
+  background: var(--rh11-cb-face) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px rgba(120, 160, 255, 0.28),
+    0 calc(var(--u) * 2.5) 0 var(--rh11-cb-lip),
+    0 calc(var(--u) * 5) calc(var(--u) * 8) rgba(0, 6, 55, 0.5) !important;
+  font-family: var(--rh10-display) !important;
+  font-style: italic;
+  font-weight: 900 !important;
+}
+
+/* ---------- Player sheet ---------- */
+
+.billion-shell--arena .draft-sheet {
+  background:
+    radial-gradient(120% 60px at 50% 0%, rgba(110, 155, 255, 0.28), transparent 100%),
+    linear-gradient(180deg, #0a2296 0%, #071a78 32%, #04114f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.55),
+    0 -18px 40px rgba(0, 4, 40, 0.6);
+}
+
+.billion-shell--arena .draft-sheet__handle .draft-sheet__cue {
+  color: rgba(196, 212, 255, 0.82);
+}
+
+.draft-sheet-peek--arena {
+  border: 0;
+  background: var(--rh11-or-face);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 204, 0.85),
+    inset 0 -2px 0 rgba(110, 26, 0, 0.3),
+    0 4px 0 var(--rh11-or-lip),
+    0 10px 18px rgba(0, 6, 55, 0.5);
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear;
+}
+
+.draft-sheet-peek--arena:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 204, 0.85),
+    0 1px 0 var(--rh11-or-lip),
+    0 5px 10px rgba(0, 6, 55, 0.45);
+}
+
+.draft-sheet-peek--arena.has-pick {
+  border: 0;
+  background: var(--rh10-card);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.55),
+    inset 0 0 0 1.5px rgba(44, 207, 132, 0.6),
+    0 4px 0 var(--rh11-cb-lip),
+    0 10px 18px rgba(0, 6, 55, 0.5);
+}
+
+.draft-sheet-peek--arena .draft-sheet-peek__copy strong {
+  font-family: var(--rh10-display);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.draft-sheet-peek--arena.has-pick .draft-sheet-peek__copy em {
+  color: var(--rh10-green-hi);
+}
+
+/* Rerolls: cobalt enamel, so SPIN stays the one orange call to action. */
+.billion-shell--arena .ap-reroll {
+  border: 0;
+  border-radius: 12px;
+  background: var(--rh11-cb-face);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px rgba(120, 160, 255, 0.25),
+    0 3px 0 var(--rh11-cb-lip),
+    0 7px 12px rgba(0, 6, 55, 0.45);
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear;
+}
+
+.billion-shell--arena .ap-reroll:active:not(:disabled) {
+  transform: translateY(2px);
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    0 1px 0 var(--rh11-cb-lip),
+    0 4px 8px rgba(0, 6, 55, 0.4);
+}
+
+.billion-shell--arena .ap-reroll__icon {
+  color: var(--rh10-orange-hi);
+  filter: none;
+}
+
+.billion-shell--arena .ap-reroll__copy strong {
+  font-family: var(--rh10-display);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 0 rgba(0, 8, 60, 0.6);
+}
+
+.billion-shell--arena .ap-reroll__copy em {
+  color: var(--rh10-green-hi);
+}
+
+.billion-shell--arena .ap-reroll.is-used,
+.billion-shell--arena .ap-reroll:disabled {
+  background: var(--rh10-well);
+  box-shadow: var(--rh10-well-edge);
+  color: rgba(196, 212, 255, 0.4);
+}
+
+.billion-shell--arena .ap-reroll.is-used .ap-reroll__icon,
+.billion-shell--arena .ap-reroll:disabled .ap-reroll__icon {
+  color: inherit;
+}
+
+.billion-shell--arena .ap-reroll.is-used .ap-reroll__copy em,
+.billion-shell--arena .ap-reroll:disabled .ap-reroll__copy em {
+  color: inherit;
+}
+
+.billion-shell--arena .ap__hint {
+  color: rgba(196, 212, 255, 0.7);
+}
+
+/* Player rows: team color stays the fill; enamel edge, tighter type, emerald selection. */
+.billion-shell--arena .ap__list {
+  gap: 8px;
+}
+
+.billion-shell--arena .ap-row {
+  border: 0;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 3px 0 rgba(0, 6, 40, 0.55),
+    0 6px 12px rgba(0, 4, 40, 0.35);
+  animation: rh11-row-in 0.34s var(--rh11-ease-out) backwards;
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.12s linear;
+}
+
+.billion-shell--arena .ap-row:nth-child(2) { animation-delay: 0.03s; }
+.billion-shell--arena .ap-row:nth-child(3) { animation-delay: 0.06s; }
+.billion-shell--arena .ap-row:nth-child(4) { animation-delay: 0.09s; }
+.billion-shell--arena .ap-row:nth-child(5) { animation-delay: 0.12s; }
+.billion-shell--arena .ap-row:nth-child(n + 6) { animation-delay: 0.15s; }
+
+.billion-shell--arena .ap-row:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 1px 0 rgba(0, 6, 40, 0.55),
+    0 3px 6px rgba(0, 4, 40, 0.3);
+}
+
+.billion-shell--arena .ap-row.is-selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 2px var(--rh11-em-hi),
+    0 3px 0 var(--rh11-em-lip),
+    0 0 18px rgba(44, 207, 132, 0.35);
+}
+
+.billion-shell--arena .ap-row__pos {
+  border-radius: 12px;
+  font-family: var(--rh10-display);
+  font-style: italic;
+  font-weight: 900;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.22),
+    0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.billion-shell--arena .ap-row__meta strong {
+  font-family: var(--rh10-ui);
+  font-weight: 800;
+  letter-spacing: -0.005em;
+}
+
+.billion-shell--arena .ap-row__meta em {
+  font-family: var(--rh10-ui);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.billion-shell--arena .ap-row__check.is-on {
+  background: var(--rh11-em-face);
+  box-shadow:
+    inset 0 1px 0 rgba(200, 255, 226, 0.6),
+    0 0 10px rgba(44, 207, 132, 0.5);
+}
+
+@keyframes rh11-row-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Final evaluation: cobalt stage, cool spotlights, same reveal ---------- */
+
+.cr .cr__bg {
+  background:
+    #01061f
+    url("/images/classic/results-bg-rh11.jpg") no-repeat center bottom;
+  background-size: cover;
+}
+
+.cr .cr__bg::before {
+  background:
+    radial-gradient(ellipse 78% 42% at 50% 54%, rgba(120, 170, 255, 0.16), transparent 66%),
+    linear-gradient(180deg, rgba(0, 4, 30, 0.6) 0%, rgba(0, 4, 30, 0.26) 18%, transparent 32%, transparent 64%, rgba(0, 4, 30, 0.5) 100%);
+}
+
+@media (min-aspect-ratio: 580/1024) {
+  .cr .cr__bg::after {
+    background: linear-gradient(
+      90deg,
+      #01061f calc(50vw - var(--bgw) / 2),
+      transparent calc(50vw - var(--bgw) / 2 + var(--u) * 50),
+      transparent calc(50vw + var(--bgw) / 2 - var(--u) * 50),
+      #01061f calc(50vw + var(--bgw) / 2)
+    );
+  }
+}
+
+.cr .cr__spot {
+  background:
+    radial-gradient(ellipse 62% 40% at 50% 58%, rgba(170, 205, 255, 0.34), rgba(90, 140, 255, 0.12) 44%, transparent 72%),
+    radial-gradient(ellipse 42% 52% at -6% -18%, rgba(220, 234, 255, 0.32), transparent 62%),
+    radial-gradient(ellipse 42% 52% at 106% -18%, rgba(220, 234, 255, 0.32), transparent 62%);
+}
+
+.cr .cr__title {
+  font-family: var(--rh10-display);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: var(--rh10-extrude);
+}
+
+.cr .cr__home {
+  border: 0;
+  background: var(--rh11-cb-face);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px rgba(120, 160, 255, 0.25),
+    0 3px 0 var(--rh11-cb-lip),
+    0 6px 12px rgba(0, 6, 55, 0.45);
+  color: #fff;
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear;
+}
+
+.cr .cr__home:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    0 1px 0 var(--rh11-cb-lip);
+}
+
+.cr .cr__again {
+  border: 0;
+  font-family: var(--rh10-display);
+  font-weight: 900;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #ff9a52 0%, #f8732f 32%, #e85a22 64%, #c9440f 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 232, 210, 0.9),
+    inset 0 -3px 0 rgba(120, 28, 0, 0.28),
+    0 5px 0 var(--rh11-or-lip),
+    0 12px 22px rgba(0, 6, 55, 0.55),
+    0 0 26px rgba(255, 110, 40, 0.3);
+  text-shadow:
+    0 2px 0 #9c3208,
+    0 4px 8px rgba(80, 20, 0, 0.3);
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear;
+}
+
+.cr .cr__share {
+  border: 0;
+  font-family: var(--rh10-display);
+  font-weight: 900;
+  background: var(--rh11-cb-face);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    inset 0 0 0 1px rgba(120, 160, 255, 0.25),
+    0 4px 0 var(--rh11-cb-lip),
+    0 10px 18px rgba(0, 6, 55, 0.5);
+  transition: transform 0.08s var(--rh11-ease-out), box-shadow 0.08s linear;
+}
+
+.cr .cr__again:active,
+.cr .cr__share:active {
+  transform: translateY(3px);
+  filter: none;
+}
+
+.cr .cr__again:active {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 232, 210, 0.9),
+    0 2px 0 var(--rh11-or-lip),
+    0 6px 12px rgba(0, 6, 55, 0.5);
+}
+
+.cr .cr__share:active {
+  box-shadow:
+    inset 0 1px 0 rgba(170, 198, 255, 0.6),
+    0 1px 0 var(--rh11-cb-lip),
+    0 5px 10px rgba(0, 6, 55, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-full-motion]) .billion-shell--arena .cj__spin,
+  html:not([data-full-motion]) .billion-shell--arena .ap-row {
+    animation: none !important;
+  }
+
+  html:not([data-full-motion]) .billion-shell--arena .cj__spin::before {
+    display: none;
+  }
+}
