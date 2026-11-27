@@ -87,7 +87,7 @@ const newHead = git(['rev-parse', 'HEAD']).out;
 const depsChanged =
   oldHead !== newHead && git(['diff', '--name-only', oldHead, newHead, '--', 'package.json', 'package-lock.json']).out !== '';
 if (!existsSync(path.join(root, 'node_modules')) || depsChanged) {
-  say(depsChanged ? 'package-lock.json changed — running npm ci ...' : 'node_modules missing — running npm ci ...');
+  say(depsChanged ? 'package.json / package-lock.json changed — running npm ci ...' : 'node_modules missing — running npm ci ...');
   if (run('npm', ['ci', '--no-audit', '--no-fund']) !== 0) stop('npm ci failed (see output above).');
 } else {
   say('dependencies unchanged — skipping install.');
