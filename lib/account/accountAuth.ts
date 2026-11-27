@@ -229,12 +229,15 @@ export async function signUpWithEmail(input: {
   // 'error' → continue; insert UNIQUE will catch races / flaky checks.
 
   // Discard orphaned Account A local achievements/Classic; keep tagged guest progress only.
+  // XP/coins never migrate into a brand-new permanent account.
   const { prepareLocalAchievementsForAccountBind } = await import(
     '@/lib/account/achievementCloud'
   );
   const { prepareLocalClassicForAccountBind } = await import('@/lib/account/classicCloud');
+  const { prepareLocalXpForAccountBind } = await import('@/lib/tradeup/xp');
   prepareLocalClassicForAccountBind();
   prepareLocalAchievementsForAccountBind();
+  prepareLocalXpForAccountBind();
 
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signUp({
@@ -318,12 +321,15 @@ export async function signInWithEmail(input: {
   }
 
   // Discard orphaned local achievements/Classic before binding a permanent session.
+  // Guest XP stays in the guest bucket; the signed-in slot loads per-user (empty if new).
   const { prepareLocalAchievementsForAccountBind } = await import(
     '@/lib/account/achievementCloud'
   );
   const { prepareLocalClassicForAccountBind } = await import('@/lib/account/classicCloud');
+  const { prepareLocalXpForAccountBind } = await import('@/lib/tradeup/xp');
   prepareLocalClassicForAccountBind();
   prepareLocalAchievementsForAccountBind();
+  prepareLocalXpForAccountBind();
 
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -466,8 +472,10 @@ export async function signOutAccount(): Promise<AuthActionResult> {
   // next guest / other account cannot inherit this user's PB, runs, or achievements.
   const { detachAchievementCloudCache } = await import('@/lib/account/achievementCloud');
   const { detachClassicCloudCache } = await import('@/lib/account/classicCloud');
+  const { detachXpProfileToGuest } = await import('@/lib/tradeup/xp');
   detachClassicCloudCache();
   detachAchievementCloudCache();
+  detachXpProfileToGuest();
   clearCachedProfile();
 
   const supabase = getSupabaseBrowserClient();

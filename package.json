@@ -18,6 +18,7 @@
     "decade-rosters": "node scripts/build-decade-rosters.mjs",
     "check:gameplay": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-shared-gameplay.ts",
     "check:xp": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-xp-rewards.ts",
+    "check:xp-isolation": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-xp-account-isolation.ts",
     "check:secure": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-secure-coin-bank.ts",
     "check:secure:pg": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/check-secure-coin-bank-pg.ts",
     "staging:validate": "node --experimental-strip-types --import ./scripts/ts-ext-loader.mjs scripts/staging-validate.ts",

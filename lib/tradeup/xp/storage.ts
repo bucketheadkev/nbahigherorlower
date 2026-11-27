@@ -6,6 +6,10 @@
 import { progressFromTotalXp, XP_STARTING_LEVEL, type LevelProgress } from './config';
 
 export const XP_PROFILE_KEY = 'oneb_xp_profile_v1';
+/** Which account owns the live XP slot: `guest` or a permanent auth user id. */
+export const XP_OWNER_KEY = 'oneb_xp_owner_v1';
+/** Per-account XP snapshots so account switches never leak level/XP/coins. */
+export const XP_PROFILES_BY_USER_KEY = 'oneb_xp_profiles_by_user_v1';
 /** @deprecated kept for one-time migration of older queues */
 export const XP_PENDING_LEVELUPS_KEY = 'oneb_xp_pending_levelups_v1';
 export const XP_PENDING_REVEALS_KEY = 'oneb_xp_pending_reveals_v1';
@@ -14,6 +18,7 @@ export const XP_CHANGED_EVENT = 'oneb:xp-changed';
 export const XP_REVEAL_READY_EVENT = 'oneb:xp-reveal-ready';
 
 const AWARDED_RUN_CAP = 250;
+const GUEST_OWNER = 'guest';
 
 export interface XpProfile {
   version: 1;
@@ -53,6 +58,109 @@ const EMPTY_PROFILE: XpProfile = {
 
 function canUseStorage(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function emptyProfile(): XpProfile {
+  return { ...EMPTY_PROFILE, awardedRunRefs: [] };
+}
+
+function readOwner(): string {
+  if (!canUseStorage()) return GUEST_OWNER;
+  try {
+    const raw = window.localStorage.getItem(XP_OWNER_KEY);
+    return raw && raw.length > 0 ? raw : GUEST_OWNER;
+  } catch {
+    return GUEST_OWNER;
+  }
+}
+
+function writeOwner(owner: string): void {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.setItem(XP_OWNER_KEY, owner);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readProfileMap(): Record<string, XpProfile> {
+  const raw = readJson(XP_PROFILES_BY_USER_KEY);
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, XpProfile> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!key) continue;
+    out[key] = sanitizeProfile(value);
+  }
+  return out;
+}
+
+function writeProfileMap(map: Record<string, XpProfile>): void {
+  writeJson(XP_PROFILES_BY_USER_KEY, map);
+}
+
+/**
+ * Migrate the legacy single-slot profile into the guest bucket once, then clear it
+ * so a brand-new permanent account cannot inherit device XP from a prior session.
+ */
+function migrateLegacyLiveProfileIntoGuestMap(): void {
+  if (!canUseStorage()) return;
+  try {
+    if (window.localStorage.getItem(XP_PROFILES_BY_USER_KEY)) return;
+  } catch {
+    return;
+  }
+  const legacy = sanitizeProfile(readJson(XP_PROFILE_KEY));
+  const map: Record<string, XpProfile> = {};
+  if (
+    legacy.totalXp > 0 ||
+    legacy.coins > 0 ||
+    legacy.awardedRunRefs.length > 0 ||
+    legacy.welcomeGranted
+  ) {
+    map[GUEST_OWNER] = legacy;
+  }
+  writeProfileMap(map);
+  writeJson(XP_PROFILE_KEY, emptyProfile());
+  writeOwner(GUEST_OWNER);
+}
+
+/**
+ * Switch the live XP/coins slot to a guest or permanent user.
+ * Never copies guest XP into a permanent account — new accounts start at level 1 / 0 XP.
+ */
+export function bindXpProfileOwner(userId: string | null): void {
+  migrateLegacyLiveProfileIntoGuestMap();
+  const nextOwner = userId && userId.length > 0 ? userId : GUEST_OWNER;
+  const prevOwner = readOwner();
+  const map = readProfileMap();
+  map[prevOwner] = sanitizeProfile(readJson(XP_PROFILE_KEY));
+  const nextProfile = map[nextOwner] ? sanitizeProfile(map[nextOwner]) : emptyProfile();
+  map[nextOwner] = nextProfile;
+  writeProfileMap(map);
+  writeOwner(nextOwner);
+  writeJson(XP_PROFILE_KEY, nextProfile);
+  clearPendingXpReveals();
+  emitChanged();
+}
+
+/** Before signup/login: park guest XP in the guest bucket; do not carry it into the new account. */
+export function prepareLocalXpForAccountBind(): void {
+  migrateLegacyLiveProfileIntoGuestMap();
+  const owner = readOwner();
+  const map = readProfileMap();
+  map[owner] = sanitizeProfile(readJson(XP_PROFILE_KEY));
+  writeProfileMap(map);
+  // Leave the live slot as-is until bindXpProfileOwner runs with the new user id.
+}
+
+/** Logout / leave permanent: restore the guest slot (never keep the permanent profile live). */
+export function detachXpProfileToGuest(): void {
+  bindXpProfileOwner(null);
+}
+
+export function getActiveXpOwner(): string {
+  migrateLegacyLiveProfileIntoGuestMap();
+  return readOwner();
 }
 
 function emitChanged(): void {
@@ -106,6 +214,7 @@ function sanitizeProfile(raw: unknown): XpProfile {
 }
 
 export function getXpProfile(): XpProfile {
+  migrateLegacyLiveProfileIntoGuestMap();
   return sanitizeProfile(readJson(XP_PROFILE_KEY));
 }
 
@@ -184,8 +293,13 @@ export function hasAwardedXpRun(runRef: string): boolean {
 }
 
 export function saveXpProfile(profile: XpProfile): XpProfile {
+  migrateLegacyLiveProfileIntoGuestMap();
   const next = sanitizeProfile(profile);
   writeJson(XP_PROFILE_KEY, next);
+  const owner = readOwner();
+  const map = readProfileMap();
+  map[owner] = next;
+  writeProfileMap(map);
   emitChanged();
   return next;
 }

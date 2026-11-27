@@ -5,17 +5,22 @@ import type { AccountAuthState } from '@/lib/account/accountAuth';
 import {
   detachAchievementCloudCache,
   ensureAchievementCloudWriteListener,
-  reconcileAchievementsForPermanentUser,
 } from '@/lib/account/achievementCloud';
 import {
   detachClassicCloudCache,
   ensureClassicCloudWriteListener,
   reconcileClassicForPermanentUser,
 } from '@/lib/account/classicCloud';
+import {
+  bindXpProfileOwner,
+  detachXpProfileToGuest,
+  syncCloudCoinsIntoLocal,
+} from '@/lib/tradeup/xp';
 
 /**
- * Permanent accounts: reconcile Classic PB/runs then achievements.
- * Guest + anonymous: local-only; detach restores guest Classic snapshot on logout.
+ * Permanent accounts: reconcile Classic PB/runs, bind per-account XP, sync server coins.
+ * Achievement/challenge cloud sync and bank payouts are retired — local cache stays empty.
+ * Guest + anonymous: local-only; detach restores guest Classic / XP slots on logout.
  */
 export function useAchievementCloudSync(accountState: AccountAuthState): void {
   const prevStatus = useRef<AccountAuthState['status'] | null>(null);
@@ -23,6 +28,7 @@ export function useAchievementCloudSync(accountState: AccountAuthState): void {
 
   useEffect(() => {
     ensureClassicCloudWriteListener();
+    // Keep the listener installed so guest writes stay tagged, but cloud upserts are no-ops.
     ensureAchievementCloudWriteListener();
   }, []);
 
@@ -34,10 +40,13 @@ export function useAchievementCloudSync(accountState: AccountAuthState): void {
       const userId = accountState.user.id;
       if (lastUserId.current !== userId) {
         lastUserId.current = userId;
+        // Isolate XP/coins before Classic reconcile so levels never leak across accounts.
+        bindXpProfileOwner(userId);
         void (async () => {
-          // Classic first so achievement materialize sees migrated PB/runs.
           await reconcileClassicForPermanentUser(userId);
-          await reconcileAchievementsForPermanentUser(userId);
+          // Challenges/achievements are retired — never upsert progress that could mint Bank cash.
+          detachAchievementCloudCache();
+          await syncCloudCoinsIntoLocal();
         })();
       }
       return;
@@ -48,6 +57,7 @@ export function useAchievementCloudSync(accountState: AccountAuthState): void {
     if (prev === 'permanent' && accountState.status !== 'loading') {
       detachClassicCloudCache();
       detachAchievementCloudCache();
+      detachXpProfileToGuest();
     }
   }, [accountState]);
 }

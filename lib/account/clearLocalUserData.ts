@@ -24,6 +24,8 @@ const APP_LOCAL_STORAGE_KEYS = [
   'oneb_classic_migrate_source_v1',
   'oneb_guest_classic_snapshot_v1',
   'oneb_xp_profile_v1',
+  'oneb_xp_owner_v1',
+  'oneb_xp_profiles_by_user_v1',
   'oneb_xp_pending_levelups_v1',
   'oneb_xp_pending_reveals_v1',
   'oneb_coin_cloud_synced_v1',

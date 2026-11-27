@@ -1,19 +1,14 @@
 /**
  * In-game Bank. Game cash only — not real money.
  *
- * The balance is achievement rewards (derived from the local + cloud achievement save,
- * so one challenge never pays twice) plus an on-device ledger for guest Rollover, Run Bonuses
- * and rank rewards.
+ * Achievement / challenge Cash rewards are retired. Guest display uses the on-device
+ * ledger only (trivia, run bonuses, rank rewards). Signed-in players use the server ledger.
  */
 
 import { getBillionRuns } from './billionRuns';
-import {
-  ACHIEVEMENT_UNLOCKED_EVENT,
-  buildChallengeProgressList,
-  type ChallengeProgress,
-} from './challenges';
+import { ACHIEVEMENT_UNLOCKED_EVENT } from './challenges';
 
-/** Internal payout bands. Never shown to players. */
+/** Internal payout bands (historical). Achievement Cash is retired — always $0. */
 export type RewardTier = 'rookie' | 'pro' | 'allstar' | 'mvp' | 'legend';
 
 export const TIER_CASH: Record<RewardTier, number> = {
@@ -24,49 +19,11 @@ export const TIER_CASH: Record<RewardTier, number> = {
   legend: 1_000_000,
 };
 
-/** Server copy: public.achievement_cash_reward() in supabase/migrations/20261018_7_achievement_payouts.sql. */
-const CHALLENGE_TIER: Record<string, RewardTier> = {
-  'halfway-home': 'rookie',
-  'closing-in': 'rookie',
-  'h2h-first-win': 'rookie',
-
-  'near-miss-950m': 'pro',
-  'all-in': 'pro',
-  'league-tour': 'pro',
-  'generational-wealth': 'pro',
-  'h2h-statement': 'pro',
-
-  'no-second-chances': 'allstar',
-  'just-enough': 'allstar',
-  'hit-1-05b': 'allstar',
-  'billion-and-beyond': 'allstar',
-  'no-headliners': 'allstar',
-  'double-trouble': 'allstar',
-  'triple-threat': 'allstar',
-  'back-to-back-billions': 'allstar',
-  'h2h-billion': 'allstar',
-  'h2h-three-wins': 'allstar',
-
-  'hit-1b': 'mvp',
-  'elite-company': 'mvp',
-  'two-hundred-m-club': 'mvp',
-  'balanced-books': 'mvp',
-  'five-star-portfolio': 'mvp',
-  'top-of-the-market': 'mvp',
-  'clutch-investment': 'mvp',
-  'perfect-range': 'mvp',
-  'three-peat': 'mvp',
-  'h2h-clean-sweep': 'mvp',
-
-  'ten-billion-runs': 'legend',
-};
-
 export const BANK_SEEN_STORAGE_KEY = 'oneb_bank_paid_seen_v1';
 
-/** Unknown or removed IDs pay nothing, matching the server. */
-export function challengeReward(id: string): number {
-  const tier = CHALLENGE_TIER[id];
-  return tier ? TIER_CASH[tier] : 0;
+/** Retired — challenges/achievements no longer pay Bank cash (always 0). */
+export function challengeReward(_id: string): number {
+  return 0;
 }
 
 /** Whole-dollar cash label with commas, e.g. $25,000. */
@@ -75,12 +32,8 @@ export function formatCash(value: number): string {
   return `$${n.toLocaleString('en-US')}`;
 }
 
-function completedIds(list: ChallengeProgress[] = buildChallengeProgressList()): string[] {
-  return list.filter((item) => item.complete).map((item) => item.id);
-}
-
 /**
- * On-device Cash movements beyond achievements (Rollover, Run Bonuses, rank rewards). The
+ * On-device Cash movements (Rollover, Run Bonuses, rank rewards, trivia). The
  * cash_table_* kinds are history from the retired guest wagers. Signed-in players'
  * authoritative balance is the server ledger.
  */
@@ -168,8 +121,8 @@ export function getPermanentDeviceBankCredit(): number {
 }
 
 export function getBankBalance(): number {
-  const earned = completedIds().reduce((sum, id) => sum + challengeReward(id), 0);
-  return Math.max(0, earned + getLocalLedgerTotal());
+  // Achievements no longer contribute; guest Cash is ledger-only.
+  return Math.max(0, getLocalLedgerTotal());
 }
 
 function readSeen(): Set<string> {
@@ -185,10 +138,9 @@ function readSeen(): Set<string> {
   }
 }
 
-/** Completed achievements whose cash this device has not celebrated yet. */
+/** Retired — no achievement Cash celebrations. */
 export function getUncelebratedPayouts(): string[] {
-  const seen = readSeen();
-  return completedIds().filter((id) => !seen.has(id));
+  return [];
 }
 
 export function markPayoutsCelebrated(ids: string[]): void {
@@ -302,5 +254,3 @@ export function catchUpRunBonuses(): number {
   if (total > 0) window.dispatchEvent(new Event(BANK_CHANGED_EVENT));
   return total;
 }
-
-

@@ -23,6 +23,8 @@ export {
 
 export {
   XP_PROFILE_KEY,
+  XP_OWNER_KEY,
+  XP_PROFILES_BY_USER_KEY,
   XP_PENDING_LEVELUPS_KEY,
   XP_PENDING_REVEALS_KEY,
   XP_CHANGED_EVENT,
@@ -46,6 +48,10 @@ export {
   clearPendingXpReveals,
   clearPendingLevelUps,
   signalXpRevealReady,
+  bindXpProfileOwner,
+  prepareLocalXpForAccountBind,
+  detachXpProfileToGuest,
+  getActiveXpOwner,
   type XpProfile,
   type PendingXpReveal,
   type PendingLevelUp,
