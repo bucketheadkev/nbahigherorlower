@@ -39,7 +39,16 @@ Open the project in Cursor and type **`iOS`**. Cursor runs `npm run ios` (`scrip
 3. Runs `npm ci` only when `package.json` / `package-lock.json` changed, or `node_modules` is missing.
 4. Prints which Supabase project the build will use, from the Mac's `.env.local` (host only).
 5. Runs `npm run build:ios` (static export with `CAPACITOR_BUILD=1`, then `npx cap sync ios`).
-6. Opens Xcode (`npx cap open ios`). Select your iPhone as the run destination and press **Cmd+R**.
+6. Verifies Capacitor Swift packages under `ios/App/CapApp-SPM` (local path plugins in `node_modules`).
+7. After `npm ci`, clears stale `~/Library/Developer/Xcode/DerivedData/App-*` so Xcode does not keep
+   "Missing package product CapacitorApp / Browser / Filesystem / Haptics / Share" from wiped trees.
+8. Runs `xcodebuild -resolvePackageDependencies`, then a real `xcodebuild` compile check
+   (`BUILD SUCCEEDED` required). Xcode is **not** opened if that fails.
+9. Opens Xcode (`npx cap open ios`). Select your iPhone as the run destination and press **Cmd+R**.
+
+`cap sync` rewrites `ios/App/CapApp-SPM/Package.swift` and `Package.resolved`. The Mac workflow
+restores those committed copies after a successful SPM verify so they do not leave the tree dirty
+or block the next pull. Real code edits still stop the workflow.
 
 Without Cursor, run `npm run ios` in the Mac terminal from the project folder.
 
@@ -83,3 +92,5 @@ Mac's `.env.local` names. Change it deliberately; see `docs/STAGING_AND_RELEASE.
 | branch has diverged | Both machines committed separately | Ask Cursor to help reconcile; nothing was changed |
 | only `tsconfig.tsbuildinfo` changed | Build cache from an older build | Approve `git checkout -- tsconfig.tsbuildinfo` |
 | `npm run build:ios` failed | Build or Capacitor error | Read the output; Xcode is not opened |
+| Capacitor Swift packages incomplete / missing product | `node_modules` or CapApp-SPM out of sync after pull | Quit Xcode, type `iOS` again (workflow re-runs `npm ci` / clears DerivedData / resolves SPM) |
+| `xcodebuild` did not report BUILD SUCCEEDED | Native compile or SPM resolve failed | Read the output; Xcode is not opened |
