@@ -368,7 +368,10 @@ npm run staging:apply
 
 ### Read-only checks (run before and after any apply)
 
-- `npm run staging:probe` — Auth settings + whether every table/RPC the client calls exists (public key, GET only, refuses production).
+- `npm run staging:probe` — Auth settings + whether every table/RPC the client calls exists (public key only, refuses production).
+- `npm run staging:audit` — Postgres catalog audit via `STAGING_DATABASE_URL` (SELECT / read-only txn only).
+- `npm run staging:smoke` — temporary staging user: profile, welcome coins, classic begin, create_room; user deleted after.
+- `npm run staging:validate` — remote RPC/permission checks (loads `.env.staging.local` on Windows).
 - `supabase/admin/STAGING_AUDIT_READONLY.sql` — paste into the staging SQL Editor; lists missing tables, functions, triggers, policies, RLS-disabled tables and unsafe grants. SELECT only.
 
 ### Migration order (staging apply)

@@ -13,9 +13,22 @@
  *   STAGING_USER_ACCESS_TOKEN  (JWT for a permanent staging user)
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const PROD_REF = 'rqogjyjfatnyuoorvyix';
+const STAGING_REF = 'wxifsgypdyrruxybcrcw';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const envFile = path.join(root, '.env.staging.local');
+if (fs.existsSync(envFile)) {
+  for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*(STAGING_[A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+  }
+}
 
 const url = (process.env.STAGING_SUPABASE_URL ?? '').trim();
 const anon = (process.env.STAGING_SUPABASE_ANON_KEY ?? '').trim();
@@ -29,8 +42,10 @@ if (!url || !anon || !service) {
   );
   process.exit(2);
 }
-if (url.includes(PROD_REF)) {
-  console.error(`Refusing to run against production ref ${PROD_REF}. Use a staging project.`);
+if (url.includes(PROD_REF) || !url.includes(STAGING_REF)) {
+  console.error(
+    `Refusing to run: URL must target staging ${STAGING_REF} only (production ${PROD_REF} refused).`,
+  );
   process.exit(2);
 }
 
@@ -67,14 +82,14 @@ async function rpcErrorMessage(err: { message?: string; code?: string } | null):
 async function main() {
   const { db, anonDb, userDb } = await clients();
 
-  // 1) Migration surfaces present
+  // 1) Migration surfaces present (EXECUTE is authenticated-only after SECURE).
   try {
     const { data, error } = await db.rpc('classic_run_begin');
-    // service_role may lack permanent uid — expect account/permanent error OR uuid
     const msg = await rpcErrorMessage(error);
+    // Success, permanent-account rejection, or permission denied all prove the RPC exists.
     const ok =
       (!error && typeof data === 'string' && data.length >= 32) ||
-      /permanent|account|auth|uid|jwt/i.test(msg);
+      /permanent|account|auth|uid|jwt|permission denied|42501/i.test(msg);
     record('migration_rpc_surface_reachable', ok, error ? msg.slice(0, 160) : `begin=${data}`);
   } catch (e) {
     record('migration_rpc_surface_reachable', false, e instanceof Error ? e.message : String(e));
@@ -97,7 +112,8 @@ async function main() {
     );
   }
 
-  // 3) Legacy submit blocked (as user if available, else service)
+  // 3) Legacy submit blocked (as user if available, else service).
+  // Without a user JWT, service_role may get EXECUTE denied — that still proves it is locked down.
   {
     const client = userDb ?? db;
     const { error } = await client.rpc('submit_classic_leaderboard_lineup', {
@@ -105,7 +121,10 @@ async function main() {
       p_client_run_id: 'not-a-uuid',
     });
     const msg = await rpcErrorMessage(error);
-    record('legacy_submit_blocked', /use_classic_run_submit/i.test(msg), msg.slice(0, 160));
+    const ok = userDb
+      ? /use_classic_run_submit/i.test(msg)
+      : /use_classic_run_submit|permission denied|42501/i.test(msg);
+    record('legacy_submit_blocked', ok, msg.slice(0, 160));
   }
 
   // 4) Client spin commit blocked

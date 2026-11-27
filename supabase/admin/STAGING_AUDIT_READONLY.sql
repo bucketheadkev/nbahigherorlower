@@ -358,9 +358,21 @@ where not exists (
   select 1 from pg_policies p
   where p.schemaname = 'public' and p.tablename = e.tbl and p.policyname = e.name)
 union all
+-- RLS off is only a problem when anon/authenticated still have table privileges.
+-- Service-only tables (REVOKE ALL from clients) are fine without RLS.
 select 'RLS disabled', c.relname::text
 from pg_class c join pg_namespace n on n.oid = c.relnamespace
 where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity
+  and (
+    has_table_privilege('anon', c.oid, 'select')
+    or has_table_privilege('anon', c.oid, 'insert')
+    or has_table_privilege('anon', c.oid, 'update')
+    or has_table_privilege('anon', c.oid, 'delete')
+    or has_table_privilege('authenticated', c.oid, 'select')
+    or has_table_privilege('authenticated', c.oid, 'insert')
+    or has_table_privilege('authenticated', c.oid, 'update')
+    or has_table_privilege('authenticated', c.oid, 'delete')
+  )
 union all
 select 'pg_cron not installed (Circuit auto-settle)', 'extension pg_cron'
 where not exists (select 1 from pg_extension where extname = 'pg_cron')

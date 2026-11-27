@@ -131,6 +131,22 @@ async function getJson(p) {
   return { status: res.status, body };
 }
 
+/** Probe RPC existence without executing meaningful work. */
+async function probeRpc(name) {
+  const res = await fetch(`${url}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {
+    /* empty */
+  }
+  return { status: res.status, body };
+}
+
 let missing = 0;
 const line = (ok, label, note = '') =>
   console.log(`  ${ok === true ? 'OK  ' : ok === false ? 'MISS' : 'WARN'}  ${label}${note ? `  (${note})` : ''}`);
@@ -168,17 +184,19 @@ const escape = (n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 for (const [group, names] of Object.entries(RPCS)) {
   console.log(`\n${group}`);
   for (const name of names) {
-    const r = await getJson(`/rest/v1/rpc/${name}?__probe=1`);
-    const text = `${r.body?.message ?? ''} ${r.body?.hint ?? ''}`;
-    const exists = new RegExp(`public\\.${escape(name)}(\\(|\\s|$|,)`).test(r.body?.hint ?? '');
-    if (r.body?.code === 'PGRST202') {
-      if (exists) line(true, name);
-      else {
-        missing += 1;
-        line(false, name);
-      }
-    } else if (r.status === 200 || r.status === 400 || r.status === 401 || r.status === 403) {
+    const r = await probeRpc(name);
+    const text = `${r.body?.message ?? ''} ${r.body?.details ?? ''} ${r.body?.hint ?? ''}`;
+    // PostgREST: wrong/missing args still prove the name is in the schema cache when
+    // the error mentions public.<name> or suggests an overload.
+    const named = new RegExp(`public\\.${escape(name)}(\\(|\\s|$|,|\\))`).test(text);
+    const suggested = new RegExp(`function public\\.${escape(name)}\\(`).test(r.body?.hint ?? '');
+    if (r.status === 200 || r.status === 400 || r.status === 401 || r.status === 403) {
       line(true, name, `HTTP ${r.status}`);
+    } else if (r.body?.code === 'PGRST202' && (named || suggested)) {
+      line(true, name, 'in schema cache');
+    } else if (r.body?.code === 'PGRST202') {
+      missing += 1;
+      line(false, name);
     } else line(null, name, `HTTP ${r.status} ${text.trim().slice(0, 80)}`);
   }
 }
