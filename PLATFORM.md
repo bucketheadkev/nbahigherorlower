@@ -37,6 +37,8 @@ iOS build:
 npm run build:ios
 ```
 
+Day to day, code on Windows, push, then type `iOS` in Cursor on the Mac (`npm run ios` pulls safely, builds, syncs and opens Xcode); see `docs/WINDOWS_MAC_WORKFLOW.md`.
+
 Then build or archive through Xcode. `npm run build:ios` statically exports the game (`CAPACITOR_BUILD=1`) and runs `npx cap sync ios`, which copies the export into the Xcode project. Editing React or CSS does nothing on a phone until that sync and a new Xcode build.
 
 ## Shared by both

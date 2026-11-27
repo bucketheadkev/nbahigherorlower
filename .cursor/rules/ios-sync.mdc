@@ -1,15 +1,37 @@
 ---
-description: When the user ends a message with "ios", run the Capacitor iOS production sync
+description: "iOS" shortcut — Windows pushes, the Mac pulls safely, builds, syncs Capacitor and opens Xcode
 alwaysApply: true
 ---
 
-# iOS sync shortcut
+# iOS shortcut (Windows → Mac workflow)
 
-If the user's message ends with `ios` (as its own last word/token, or the entire message is just `ios`):
+Windows is the primary development machine. The MacBook + Xcode + a physical iPhone are the source of truth for native iOS testing. Full guide: `docs/WINDOWS_MAC_WORKFLOW.md`.
 
-1. Run `npm run build:ios` from the project root (`CAPACITOR_BUILD=1 next build && npx cap sync ios`).
-2. Do this after finishing any other work requested in the same message.
-3. If the message is only `ios`, just run the sync — no other changes.
-4. Confirm briefly when sync succeeds (e.g. "iOS production build synced.").
+Trigger (case-insensitive): the message is just `ios` / `iOS` / `run ios` / `ios build`, or ends with `ios` as its own last token. Finish any other requested work in the same message first. Do not ask for confirmation before starting.
 
-Do not ask for confirmation before running the sync when this shortcut is used.
+## On macOS (`darwin`)
+
+1. From the project root run `npm run ios` (`scripts/ios-mac.mjs`). It:
+   - refuses to touch uncommitted changes to tracked files,
+   - fetches and fast-forwards the **current branch only** (`--ff-only`); stops if the branch has diverged,
+   - runs `npm ci` only when `package.json` / `package-lock.json` changed or `node_modules` is missing,
+   - prints which Supabase project the build targets (host only, never keys),
+   - runs `npm run build:ios` (static export + `npx cap sync ios`), then `npx cap open ios`.
+2. Report briefly: branch, commit, whether dependencies were installed, backend target, and that Xcode is open (pick the iPhone, Cmd+R).
+3. If the script STOPS, relay its message and ask the user how to proceed. Do not work around it.
+   - Only exception: if the sole local change is `tsconfig.tsbuildinfo`, offer `git checkout -- tsconfig.tsbuildinfo` and run it only after the user confirms.
+
+## On Windows (`win32`)
+
+Do not run `build:ios` / `cap sync` (CocoaPods / Xcode are Mac-only). Instead:
+
+1. Report `git status` and whether there are unpushed commits on the current branch.
+2. If there is uncommitted or unpushed work, say so and offer to run regression checks, commit and push it. Commit/push only when the user asks.
+3. Remind the user to type `iOS` in Cursor on the MacBook.
+
+## Never (unless the user explicitly asks in that message)
+
+- merge into `main`, rebase, or switch branches
+- `git reset`, `git stash`, `git checkout -- <files>`, `git clean`, or otherwise discard local changes
+- force-push
+- deploy, release, archive/upload to App Store Connect, or run Supabase migrations

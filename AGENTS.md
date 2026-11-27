@@ -48,7 +48,7 @@ GSAP (`gsap` + `@gsap/react`) is installed and drives Home motion (`useGSAP`, sc
 
 ## Shortcuts
 
-- `ios` — run `npm run build:ios` ( Cap sync for Xcode )
+- `iOS` — on the Mac: `npm run ios` (safe ff-only pull → `npm ci` if deps changed → `build:ios` → open Xcode). On Windows: report status / unpushed work only. See `docs/WINDOWS_MAC_WORKFLOW.md`.
 - `300` — ensure dev server on :3000 and open the game
 
 ## Do not (unless asked)
