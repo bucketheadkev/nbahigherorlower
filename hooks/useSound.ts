@@ -8,6 +8,7 @@ import {
   setMusicVolume,
 } from '@/lib/tradeup/audioSettings';
 import {
+  playClassicTapSound,
   playGameSound,
   playUiTapSound,
   schedulePreloadGameAudio,
@@ -97,6 +98,10 @@ export function useSound() {
 
   const playTap = useCallback(() => {
     playUiTapSound();
+    hapticTap();
+  }, []);
+  const playClassicTap = useCallback(() => {
+    playClassicTapSound();
     hapticTap();
   }, []);
   const playAccept = useCallback(() => {
@@ -236,6 +241,7 @@ export function useSound() {
     playBankCoin,
     playReject,
     playTap,
+    playClassicTap,
     playCardFlip,
     playRevealImpact,
     playLifeGain,

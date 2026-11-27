@@ -987,14 +987,22 @@ export function playPlaceClickSound(): void {
   playClick('place_click');
 }
 
-/** Shared home UI click — PLAY, CHOOSE MODE, and mode sheet picks. Call from the tap. */
+/**
+ * Shared menu click outside the Classic run (Home, tab bar, Shop, menu, account, modes): the same
+ * sample as closing Settings. Call from the tap.
+ */
 export function playUiTapSound(): void {
-  playClick('ui_tap');
+  playClick('ui_back_click');
 }
 
 /** Menu / account primary action (Save, Log In, Create Account, Confirm). Call from the tap. */
 export function playUiConfirmSound(): void {
-  playClick('ui_confirm_click');
+  playClick('ui_back_click');
+}
+
+/** UI taps inside the Classic run (perk buttons) keep the original tap. Call from the tap. */
+export function playClassicTapSound(): void {
+  playClick('ui_tap');
 }
 
 /** Menu / account dismiss (Cancel, Back, Close). Call from the tap. */
@@ -1016,8 +1024,8 @@ export function playBallBounceSound(gain = 1): void {
 export function warmUiTapSound(): void {
   if (typeof window === 'undefined') return;
   unlockGameAudio();
-  void ensureClickBuffer('ui_tap');
-  const el = ensurePlayer('ui_tap');
+  void ensureClickBuffer('ui_back_click');
+  const el = ensurePlayer('ui_back_click');
   if (el && el.readyState === 0) el.load();
 }
 

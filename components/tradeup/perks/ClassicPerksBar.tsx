@@ -27,7 +27,7 @@ export function ClassicPerksBar({
   disabled,
   onActivate,
 }: ClassicPerksBarProps) {
-  const { resume, playTap } = useSound();
+  const { resume, playClassicTap } = useSound();
   const inv = usePerkInventory();
   const { coins } = useXpProfile();
   const remaining = Math.max(0, MAX_PERK_USES - activationsUsed);
@@ -50,7 +50,7 @@ export function ClassicPerksBar({
               title={perk.blurb}
               onClick={() => {
                 void resume();
-                playTap();
+                playClassicTap();
                 onActivate(perk.id);
               }}
             >
