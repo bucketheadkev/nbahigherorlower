@@ -8,6 +8,7 @@
     "build": "next build",
     "build:ios": "node scripts/build-ios.mjs",
     "ios": "node scripts/ios-mac.mjs",
+    "staging:probe": "node scripts/staging-auth-probe.mjs",
     "start": "next start",
     "start:lan": "next start -p 3000 -H 0.0.0.0",
     "lint": "next lint",

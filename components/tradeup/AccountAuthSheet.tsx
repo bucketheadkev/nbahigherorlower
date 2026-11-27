@@ -8,7 +8,9 @@ import {
 } from 'react';
 import {
   completeUsernameForSession,
+  pendingUsernameForState,
   requestPasswordReset,
+  resendSignupConfirmation,
   signInWithEmail,
   signOutAccount,
   signUpWithEmail,
@@ -53,16 +55,19 @@ export function AccountAuthSheet({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setView(state.status === 'needs_username' ? 'claim' : initialView);
-    setUsername('');
+    setUsername(pendingUsernameForState(state));
     setEmail('');
     setPassword('');
     setError(null);
     setInfo(null);
+    setCanResend(false);
     setBusy(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the sheet opens or auth status changes
   }, [open, initialView, state.status]);
 
   const press =
@@ -96,6 +101,7 @@ export function AccountAuthSheet({
   const go = (next: AccountSheetView) => {
     setError(null);
     setInfo(null);
+    setCanResend(false);
     setView(next);
   };
 
@@ -115,6 +121,17 @@ export function AccountAuthSheet({
     const result = await signUpWithEmail({ username, email, password });
     setBusy(false);
     if (result.ok === false) {
+      if (result.code === 'confirm_email_sent' || result.code === 'email_in_use') {
+        go('login');
+        setPassword('');
+        if (result.code === 'confirm_email_sent') {
+          setInfo(result.message);
+          setCanResend(true);
+        } else {
+          setError(result.message);
+        }
+        return;
+      }
       setError(result.message);
       return;
     }
@@ -131,12 +148,15 @@ export function AccountAuthSheet({
     beginSubmit();
     setBusy(true);
     setError(null);
+    setInfo(null);
     const result = await signInWithEmail({ email, password });
     setBusy(false);
     if (result.ok === false) {
       setError(result.message);
+      if (result.code === 'email_not_confirmed') setCanResend(true);
       return;
     }
+    setCanResend(false);
     markAccountPromptSeen();
     hapticTap();
     playAccountSuccessSound();
@@ -185,6 +205,20 @@ export function AccountAuthSheet({
     setInfo(
       'If an account exists for that email, a reset link was sent. Open it to choose a new password.',
     );
+  };
+
+  const handleResend = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    const result = await resendSignupConfirmation(email);
+    setBusy(false);
+    if (result.ok === false) {
+      setError(result.message);
+      return;
+    }
+    setInfo(`Confirmation email sent to ${email.trim().toLowerCase()}.`);
   };
 
   const handleLogOut = async () => {
@@ -388,6 +422,7 @@ export function AccountAuthSheet({
               />
             </label>
             {error ? <p className="settings-name-modal__error">{error}</p> : null}
+            {info ? <p className="account-sheet__info">{info}</p> : null}
             <div className="settings-name-modal__actions">
               <button
                 type="button"
@@ -401,6 +436,16 @@ export function AccountAuthSheet({
                 {busy ? 'Logging in…' : 'Log In'}
               </button>
             </div>
+            {canResend ? (
+              <button
+                type="button"
+                className="settings-ctrl account-sheet__text-link"
+                disabled={busy}
+                onClick={press(handleResend, { skipWhen: () => busy })}
+              >
+                Resend confirmation email
+              </button>
+            ) : null}
             <button
               type="button"
               className="settings-ctrl account-sheet__text-link"

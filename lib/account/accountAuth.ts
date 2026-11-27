@@ -14,6 +14,7 @@ import {
   sanitizeUsernameDisplay,
   usernameValidationMessage,
 } from '@/lib/account/username';
+import { isNativeApp } from '@/lib/platform/isNativeApp';
 import { resetAuthSessionCache } from '@/lib/supabase/auth';
 import {
   getSupabaseBrowserClient,
@@ -132,9 +133,45 @@ export async function resolveAccountAuthState(): Promise<AccountAuthState> {
   return { status: 'needs_username', session, user: session.user };
 }
 
+/**
+ * - confirm_email_sent: signup accepted, but the project requires email confirmation first.
+ * - email_not_confirmed: login refused until the confirmation link is opened.
+ * - email_in_use: an account already exists for that email.
+ */
+export type AuthFailureCode = 'confirm_email_sent' | 'email_not_confirmed' | 'email_in_use';
+
 export type AuthActionResult =
   | { ok: true; state: AccountAuthState }
-  | { ok: false; message: string };
+  | { ok: false; message: string; code?: AuthFailureCode };
+
+function authErrorCode(error: unknown): string {
+  if (error && typeof error === 'object' && 'code' in error) {
+    return String((error as { code?: unknown }).code ?? '');
+  }
+  return '';
+}
+
+/** Username chosen at signup, kept in auth metadata until the profiles row exists. */
+function pendingSignupUsername(user: User): string | null {
+  const raw = user.user_metadata?.username;
+  if (typeof raw !== 'string') return null;
+  const display = sanitizeUsernameDisplay(raw);
+  return isValidUsername(display) ? display : null;
+}
+
+export function pendingUsernameForState(state: AccountAuthState): string {
+  return state.status === 'needs_username' ? (pendingSignupUsername(state.user) ?? '') : '';
+}
+
+/**
+ * Origin for links inside auth emails. The native shell's origin (capacitor://localhost)
+ * cannot be opened from Mail, so iOS points at the website instead.
+ */
+function authEmailOrigin(): string {
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '');
+  if (isNativeApp()) return site || 'https://1brun.com';
+  return (typeof window !== 'undefined' && window.location?.origin) || site || 'https://1brun.com';
+}
 
 /**
  * Sign up with email/password + public username profile.
@@ -179,9 +216,21 @@ export async function signUpWithEmail(input: {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: { username },
+      emailRedirectTo: `${authEmailOrigin()}/`,
+    },
   });
 
   if (error) {
+    const code = authErrorCode(error);
+    if (code === 'user_already_exists' || code === 'email_exists') {
+      return {
+        ok: false,
+        code: 'email_in_use',
+        message: 'An account already uses that email. Log in instead.',
+      };
+    }
     return {
       ok: false,
       message: authErrorMessage(error, 'Could not create your account. Try again.'),
@@ -189,10 +238,19 @@ export async function signUpWithEmail(input: {
   }
 
   if (!data.session?.user) {
+    // With confirmation on, an existing email comes back as a user with no identities.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return {
+        ok: false,
+        code: 'email_in_use',
+        message: 'An account already uses that email. Log in instead.',
+      };
+    }
+    // The profiles row is created on first login from the username stored in metadata.
     return {
       ok: false,
-      message:
-        'Account was created but no session was returned. Try logging in, or check email confirmation settings.',
+      code: 'confirm_email_sent',
+      message: `Check ${email} for a confirmation link, then log in here.`,
     };
   }
 
@@ -250,6 +308,13 @@ export async function signInWithEmail(input: {
   });
 
   if (error) {
+    if (authErrorCode(error) === 'email_not_confirmed') {
+      return {
+        ok: false,
+        code: 'email_not_confirmed',
+        message: 'Confirm your email first. Open the link we sent, then log in.',
+      };
+    }
     return {
       ok: false,
       message: authErrorMessage(error, 'Could not log in. Check your email and password.'),
@@ -272,7 +337,35 @@ export async function signInWithEmail(input: {
   if (signedIn.status !== 'permanent' && signedIn.status !== 'needs_username') {
     return { ok: false, message: 'Login did not return a session.' };
   }
+  if (signedIn.status === 'needs_username') {
+    const pending = pendingSignupUsername(signedIn.user);
+    if (pending) {
+      const claimed = await completeUsernameForSession(pending);
+      if (claimed.ok) return claimed;
+    }
+  }
   return { ok: true, state: signedIn };
+}
+
+/** Re-send the signup confirmation email. */
+export async function resendSignupConfirmation(emailRaw: string): Promise<AuthActionResult> {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    return { ok: false, message: 'Enter the email you signed up with.' };
+  }
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${authEmailOrigin()}/` },
+  });
+  if (error) {
+    return {
+      ok: false,
+      message: authErrorMessage(error, 'Could not resend the confirmation email. Try again.'),
+    };
+  }
+  return { ok: true, state: await resolveAccountAuthState() };
 }
 
 async function permanentState(profile: ProfileRow): Promise<AccountAuthState> {
@@ -393,11 +486,7 @@ export async function requestPasswordReset(emailRaw: string): Promise<AuthAction
 
 /** Website reset landing page (also used as Supabase redirect allow-list entry). */
 export function passwordResetRedirectUrl(): string {
-  const origin =
-    (typeof window !== 'undefined' && window.location?.origin) ||
-    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ||
-    'https://1brun.com';
-  return `${origin.replace(/\/$/, '')}/reset-password`;
+  return `${authEmailOrigin().replace(/\/$/, '')}/reset-password`;
 }
 
 /**
